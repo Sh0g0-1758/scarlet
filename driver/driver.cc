@@ -3,6 +3,8 @@
 #include <format>
 #include <vector>
 
+#include <lexer/lexer.cc>
+
 // extract out the name of the file
 // possibilities : ./<path>/<filename>.<ext> or <filename>.<ext>
 #include <filesystem>
@@ -47,6 +49,11 @@ int main(int argc, char* argv[]) {
     }
 
     // STUB: convert the preprocessed file to assembly file
+    // LEXER
+    lexer lex;
+    lex.read_file(std::format("{}.scp", file_name));
+    lex.tokenize();
+    lex.print_tokens();
     result = system(std::format("gcc -x c++ -S {}.scp -o {}.s", file_name, file_name).c_str());
 
     if (result != 0) {
