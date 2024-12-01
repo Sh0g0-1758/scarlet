@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> flags;
     flags.reserve(argc - 2);
 
-    for(int i = 2; i < argc; i++) {
+    for(int i = 1; i < argc - 1; i++) {
         std::string flagArg = std::string(argv[i]);
         std::string flag = flagArg.substr(2);
         if (flagArg.substr(0, 2) != "--" or !isFlagValid(flag)) {
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::filesystem::path path(argv[1]);
+    std::filesystem::path path(argv[argc - 1]);
     std::string file_name = path.stem().string();
 
     if(path.extension().string() != ".sc") {
@@ -54,6 +54,10 @@ int main(int argc, char* argv[]) {
     lex.read_file(std::format("{}.scp", file_name));
     lex.tokenize();
     lex.print_tokens();
+    if(!lex.is_success()) {
+        std::cerr << "[ERROR]: Lexical analysis failed" << std::endl;
+        return 1;
+    }
     result = system(std::format("gcc -x c++ -S {}.scp -o {}.s", file_name, file_name).c_str());
 
     if (result != 0) {

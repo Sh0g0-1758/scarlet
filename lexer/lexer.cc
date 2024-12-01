@@ -46,7 +46,24 @@ void lexer::tokenize() {
         }
         tokens.emplace_back(TOKEN::CONSTANT);
         tokenize();
+    } else if(file_contents[0] == '\n' or file_contents[0] == ' ' or file_contents[0] == '\t') {
+        file_contents.erase(0, 1);
+        tokenize();
+    } else if(file_contents[0] == '/') {
+        if(file_contents[1] == '/') {
+            while(file_contents[0] != '\n') {
+                file_contents.erase(0, 1);
+            }
+            file_contents.erase(0, 1);
+            tokenize();
+        } else {
+            success = false;
+            tokens.emplace_back(TOKEN::UNKNOWN);
+            file_contents.erase(0, 1);
+            tokenize();
+        }
     } else {
+        success = false;
         tokens.emplace_back(TOKEN::UNKNOWN);
         file_contents.erase(0, 1);
         tokenize();

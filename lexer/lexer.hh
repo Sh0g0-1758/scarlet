@@ -25,8 +25,10 @@ private:
     std::string file_contents;
     std::vector<TOKEN> tokens;
     Regex regex;
+    bool success = true;
 public:
     void tokenize();
     void print_tokens();
     void read_file(const std::string& file_path);
+    bool is_success() { return success; }
 };
