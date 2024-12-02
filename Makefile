@@ -1,7 +1,7 @@
 build:
 	@echo "Building scarlet..."
 	@mkdir build
-	@g++ -std=c++20 ./driver/driver.cc -o ./build/scarlet -I .
+	@g++-13 -std=c++20 ./driver/driver.cc -o ./build/scarlet -I .
 	@echo "Done."
 
 test:
