@@ -7,4 +7,10 @@ build:
 test:
 	@echo "Running lexer test"
 	@./test_compiler ./build/scarlet --chapter 1 --stage lex
+	@echo "Running parser test"
+	@./test_compiler ./build/scarlet --chapter 1 --stage parse
 	@echo "Done."
+
+clean:
+	@echo "Cleaning up..."
+	@rm -rf build

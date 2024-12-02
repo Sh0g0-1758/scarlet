@@ -5,20 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include "regex.cc"
-
-enum class TOKEN {
-    IDENTIFIER,
-    CONSTANT,
-    INT,
-    VOID,
-    RETURN,
-    OPEN_PARANTHESES,
-    CLOSE_PARANTHESES,
-    OPEN_BRACE,
-    CLOSE_BRACE,
-    SEMICOLON,
-    UNKNOWN
-};
+#include <token/token.hh>
 
 class lexer {
 private:
@@ -29,6 +16,7 @@ private:
 public:
     void tokenize();
     void print_tokens();
+    std::vector<TOKEN> get_tokens();
     void read_file(const std::string& file_path);
     bool is_success() { return success; }
 };

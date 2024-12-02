@@ -83,43 +83,7 @@ void lexer::tokenize() {
 }
 
 void lexer::print_tokens() {
-    for(auto token : tokens) {
-        switch(token) {
-            case TOKEN::IDENTIFIER:
-                std::cout << "IDENTIFIER" << std::endl;
-                break;
-            case TOKEN::CONSTANT:
-                std::cout << "CONSTANT" << std::endl;
-                break;
-            case TOKEN::INT:
-                std::cout << "INT" << std::endl;
-                break;
-            case TOKEN::VOID:
-                std::cout << "VOID" << std::endl;
-                break;
-            case TOKEN::RETURN:
-                std::cout << "RETURN" << std::endl;
-                break;
-            case TOKEN::OPEN_PARANTHESES:
-                std::cout << "OPEN_PARANTHESES" << std::endl;
-                break;
-            case TOKEN::CLOSE_PARANTHESES:
-                std::cout << "CLOSE_PARANTHESES" << std::endl;
-                break;
-            case TOKEN::OPEN_BRACE:
-                std::cout << "OPEN_BRACE" << std::endl;
-                break;
-            case TOKEN::CLOSE_BRACE:
-                std::cout << "CLOSE_BRACE" << std::endl;
-                break;
-            case TOKEN::SEMICOLON:
-                std::cout << "SEMICOLON" << std::endl;
-                break;
-            case TOKEN::UNKNOWN:
-                std::cout << "UNKNOWN" << std::endl;
-                break;
-        }
-    }
+    for(auto token : tokens) print_token(token);
 }
 
 void lexer::read_file(const std::string& file_path) {
@@ -132,4 +96,8 @@ void lexer::read_file(const std::string& file_path) {
         }
         file.close();
     }
+}
+
+std::vector<TOKEN> lexer::get_tokens() {
+    return tokens;
 }

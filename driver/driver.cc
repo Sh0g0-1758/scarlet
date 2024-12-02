@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include <lexer/lexer.cc>
+#include <parser/parser.cc>
 
 // extract out the name of the file
 // possibilities : ./<path>/<filename>.<ext> or <filename>.<ext>
@@ -67,6 +68,31 @@ int main(int argc, char* argv[]) {
     }
 
     if(std::find(flags.begin(), flags.end(), "lex") != flags.end()) {
+        result = system(std::format("rm {}.scp", file_name).c_str());
+
+        if (result != 0) {
+            std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file" << std::endl;
+            return 1;
+        }
+        return 0;
+    }
+
+    // PARSER
+    parser gnu;
+    gnu.parse_program(lex.get_tokens());
+    if(!gnu.is_success()) {
+        result = system(std::format("rm {}.scp", file_name).c_str());
+
+        if (result != 0) {
+            std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file" << std::endl;
+            return 1;
+        }
+        gnu.display_errors();
+        std::cerr << "[ERROR]: Parsing failed" << std::endl;
+        return 1;
+    }
+
+    if(std::find(flags.begin(), flags.end(), "parse") != flags.end()) {
         result = system(std::format("rm {}.scp", file_name).c_str());
 
         if (result != 0) {
