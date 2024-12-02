@@ -28,24 +28,36 @@ void lexer::tokenize() {
             identifier += file_contents[0];
             file_contents.erase(0, 1);
         }
-        if(identifier == "int") {
-            tokens.emplace_back(TOKEN::INT);
-        } else if(identifier == "void") {
-            tokens.emplace_back(TOKEN::VOID);
-        } else if(identifier == "return") {
-            tokens.emplace_back(TOKEN::RETURN);
+        if(regex.matchDigit(file_contents[0])) {
+            success = false;
+            tokens.emplace_back(TOKEN::UNKNOWN);
+            tokenize();
         } else {
-            tokens.emplace_back(TOKEN::IDENTIFIER);
+            if(identifier == "int") {
+                tokens.emplace_back(TOKEN::INT);
+            } else if(identifier == "void") {
+                tokens.emplace_back(TOKEN::VOID);
+            } else if(identifier == "return") {
+                tokens.emplace_back(TOKEN::RETURN);
+            } else {
+                tokens.emplace_back(TOKEN::IDENTIFIER);
+            }
+            tokenize();
         }
-        tokenize();
     } else if(regex.matchDigit(file_contents[0])) {
         std::string constant;
         while(regex.matchDigit(file_contents[0])) {
             constant += file_contents[0];
             file_contents.erase(0, 1);
         }
-        tokens.emplace_back(TOKEN::CONSTANT);
-        tokenize();
+        if (regex.matchWord(file_contents[0])) {
+            success = false;
+            tokens.emplace_back(TOKEN::UNKNOWN);
+            tokenize();
+        } else {
+            tokens.emplace_back(TOKEN::CONSTANT);
+            tokenize();
+        }
     } else if(file_contents[0] == '\n' or file_contents[0] == ' ' or file_contents[0] == '\t') {
         file_contents.erase(0, 1);
         tokenize();
@@ -103,6 +115,9 @@ void lexer::print_tokens() {
             case TOKEN::SEMICOLON:
                 std::cout << "SEMICOLON" << std::endl;
                 break;
+            case TOKEN::UNKNOWN:
+                std::cout << "UNKNOWN" << std::endl;
+                break;
         }
     }
 }
@@ -113,6 +128,7 @@ void lexer::read_file(const std::string& file_path) {
         std::string line;
         while(std::getline(file, line)) {
             file_contents += line;
+            file_contents += '\n';
         }
         file.close();
     }

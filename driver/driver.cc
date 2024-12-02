@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <format>
 #include <vector>
+#include <algorithm>
 
 #include <lexer/lexer.cc>
 
@@ -36,12 +37,12 @@ int main(int argc, char* argv[]) {
     std::filesystem::path path(argv[argc - 1]);
     std::string file_name = path.stem().string();
 
-    if(path.extension().string() != ".sc") {
-        std::cerr << "[ERROR]: file format not recognized; It should have an sc extension" << std::endl;
+    if(path.extension().string() != ".sc" and path.extension().string() != ".c" and path.extension().string() != ".cc") {
+        std::cerr << "[ERROR]: file format not recognized; It should have an sc | c | cc extension" << std::endl;
         return 1;
     }
 
-    int result = system(std::format("gcc -x c++ -E -P {} -o {}.scp", argv[1], file_name).c_str());
+    int result = system(std::format("gcc -x c++ -E -P {} -o {}.scp", argv[argc - 1], file_name).c_str());
 
     if (result != 0) {
         std::cerr << "[ERROR]: Preprocessing failed" << std::endl;
@@ -55,9 +56,26 @@ int main(int argc, char* argv[]) {
     lex.tokenize();
     lex.print_tokens();
     if(!lex.is_success()) {
+        result = system(std::format("rm {}.scp", file_name).c_str());
+
+        if (result != 0) {
+            std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file" << std::endl;
+            return 1;
+        }
         std::cerr << "[ERROR]: Lexical analysis failed" << std::endl;
         return 1;
     }
+
+    if(std::find(flags.begin(), flags.end(), "lex") != flags.end()) {
+        result = system(std::format("rm {}.scp", file_name).c_str());
+
+        if (result != 0) {
+            std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file" << std::endl;
+            return 1;
+        }
+        return 0;
+    }
+
     result = system(std::format("gcc -x c++ -S {}.scp -o {}.s", file_name, file_name).c_str());
 
     if (result != 0) {
