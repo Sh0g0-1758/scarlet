@@ -40,7 +40,7 @@ void lexer::tokenize() {
             } else if(identifier == "return") {
                 tokens.emplace_back(TOKEN::RETURN);
             } else {
-                tokens.emplace_back(TOKEN::IDENTIFIER);
+                tokens.emplace_back(Token(TOKEN::IDENTIFIER, identifier));
             }
             tokenize();
         }
@@ -84,6 +84,7 @@ void lexer::tokenize() {
 
 void lexer::print_tokens() {
     for(auto token : tokens) print_token(token.get_token());
+    std::cout << std::endl;
 }
 
 void lexer::read_file(const std::string& file_path) {

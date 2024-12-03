@@ -102,6 +102,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    gnu.pretty_print();
+
     result = system(std::format("gcc -x c++ -S {}.scp -o {}.s", file_name, file_name).c_str());
 
     if (result != 0) {

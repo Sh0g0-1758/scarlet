@@ -37,37 +37,37 @@ public:
 void print_token(TOKEN token) {
     switch(token) {
         case TOKEN::IDENTIFIER:
-            std::cerr << "identifier" << std::endl;
+            std::cerr << "identifier ";
             break;
         case TOKEN::CONSTANT:
-            std::cerr << "constant" << std::endl;
+            std::cerr << "constant ";
             break;
         case TOKEN::INT:
-            std::cerr << "int" << std::endl;
+            std::cerr << "int ";
             break;
         case TOKEN::VOID:
-            std::cerr << "void" << std::endl;
+            std::cerr << "void ";
             break;
         case TOKEN::RETURN:
-            std::cerr << "return" << std::endl;
+            std::cerr << "return ";
             break;
         case TOKEN::OPEN_PARANTHESES:
-            std::cerr << "(" << std::endl;
+            std::cerr << "( ";
             break;
         case TOKEN::CLOSE_PARANTHESES:
-            std::cerr << ")" << std::endl;
+            std::cerr << ") ";
             break;
         case TOKEN::OPEN_BRACE:
-            std::cerr << "{" << std::endl;
+            std::cerr << "{ ";
             break;
         case TOKEN::CLOSE_BRACE:
-            std::cerr << "}" << std::endl;
+            std::cerr << "} ";
             break;
         case TOKEN::SEMICOLON:
-            std::cerr << ";" << std::endl;
+            std::cerr << "; ";
             break;
         case TOKEN::UNKNOWN:
-            std::cerr << "UNKNOWN" << std::endl;
+            std::cerr << "UNKNOWN ";
             break;
     }
 }
@@ -75,25 +75,25 @@ void print_token(TOKEN token) {
 std::string to_string(TOKEN token) {
     switch(token) {
         case TOKEN::IDENTIFIER:
-            return "IDENTIFIER";
+            return "identifier";
         case TOKEN::CONSTANT:
-            return "CONSTANT";
+            return "constant";
         case TOKEN::INT:
-            return "INT";
+            return "int";
         case TOKEN::VOID:
-            return "VOID";
+            return "void";
         case TOKEN::RETURN:
-            return "RETURN";
+            return "return";
         case TOKEN::OPEN_PARANTHESES:
-            return "OPEN_PARANTHESES";
+            return "(";
         case TOKEN::CLOSE_PARANTHESES:
-            return "CLOSE_PARANTHESES";
+            return ")";
         case TOKEN::OPEN_BRACE:
-            return "OPEN_BRACE";
+            return "{";
         case TOKEN::CLOSE_BRACE:
-            return "CLOSE_BRACE";
+            return "}";
         case TOKEN::SEMICOLON:
-            return "SEMICOLON";
+            return ";";
         case TOKEN::UNKNOWN:
             return "UNKNOWN";
     }
