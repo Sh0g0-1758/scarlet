@@ -37,34 +37,34 @@ public:
 void print_token(TOKEN token) {
     switch(token) {
         case TOKEN::IDENTIFIER:
-            std::cerr << "IDENTIFIER" << std::endl;
+            std::cerr << "identifier" << std::endl;
             break;
         case TOKEN::CONSTANT:
-            std::cerr << "CONSTANT" << std::endl;
+            std::cerr << "constant" << std::endl;
             break;
         case TOKEN::INT:
-            std::cerr << "INT" << std::endl;
+            std::cerr << "int" << std::endl;
             break;
         case TOKEN::VOID:
-            std::cerr << "VOID" << std::endl;
+            std::cerr << "void" << std::endl;
             break;
         case TOKEN::RETURN:
-            std::cerr << "RETURN" << std::endl;
+            std::cerr << "return" << std::endl;
             break;
         case TOKEN::OPEN_PARANTHESES:
-            std::cerr << "OPEN_PARANTHESES" << std::endl;
+            std::cerr << "(" << std::endl;
             break;
         case TOKEN::CLOSE_PARANTHESES:
-            std::cerr << "CLOSE_PARANTHESES" << std::endl;
+            std::cerr << ")" << std::endl;
             break;
         case TOKEN::OPEN_BRACE:
-            std::cerr << "OPEN_BRACE" << std::endl;
+            std::cerr << "{" << std::endl;
             break;
         case TOKEN::CLOSE_BRACE:
-            std::cerr << "CLOSE_BRACE" << std::endl;
+            std::cerr << "}" << std::endl;
             break;
         case TOKEN::SEMICOLON:
-            std::cerr << "SEMICOLON" << std::endl;
+            std::cerr << ";" << std::endl;
             break;
         case TOKEN::UNKNOWN:
             std::cerr << "UNKNOWN" << std::endl;
