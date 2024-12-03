@@ -1,24 +1,70 @@
 #include "parser.hh"
 
 #define EXPECT(tok)                                                            \
+    if (!success) {                                                            \
+        return;                                                                \
+    }                                                                          \
     if (tokens.empty()) {                                                      \
         eof_error(tok);                                                        \
         return;                                                                \
     }                                                                          \
     expect(tokens[0].get_token(), tok);                                        \
+    if (!success) {                                                            \
+        return;                                                                \
+    }                                                                          \
     tokens.erase(tokens.begin());                                              \
 
 #define EXPECT_FUNC(tok)                                                       \
+    if (!success) {                                                            \
+        return function;                                                       \
+    }                                                                          \
     if (tokens.empty()) {                                                      \
         eof_error(tok);                                                        \
         return function;                                                       \
     }                                                                          \
     expect(tokens[0].get_token(), tok);                                        \
+    if (!success) {                                                            \
+        return function;                                                       \
+    }                                                                          \
+    tokens.erase(tokens.begin());                                              \
+
+#define EXPECT_INT(tok)                                                        \
+    if (!success) {                                                            \
+        return;                                                                \
+    }                                                                          \
+    if (tokens.empty()) {                                                      \
+        eof_error(tok);                                                        \
+        return;                                                                \
+    }                                                                          \
+    expect(tokens[0].get_token(), tok);                                        \
+    if (!success) {                                                            \
+        return;                                                                \
+    }                                                                          \
+    AST_int_Node int_node;                                                     \
+    int_node.set_value(tokens[0].get_value().value());                         \
+    exp.set_int_node(int_node);                                                \
+    tokens.erase(tokens.begin());                                              \
+
+#define EXPECT_IDENTIFIER(tok)                                                 \
+    if (!success) {                                                            \
+        return;                                                                \
+    }                                                                          \
+    if (tokens.empty()) {                                                      \
+        eof_error(tok);                                                        \
+        return;                                                                \
+    }                                                                          \
+    expect(tokens[0].get_token(), tok);                                        \
+    if (!success) {                                                            \
+        return;                                                                \
+    }                                                                          \
+    AST_identifier_Node identifier;                                            \
+    identifier.set_identifier(tokens[0].get_value().value());                  \
+    function.set_identifier(identifier);                                       \
     tokens.erase(tokens.begin());                                              \
 
 void parser::parse_program(std::vector<Token> tokens) {
     AST_Program_Node program;
-    while(!tokens.empty()) {
+    while(!tokens.empty() and success) {
         AST_Function_Node func = parse_function(tokens);
         program.add_function(func);
     }
@@ -57,17 +103,11 @@ void parser::parse_exp(std::vector<Token>& tokens, AST_Statement_Node& statement
 }
 
 void parser::parse_identifier(std::vector<Token>& tokens, AST_Function_Node& function) {
-    AST_identifier_Node identifier;
-    identifier.set_identifier(tokens[0].get_value().value());
-    function.set_identifier(identifier);
-    EXPECT(TOKEN::IDENTIFIER);
+    EXPECT_IDENTIFIER(TOKEN::IDENTIFIER);
 }
 
 void parser::parse_int(std::vector<Token>& tokens, AST_exp_Node& exp) {
-    AST_int_Node int_node;
-    int_node.set_value(tokens[0].get_value().value());
-    exp.set_int_node(int_node);
-    EXPECT(TOKEN::CONSTANT);
+    EXPECT_INT(TOKEN::CONSTANT);
 }
 
 void parser::expect(TOKEN actual_token, TOKEN expected_token) {
