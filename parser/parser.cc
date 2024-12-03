@@ -5,14 +5,14 @@
         eof_error(tok);                                                        \
         return;                                                                \
     }                                                                          \
-    expect(tokens[0], tok);                                                    \
+    expect(tokens[0].get_token(), tok);                                        \
     tokens.erase(tokens.begin());                                              \
 
-void parser::parse_program(std::vector<TOKEN> tokens) {
+void parser::parse_program(std::vector<Token> tokens) {
     parse_function(tokens);
 }
 
-void parser::parse_function(std::vector<TOKEN>& tokens) {
+void parser::parse_function(std::vector<Token>& tokens) {
     EXPECT(TOKEN::INT);
     parse_identifier(tokens);
     EXPECT(TOKEN::OPEN_PARANTHESES);
@@ -23,25 +23,25 @@ void parser::parse_function(std::vector<TOKEN>& tokens) {
     EXPECT(TOKEN::CLOSE_BRACE);
     if(!tokens.empty()) {
         success = false;
-        error_messages.emplace_back("Expected end of file but got " + to_string(tokens[0]));
+        error_messages.emplace_back("Expected end of file but got " + to_string(tokens[0].get_token()));
     }
 }
 
-void parser::parse_statement(std::vector<TOKEN>& tokens) {
+void parser::parse_statement(std::vector<Token>& tokens) {
     EXPECT(TOKEN::RETURN);
     parse_exp(tokens);
     EXPECT(TOKEN::SEMICOLON);
 }
 
-void parser::parse_exp(std::vector<TOKEN>& tokens) {
+void parser::parse_exp(std::vector<Token>& tokens) {
     parse_int(tokens);
 }
 
-void parser::parse_identifier(std::vector<TOKEN>& tokens) {
+void parser::parse_identifier(std::vector<Token>& tokens) {
     EXPECT(TOKEN::IDENTIFIER);
 }
 
-void parser::parse_int(std::vector<TOKEN>& tokens) {
+void parser::parse_int(std::vector<Token>& tokens) {
     EXPECT(TOKEN::CONSTANT);
 }
 
@@ -58,7 +58,7 @@ void parser::display_errors() {
     }
 }
 
-void parser::eof_error(TOKEN token) {
+void parser::eof_error(Token token) {
     success = false;
-    error_messages.emplace_back("Expected " + to_string(token) + " but got end of file");
+    error_messages.emplace_back("Expected " + to_string(token.get_token()) + " but got end of file");
 }

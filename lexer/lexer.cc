@@ -55,7 +55,7 @@ void lexer::tokenize() {
             tokens.emplace_back(TOKEN::UNKNOWN);
             tokenize();
         } else {
-            tokens.emplace_back(TOKEN::CONSTANT);
+            tokens.emplace_back(Token(TOKEN::CONSTANT, constant));
             tokenize();
         }
     } else if(file_contents[0] == '\n' or file_contents[0] == ' ' or file_contents[0] == '\t') {
@@ -83,7 +83,7 @@ void lexer::tokenize() {
 }
 
 void lexer::print_tokens() {
-    for(auto token : tokens) print_token(token);
+    for(auto token : tokens) print_token(token.get_token());
 }
 
 void lexer::read_file(const std::string& file_path) {
@@ -98,6 +98,6 @@ void lexer::read_file(const std::string& file_path) {
     }
 }
 
-std::vector<TOKEN> lexer::get_tokens() {
+std::vector<Token> lexer::get_tokens() {
     return tokens;
 }
