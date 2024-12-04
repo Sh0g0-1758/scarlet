@@ -394,12 +394,13 @@ class TestChapter(unittest.TestCase):
 
         # run the executable
         # TODO cleaner handling if executable doesn't exist? or check that it exists above?
-        exe = source_file.with_suffix("")
+        exe = source_file.parent.parent.parent.parent / source_file.with_suffix("").name
         result = subprocess.run(
             [exe], check=False, capture_output=True, text=True, timeout=10.0
         )
 
         self.validate_runs(source_file, result)
+        exe.unlink(missing_ok=True)
 
     def library_test_helper(
         self, file_under_test: Path, other_files: List[Path]

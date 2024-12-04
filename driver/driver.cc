@@ -6,6 +6,7 @@
 
 #include <lexer/lexer.cc>
 #include <parser/parser.cc>
+#include <codegen/codegen.cc>
 
 // extract out the name of the file
 // possibilities : ./<path>/<filename>.<ext> or <filename>.<ext>
@@ -55,7 +56,6 @@ int main(int argc, char* argv[]) {
     lexer lex;
     lex.read_file(std::format("{}.scp", file_name));
     lex.tokenize();
-    lex.print_tokens();
     if(!lex.is_success()) {
         result = system(std::format("rm {}.scp", file_name).c_str());
 
@@ -104,11 +104,30 @@ int main(int argc, char* argv[]) {
 
     gnu.pretty_print();
 
-    result = system(std::format("gcc -x c++ -S {}.scp -o {}.s", file_name, file_name).c_str());
+    // CODEGEN
+    Codegen codegen(gnu.get_program());
+    codegen.set_file_name(std::format("{}.s", file_name));
+    codegen.codegen();
 
-    if (result != 0) {
-        std::cerr << "[ERROR]: Compilation failed" << std::endl;
+    if(!codegen.is_success()) {
+        result = system(std::format("rm {}.scp", file_name).c_str());
+
+        if (result != 0) {
+            std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file" << std::endl;
+            return 1;
+        }
+        std::cerr << "[ERROR]: Code generation failed" << std::endl;
         return 1;
+    }
+
+    if(std::find(flags.begin(), flags.end(), "codegen") != flags.end()) {
+        result = system(std::format("rm {}.scp", file_name).c_str());
+
+        if (result != 0) {
+            std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file" << std::endl;
+            return 1;
+        }
+        return 0;
     }
 
     // delete the intermediate preprocessed file
