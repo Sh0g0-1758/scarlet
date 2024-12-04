@@ -1,13 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <token/token.hh>
 #include <ast/ast.hh>
 #include <fstream>
+#include <token/token.hh>
+#include <vector>
 
-enum class Regiser {
-    EAX
-};
+enum class Regiser { EAX };
 
 /*
 
@@ -33,12 +31,13 @@ Notes about X86-64 Assembly:
 
 class Codegen {
 private:
-    AST_Program_Node program;
-    std::string file_name;
-    bool success = true;
+  AST_Program_Node program;
+  std::string file_name;
+  bool success = true;
+
 public:
-    Codegen(AST_Program_Node program) : program(program) {}
-    void codegen();
-    void set_file_name(std::string file_name) {this->file_name = file_name;}
-    bool is_success() {return success;}
+  Codegen(AST_Program_Node program) : program(program) {}
+  void codegen();
+  void set_file_name(std::string file_name) { this->file_name = file_name; }
+  bool is_success() { return success; }
 };

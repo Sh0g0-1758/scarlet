@@ -3,6 +3,6 @@
 
 class Regex {
 public:
-    bool matchWord(char c);
-    bool matchDigit(char c);
+  bool matchWord(char c);
+  bool matchDigit(char c);
 };
