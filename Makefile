@@ -6,7 +6,7 @@ build:
 	@g++-13 -std=c++20 ./driver/driver.cc -o ./build/scarlet -I .
 	@echo "Done."
 
-test:
+test: build
 	@echo "Running lexer test"
 	@./test_compiler ./build/scarlet --chapter 1 --stage lex
 	@echo "Running parser test"
