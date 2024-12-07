@@ -23,6 +23,20 @@ void lexer::tokenize() {
     tokens.emplace_back(TOKEN::SEMICOLON);
     file_contents.erase(0, 1);
     tokenize();
+  } else if (file_contents[0] == '~') {
+    tokens.emplace_back(TOKEN::TILDE);
+    file_contents.erase(0, 1);
+    tokenize();
+  } else if (file_contents[0] == '-') {
+    if (file_contents[1] == '-') {
+      tokens.emplace_back(TOKEN::DECREMENT_OPERATOR);
+      file_contents.erase(0, 2);
+      tokenize();
+    } else {
+      tokens.emplace_back(TOKEN::HYPHEN);
+      file_contents.erase(0, 1);
+      tokenize();
+    }
   } else if (regex.matchWord(file_contents[0])) {
     std::string identifier;
     while (regex.matchWord(file_contents[0])) {

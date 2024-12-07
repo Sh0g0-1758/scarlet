@@ -93,16 +93,48 @@ void parser::parse_statement(std::vector<Token> &tokens,
                              AST_Function_Node &function) {
   AST_Statement_Node statement("Return");
   EXPECT(TOKEN::RETURN);
-  parse_exp(tokens, statement);
+  AST_exp_Node exp;
+  parse_exp(tokens, exp);
+  statement.add_exp(exp);
   EXPECT(TOKEN::SEMICOLON);
   function.add_statement(statement);
 }
 
-void parser::parse_exp(std::vector<Token> &tokens,
-                       AST_Statement_Node &statement) {
-  AST_exp_Node exp;
-  parse_int(tokens, exp);
-  statement.add_exp(exp);
+void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
+  if (tokens[0].get_token() == TOKEN::CONSTANT) {
+    parse_int(tokens, exp);
+  } else if (tokens[0].get_token() == TOKEN::TILDE or
+             tokens[0].get_token() == TOKEN::HYPHEN) {
+    parse_unary_op(tokens, exp);
+    parse_exp(tokens, exp);
+  } else if (tokens[0].get_token() == TOKEN::OPEN_PARANTHESES) {
+    tokens.erase(tokens.begin());
+    parse_exp(tokens, exp);
+    EXPECT(TOKEN::CLOSE_PARANTHESES);
+  } else {
+    success = false;
+    error_messages.emplace_back(
+        "Expected constant, unary operator or open parantheses but got " +
+        to_string(tokens[0].get_token()));
+  }
+}
+
+void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
+  if (tokens[0].get_token() == TOKEN::TILDE) {
+    AST_unop_Node unop;
+    unop.set_op("~");
+    exp.set_unop_node(unop);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == TOKEN::HYPHEN) {
+    AST_unop_Node unop;
+    unop.set_op("-");
+    exp.set_unop_node(unop);
+    tokens.erase(tokens.begin());
+  } else {
+    success = false;
+    error_messages.emplace_back("Expected unary operator but got " +
+                                to_string(tokens[0].get_token()));
+  }
 }
 
 void parser::parse_identifier(std::vector<Token> &tokens,

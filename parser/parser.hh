@@ -12,7 +12,8 @@ private:
   AST_Program_Node program;
   AST_Function_Node parse_function(std::vector<Token> &tokens);
   void parse_statement(std::vector<Token> &tokens, AST_Function_Node &function);
-  void parse_exp(std::vector<Token> &tokens, AST_Statement_Node &statement);
+  void parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp);
+  void parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp);
   void parse_identifier(std::vector<Token> &tokens,
                         AST_Function_Node &function);
   void parse_int(std::vector<Token> &tokens, AST_exp_Node &exp);

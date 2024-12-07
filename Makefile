@@ -7,14 +7,18 @@ build:
 	@echo "Done."
 
 test: build
-	@echo "Running lexer test"
+	@echo "Running lexer-1 test"
 	@./test_compiler ./build/scarlet --chapter 1 --stage lex
-	@echo "Running parser test"
+	@echo "Running parser-1 test"
 	@./test_compiler ./build/scarlet --chapter 1 --stage parse
-	@echo "Running Codegen test"
+	@echo "Running Codegen-1 test"
 	@./test_compiler ./build/scarlet --chapter 1 --stage codegen
 	@echo "Running test all-1"
 	@./test_compiler ./build/scarlet --chapter 1
+	@echo "Running lexer-2 test"
+	@./test_compiler ./build/scarlet --chapter 2 --stage lex
+	@echo "Running parser-2 test"
+	@./test_compiler ./build/scarlet --chapter 2 --stage parse
 
 clean:
 	@echo "Cleaning up..."

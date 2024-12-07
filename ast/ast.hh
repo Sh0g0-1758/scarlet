@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <optional>
 #include <string>
 #include <token/token.hh>
 #include <vector>
@@ -11,7 +12,8 @@ Grammar:
 <program> ::= <function>
 <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
 <statement> ::= "return" <exp> ";"
-<exp> ::= <int>
+<exp> ::= <int> | <unop> <exp> | "(" <exp> ")"
+<unop> ::= "~" | "-"
 <identifier> ::= ? An identifier token ?
 <int> ::= ? A constant token ?
 
@@ -30,7 +32,7 @@ private:
 public:
   std::string get_AST_name() override { return "Int"; }
   std::string get_value() { return value; }
-  void set_value(std::string value) { this->value = value; }
+  void set_value(std::string value) { this->value = std::move(value); }
 };
 
 class AST_identifier_Node : public AST_Node {
@@ -40,17 +42,34 @@ private:
 public:
   std::string get_AST_name() override { return "Identifier"; }
   std::string get_value() { return value; }
-  void set_identifier(std::string value) { this->value = value; }
+  void set_identifier(std::string value) { this->value = std::move(value); }
+};
+
+class AST_unop_Node : public AST_Node {
+private:
+  std::string op;
+
+public:
+  std::string get_AST_name() override { return "Unop"; }
+  std::string get_op() { return op; }
+  void set_op(std::string op) { this->op = std::move(op); }
 };
 
 class AST_exp_Node : public AST_Node {
 private:
   AST_int_Node int_node;
+  std::vector<AST_unop_Node> unop_nodes;
 
 public:
   std::string get_AST_name() override { return "Exp"; }
   AST_int_Node get_int_node() { return int_node; }
-  void set_int_node(AST_int_Node int_node) { this->int_node = int_node; }
+  void set_int_node(AST_int_Node int_node) {
+    this->int_node = std::move(int_node);
+  }
+  std::vector<AST_unop_Node> get_unop_node() { return unop_nodes; }
+  void set_unop_node(AST_unop_Node unop_node) {
+    this->unop_nodes.emplace_back(std::move(unop_node));
+  }
 };
 
 class AST_Statement_Node : public AST_Node {
@@ -83,7 +102,7 @@ public:
     statements.emplace_back(statement);
   }
   void set_identifier(AST_identifier_Node identifier) {
-    this->identifier = identifier;
+    this->identifier = std::move(identifier);
   }
 };
 

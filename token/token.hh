@@ -13,6 +13,9 @@ enum class TOKEN {
   OPEN_BRACE,
   CLOSE_BRACE,
   SEMICOLON,
+  TILDE,
+  HYPHEN,
+  DECREMENT_OPERATOR,
   UNKNOWN
 };
 
@@ -63,6 +66,15 @@ void print_token(TOKEN token) {
   case TOKEN::SEMICOLON:
     std::cerr << "; ";
     break;
+  case TOKEN::TILDE:
+    std::cerr << "~";
+    break;
+  case TOKEN::HYPHEN:
+    std::cerr << "-";
+    break;
+  case TOKEN::DECREMENT_OPERATOR:
+    std::cerr << "--";
+    break;
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
@@ -91,6 +103,12 @@ std::string to_string(TOKEN token) {
     return "}";
   case TOKEN::SEMICOLON:
     return ";";
+  case TOKEN::TILDE:
+    return "~";
+  case TOKEN::HYPHEN:
+    return "-";
+  case TOKEN::DECREMENT_OPERATOR:
+    return "--";
   case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
