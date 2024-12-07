@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
           << std::endl;
       return 1;
     }
+    gnu.pretty_print();
     return 0;
   }
 

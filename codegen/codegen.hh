@@ -19,10 +19,6 @@ Grammar:
 <register> ::= "%eax"
 <identifier> ::= ? An identifier token ?
 
-*/
-
-/*
-
 Notes about X86-64 Assembly:
 
 1.  Non Executable stack: .section	.note.GNU-stack,"",@progbits

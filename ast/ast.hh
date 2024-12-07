@@ -70,6 +70,7 @@ public:
   void set_unop_node(AST_unop_Node unop_node) {
     this->unop_nodes.emplace_back(std::move(unop_node));
   }
+  std::vector<AST_unop_Node> get_unop_nodes() { return unop_nodes; }
 };
 
 class AST_Statement_Node : public AST_Node {

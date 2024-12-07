@@ -122,12 +122,12 @@ void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
 void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
   if (tokens[0].get_token() == TOKEN::TILDE) {
     AST_unop_Node unop;
-    unop.set_op("~");
+    unop.set_op("Complement");
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == TOKEN::HYPHEN) {
     AST_unop_Node unop;
-    unop.set_op("-");
+    unop.set_op("Negate");
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
   } else {
@@ -176,8 +176,11 @@ void parser::pretty_print() {
     for (auto statement : function.get_statements()) {
       std::cerr << "\t\t\t" << statement.get_type() << "(" << std::endl;
       for (auto exp : statement.get_exps()) {
-        std::cerr << "\t\t\t\tExpression(" << exp.get_int_node().get_AST_name()
-                  << "(" << exp.get_int_node().get_value() << "))" << std::endl;
+        for (auto unop : exp.get_unop_nodes()) {
+          std::cerr << "\t\t\t\tUnop(" << unop.get_op() << ")" << std::endl;
+        }
+        std::cerr << "\t\t\t\t" << exp.get_int_node().get_AST_name() << "("
+                  << exp.get_int_node().get_value() << "))" << std::endl;
       }
       std::cerr << "\t\t\t)," << std::endl;
     }
