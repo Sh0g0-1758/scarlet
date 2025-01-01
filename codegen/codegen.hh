@@ -51,7 +51,7 @@ public:
   void set_file_name(std::string file_name) { this->file_name = file_name; }
   bool is_success() { return success; }
   std::string get_reg_name() {
-    std::string reg_name = "temp" + std::to_string(curr);
+    std::string reg_name = "temp." + std::to_string(curr);
     curr++;
     return reg_name;
   }
