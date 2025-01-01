@@ -62,15 +62,14 @@ private:
 
 public:
   std::string get_AST_name() override { return "Exp"; }
-  AST_int_Node get_int_node() { return int_node; }
+  AST_int_Node &get_int_node() { return int_node; }
   void set_int_node(AST_int_Node int_node) {
     this->int_node = std::move(int_node);
   }
-  std::vector<AST_unop_Node> get_unop_node() { return unop_nodes; }
   void set_unop_node(AST_unop_Node unop_node) {
     this->unop_nodes.emplace_back(std::move(unop_node));
   }
-  std::vector<AST_unop_Node> get_unop_nodes() { return unop_nodes; }
+  std::vector<AST_unop_Node> &get_unop_nodes() { return unop_nodes; }
 };
 
 class AST_Statement_Node : public AST_Node {
@@ -84,7 +83,7 @@ public:
     this->type = type;
   }
   std::string get_AST_name() override { return "Statement"; }
-  std::vector<AST_exp_Node> get_exps() { return exps; }
+  std::vector<AST_exp_Node> &get_exps() { return exps; }
   void add_exp(AST_exp_Node exp) { exps.emplace_back(exp); }
   std::string get_type() { return type; }
 };
@@ -97,8 +96,8 @@ private:
 public:
   AST_Function_Node() { statements.reserve(2); }
   std::string get_AST_name() override { return "Function"; }
-  std::vector<AST_Statement_Node> get_statements() { return statements; }
-  AST_identifier_Node get_identifier() { return identifier; }
+  std::vector<AST_Statement_Node> &get_statements() { return statements; }
+  AST_identifier_Node &get_identifier() { return identifier; }
   void add_statement(AST_Statement_Node statement) {
     statements.emplace_back(statement);
   }
@@ -114,7 +113,7 @@ private:
 public:
   AST_Program_Node() { functions.reserve(2); }
   std::string get_AST_name() override { return "Program"; }
-  std::vector<AST_Function_Node> get_functions() { return functions; }
+  std::vector<AST_Function_Node> &get_functions() { return functions; }
   void add_function(AST_Function_Node function) {
     functions.emplace_back(function);
   }

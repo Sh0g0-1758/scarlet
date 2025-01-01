@@ -52,9 +52,9 @@ public:
   void set_type(std::string type) { this->type = std::move(type); }
   UNOP get_op() { return op; }
   void set_op(UNOP op) { this->op = op; }
-  scasm_operand get_src() { return src; }
+  scasm_operand &get_src() { return src; }
   void set_src(scasm_operand src) { this->src = std::move(src); }
-  scasm_operand get_dst() { return dst; }
+  scasm_operand &get_dst() { return dst; }
   void set_dst(scasm_operand dst) { this->dst = std::move(dst); }
 };
 

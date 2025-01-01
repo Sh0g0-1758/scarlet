@@ -14,7 +14,7 @@
 
 bool isFlagValid(const std::string &flag) {
   return flag == "lex" || flag == "parse" || flag == "codegen" ||
-         flag == "tacky";
+         flag == "tacky" || flag == "scasm";
 }
 
 int main(int argc, char *argv[]) {
@@ -119,8 +119,6 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  gnu.pretty_print();
-
   // CODEGEN
   Codegen codegen(gnu.get_program());
 
@@ -138,7 +136,7 @@ int main(int argc, char *argv[]) {
     codegen.pretty_print();
     return 0;
   }
-
+  codegen.pretty_print();
   codegen.set_file_name(std::format("{}.s", file_name));
   codegen.codegen();
 
@@ -169,6 +167,18 @@ int main(int argc, char *argv[]) {
     if (result != 0) {
       std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
                 << std::endl;
+      return 1;
+    }
+    return 0;
+  }
+
+  if (std::find(flags.begin(), flags.end(), "scasm") != flags.end()) {
+    result = system(std::format("rm {}.scp", file_name).c_str());
+
+    if (result != 0) {
+      std::cerr
+          << "[ERROR]: Unable to delete the intermediate preprocessed file"
+          << std::endl;
       return 1;
     }
     return 0;

@@ -129,15 +129,17 @@ void Codegen::gen_scasm() {
         scasm_instruction scasm_inst;
         scasm_inst.set_type("Mov");
         scasm_operand scasm_src;
-        if (inst.get_src_ret().get_type() == "Constant")
+        if (inst.get_src_ret().get_type() == "Constant") {
           scasm_src.set_type("Imm");
-        else if (inst.get_src_ret().get_type() == "Var")
+          scasm_src.set_value(inst.get_src_ret().get_value());
+        } else if (inst.get_src_ret().get_type() == "Var") {
           scasm_src.set_type("Pseudo");
-        scasm_src.set_value(inst.get_src_ret().get_value());
+          scasm_src.set_value(inst.get_src_ret().get_reg());
+        }
         scasm_inst.set_src(scasm_src);
         scasm_operand scasm_dst;
         scasm_dst.set_type("Reg");
-        scasm_dst.set_value("eax");
+        scasm_dst.set_value("AX");
         scasm_inst.set_dst(scasm_dst);
         scasm_func.add_instruction(scasm_inst);
         scasm_instruction scasm_inst2;
@@ -148,17 +150,20 @@ void Codegen::gen_scasm() {
         scasm_inst.set_type("Mov");
 
         scasm_operand scasm_src;
-        if (inst.get_src_ret().get_type() == "Constant")
+        if (inst.get_src_ret().get_type() == "Constant") {
           scasm_src.set_type("Imm");
-        else if (inst.get_src_ret().get_type() == "Var")
+          scasm_src.set_value(inst.get_src_ret().get_value());
+        } else if (inst.get_src_ret().get_type() == "Var") {
           scasm_src.set_type("Pseudo");
-        scasm_src.set_value(inst.get_src_ret().get_value());
+          scasm_src.set_value(inst.get_src_ret().get_reg());
+        }
         scasm_inst.set_src(scasm_src);
 
         scasm_operand scasm_dst;
-        if (inst.get_dst().get_type() == "Var")
+        if (inst.get_dst().get_type() == "Var") {
           scasm_dst.set_type("Pseudo");
-        scasm_dst.set_value(inst.get_dst().get_value());
+          scasm_dst.set_value(inst.get_dst().get_reg());
+        }
         scasm_inst.set_dst(scasm_dst);
 
         scasm_func.add_instruction(scasm_inst);
@@ -168,10 +173,11 @@ void Codegen::gen_scasm() {
         scasm_inst2.set_op(inst.get_op());
 
         scasm_operand scasm_dst2;
-        if (inst.get_dst().get_type() == "Var")
+        if (inst.get_dst().get_type() == "Var") {
           scasm_dst2.set_type("Pseudo");
-        scasm_dst2.set_value(inst.get_dst().get_value());
-        scasm_inst2.set_dst(scasm_dst);
+          scasm_dst2.set_value(inst.get_dst().get_reg());
+        }
+        scasm_inst2.set_dst(scasm_dst2);
 
         scasm_func.add_instruction(scasm_inst2);
       }
@@ -184,19 +190,20 @@ void Codegen::gen_scasm() {
 
 void Codegen::fix_pseudo_registers() {
   int offset = 1;
-  for (auto funcs : scasm.get_functions()) {
-    for (auto inst : funcs.get_instructions()) {
+  for (auto &funcs : scasm.get_functions()) {
+    for (auto &inst : funcs.get_instructions()) {
       if (inst.get_src().get_type() == "Pseudo") {
         if (pseduo_registers.find(inst.get_src().get_value()) !=
             pseduo_registers.end()) {
           inst.get_src().set_value(
               pseduo_registers[inst.get_src().get_value()]);
         } else {
+          std::string temp = inst.get_src().get_value();
           inst.get_src().set_value("-" + std::to_string(offset * 4) + "(%rbp)");
-          pseduo_registers[inst.get_src().get_value()] =
-              inst.get_src().get_value();
+          pseduo_registers[temp] = inst.get_src().get_value();
           offset++;
         }
+        inst.get_src().set_type("Stack");
       }
       if (inst.get_dst().get_type() == "Pseudo") {
         if (pseduo_registers.find(inst.get_dst().get_value()) !=
@@ -204,22 +211,23 @@ void Codegen::fix_pseudo_registers() {
           inst.get_dst().set_value(
               pseduo_registers[inst.get_dst().get_value()]);
         } else {
+          std::string temp = inst.get_dst().get_value();
           inst.get_dst().set_value("-" + std::to_string(offset * 4) + "(%rbp)");
-          pseduo_registers[inst.get_dst().get_value()] =
-              inst.get_dst().get_value();
+          pseduo_registers[temp] = inst.get_dst().get_value();
           offset++;
         }
+        inst.get_dst().set_type("Stack");
       }
     }
   }
-  stack_offset = 4 * offset;
+  stack_offset = 4 * (offset - 1);
 }
 
 void Codegen::fix_instructions() {
   scasm_instruction scasm_stack_instr;
   scasm_stack_instr.set_type("AllocateStack");
   scasm_operand val;
-  val.set_type("stack");
+  val.set_type("Imm");
   val.set_value(std::to_string(stack_offset));
   scasm_stack_instr.set_src(val);
 
@@ -229,21 +237,21 @@ void Codegen::fix_instructions() {
   for (auto funcs : scasm.get_functions()) {
     for (auto it = funcs.get_instructions().begin();
          it != funcs.get_instructions().end(); it++) {
-      if ((*it).get_src().get_type() == "Pseudo" &&
-          (*it).get_dst().get_type() == "Pseudo") {
+      if ((*it).get_src().get_type() == "Stack" &&
+          (*it).get_dst().get_type() == "Stack") {
+        std::cout << "Hey BRO!!" << std::endl;
         scasm_instruction scasm_inst;
         scasm_inst.set_type((*it).get_type());
         scasm_inst.set_dst((*it).get_dst());
 
         scasm_operand src;
         src.set_type("Reg");
-        src.set_value("%r10d");
+        src.set_value("R10");
         scasm_inst.set_src(src);
 
         scasm_operand dst;
         dst.set_type("Reg");
-        dst.set_value("%r10d");
-        scasm_inst.set_dst(dst);
+        dst.set_value("R10");
         (*it).set_dst(dst);
         it = funcs.get_instructions().insert(it + 1, scasm_inst);
         it++;
@@ -258,26 +266,69 @@ void Codegen::codegen() {
   fix_pseudo_registers();
   fix_instructions();
   // ###########################
-  std::string assembly;
-  for (auto it : program.get_functions()) {
-    assembly += "\t.globl ";
-    assembly += it.get_identifier().get_value() + "\n";
-    assembly += it.get_identifier().get_value() + ":\n";
-    for (auto inst : it.get_statements()) {
-      if (inst.get_type() == "Return") {
-        assembly += "\tmovl ";
-        assembly +=
-            "$" + inst.get_exps()[0].get_int_node().get_value() + ", %eax\n";
-        assembly += "\tret\n";
+  std::stringstream assembly;
+
+  for (auto funcs : scasm.get_functions()) {
+    assembly << "\t.globl " << funcs.get_name() << "\n";
+    assembly << funcs.get_name() << ":\n";
+    assembly << "\tpushq %rbp\n";
+    assembly << "\tmovq %rsp, %rbp\n";
+    for (auto instr : funcs.get_instructions()) {
+      if (instr.get_type() == "AllocateStack") {
+        assembly << "\tsubq $" << instr.get_src().get_value() << ", %rsp\n";
+      } else if (instr.get_type() == "Ret") {
+        assembly << "\tmovq %rbp, %rsp\n";
+        assembly << "\tpopq %rbp\n";
+        assembly << "\tret\n";
+      } else if (instr.get_type() == "Mov") {
+        assembly << "\tmovl ";
+        if (instr.get_src().get_type() == "Imm") {
+          assembly << "$" << instr.get_src().get_value();
+        } else if (instr.get_src().get_type() == "Stack") {
+          assembly << instr.get_src().get_value();
+        } else if (instr.get_src().get_type() == "Reg") {
+          if (instr.get_src().get_value() == "AX") {
+            assembly << "%eax";
+          } else if (instr.get_src().get_value() == "R10") {
+            assembly << "%r10d";
+          }
+        }
+        assembly << ", ";
+        if (instr.get_dst().get_type() == "Stack") {
+          assembly << instr.get_dst().get_value();
+        } else if (instr.get_dst().get_type() == "Reg") {
+          if (instr.get_dst().get_value() == "AX") {
+            assembly << "%eax";
+          } else if (instr.get_dst().get_value() == "R10") {
+            assembly << "%r10d";
+          }
+        }
+        assembly << "\n";
+      } else if (instr.get_type() == "Unary") {
+        if (instr.get_op() == UNOP::NEGATE) {
+          assembly << "\tnegl ";
+        } else if (instr.get_op() == UNOP::COMPLEMENT) {
+          assembly << "\tnotl ";
+        }
+        if (instr.get_dst().get_type() == "Stack") {
+          assembly << instr.get_dst().get_value();
+        } else if (instr.get_dst().get_type() == "Reg") {
+          if (instr.get_dst().get_value() == "AX") {
+            assembly << "%eax";
+          } else if (instr.get_dst().get_value() == "R10") {
+            assembly << "%r10d";
+          }
+        }
+        assembly << "\n";
       }
     }
   }
 
-  assembly += "\t.section    .note.GNU-stack,\"\",@progbits\n";
+  assembly << "\t.section    .note.GNU-stack,\"\",@progbits\n";
 
   std::ofstream file(file_name);
   if (file.is_open()) {
-    file << assembly;
+    file << assembly.str();
     file.close();
   } else {
     std::cerr << "[ERROR]: Unable to open file" << std::endl;

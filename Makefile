@@ -23,6 +23,8 @@ test: build
 	@./test_compiler ./build/scarlet --chapter 2 --stage tacky
 	@echo "Running Codegen-2 test"
 	@./test_compiler ./build/scarlet --chapter 2 --stage codegen
+	@echo "Running test all-2"
+	@./test_compiler ./build/scarlet --chapter 2
 clean:
 	@echo "Cleaning up..."
 	@rm -rf build

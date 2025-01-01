@@ -5,6 +5,8 @@
 #include <fstream>
 #include <map>
 #include <scar/scar.hh>
+#include <sstream>
+#include <string>
 #include <token/token.hh>
 #include <vector>
 

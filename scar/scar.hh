@@ -66,11 +66,11 @@ public:
   void set_type(std::string type) { this->type = std::move(type); }
   UNOP get_op() { return op; }
   void set_op(UNOP op) { this->op = op; }
-  scar_Val_Node get_src_ret() { return src_ret; }
+  scar_Val_Node &get_src_ret() { return src_ret; }
   void set_src_ret(scar_Val_Node src_ret) {
     this->src_ret = std::move(src_ret);
   }
-  scar_Val_Node get_dst() { return dst; }
+  scar_Val_Node &get_dst() { return dst; }
   void set_dst(scar_Val_Node dst) { this->dst = std::move(dst); }
 };
 
@@ -82,7 +82,7 @@ private:
 public:
   scar_Function_Node() { body.reserve(2); }
   std::string get_scar_name() override { return "Function"; }
-  scar_Identifier_Node get_identifier() { return identifier; }
+  scar_Identifier_Node &get_identifier() { return identifier; }
   void set_identifier(scar_Identifier_Node identifier) {
     this->identifier = std::move(identifier);
   }
