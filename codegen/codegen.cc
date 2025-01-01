@@ -234,12 +234,11 @@ void Codegen::fix_instructions() {
   scasm.get_functions()[0].get_instructions().insert(
       scasm.get_functions()[0].get_instructions().begin(), scasm_stack_instr);
 
-  for (auto funcs : scasm.get_functions()) {
+  for (auto &funcs : scasm.get_functions()) {
     for (auto it = funcs.get_instructions().begin();
          it != funcs.get_instructions().end(); it++) {
       if ((*it).get_src().get_type() == "Stack" &&
           (*it).get_dst().get_type() == "Stack") {
-        std::cout << "Hey BRO!!" << std::endl;
         scasm_instruction scasm_inst;
         scasm_inst.set_type((*it).get_type());
         scasm_inst.set_dst((*it).get_dst());
