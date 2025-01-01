@@ -19,6 +19,8 @@ test: build
 	@./test_compiler ./build/scarlet --chapter 2 --stage lex
 	@echo "Running parser-2 test"
 	@./test_compiler ./build/scarlet --chapter 2 --stage parse
+	@echo "Running scar-2 test"
+	@./test_compiler ./build/scarlet --chapter 2 --stage tacky
 
 clean:
 	@echo "Cleaning up..."

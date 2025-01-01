@@ -13,7 +13,8 @@
 #include <filesystem>
 
 bool isFlagValid(const std::string &flag) {
-  return flag == "lex" || flag == "parse" || flag == "codegen";
+  return flag == "lex" || flag == "parse" || flag == "codegen" ||
+         flag == "tacky";
 }
 
 int main(int argc, char *argv[]) {
@@ -59,7 +60,6 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // STUB: convert the preprocessed file to assembly file
   // LEXER
   lexer lex;
   lex.read_file(std::format("{}.scp", file_name));
@@ -123,6 +123,22 @@ int main(int argc, char *argv[]) {
 
   // CODEGEN
   Codegen codegen(gnu.get_program());
+
+  codegen.gen_scar();
+
+  if (std::find(flags.begin(), flags.end(), "tacky") != flags.end()) {
+    result = system(std::format("rm {}.scp", file_name).c_str());
+
+    if (result != 0) {
+      std::cerr
+          << "[ERROR]: Unable to delete the intermediate preprocessed file"
+          << std::endl;
+      return 1;
+    }
+    codegen.pretty_print();
+    return 0;
+  }
+
   codegen.set_file_name(std::format("{}.s", file_name));
   codegen.codegen();
 
