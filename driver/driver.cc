@@ -164,6 +164,13 @@ int main(int argc, char *argv[]) {
           << std::endl;
       return 1;
     }
+
+    result = system(std::format("rm {}.s", file_name).c_str());
+    if (result != 0) {
+      std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
+                << std::endl;
+      return 1;
+    }
     return 0;
   }
 

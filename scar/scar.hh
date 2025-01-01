@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "unop.hh"
 #include <string>
 #include <vector>
 
@@ -17,8 +18,6 @@ val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate
 
 */
-
-enum class UNOP { UNKNOWN, COMPLEMENT, NEGATE };
 
 class scar {
 public:
@@ -87,11 +86,10 @@ public:
   void set_identifier(scar_Identifier_Node identifier) {
     this->identifier = std::move(identifier);
   }
-  std::vector<scar_Instruction_Node> get_body() { return body; }
   void add_instruction(scar_Instruction_Node instruction) {
     body.emplace_back(instruction);
   }
-  std::vector<scar_Instruction_Node> get_instructions() { return body; }
+  std::vector<scar_Instruction_Node> &get_instructions() { return body; }
 };
 
 class scar_Program_Node : public scar {
@@ -101,7 +99,7 @@ private:
 public:
   scar_Program_Node() { functions.reserve(2); }
   std::string get_scar_name() override { return "Program"; }
-  std::vector<scar_Function_Node> get_functions() { return functions; }
+  std::vector<scar_Function_Node> &get_functions() { return functions; }
   void add_function(scar_Function_Node function) {
     functions.emplace_back(function);
   }

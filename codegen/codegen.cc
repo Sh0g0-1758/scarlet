@@ -82,7 +82,7 @@ void Codegen::pretty_print() {
     std::cerr << "\t\tname=\"" << function.get_identifier().get_value() << "\","
               << std::endl;
     std::cerr << "\t\tbody=[" << std::endl;
-    for (auto statement : function.get_body()) {
+    for (auto statement : function.get_instructions()) {
       std::cerr << "\t\t\t" << statement.get_type() << "(";
       if (statement.get_op() == UNOP::UNKNOWN) {
         if (statement.get_src_ret().get_type() == "Constant") {
@@ -119,7 +119,145 @@ void Codegen::pretty_print() {
   std::cerr << ")" << std::endl;
 }
 
+void Codegen::gen_scasm() {
+  scasm_program scasm_program;
+  for (auto func : scar.get_functions()) {
+    scasm_function scasm_func;
+    scasm_func.set_name(func.get_identifier().get_value());
+    for (auto inst : func.get_instructions()) {
+      if (inst.get_type() == "Return") {
+        scasm_instruction scasm_inst;
+        scasm_inst.set_type("Mov");
+        scasm_operand scasm_src;
+        if (inst.get_src_ret().get_type() == "Constant")
+          scasm_src.set_type("Imm");
+        else if (inst.get_src_ret().get_type() == "Var")
+          scasm_src.set_type("Pseudo");
+        scasm_src.set_value(inst.get_src_ret().get_value());
+        scasm_inst.set_src(scasm_src);
+        scasm_operand scasm_dst;
+        scasm_dst.set_type("Reg");
+        scasm_dst.set_value("eax");
+        scasm_inst.set_dst(scasm_dst);
+        scasm_func.add_instruction(scasm_inst);
+        scasm_instruction scasm_inst2;
+        scasm_inst2.set_type("Ret");
+        scasm_func.add_instruction(scasm_inst2);
+      } else if (inst.get_type() == "Unary") {
+        scasm_instruction scasm_inst;
+        scasm_inst.set_type("Mov");
+
+        scasm_operand scasm_src;
+        if (inst.get_src_ret().get_type() == "Constant")
+          scasm_src.set_type("Imm");
+        else if (inst.get_src_ret().get_type() == "Var")
+          scasm_src.set_type("Pseudo");
+        scasm_src.set_value(inst.get_src_ret().get_value());
+        scasm_inst.set_src(scasm_src);
+
+        scasm_operand scasm_dst;
+        if (inst.get_dst().get_type() == "Var")
+          scasm_dst.set_type("Pseudo");
+        scasm_dst.set_value(inst.get_dst().get_value());
+        scasm_inst.set_dst(scasm_dst);
+
+        scasm_func.add_instruction(scasm_inst);
+
+        scasm_instruction scasm_inst2;
+        scasm_inst2.set_type("Unary");
+        scasm_inst2.set_op(inst.get_op());
+
+        scasm_operand scasm_dst2;
+        if (inst.get_dst().get_type() == "Var")
+          scasm_dst2.set_type("Pseudo");
+        scasm_dst2.set_value(inst.get_dst().get_value());
+        scasm_inst2.set_dst(scasm_dst);
+
+        scasm_func.add_instruction(scasm_inst2);
+      }
+    }
+    scasm_program.add_function(scasm_func);
+  }
+
+  this->scasm = scasm_program;
+}
+
+void Codegen::fix_pseudo_registers() {
+  int offset = 1;
+  for (auto funcs : scasm.get_functions()) {
+    for (auto inst : funcs.get_instructions()) {
+      if (inst.get_src().get_type() == "Pseudo") {
+        if (pseduo_registers.find(inst.get_src().get_value()) !=
+            pseduo_registers.end()) {
+          inst.get_src().set_value(
+              pseduo_registers[inst.get_src().get_value()]);
+        } else {
+          inst.get_src().set_value("-" + std::to_string(offset * 4) + "(%rbp)");
+          pseduo_registers[inst.get_src().get_value()] =
+              inst.get_src().get_value();
+          offset++;
+        }
+      }
+      if (inst.get_dst().get_type() == "Pseudo") {
+        if (pseduo_registers.find(inst.get_dst().get_value()) !=
+            pseduo_registers.end()) {
+          inst.get_dst().set_value(
+              pseduo_registers[inst.get_dst().get_value()]);
+        } else {
+          inst.get_dst().set_value("-" + std::to_string(offset * 4) + "(%rbp)");
+          pseduo_registers[inst.get_dst().get_value()] =
+              inst.get_dst().get_value();
+          offset++;
+        }
+      }
+    }
+  }
+  stack_offset = 4 * offset;
+}
+
+void Codegen::fix_instructions() {
+  scasm_instruction scasm_stack_instr;
+  scasm_stack_instr.set_type("AllocateStack");
+  scasm_operand val;
+  val.set_type("stack");
+  val.set_value(std::to_string(stack_offset));
+  scasm_stack_instr.set_src(val);
+
+  scasm.get_functions()[0].get_instructions().insert(
+      scasm.get_functions()[0].get_instructions().begin(), scasm_stack_instr);
+
+  for (auto funcs : scasm.get_functions()) {
+    for (auto it = funcs.get_instructions().begin();
+         it != funcs.get_instructions().end(); it++) {
+      if ((*it).get_src().get_type() == "Pseudo" &&
+          (*it).get_dst().get_type() == "Pseudo") {
+        scasm_instruction scasm_inst;
+        scasm_inst.set_type((*it).get_type());
+        scasm_inst.set_dst((*it).get_dst());
+
+        scasm_operand src;
+        src.set_type("Reg");
+        src.set_value("%r10d");
+        scasm_inst.set_src(src);
+
+        scasm_operand dst;
+        dst.set_type("Reg");
+        dst.set_value("%r10d");
+        scasm_inst.set_dst(dst);
+        (*it).set_dst(dst);
+        it = funcs.get_instructions().insert(it + 1, scasm_inst);
+        it++;
+      }
+    }
+  }
+}
+
 void Codegen::codegen() {
+  // ###########################
+  gen_scasm();
+  fix_pseudo_registers();
+  fix_instructions();
+  // ###########################
   std::string assembly;
   for (auto it : program.get_functions()) {
     assembly += "\t.globl ";

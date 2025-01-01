@@ -1,7 +1,9 @@
 #pragma once
 
+#include "scasm.hh"
 #include <ast/ast.hh>
 #include <fstream>
+#include <map>
 #include <scar/scar.hh>
 #include <token/token.hh>
 #include <vector>
@@ -40,14 +42,27 @@ class Codegen {
 private:
   AST_Program_Node program;
   scar_Program_Node scar;
+  scasm_program scasm;
   std::string file_name;
   bool success = true;
   int curr = 1;
+  std::map<std::string, std::string> pseduo_registers;
+  int stack_offset{};
 
 public:
   Codegen(AST_Program_Node program) : program(program) {}
-  void codegen();
+  // ###### COMPILER PASSES ######
+  // IR PASS
   void gen_scar();
+  // ASM PASS
+  void gen_scasm();
+  // STACK ALLOCATION PASS
+  void fix_pseudo_registers();
+  // FIXING INSTRUCTIONS PASS
+  void fix_instructions();
+  // CODEGEN PASS
+  void codegen();
+  // #############################
   void set_file_name(std::string file_name) { this->file_name = file_name; }
   bool is_success() { return success; }
   std::string get_reg_name() {
