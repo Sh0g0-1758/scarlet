@@ -1,9 +1,23 @@
 .PHONY: build test clean
 
+CXX = g++-13
+CXXFLAGS = -std=c++20 -I .
+
+BUILD_DIR = build
+
+SRCS = driver/driver.cc \
+       src/ast/ast.cc \
+       src/lexer/lexer.cc \
+       src/parser/parser.cc \
+       src/regex/regex.cc \
+       src/tokens/tokens.cc
+
+TARGET = $(BUILD_DIR)/scarlet
+
 build:
 	@echo "Building scarlet..."
-	@mkdir -p build
-	@g++-13 -std=c++20 ./driver/driver.cc -o ./build/scarlet -I .
+	@mkdir -p $(BUILD_DIR)
+	@$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET)
 	@echo "Done."
 
 test: build

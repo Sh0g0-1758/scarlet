@@ -1,76 +1,77 @@
 #include "lexer.hh"
 
 void lexer::tokenize() {
+  regex_engine re;
   if (file_contents.empty())
     return;
   if (file_contents[0] == '(') {
-    tokens.emplace_back(TOKEN::OPEN_PARANTHESES);
+    tokens.emplace_back(scarlet::TOKEN::OPEN_PARANTHESES);
     file_contents.erase(0, 1);
     tokenize();
   } else if (file_contents[0] == ')') {
-    tokens.emplace_back(TOKEN::CLOSE_PARANTHESES);
+    tokens.emplace_back(scarlet::TOKEN::CLOSE_PARANTHESES);
     file_contents.erase(0, 1);
     tokenize();
   } else if (file_contents[0] == '{') {
-    tokens.emplace_back(TOKEN::OPEN_BRACE);
+    tokens.emplace_back(scarlet::TOKEN::OPEN_BRACE);
     file_contents.erase(0, 1);
     tokenize();
   } else if (file_contents[0] == '}') {
-    tokens.emplace_back(TOKEN::CLOSE_BRACE);
+    tokens.emplace_back(scarlet::TOKEN::CLOSE_BRACE);
     file_contents.erase(0, 1);
     tokenize();
   } else if (file_contents[0] == ';') {
-    tokens.emplace_back(TOKEN::SEMICOLON);
+    tokens.emplace_back(scarlet::TOKEN::SEMICOLON);
     file_contents.erase(0, 1);
     tokenize();
   } else if (file_contents[0] == '~') {
-    tokens.emplace_back(TOKEN::TILDE);
+    tokens.emplace_back(scarlet::TOKEN::TILDE);
     file_contents.erase(0, 1);
     tokenize();
   } else if (file_contents[0] == '-') {
     if (file_contents[1] == '-') {
-      tokens.emplace_back(TOKEN::DECREMENT_OPERATOR);
+      tokens.emplace_back(scarlet::TOKEN::DECREMENT_OPERATOR);
       file_contents.erase(0, 2);
       tokenize();
     } else {
-      tokens.emplace_back(TOKEN::HYPHEN);
+      tokens.emplace_back(scarlet::TOKEN::HYPHEN);
       file_contents.erase(0, 1);
       tokenize();
     }
-  } else if (regex.matchWord(file_contents[0])) {
+  } else if (re.matchWord(file_contents[0])) {
     std::string identifier;
-    while (regex.matchWord(file_contents[0])) {
+    while (re.matchWord(file_contents[0])) {
       identifier += file_contents[0];
       file_contents.erase(0, 1);
     }
-    if (regex.matchDigit(file_contents[0])) {
+    if (re.matchDigit(file_contents[0])) {
       success = false;
-      tokens.emplace_back(TOKEN::UNKNOWN);
+      tokens.emplace_back(scarlet::TOKEN::UNKNOWN);
       tokenize();
     } else {
       if (identifier == "int") {
-        tokens.emplace_back(TOKEN::INT);
+        tokens.emplace_back(scarlet::TOKEN::INT);
       } else if (identifier == "void") {
-        tokens.emplace_back(TOKEN::VOID);
+        tokens.emplace_back(scarlet::TOKEN::VOID);
       } else if (identifier == "return") {
-        tokens.emplace_back(TOKEN::RETURN);
+        tokens.emplace_back(scarlet::TOKEN::RETURN);
       } else {
-        tokens.emplace_back(Token(TOKEN::IDENTIFIER, identifier));
+        tokens.emplace_back(scarlet::Token(scarlet::TOKEN::IDENTIFIER, identifier));
       }
       tokenize();
     }
-  } else if (regex.matchDigit(file_contents[0])) {
+  } else if (re.matchDigit(file_contents[0])) {
     std::string constant;
-    while (regex.matchDigit(file_contents[0])) {
+    while (re.matchDigit(file_contents[0])) {
       constant += file_contents[0];
       file_contents.erase(0, 1);
     }
-    if (regex.matchWord(file_contents[0])) {
+    if (re.matchWord(file_contents[0])) {
       success = false;
-      tokens.emplace_back(TOKEN::UNKNOWN);
+      tokens.emplace_back(scarlet::TOKEN::UNKNOWN);
       tokenize();
     } else {
-      tokens.emplace_back(Token(TOKEN::CONSTANT, constant));
+      tokens.emplace_back(scarlet::Token(scarlet::TOKEN::CONSTANT, constant));
       tokenize();
     }
   } else if (file_contents[0] == '\n' or file_contents[0] == ' ' or
@@ -86,16 +87,18 @@ void lexer::tokenize() {
       tokenize();
     } else {
       success = false;
-      tokens.emplace_back(TOKEN::UNKNOWN);
+      tokens.emplace_back(scarlet::TOKEN::UNKNOWN);
       file_contents.erase(0, 1);
       tokenize();
     }
   } else {
     success = false;
-    tokens.emplace_back(TOKEN::UNKNOWN);
+    tokens.emplace_back(scarlet::TOKEN::UNKNOWN);
     file_contents.erase(0, 1);
     tokenize();
   }
+  cout<<"now we print tokens"<<endl;
+  print_tokens();
 }
 
 void lexer::print_tokens() {
@@ -116,4 +119,4 @@ void lexer::read_file(const std::string &file_path) {
   }
 }
 
-std::vector<Token> lexer::get_tokens() { return tokens; }
+std::vector<scarlet::Token> lexer::get_tokens() { return tokens; }

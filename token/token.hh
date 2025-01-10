@@ -1,7 +1,10 @@
 #pragma once
 
 #include <optional>
+#include <string>
+#include <iostream>
 
+namespace scarlet{
 enum class TOKEN {
   IDENTIFIER,
   CONSTANT,
@@ -113,4 +116,5 @@ std::string to_string(TOKEN token) {
     return "UNKNOWN";
   }
   return "INVALID";
+}
 }

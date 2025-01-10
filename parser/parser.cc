@@ -62,7 +62,7 @@
   function.set_identifier(identifier);                                         \
   tokens.erase(tokens.begin());
 
-void parser::parse_program(std::vector<Token> tokens) {
+void parser::parse_program(std::vector<scarlet::Token> tokens) {
   AST_Program_Node program;
   while (!tokens.empty() and success) {
     AST_Function_Node func = parse_function(tokens);
@@ -71,16 +71,16 @@ void parser::parse_program(std::vector<Token> tokens) {
   this->program = program;
 }
 
-AST_Function_Node parser::parse_function(std::vector<Token> &tokens) {
+AST_Function_Node parser::parse_function(std::vector<scarlet::Token> &tokens) {
   AST_Function_Node function;
-  EXPECT_FUNC(TOKEN::INT);
+  EXPECT_FUNC(scarlet::TOKEN::INT);
   parse_identifier(tokens, function);
-  EXPECT_FUNC(TOKEN::OPEN_PARANTHESES);
-  EXPECT_FUNC(TOKEN::VOID);
-  EXPECT_FUNC(TOKEN::CLOSE_PARANTHESES);
-  EXPECT_FUNC(TOKEN::OPEN_BRACE);
+  EXPECT_FUNC(scarlet::TOKEN::OPEN_PARANTHESES);
+  EXPECT_FUNC(scarlet::TOKEN::VOID);
+  EXPECT_FUNC(scarlet::TOKEN::CLOSE_PARANTHESES);
+  EXPECT_FUNC(scarlet::TOKEN::OPEN_BRACE);
   parse_statement(tokens, function);
-  EXPECT_FUNC(TOKEN::CLOSE_BRACE);
+  EXPECT_FUNC(scarlet::TOKEN::CLOSE_BRACE);
   if (!tokens.empty()) {
     success = false;
     error_messages.emplace_back("Expected end of file but got " +
@@ -89,28 +89,28 @@ AST_Function_Node parser::parse_function(std::vector<Token> &tokens) {
   return function;
 }
 
-void parser::parse_statement(std::vector<Token> &tokens,
+void parser::parse_statement(std::vector<scarlet::Token> &tokens,
                              AST_Function_Node &function) {
   AST_Statement_Node statement("Return");
-  EXPECT(TOKEN::RETURN);
+  EXPECT(scarlet::TOKEN::RETURN);
   AST_exp_Node exp;
   parse_exp(tokens, exp);
   statement.add_exp(exp);
-  EXPECT(TOKEN::SEMICOLON);
+  EXPECT(scarlet::TOKEN::SEMICOLON);
   function.add_statement(statement);
 }
 
-void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
-  if (tokens[0].get_token() == TOKEN::CONSTANT) {
+void parser::parse_exp(std::vector<scarlet::Token> &tokens, AST_exp_Node &exp) {
+  if (tokens[0].get_token() == scarlet::TOKEN::CONSTANT) {
     parse_int(tokens, exp);
-  } else if (tokens[0].get_token() == TOKEN::TILDE or
-             tokens[0].get_token() == TOKEN::HYPHEN) {
+  } else if (tokens[0].get_token() == scarlet::TOKEN::TILDE or
+             tokens[0].get_token() == scarlet::TOKEN::HYPHEN) {
     parse_unary_op(tokens, exp);
     parse_exp(tokens, exp);
-  } else if (tokens[0].get_token() == TOKEN::OPEN_PARANTHESES) {
+  } else if (tokens[0].get_token() == scarlet::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     parse_exp(tokens, exp);
-    EXPECT(TOKEN::CLOSE_PARANTHESES);
+    EXPECT(scarlet::TOKEN::CLOSE_PARANTHESES);
   } else {
     success = false;
     error_messages.emplace_back(
@@ -119,13 +119,13 @@ void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
   }
 }
 
-void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
-  if (tokens[0].get_token() == TOKEN::TILDE) {
+void parser::parse_unary_op(std::vector<scarlet::Token> &tokens, AST_exp_Node &exp) {
+  if (tokens[0].get_token() == scarlet::TOKEN::TILDE) {
     AST_unop_Node unop;
     unop.set_op("Complement");
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == TOKEN::HYPHEN) {
+  } else if (tokens[0].get_token() == scarlet::TOKEN::HYPHEN) {
     AST_unop_Node unop;
     unop.set_op("Negate");
     exp.set_unop_node(unop);
@@ -137,16 +137,16 @@ void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
   }
 }
 
-void parser::parse_identifier(std::vector<Token> &tokens,
+void parser::parse_identifier(std::vector<scarlet::Token> &tokens,
                               AST_Function_Node &function) {
-  EXPECT_IDENTIFIER(TOKEN::IDENTIFIER);
+  EXPECT_IDENTIFIER(scarlet::TOKEN::IDENTIFIER);
 }
 
-void parser::parse_int(std::vector<Token> &tokens, AST_exp_Node &exp) {
-  EXPECT_INT(TOKEN::CONSTANT);
+void parser::parse_int(std::vector<scarlet::Token> &tokens, AST_exp_Node &exp) {
+  EXPECT_INT(scarlet::TOKEN::CONSTANT);
 }
 
-void parser::expect(TOKEN actual_token, TOKEN expected_token) {
+void parser::expect(scarlet::TOKEN actual_token, scarlet::TOKEN expected_token) {
   if (actual_token != expected_token) {
     success = false;
     error_messages.emplace_back("Expected token " + to_string(expected_token) +
@@ -160,7 +160,7 @@ void parser::display_errors() {
   }
 }
 
-void parser::eof_error(Token token) {
+void parser::eof_error(scarlet::Token token) {
   success = false;
   error_messages.emplace_back("Expected " + to_string(token.get_token()) +
                               " but got end of file");
