@@ -9,15 +9,17 @@
 
 class lexer {
 private:
-  std::string file_contents;
   std::vector<Token> tokens;
   Regex regex;
   bool success = true;
+  std::string file_path;
 
 public:
   void tokenize();
   void print_tokens();
   std::vector<Token> get_tokens();
-  void read_file(const std::string &file_path);
+  void set_file_path(std::string &&file_path) {
+    this->file_path = std::move(file_path);
+  };
   bool is_success() { return success; }
 };

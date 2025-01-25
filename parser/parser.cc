@@ -81,11 +81,6 @@ AST_Function_Node parser::parse_function(std::vector<Token> &tokens) {
   EXPECT_FUNC(TOKEN::OPEN_BRACE);
   parse_statement(tokens, function);
   EXPECT_FUNC(TOKEN::CLOSE_BRACE);
-  if (!tokens.empty()) {
-    success = false;
-    error_messages.emplace_back("Expected end of file but got " +
-                                to_string(tokens[0].get_token()));
-  }
   return function;
 }
 
@@ -122,6 +117,7 @@ void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
 void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
   if (tokens[0].get_token() == TOKEN::TILDE) {
     AST_unop_Node unop;
+    // TODO: This should be an enum
     unop.set_op("Complement");
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
