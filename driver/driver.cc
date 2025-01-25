@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
   // LEXER
   lexer lex;
-  lex.set_file_path(std::format("{}.scp", file_name));
+  lex.read_file(std::format("{}.scp", file_name));
   lex.tokenize();
   if (!lex.is_success()) {
     result = system(std::format("rm {}.scp", file_name).c_str());
