@@ -21,7 +21,13 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   if (cmd.has_option("version")) {
-    std::cout << "Scarlet Compiler v1.0" << std::endl;
+    std::cout << "\033[38;5;207m" // Neon pink color
+              << R"(
+     ┌─────────────────────────────────────┐
+     │       ░▒▓█ S C A R L E T █▓▒░       │
+     └─────────────────────────────────────┘
+)" << "\033[38;5;159m"            // Light cyan color
+              << "                  Compiler v0.1_  \033[0m\n\n";
     return 0;
   }
   if (!cmd.has_option("input-file")) {
