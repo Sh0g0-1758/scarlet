@@ -14,9 +14,9 @@ Grammar:
 
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
-instruction = Mov(Operand src, Operand dst) | Ret | Unary(Unary_operator,
-operand) | AllocateStack(Operand) unary_operator = Neg | Not Operand = Imm(int)
-| Reg(reg) | Pseudo(Identifier) | stack(int)
+instruction = Mov(Operand src, Operand dst) | Ret | Unary(Unary_operator, operand) | AllocateStack(Operand) 
+unary_operator = Neg | Not 
+Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(int)
 
 */
 
