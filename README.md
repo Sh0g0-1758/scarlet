@@ -5,7 +5,13 @@ machine learning framework on top of it.
 
 # Roadmap
 
-1. Implement a compiler driver which has custom lexer, parser, assembly generation pass and code emission pass. Since we are not concerned with linking and preprocessing for now, we use their gcc implementations. 
+1. Implement a compiler driver which has custom lexer, parser, assembly generation pass and code emission pass. Since we are not concerned with linking and preprocessing for now, we use their gcc implementations. [DONE]
+2. Use Boost Program Options instead of manually handling argc and argv functions.
+3. (Lexer.cc) Alternative to erasing the file_contents text repeatedly? [DONE]
+4. (lexer.cc) Take characters from filestream. [DONE]
+5. (parser.cc) {Line:125} unop set_op can be enum also.
+6. Generate txt file for scar.
+7. Create static library for lexer, parser, codegen.
 
 # Contributing Guidlines
 
