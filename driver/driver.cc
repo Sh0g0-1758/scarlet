@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 
+#include <cmd/cmd.hh>
 #include <codegen/codegen.cc>
 #include <lexer/lexer.cc>
 #include <parser/parser.cc>
@@ -12,34 +13,24 @@
 // possibilities : ./<path>/<filename>.<ext> or <filename>.<ext>
 #include <filesystem>
 
-bool isFlagValid(const std::string &flag) {
-  return flag == "lex" || flag == "parse" || flag == "codegen" ||
-         flag == "tacky" || flag == "scasm";
-}
-
 int main(int argc, char *argv[]) {
-  if (argc < 2) {
-    std::cerr << "[USAGE]: " << argv[0] << " <filepath>" << " <flags>"
+  scarcmd cmd;
+  cmd.parse(argc, argv);
+  if (cmd.has_option("help")) {
+    cmd.help();
+    return 0;
+  }
+  if (cmd.has_option("version")) {
+    std::cout << "Scarlet Compiler v1.0" << std::endl;
+    return 0;
+  }
+  if (!cmd.has_option("input-file")) {
+    std::cerr << "[ERROR]: No input file provided\npass --help to know how to "
+                 "use scarlet"
               << std::endl;
     return 1;
   }
-
-  std::vector<std::string> flags;
-  flags.reserve(argc - 2);
-
-  for (int i = 1; i < argc - 1; i++) {
-    std::string flagArg = std::string(argv[i]);
-    std::string flag = flagArg.substr(2);
-    if (flagArg.substr(0, 2) != "--" or !isFlagValid(flag)) {
-      std::cerr << std::format("[ERROR]: Invalid flag {}", argv[i])
-                << std::endl;
-      return 1;
-    } else {
-      flags.emplace_back(flag);
-    }
-  }
-
-  std::filesystem::path path(argv[argc - 1]);
+  std::filesystem::path path(cmd.get_input_file());
   std::string file_name = path.stem().string();
 
   if (path.extension().string() != ".sc" and
@@ -51,9 +42,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  int result = system(
-      std::format("gcc -x c++ -E -P {} -o {}.scp", argv[argc - 1], file_name)
-          .c_str());
+  int result = system(std::format("gcc -x c++ -E -P {} -o {}.scp",
+                                  cmd.get_input_file(), file_name)
+                          .c_str());
 
   if (result != 0) {
     std::cerr << "[ERROR]: Preprocessing failed" << std::endl;
@@ -77,7 +68,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (std::find(flags.begin(), flags.end(), "lex") != flags.end()) {
+  if (cmd.has_option("lex")) {
     result = system(std::format("rm {}.scp", file_name).c_str());
 
     if (result != 0) {
@@ -106,7 +97,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (std::find(flags.begin(), flags.end(), "parse") != flags.end()) {
+  if (cmd.has_option("parse")) {
     result = system(std::format("rm {}.scp", file_name).c_str());
 
     if (result != 0) {
@@ -124,7 +115,7 @@ int main(int argc, char *argv[]) {
 
   codegen.gen_scar();
 
-  if (std::find(flags.begin(), flags.end(), "tacky") != flags.end()) {
+  if (cmd.has_option("tacky")) {
     result = system(std::format("rm {}.scp", file_name).c_str());
 
     if (result != 0) {
@@ -136,7 +127,6 @@ int main(int argc, char *argv[]) {
     codegen.pretty_print();
     return 0;
   }
-  codegen.pretty_print();
   codegen.set_file_name(std::format("{}.s", file_name));
   codegen.codegen();
 
@@ -153,7 +143,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (std::find(flags.begin(), flags.end(), "codegen") != flags.end()) {
+  if (cmd.has_option("codegen")) {
+    codegen.pretty_print();
     result = system(std::format("rm {}.scp", file_name).c_str());
 
     if (result != 0) {
@@ -172,18 +163,6 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  if (std::find(flags.begin(), flags.end(), "scasm") != flags.end()) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
-    return 0;
-  }
-
   // delete the intermediate preprocessed file
   result = system(std::format("rm {}.scp", file_name).c_str());
 
@@ -194,13 +173,23 @@ int main(int argc, char *argv[]) {
   }
 
   // convert the assembly file to object file
-  result = system(std::format("gcc {}.s -o {}", file_name, file_name).c_str());
+  std::string output_file_name = file_name;
+  if (cmd.has_option("output-file")) {
+    output_file_name = cmd.get_option<std::string>("output-file");
+  }
+  result = system(
+      std::format("gcc {}.s -o {}", file_name, output_file_name).c_str());
 
   if (result != 0) {
     std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
     return 1;
   }
 
+  // only generate the assembly file
+  if (cmd.has_option("asm")) {
+    std::cout << "[LOG]: Assembly file generated successfully" << std::endl;
+    return 0;
+  }
   // delete the intermediate assembly file
   result = system(std::format("rm {}.s", file_name).c_str());
 
