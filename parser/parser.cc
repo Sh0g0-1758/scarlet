@@ -81,11 +81,6 @@ AST_Function_Node parser::parse_function(std::vector<Token> &tokens) {
   EXPECT_FUNC(TOKEN::OPEN_BRACE);
   parse_statement(tokens, function);
   EXPECT_FUNC(TOKEN::CLOSE_BRACE);
-  if (!tokens.empty()) {
-    success = false;
-    error_messages.emplace_back("Expected end of file but got " +
-                                to_string(tokens[0].get_token()));
-  }
   return function;
 }
 
