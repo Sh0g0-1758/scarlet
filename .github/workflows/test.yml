@@ -17,7 +17,7 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt update
-        sudo apt install gcc-13 g++-13
+        sudo apt install gcc-13 g++-13 libboost-all-dev
         
     - name: Build
       run: |

@@ -3,7 +3,7 @@
 build:
 	@echo "Building scarlet..."
 	@mkdir -p build
-	@g++-13 -std=c++20 ./driver/driver.cc -o ./build/scarlet -I .
+	@g++-13 -std=c++20 ./driver/driver.cc -o ./build/scarlet -I . -lboost_program_options
 	@echo "Done."
 
 test: build
