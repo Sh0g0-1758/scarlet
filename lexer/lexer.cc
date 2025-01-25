@@ -39,26 +39,21 @@ void lexer::tokenize() {
     }
   } else if (regex.matchWord(file_contents[0])) {
     std::string identifier;
-    while (regex.matchWord(file_contents[0])) {
+    while (regex.matchWord(file_contents[0]) ||
+           regex.matchDigit(file_contents[0])) {
       identifier += file_contents[0];
       file_contents.erase(0, 1);
     }
-    if (regex.matchDigit(file_contents[0])) {
-      success = false;
-      tokens.emplace_back(TOKEN::UNKNOWN);
-      tokenize();
+    if (identifier == "int") {
+      tokens.emplace_back(TOKEN::INT);
+    } else if (identifier == "void") {
+      tokens.emplace_back(TOKEN::VOID);
+    } else if (identifier == "return") {
+      tokens.emplace_back(TOKEN::RETURN);
     } else {
-      if (identifier == "int") {
-        tokens.emplace_back(TOKEN::INT);
-      } else if (identifier == "void") {
-        tokens.emplace_back(TOKEN::VOID);
-      } else if (identifier == "return") {
-        tokens.emplace_back(TOKEN::RETURN);
-      } else {
-        tokens.emplace_back(Token(TOKEN::IDENTIFIER, identifier));
-      }
-      tokenize();
+      tokens.emplace_back(Token(TOKEN::IDENTIFIER, identifier));
     }
+    tokenize();
   } else if (regex.matchDigit(file_contents[0])) {
     std::string constant;
     while (regex.matchDigit(file_contents[0])) {
