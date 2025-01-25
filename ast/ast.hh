@@ -4,7 +4,7 @@
 #include <string>
 #include <token/token.hh>
 #include <vector>
-
+#include <unary_operations/unop.hh>
 /*
 
 Grammar:
@@ -47,12 +47,14 @@ public:
 
 class AST_unop_Node : public AST_Node {
 private:
-  std::string op;
+  UNOP op;
 
 public:
   std::string get_AST_name() override { return "Unop"; }
-  std::string get_op() { return op; }
-  void set_op(std::string op) { this->op = std::move(op); }
+  std::string get_op() { return to_string_unop(op); }
+  void set_op(UNOP unop){ 
+    this->op = unop;
+   }
 };
 
 class AST_exp_Node : public AST_Node {
