@@ -117,6 +117,7 @@ void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
 void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
   if (tokens[0].get_token() == TOKEN::TILDE) {
     AST_unop_Node unop;
+    // TODO: This should be an enum
     unop.set_op("Complement");
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
