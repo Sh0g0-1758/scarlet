@@ -4,6 +4,7 @@
 #include <string>
 #include <token/token.hh>
 #include <vector>
+#include <scar/unop.hh>
 
 class parser {
 private:

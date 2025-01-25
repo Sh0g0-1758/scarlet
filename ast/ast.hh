@@ -4,7 +4,7 @@
 #include <string>
 #include <token/token.hh>
 #include <vector>
-
+#include <scar/unop.hh>
 /*
 
 Grammar:
@@ -52,7 +52,14 @@ private:
 public:
   std::string get_AST_name() override { return "Unop"; }
   std::string get_op() { return op; }
-  void set_op(std::string op) { this->op = std::move(op); }
+  void set_op(UNOP unop){ 
+    if(unop == UNOP::COMPLEMENT){
+      this->op = "Complement";
+    }
+    if(unop == UNOP::NEGATE){
+      this->op = "Negate";
+    }
+   }
 };
 
 class AST_exp_Node : public AST_Node {

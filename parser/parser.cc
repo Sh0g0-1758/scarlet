@@ -118,12 +118,12 @@ void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
   if (tokens[0].get_token() == TOKEN::TILDE) {
     AST_unop_Node unop;
     // TODO: This should be an enum
-    unop.set_op("Complement");
+    unop.set_op(UNOP::COMPLEMENT);
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == TOKEN::HYPHEN) {
     AST_unop_Node unop;
-    unop.set_op("Negate");
+    unop.set_op(UNOP::NEGATE);
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
   } else {
