@@ -22,13 +22,10 @@ jobs:
         brew install boost
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
-    - name: Set up X86_64 env
-      run: arch -x86_64 zsh
-
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make
+        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make'
 
     - name: Test scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make test-scarlet
+        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make test-scarlet'
