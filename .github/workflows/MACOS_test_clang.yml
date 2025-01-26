@@ -6,16 +6,20 @@ on:
     branches: [ "main" ]
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13
+    env:
+      HOMEBREW_PREFIX: /usr/local
+      
     steps:
     - uses: actions/checkout@v3
     
     - name: Install deps
       run: |
-        brew install --prefix /usr/local llvm
-        brew install --prefix /usr/local clang-build-analyzer
-        brew install --prefix /usr/local --cask clay
-        brew install --prefix /usr/local boost
+        brew update
+        brew install llvm
+        brew install clang-build-analyzer
+        brew install --cask clay
+        brew install boost
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Build scarlet
