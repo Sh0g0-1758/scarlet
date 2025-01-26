@@ -1,0 +1,30 @@
+name: Clang-Format Compliance Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  format-check:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install clang-format
+      run: |
+        sudo apt update
+        sudo apt install -y clang-format
+
+    - name: Check Code Formatting
+      run: |
+        # Define the paths to check
+        FILES_TO_CHECK=$(find . -name '*.cpp' -o -name '*.hpp' -o -name '*.cc' -o -name '*.hh')
+        
+        # Run clang-format and list any files that don't comply
+        for file in $FILES_TO_CHECK; do
+          clang-format --dry-run --Werror $file
+        done

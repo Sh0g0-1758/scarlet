@@ -16,7 +16,8 @@ jobs:
     - name: Install deps and Setup X86_64 environment
       run: |
         brew update
-        brew install clang boost
+        brew install clang boost clang-build-analyzer
+        brew install --cask clay
         arch -x86_64 zsh
         
     - name: Build scarlet
