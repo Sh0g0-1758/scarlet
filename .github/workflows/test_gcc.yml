@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Test (gcc)
 
 on:
   push:
@@ -21,8 +21,8 @@ jobs:
         
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make
 
     - name: Test scarlet
       run: |
-        mkdir -p build && cd build && cmake .. && make test-scarlet
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make test-scarlet
