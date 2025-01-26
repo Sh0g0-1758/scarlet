@@ -16,16 +16,16 @@ jobs:
     - name: Install deps
       run: |
         brew update
-        brew install llvm
-        brew install clang-build-analyzer
-        brew install --cask clay
-        brew install boost
+        arch -x86_64 brew install llvm
+        arch -x86_64 brew install clang-build-analyzer
+        arch -x86_64 brew install --cask clay
+        arch -x86_64 brew install boost
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Build scarlet
       run: |
         arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make'
-
+    
     - name: Test scarlet
       run: |
         arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make test-scarlet'
