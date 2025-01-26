@@ -10,21 +10,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Setup x86_64 Homebrew
-      run: |
-        cd /usr/local
-        mkdir homebrew
-        curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
-        eval "$(/usr/local/homebrew/bin/brew shellenv)"
-        brew update
-        
     - name: Install deps
       run: |
-        eval "$(/usr/local/homebrew/bin/brew shellenv)"
-        brew install llvm
-        brew install clang-build-analyzer
-        brew install --cask clay
-        brew install boost
+        brew install --prefix /usr/local llvm
+        brew install --prefix /usr/local clang-build-analyzer
+        brew install --prefix /usr/local --cask clay
+        brew install --prefix /usr/local boost
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Build scarlet
