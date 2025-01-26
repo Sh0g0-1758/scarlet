@@ -19,13 +19,13 @@ jobs:
         sudo apt update
         sudo apt install gcc-13 g++-13 libboost-all-dev
         
-    - name: build scarlet
+    - name: Build scarlet
       run: |
         export CC=gcc-13
         export CXX=g++-13
         mkdir build && cd build && cmake .. && make
 
-    - name: test scarlet
+    - name: Test scarlet
       run: |
         export CC=gcc-13
         export CXX=g++-13
