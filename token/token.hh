@@ -4,6 +4,8 @@
 #include <optional>
 #include <string>
 
+namespace Scarlet {
+namespace Token {
 enum class TOKEN {
   IDENTIFIER,
   CONSTANT,
@@ -42,3 +44,6 @@ public:
 
 void print_token(TOKEN token);
 std::string to_string(TOKEN token);
+
+}
+}

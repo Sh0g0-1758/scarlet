@@ -19,6 +19,8 @@ unary_operator = Complement | Negate
 
 */
 
+namespace Scarlet {
+namespace Scar {
 class scar {
 public:
   virtual std::string get_scar_name() { return "scar"; }
@@ -56,7 +58,7 @@ public:
 class scar_Instruction_Node : public scar {
 private:
   std::string type;
-  UNOP op;               // When the instruction is not a return instruction
+  Unop::UNOP op;               // When the instruction is not a return instruction
   scar_Val_Node src_ret; // This can act as both the source and return value
   scar_Val_Node dst;
 
@@ -64,8 +66,8 @@ public:
   std::string get_scar_name() override { return "Instruction"; }
   std::string get_type() { return type; }
   void set_type(std::string type) { this->type = std::move(type); }
-  UNOP get_op() { return op; }
-  void set_op(UNOP op) { this->op = op; }
+  Unop::UNOP get_op() { return op; }
+  void set_op(Unop::UNOP op) { this->op = op; }
   scar_Val_Node &get_src_ret() { return src_ret; }
   void set_src_ret(scar_Val_Node src_ret) {
     this->src_ret = std::move(src_ret);
@@ -104,3 +106,5 @@ public:
     functions.emplace_back(function);
   }
 };
+}
+}

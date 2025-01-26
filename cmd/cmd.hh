@@ -3,6 +3,8 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 
+namespace Scarlet {
+namespace cmd {
 namespace po = boost::program_options;
 
 class scarcmd {
@@ -21,7 +23,7 @@ public:
 
     desc.add_options()("help,h", "produce this help message")(
         "version,v", "print version string")("lex",
-                                             "run only till the lexer stage")(
+                                            "run only till the lexer stage")(
         "parse", "run only till the parser stage and print the AST")(
         "codegen",
         "run only till the codegen stage and print the IR(scar) AST")(
@@ -61,3 +63,5 @@ public:
     return vm[option].as<T>();
   }
 };
+}
+}

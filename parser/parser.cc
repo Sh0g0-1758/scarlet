@@ -1,5 +1,7 @@
 #include "parser.hh"
 
+namespace Scarlet {
+namespace Parser {
 #define EXPECT(tok)                                                            \
   if (!success) {                                                              \
     return;                                                                    \
@@ -40,7 +42,7 @@
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
-  AST_int_Node int_node;                                                       \
+  AST::AST_int_Node int_node;                                                       \
   int_node.set_value(tokens[0].get_value().value());                           \
   exp.set_int_node(int_node);                                                  \
   tokens.erase(tokens.begin());
@@ -57,55 +59,55 @@
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
-  AST_identifier_Node identifier;                                              \
+  AST::AST_identifier_Node identifier;                                              \
   identifier.set_identifier(tokens[0].get_value().value());                    \
   function.set_identifier(identifier);                                         \
   tokens.erase(tokens.begin());
 
-void parser::parse_program(std::vector<Token> tokens) {
-  AST_Program_Node program;
+void parser::parse_program(std::vector<Token::Token> tokens) {
+  AST::AST_Program_Node program;
   while (!tokens.empty() and success) {
-    AST_Function_Node func = parse_function(tokens);
+    AST::AST_Function_Node func = parse_function(tokens);
     program.add_function(func);
   }
   this->program = program;
 }
 
-AST_Function_Node parser::parse_function(std::vector<Token> &tokens) {
-  AST_Function_Node function;
-  EXPECT_FUNC(TOKEN::INT);
+AST::AST_Function_Node parser::parse_function(std::vector<Token::Token> &tokens) {
+  AST::AST_Function_Node function;
+  EXPECT_FUNC(Token::TOKEN::INT);
   parse_identifier(tokens, function);
-  EXPECT_FUNC(TOKEN::OPEN_PARANTHESES);
-  EXPECT_FUNC(TOKEN::VOID);
-  EXPECT_FUNC(TOKEN::CLOSE_PARANTHESES);
-  EXPECT_FUNC(TOKEN::OPEN_BRACE);
+  EXPECT_FUNC(Token::TOKEN::OPEN_PARANTHESES);
+  EXPECT_FUNC(Token::TOKEN::VOID);
+  EXPECT_FUNC(Token::TOKEN::CLOSE_PARANTHESES);
+  EXPECT_FUNC(Token::TOKEN::OPEN_BRACE);
   parse_statement(tokens, function);
-  EXPECT_FUNC(TOKEN::CLOSE_BRACE);
+  EXPECT_FUNC(Token::TOKEN::CLOSE_BRACE);
   return function;
 }
 
-void parser::parse_statement(std::vector<Token> &tokens,
-                             AST_Function_Node &function) {
-  AST_Statement_Node statement("Return");
-  EXPECT(TOKEN::RETURN);
-  AST_exp_Node exp;
+void parser::parse_statement(std::vector<Token::Token> &tokens,
+                             AST::AST_Function_Node &function) {
+  AST::AST_Statement_Node statement("Return");
+  EXPECT(Token::TOKEN::RETURN);
+  AST::AST_exp_Node exp;
   parse_exp(tokens, exp);
   statement.add_exp(exp);
-  EXPECT(TOKEN::SEMICOLON);
+  EXPECT(Token::TOKEN::SEMICOLON);
   function.add_statement(statement);
 }
 
-void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
-  if (tokens[0].get_token() == TOKEN::CONSTANT) {
+void parser::parse_exp(std::vector<Token::Token> &tokens, AST::AST_exp_Node &exp) {
+  if (tokens[0].get_token() == Token::TOKEN::CONSTANT) {
     parse_int(tokens, exp);
-  } else if (tokens[0].get_token() == TOKEN::TILDE or
-             tokens[0].get_token() == TOKEN::HYPHEN) {
+  } else if (tokens[0].get_token() == Token::TOKEN::TILDE or
+             tokens[0].get_token() == Token::TOKEN::HYPHEN) {
     parse_unary_op(tokens, exp);
     parse_exp(tokens, exp);
-  } else if (tokens[0].get_token() == TOKEN::OPEN_PARANTHESES) {
+  } else if (tokens[0].get_token() == Token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     parse_exp(tokens, exp);
-    EXPECT(TOKEN::CLOSE_PARANTHESES);
+    EXPECT(Token::TOKEN::CLOSE_PARANTHESES);
   } else {
     success = false;
     error_messages.emplace_back(
@@ -114,16 +116,16 @@ void parser::parse_exp(std::vector<Token> &tokens, AST_exp_Node &exp) {
   }
 }
 
-void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
-  if (tokens[0].get_token() == TOKEN::TILDE) {
-    AST_unop_Node unop;
+void parser::parse_unary_op(std::vector<Token::Token> &tokens, AST::AST_exp_Node &exp) {
+  if (tokens[0].get_token() == Token::TOKEN::TILDE) {
+    AST::AST_unop_Node unop;
     // TODO: This should be an enum
-    unop.set_op(UNOP::COMPLEMENT);
+    unop.set_op(Unop::UNOP::COMPLEMENT);
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == TOKEN::HYPHEN) {
-    AST_unop_Node unop;
-    unop.set_op(UNOP::NEGATE);
+  } else if (tokens[0].get_token() == Token::TOKEN::HYPHEN) {
+    AST::AST_unop_Node unop;
+    unop.set_op(Unop::UNOP::NEGATE);
     exp.set_unop_node(unop);
     tokens.erase(tokens.begin());
   } else {
@@ -133,16 +135,16 @@ void parser::parse_unary_op(std::vector<Token> &tokens, AST_exp_Node &exp) {
   }
 }
 
-void parser::parse_identifier(std::vector<Token> &tokens,
-                              AST_Function_Node &function) {
-  EXPECT_IDENTIFIER(TOKEN::IDENTIFIER);
+void parser::parse_identifier(std::vector<Token::Token> &tokens,
+                              AST::AST_Function_Node &function) {
+  EXPECT_IDENTIFIER(Token::TOKEN::IDENTIFIER);
 }
 
-void parser::parse_int(std::vector<Token> &tokens, AST_exp_Node &exp) {
-  EXPECT_INT(TOKEN::CONSTANT);
+void parser::parse_int(std::vector<Token::Token> &tokens, AST::AST_exp_Node &exp) {
+  EXPECT_INT(Token::TOKEN::CONSTANT);
 }
 
-void parser::expect(TOKEN actual_token, TOKEN expected_token) {
+void parser::expect(Token::TOKEN actual_token, Token::TOKEN expected_token) {
   if (actual_token != expected_token) {
     success = false;
     error_messages.emplace_back("Expected token " + to_string(expected_token) +
@@ -156,7 +158,7 @@ void parser::display_errors() {
   }
 }
 
-void parser::eof_error(Token token) {
+void parser::eof_error(Token::Token token) {
   success = false;
   error_messages.emplace_back("Expected " + to_string(token.get_token()) +
                               " but got end of file");
@@ -184,4 +186,6 @@ void parser::pretty_print() {
     std::cerr << "\t)," << std::endl;
   }
   std::cerr << ")" << std::endl;
+}
+}
 }

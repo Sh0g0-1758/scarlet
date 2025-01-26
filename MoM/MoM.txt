@@ -7,6 +7,7 @@ Date - 25th Jan 2025
 6. Generate txt file for scar. DONE {Not needed as it will incur a lot of overhead and serves no purpose}
 7. Create static library for lexer, parser, codegen.
 8. (scar.hh) {Line:60} Need to implement instruction of 2 source 1 dst.
+9. Implement namespace for all functions.
 
 Design Decision:
 Date - 25th Jan 2025

@@ -1,6 +1,7 @@
-
 #include "regex.hh"
 
+namespace Scarlet {
+namespace regex {
 bool Regex::matchWord(char c) {
   if ((c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or (c == '_'))
     return true;
@@ -11,4 +12,6 @@ bool Regex::matchDigit(char c) {
   if (c >= '0' and c <= '9')
     return true;
   return false;
+}
+}
 }

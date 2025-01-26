@@ -1,5 +1,7 @@
 #include "unop.hh"
 
+namespace Scarlet {
+namespace Unop {
 std::string to_string_unop(UNOP unop) {
   if (unop == UNOP::COMPLEMENT) {
     return "Complement";
@@ -8,4 +10,6 @@ std::string to_string_unop(UNOP unop) {
     return "Negate";
   }
   return "";
+}
+}
 }

@@ -19,6 +19,8 @@ Grammar:
 
 */
 
+namespace Scarlet {
+namespace AST {
 class AST_Node {
 public:
   virtual std::string get_AST_name() { return "AST_Node"; }
@@ -47,12 +49,12 @@ public:
 
 class AST_unop_Node : public AST_Node {
 private:
-  UNOP op;
+  Unop::UNOP op;
 
 public:
   std::string get_AST_name() override { return "Unop"; }
   std::string get_op() { return to_string_unop(op); }
-  void set_op(UNOP unop){ 
+  void set_op(Unop::UNOP unop){ 
     this->op = unop;
    }
 };
@@ -120,3 +122,5 @@ public:
     functions.emplace_back(function);
   }
 };
+}
+}

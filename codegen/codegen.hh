@@ -40,11 +40,13 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 */
 // clang-format on
 
+namespace Scarlet {
+namespace Codegen {
 class Codegen {
 private:
-  AST_Program_Node program;
-  scar_Program_Node scar;
-  scasm_program scasm;
+  AST::AST_Program_Node program;
+  Scar::scar_Program_Node scar;
+  Scasm::scasm_program scasm;
   std::string file_name;
   bool success = true;
   int curr = 1;
@@ -52,7 +54,7 @@ private:
   int stack_offset{};
 
 public:
-  Codegen(AST_Program_Node program) : program(program) {}
+  Codegen(AST::AST_Program_Node program) : program(program) {}
   // ###### COMPILER PASSES ######
   // IR PASS
   void gen_scar();
@@ -74,3 +76,5 @@ public:
   }
   void pretty_print();
 };
+}
+}
