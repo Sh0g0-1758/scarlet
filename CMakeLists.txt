@@ -7,6 +7,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message(STATUS "Using ${CMAKE_CXX_COMPILER} (version ${CMAKE_CXX_COMPILER_VERSION}) to build Scarlet")
 
 set(SCARLET_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+execute_process(
+  COMMAND uname -m
+  OUTPUT_VARIABLE SYSTEM_ARCHITECTURE
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(SYSTEM_ARCHITECTURE STREQUAL "arm64")
+    message(STATUS "Detected ARM64 platform")
+    message(FATAL_ERROR "Build halted.\nPlease run the following command in your terminal and then build again:\n'arch -x86_64 zsh'")
+endif()
 
 function(set_basic_compile_options target)
   target_compile_options(${target} PRIVATE 
