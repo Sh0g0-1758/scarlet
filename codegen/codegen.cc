@@ -270,16 +270,17 @@ void Codegen::codegen() {
 
   for (auto funcs : scasm.get_functions()) {
 #ifdef __aarch64__
-      if(funcs.get_name() == "main"){
-        assembly << "\t.globl " << "_main" << "\n";
-        assembly << "_main" << ":\n";
-      }else{
-        assembly << "\t.globl " << funcs.get_name() << "\n";
-        assembly << funcs.get_name() << ":\n";
-      }
-#else
+
+    if (funcs.get_name() == "main") {
+      assembly << "\t.globl " << "_main" << "\n";
+      assembly << "_main" << ":\n";
+    } else {
       assembly << "\t.globl " << funcs.get_name() << "\n";
       assembly << funcs.get_name() << ":\n";
+    }
+#else
+    assembly << "\t.globl " << funcs.get_name() << "\n";
+    assembly << funcs.get_name() << ":\n";
 #endif
     assembly << "\tpushq %rbp\n";
     assembly << "\tmovq %rsp, %rbp\n";
@@ -334,7 +335,7 @@ void Codegen::codegen() {
     }
   }
 #ifndef __aarch64__
-    assembly << "\t.section    .note.GNU-stack,\"\",@progbits\n";
+  assembly << "\t.section    .note.GNU-stack,\"\",@progbits\n";
 #endif
 
   std::ofstream file(file_name);
