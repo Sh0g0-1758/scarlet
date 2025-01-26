@@ -9,38 +9,23 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
     - uses: actions/checkout@v3
-
-    - name: Install x86_64 Homebrew
-      run: |
-        arch -x86_64 zsh -c '
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" &&
-        echo "/usr/local/bin" >> $GITHUB_PATH
-        '
-
+    
     - name: Install deps
       run: |
-        arch -x86_64 zsh -c '
-        brew update &&
-        brew install llvm &&
-        brew install clang-build-analyzer &&
-        brew install boost &&
+        brew update
+        brew install llvm
+        brew install clang-build-analyzer
+        brew install --cask clay
+        brew install boost
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
-        '
-
+        
     - name: Build scarlet
       run: |
-        arch -x86_64 zsh -c '
-        mkdir -p build && cd build &&
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ .. &&
-        make
-        '
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ .. && make
 
     - name: Test scarlet
       run: |
-        arch -x86_64 zsh -c '
-        mkdir -p build && cd build &&
-        cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ .. &&
-        make test-scarlet
-        '
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ .. && make test-scarlet
