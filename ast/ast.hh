@@ -12,7 +12,7 @@ Grammar:
 <program> ::= <function>
 <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
 <statement> ::= "return" <exp> ";"
-<exp> ::= <int> | <unop> <exp> | "(" <exp> ")"
+<exp> ::= <int> | <unop> <exp> | "(" <exp> ")" | <exp> <binary_operator> <exp>
 <unop> ::= "~" | "-"
 <binary_operator> ::= "+" | "-" | "*" | "/" | "%"
 <identifier> ::= ? An identifier token ?
