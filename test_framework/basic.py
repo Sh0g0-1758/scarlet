@@ -397,8 +397,7 @@ class TestChapter(unittest.TestCase):
         # TODO cleaner handling if executable doesn't exist? or check that it exists above?
         exe = source_file.parent.parent.parent.parent / source_file.with_suffix("").name
         parts = list(exe.parts)
-        index = parts.index("scarlet")
-        parts.insert(index + 1, "build")
+        parts.insert(len(parts) - 1, "build")
         exe = Path(*parts)
 
         result = subprocess.run(
