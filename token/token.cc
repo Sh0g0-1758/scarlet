@@ -38,6 +38,18 @@ void print_token(TOKEN token) {
   case TOKEN::HYPHEN:
     std::cerr << "-";
     break;
+  case TOKEN::PLUS:
+    std::cerr << "+";
+    break;
+  case TOKEN::ASTERISK:
+    std::cerr << "*";
+    break;
+  case TOKEN::FORWARD_SLASH:
+    std::cerr << "/";
+    break;
+  case TOKEN::PERCENT_SIGN:
+    std::cerr << "%";
+    break;
   case TOKEN::DECREMENT_OPERATOR:
     std::cerr << "--";
     break;
@@ -73,6 +85,14 @@ std::string to_string(TOKEN token) {
     return "~";
   case TOKEN::HYPHEN:
     return "-";
+  case TOKEN::PLUS:
+    return "+";
+  case TOKEN::ASTERISK:
+    return "*";
+  case TOKEN::FORWARD_SLASH:
+    return "/";
+  case TOKEN::PERCENT_SIGN:
+    return "%";
   case TOKEN::DECREMENT_OPERATOR:
     return "--";
   case TOKEN::UNKNOWN:
