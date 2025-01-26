@@ -38,4 +38,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 2 --stage codegen
     COMMAND echo "Running test all-2"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 2
+    COMMAND echo "Running lexer-3 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage lex
 )
