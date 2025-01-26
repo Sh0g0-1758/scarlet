@@ -10,6 +10,8 @@ jobs:
     runs-on: macos-13
     env:
       HOMEBREW_PREFIX: /usr/local
+      CC: gcc-13
+      CXX: g++-13
       
     steps:
     - uses: actions/checkout@v3
@@ -17,14 +19,14 @@ jobs:
     - name: Install deps
       run: |
         brew update
-        brew install gcc
+        brew install gcc@13
         brew install --cask clay
         brew install boost
 
     - name: Build scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make'
+        arch -x86_64 /bin/zsh -c 'export CC=gcc-13 && export CXX=g++-13 && mkdir -p build && cd build && cmake .. && make'
     
     - name: Test scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make test-scarlet'
+        arch -x86_64 /bin/zsh -c 'export CC=gcc-13 && export CXX=g++-13 && mkdir -p build && cd build && cmake .. && make test-scarlet'

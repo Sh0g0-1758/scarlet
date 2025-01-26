@@ -36,7 +36,7 @@ Scarlet currently supports the following architectures:
 - [x] (Lexer.cc) Find an alternative to erasing the `file_contents` text repeatedly.
 - [x] (Lexer.cc) Refactor to read characters directly from the file stream.
 - [x] (Parser.cc) Refactor `unop set_op` (Line:125) to use enums.
-- [ ] Generate a `.txt` file for the Scarlet output.
+- [x] Generate a `.txt` file for the Scarlet output. {Not needed as it will incur a lot of overhead and serves no purpose}
 - [x] Create a static library for the lexer, parser, and code generation components.
 
 ## Contributing Guidelines
