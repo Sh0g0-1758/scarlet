@@ -21,6 +21,14 @@ void lexer::tokenize() {
       tokens.emplace_back(TOKEN::SEMICOLON);
     } else if (ch == '~') {
       tokens.emplace_back(TOKEN::TILDE);
+    } else if (ch == '+') {
+      tokens.emplace_back(TOKEN::PLUS);
+    } else if (ch == '*') {
+      tokens.emplace_back(TOKEN::ASTERISK);
+    } else if (ch == '/') {
+      tokens.emplace_back(TOKEN::FORWARD_SLASH);
+    } else if (ch == '%') {
+      tokens.emplace_back(TOKEN::PERCENT_SIGN);
     } else if (ch == '-') {
       file.get(ch);
       if (ch == '-') {
