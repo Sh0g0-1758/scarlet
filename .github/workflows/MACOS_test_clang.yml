@@ -16,9 +16,11 @@ jobs:
     - name: Install deps and Setup X86_64 environment
       run: |
         brew update
+        brew install llvm
         brew install clang-build-analyzer
         brew install --cask clay
-        brew install clang boost
+        brew install boost
+        echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
         arch -x86_64 zsh
         
     - name: Build scarlet
