@@ -13,13 +13,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Install x86_64 Homebrew
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/null
+        echo "/usr/local/bin" >> $GITHUB_PATH
+      
     - name: Install deps
       run: |
-        brew update
-        arch -x86_64 brew install llvm
-        arch -x86_64 brew install clang-build-analyzer
-        arch -x86_64 brew install --cask clay
-        arch -x86_64 brew install boost
+        /usr/local/bin/brew update
+        /usr/local/bin/brew install llvm
+        /usr/local/bin/brew install clang-build-analyzer
+        /usr/local/bin/brew install --cask clay
+        /usr/local/bin/brew install boost
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Build scarlet
