@@ -26,7 +26,6 @@ Scarlet currently supports the following architectures:
 | ---------------- | -------- | ----------------------- |
 | Ubuntu           | GCC      | x86_64                  |
 | Ubuntu           | Clang    | x86_64                  |
-| macOS            | GCC      | ARM64                   |
 | macOS            | Clang    | ARM64                   |
 
 ## Roadmap
