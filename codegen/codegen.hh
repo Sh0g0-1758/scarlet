@@ -10,7 +10,7 @@
 #include <token/token.hh>
 #include <vector>
 
-enum class Regiser { EAX };
+
 
 // clang-format off
 /*
@@ -39,12 +39,15 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 
 */
 // clang-format on
+namespace scarlet{
+  namespace codegen{
+enum class Regiser { EAX };
 
 class Codegen {
 private:
-  AST_Program_Node program;
-  scar_Program_Node scar;
-  scasm_program scasm;
+  ast::AST_Program_Node program;
+  scar::scar_Program_Node scar;
+  scasm::scasm_program scasm;
   std::string file_name;
   bool success = true;
   int curr = 1;
@@ -52,7 +55,7 @@ private:
   int stack_offset{};
 
 public:
-  Codegen(AST_Program_Node program) : program(program) {}
+  Codegen(ast::AST_Program_Node program) : program(program) {}
   // ###### COMPILER PASSES ######
   // IR PASS
   void gen_scar();
@@ -74,3 +77,6 @@ public:
   }
   void pretty_print();
 };
+
+  }
+}

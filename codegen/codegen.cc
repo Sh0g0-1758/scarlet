@@ -1,10 +1,12 @@
 #include "codegen.hh"
+namespace scarlet{
+  namespace codegen{
 
 void Codegen::gen_scar() {
-  scar_Program_Node scar_program;
+  scar::scar_Program_Node scar_program;
   for (auto it : program.get_functions()) {
-    scar_Function_Node scar_function;
-    scar_Identifier_Node identifier;
+    scar::scar_Function_Node scar_function;
+    scar::scar_Identifier_Node identifier;
     identifier.set_value(it.get_identifier().get_value());
     scar_function.set_identifier(identifier);
     for (auto inst : it.get_statements()) {
@@ -12,16 +14,16 @@ void Codegen::gen_scar() {
         for (auto exp : inst.get_exps()) {
           if (exp.get_unop_nodes().size() > 0) {
             for (int i = exp.get_unop_nodes().size() - 1; i >= 0; i--) {
-              scar_Instruction_Node scar_instruction;
+              scar::scar_Instruction_Node scar_instruction;
               scar_instruction.set_type("Unary");
               if (exp.get_unop_nodes()[i].get_op() == "Negate") {
-                scar_instruction.set_op(UNOP::NEGATE);
+                scar_instruction.set_op(unop::UNOP::NEGATE);
               } else if (exp.get_unop_nodes()[i].get_op() == "Complement") {
-                scar_instruction.set_op(UNOP::COMPLEMENT);
+                scar_instruction.set_op(unop::UNOP::COMPLEMENT);
               }
 
-              scar_Val_Node scar_val_src;
-              scar_Val_Node scar_val_dst;
+              scar::scar_Val_Node scar_val_src;
+              scar::scar_Val_Node scar_val_dst;
 
               scar_val_dst.set_type("Var");
               scar_val_dst.set_reg_name(get_reg_name());
@@ -45,9 +47,9 @@ void Codegen::gen_scar() {
 
               scar_function.add_instruction(scar_instruction);
             }
-            scar_Instruction_Node scar_instruction;
+            scar::scar_Instruction_Node scar_instruction;
             scar_instruction.set_type("Return");
-            scar_Val_Node scar_val_ret;
+            scar::scar_Val_Node scar_val_ret;
             scar_val_ret.set_type("Var");
             scar_val_ret.set_reg_name(
                 scar_function
@@ -56,12 +58,12 @@ void Codegen::gen_scar() {
                     .get_dst()
                     .get_reg());
             scar_instruction.set_src_ret(scar_val_ret);
-            scar_instruction.set_op(UNOP::UNKNOWN);
+            scar_instruction.set_op(unop::UNOP::UNKNOWN);
             scar_function.add_instruction(scar_instruction);
           } else {
-            scar_Instruction_Node scar_instruction;
+            scar::scar_Instruction_Node scar_instruction;
             scar_instruction.set_type("Return");
-            scar_Val_Node scar_val_ret;
+            scar::scar_Val_Node scar_val_ret;
             scar_val_ret.set_type("Constant");
             scar_val_ret.set_value(exp.get_int_node().get_value());
             scar_instruction.set_src_ret(scar_val_ret);
@@ -85,7 +87,7 @@ void Codegen::pretty_print() {
     std::cerr << "\t\tbody=[" << std::endl;
     for (auto statement : function.get_instructions()) {
       std::cerr << "\t\t\t" << statement.get_type() << "(";
-      if (statement.get_op() == UNOP::UNKNOWN) {
+      if (statement.get_op() == unop::UNOP::UNKNOWN) {
         if (statement.get_src_ret().get_type() == "Constant") {
           std::cerr << "Constant(" << statement.get_src_ret().get_value()
                     << ")";
@@ -94,9 +96,9 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else {
-        if (statement.get_op() == UNOP::COMPLEMENT) {
+        if (statement.get_op() == unop::UNOP::COMPLEMENT) {
           std::cerr << "Complement, ";
-        } else if (statement.get_op() == UNOP::NEGATE) {
+        } else if (statement.get_op() == unop::UNOP::NEGATE) {
           std::cerr << "Negate, ";
         }
         if (statement.get_src_ret().get_type() == "Constant") {
@@ -121,15 +123,15 @@ void Codegen::pretty_print() {
 }
 
 void Codegen::gen_scasm() {
-  scasm_program scasm_program;
+  scasm::scasm_program scasm_program;
   for (auto func : scar.get_functions()) {
-    scasm_function scasm_func;
+    scasm::scasm_function scasm_func;
     scasm_func.set_name(func.get_identifier().get_value());
     for (auto inst : func.get_instructions()) {
       if (inst.get_type() == "Return") {
-        scasm_instruction scasm_inst;
+        scasm::scasm_instruction scasm_inst;
         scasm_inst.set_type("Mov");
-        scasm_operand scasm_src;
+        scasm::scasm_operand scasm_src;
         if (inst.get_src_ret().get_type() == "Constant") {
           scasm_src.set_type("Imm");
           scasm_src.set_value(inst.get_src_ret().get_value());
@@ -138,19 +140,19 @@ void Codegen::gen_scasm() {
           scasm_src.set_value(inst.get_src_ret().get_reg());
         }
         scasm_inst.set_src(scasm_src);
-        scasm_operand scasm_dst;
+        scasm::scasm_operand scasm_dst;
         scasm_dst.set_type("Reg");
         scasm_dst.set_value("AX");
         scasm_inst.set_dst(scasm_dst);
         scasm_func.add_instruction(scasm_inst);
-        scasm_instruction scasm_inst2;
+        scasm::scasm_instruction scasm_inst2;
         scasm_inst2.set_type("Ret");
         scasm_func.add_instruction(scasm_inst2);
       } else if (inst.get_type() == "Unary") {
-        scasm_instruction scasm_inst;
+        scasm::scasm_instruction scasm_inst;
         scasm_inst.set_type("Mov");
 
-        scasm_operand scasm_src;
+        scasm::scasm_operand scasm_src;
         if (inst.get_src_ret().get_type() == "Constant") {
           scasm_src.set_type("Imm");
           scasm_src.set_value(inst.get_src_ret().get_value());
@@ -160,7 +162,7 @@ void Codegen::gen_scasm() {
         }
         scasm_inst.set_src(scasm_src);
 
-        scasm_operand scasm_dst;
+        scasm::scasm_operand scasm_dst;
         if (inst.get_dst().get_type() == "Var") {
           scasm_dst.set_type("Pseudo");
           scasm_dst.set_value(inst.get_dst().get_reg());
@@ -169,11 +171,11 @@ void Codegen::gen_scasm() {
 
         scasm_func.add_instruction(scasm_inst);
 
-        scasm_instruction scasm_inst2;
+        scasm::scasm_instruction scasm_inst2;
         scasm_inst2.set_type("Unary");
         scasm_inst2.set_op(inst.get_op());
 
-        scasm_operand scasm_dst2;
+        scasm::scasm_operand scasm_dst2;
         if (inst.get_dst().get_type() == "Var") {
           scasm_dst2.set_type("Pseudo");
           scasm_dst2.set_value(inst.get_dst().get_reg());
@@ -225,9 +227,9 @@ void Codegen::fix_pseudo_registers() {
 }
 
 void Codegen::fix_instructions() {
-  scasm_instruction scasm_stack_instr;
+  scasm::scasm_instruction scasm_stack_instr;
   scasm_stack_instr.set_type("AllocateStack");
-  scasm_operand val;
+  scasm::scasm_operand val;
   val.set_type("Imm");
   val.set_value(std::to_string(stack_offset));
   scasm_stack_instr.set_src(val);
@@ -240,16 +242,17 @@ void Codegen::fix_instructions() {
          it != funcs.get_instructions().end(); it++) {
       if ((*it).get_src().get_type() == "Stack" &&
           (*it).get_dst().get_type() == "Stack") {
-        scasm_instruction scasm_inst;
+        scasm::scasm_instruction scasm_inst;
         scasm_inst.set_type((*it).get_type());
         scasm_inst.set_dst((*it).get_dst());
 
-        scasm_operand src;
+        // fixing up stack to stack move
+        scasm::scasm_operand src;
         src.set_type("Reg");
         src.set_value("R10");
         scasm_inst.set_src(src);
 
-        scasm_operand dst;
+        scasm::scasm_operand dst;
         dst.set_type("Reg");
         dst.set_value("R10");
         (*it).set_dst(dst);
@@ -315,9 +318,9 @@ void Codegen::codegen() {
         }
         assembly << "\n";
       } else if (instr.get_type() == "Unary") {
-        if (instr.get_op() == UNOP::NEGATE) {
+        if (instr.get_op() == unop::UNOP::NEGATE) {
           assembly << "\tnegl ";
-        } else if (instr.get_op() == UNOP::COMPLEMENT) {
+        } else if (instr.get_op() == unop::UNOP::COMPLEMENT) {
           assembly << "\tnotl ";
         }
         if (instr.get_dst().get_type() == "Stack") {
@@ -344,5 +347,7 @@ void Codegen::codegen() {
   } else {
     std::cerr << "[ERROR]: Unable to open file" << std::endl;
     success = false;
+  }
+}
   }
 }
