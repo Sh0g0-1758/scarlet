@@ -1,4 +1,4 @@
-name: Build and Test (clang)
+name: MACOS => Build and Test (clang)
 
 on:
   push:
@@ -8,16 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v3
     
     - name: Install deps
       run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-        sudo apt update
-        sudo apt install clang libboost-all-dev
+        brew update
+        brew install clang boost
         
     - name: Build scarlet
       run: |
