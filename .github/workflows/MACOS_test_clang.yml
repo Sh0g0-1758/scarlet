@@ -13,20 +13,19 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Install deps and Setup X86_64 environment
+    - name: Install deps
       run: |
         brew update
         brew install llvm
         brew install clang-build-analyzer
         brew install --cask clay
         brew install boost
-        echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
-        arch -x86_64 zsh
+        echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
         
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ .. && make
 
     - name: Test scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make test-scarlet
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++ .. && make test-scarlet
