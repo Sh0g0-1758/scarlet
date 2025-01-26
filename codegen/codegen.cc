@@ -270,7 +270,6 @@ void Codegen::codegen() {
 
   for (auto funcs : scasm.get_functions()) {
 #ifdef __aarch64__
-
     if (funcs.get_name() == "main") {
       assembly << "\t.globl " << "_main" << "\n";
       assembly << "_main" << ":\n";
