@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   }
 
   // LEXER
-  lexer lex;
+  scarlet::lexer::lexer lex;
   lex.set_file_path(std::format("{}.scp", file_name));
   lex.tokenize();
   if (!lex.is_success()) {
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
   }
 
   // PARSER
-  parser gnu;
+  scarlet::parser::parser gnu;
   gnu.parse_program(lex.get_tokens());
   if (!gnu.is_success()) {
     result = system(std::format("rm {}.scp", file_name).c_str());
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   }
 
   // CODEGEN
-  Codegen codegen(gnu.get_program());
+  scarlet::codegen::Codegen codegen(gnu.get_program());
 
   codegen.gen_scar();
 

@@ -23,7 +23,8 @@ Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(int)
 */
 
 // clang-format on
-
+namespace scarlet {
+namespace scasm {
 class scasm {
 public:
   virtual std::string get_scasm_name() { return "scasm"; }
@@ -46,7 +47,7 @@ public:
 class scasm_instruction : public scasm {
 private:
   std::string type;
-  UNOP op;
+  unop::UNOP op;
   scasm_operand src;
   scasm_operand dst;
 
@@ -54,8 +55,8 @@ public:
   std::string get_scasm_name() override { return "Instruction"; }
   std::string get_type() { return type; }
   void set_type(std::string type) { this->type = std::move(type); }
-  UNOP get_op() { return op; }
-  void set_op(UNOP op) { this->op = op; }
+  unop::UNOP get_op() { return op; }
+  void set_op(unop::UNOP op) { this->op = op; }
   scasm_operand &get_src() { return src; }
   void set_src(scasm_operand src) { this->src = std::move(src); }
   scasm_operand &get_dst() { return dst; }
@@ -88,3 +89,6 @@ public:
     functions.emplace_back(std::move(function));
   }
 };
+
+} // namespace scasm
+} // namespace scarlet
