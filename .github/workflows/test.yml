@@ -13,19 +13,19 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Install GCC 13
+    - name: Install deps
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt update
         sudo apt install gcc-13 g++-13 libboost-all-dev
         
-    - name: Build
+    - name: build scarlet
       run: |
         export CC=gcc-13
         export CXX=g++-13
         mkdir build && cd build && cmake .. && make
 
-    - name: Test
+    - name: test scarlet
       run: |
         export CC=gcc-13
         export CXX=g++-13
