@@ -12,7 +12,6 @@ function(set_basic_compile_options target)
     -Wall
     -Wextra
     -Werror
-    -fno-exceptions
     -fno-rtti
     -fpie
     -O3
@@ -36,6 +35,12 @@ if(Boost_FOUND)
 endif()
 
 add_executable(scarlet ${SOURCES})
+target_compile_options(scarlet PRIVATE 
+    -O3
+    -Wall
+    -Wextra
+    -Werror
+)
 
 add_dependencies(
     scarlet
