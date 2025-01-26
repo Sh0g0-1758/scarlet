@@ -19,6 +19,8 @@ Grammar:
 <int> ::= ? A constant token ?
 
 */
+namespace scarlet {
+namespace ast {
 
 class AST_Node {
 public:
@@ -48,12 +50,12 @@ public:
 
 class AST_unop_Node : public AST_Node {
 private:
-  UNOP op;
+  unop::UNOP op;
 
 public:
   std::string get_AST_name() override { return "Unop"; }
-  std::string get_op() { return to_string_unop(op); }
-  void set_op(UNOP unop) { this->op = unop; }
+  std::string get_op() { return unop::to_string_unop(op); }
+  void set_op(unop::UNOP unop) { this->op = unop; }
 };
 
 class AST_exp_Node : public AST_Node {
@@ -119,3 +121,5 @@ public:
     functions.emplace_back(function);
   }
 };
+} // namespace ast
+} // namespace scarlet
