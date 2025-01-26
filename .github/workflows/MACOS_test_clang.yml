@@ -13,10 +13,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Install deps
+    - name: Install deps and Setup X86_64 environment
       run: |
         brew update
         brew install clang boost
+        arch -x86_64 zsh
         
     - name: Build scarlet
       run: |
