@@ -5,9 +5,9 @@
 #include <vector>
 
 #include <cmd/cmd.hh>
-#include <codegen/codegen.cc>
-#include <lexer/lexer.cc>
-#include <parser/parser.cc>
+#include <codegen/codegen.hh>
+#include <lexer/lexer.hh>
+#include <parser/parser.hh>
 
 // extract out the name of the file
 // possibilities : ./<path>/<filename>.<ext> or <filename>.<ext>

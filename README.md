@@ -11,7 +11,7 @@ machine learning framework on top of it.
 - [x] (lexer.cc) Take characters from filestream.
 - [x] (parser.cc) {Line:125} unop set_op can be enum also.
 - [ ] Generate txt file for scar.
-- [ ] Create static library for lexer, parser, codegen.
+- [x] Create static library for lexer, parser, codegen.
 
 # Contributing Guidlines
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "regex.cc"
 #include <fstream>
 #include <iostream>
+#include <regex/regex.hh>
 #include <string>
 #include <token/token.hh>
 #include <vector>

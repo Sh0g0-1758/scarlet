@@ -1,5 +1,4 @@
 #pragma once
-// TODO: Replace this with a custom regex engine
 
 class Regex {
 public:

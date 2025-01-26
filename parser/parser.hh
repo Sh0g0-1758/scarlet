@@ -1,10 +1,11 @@
 #pragma once
+
 #include <ast/ast.hh>
 #include <iostream>
 #include <string>
 #include <token/token.hh>
-#include <vector>
 #include <unary_operations/unop.hh>
+#include <vector>
 
 class parser {
 private:

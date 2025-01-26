@@ -27,7 +27,8 @@ void Codegen::gen_scar() {
               scar_val_dst.set_reg_name(get_reg_name());
               scar_instruction.set_dst(scar_val_dst);
 
-              if (i == exp.get_unop_nodes().size() - 1) {
+              if (static_cast<long unsigned int>(i) ==
+                  exp.get_unop_nodes().size() - 1) {
                 scar_val_src.set_type("Constant");
                 scar_val_src.set_value(exp.get_int_node().get_value());
                 scar_instruction.set_src_ret(scar_val_src);

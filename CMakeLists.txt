@@ -5,6 +5,27 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_COMPILER g++-13)
 
+set(SCARLET_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+
+function(set_basic_compile_options target)
+  target_compile_options(${target} PRIVATE 
+    -Wall
+    -Wextra
+    -Werror
+    -fno-exceptions
+    -fno-rtti
+    -fpie
+    -O3
+  )
+endfunction()
+
+add_subdirectory(token)
+add_subdirectory(regex)
+add_subdirectory(unary_operations)
+add_subdirectory(lexer)
+add_subdirectory(parser)
+add_subdirectory(codegen)
+
 set(SOURCES ./driver/driver.cc)
 
 include_directories(${CMAKE_SOURCE_DIR})
@@ -16,7 +37,20 @@ endif()
 
 add_executable(scarlet ${SOURCES})
 
+add_dependencies(
+    scarlet
+    scarRegex
+    scarLexer
+    scarParser
+    scarCodegen
+  )
+
 target_link_libraries(scarlet ${Boost_LIBRARIES})
+target_link_libraries(scarlet scarRegex)
+target_link_libraries(scarlet scarLexer)
+target_link_libraries(scarlet scarParser)
+target_link_libraries(scarlet scarCodegen)
+target_compile_options(scarlet PRIVATE -O3)
 
 add_custom_target(test-scarlet
     DEPENDS scarlet
