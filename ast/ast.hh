@@ -3,8 +3,8 @@
 #include <optional>
 #include <string>
 #include <token/token.hh>
-#include <vector>
 #include <unary_operations/unop.hh>
+#include <vector>
 /*
 
 Grammar:
@@ -52,9 +52,7 @@ private:
 public:
   std::string get_AST_name() override { return "Unop"; }
   std::string get_op() { return to_string_unop(op); }
-  void set_op(UNOP unop){ 
-    this->op = unop;
-   }
+  void set_op(UNOP unop) { this->op = unop; }
 };
 
 class AST_exp_Node : public AST_Node {
