@@ -4,8 +4,9 @@ Date - 25th Jan 2025
 3. (Lexer.cc) Alternative to erasing the file_contents text repeatedly? DONE
 4. (lexer.cc) Take characters from filestream. DONE
 5. (parser.cc) {Line:125} unop set_op can be enum also.
-6. Generate txt file for scar.
+6. Generate txt file for scar. DONE {Not needed as it will incur a lot of overhead and serves no purpose}
 7. Create static library for lexer, parser, codegen.
+8. (scar.hh) {Line:60} Need to implement instruction of 2 source 1 dst.
 
 Design Decision:
 Date - 25th Jan 2025
