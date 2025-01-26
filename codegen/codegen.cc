@@ -269,8 +269,18 @@ void Codegen::codegen() {
   std::stringstream assembly;
 
   for (auto funcs : scasm.get_functions()) {
-    assembly << "\t.globl " << funcs.get_name() << "\n";
-    assembly << funcs.get_name() << ":\n";
+#ifdef __aarch64__
+      if(funcs.get_name() == "main"){
+        assembly << "\t.globl " << "_main" << "\n";
+        assembly << "_main" << ":\n";
+      }else{
+        assembly << "\t.globl " << funcs.get_name() << "\n";
+        assembly << funcs.get_name() << ":\n";
+      }
+#else
+      assembly << "\t.globl " << funcs.get_name() << "\n";
+      assembly << funcs.get_name() << ":\n";
+#endif
     assembly << "\tpushq %rbp\n";
     assembly << "\tmovq %rsp, %rbp\n";
     for (auto instr : funcs.get_instructions()) {
@@ -323,8 +333,9 @@ void Codegen::codegen() {
       }
     }
   }
-
-  assembly << "\t.section    .note.GNU-stack,\"\",@progbits\n";
+#ifndef __aarch64__
+    assembly << "\t.section    .note.GNU-stack,\"\",@progbits\n";
+#endif
 
   std::ofstream file(file_name);
   if (file.is_open()) {
