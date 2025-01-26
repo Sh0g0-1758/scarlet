@@ -17,7 +17,7 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt update
-        sudo apt install clang clang++ libboost-all-dev
+        sudo apt install clang libboost-all-dev
         
     - name: Build scarlet
       run: |
