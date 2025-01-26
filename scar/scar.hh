@@ -18,8 +18,8 @@ val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate
 
 */
-namespace scarlet{
-  namespace scar{
+namespace scarlet {
+namespace scar {
 class scar {
 public:
   virtual std::string get_scar_name() { return "scar"; }
@@ -57,7 +57,7 @@ public:
 class scar_Instruction_Node : public scar {
 private:
   std::string type;
-  unop::UNOP op;               // When the instruction is not a return instruction
+  unop::UNOP op;         // When the instruction is not a return instruction
   scar_Val_Node src_ret; // This can act as both the source and return value
   scar_Val_Node dst;
 
@@ -105,6 +105,6 @@ public:
     functions.emplace_back(function);
   }
 };
-    
-  }
-}
+
+} // namespace scar
+} // namespace scarlet

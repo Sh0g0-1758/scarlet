@@ -19,8 +19,8 @@ Grammar:
 <int> ::= ? A constant token ?
 
 */
-namespace scarlet{
-  namespace ast{
+namespace scarlet {
+namespace ast {
 
 class AST_Node {
 public:
@@ -121,5 +121,5 @@ public:
     functions.emplace_back(function);
   }
 };
-  }
-}
+} // namespace ast
+} // namespace scarlet

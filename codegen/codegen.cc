@@ -1,6 +1,6 @@
 #include "codegen.hh"
-namespace scarlet{
-  namespace codegen{
+namespace scarlet {
+namespace codegen {
 
 void Codegen::gen_scar() {
   scar::scar_Program_Node scar_program;
@@ -349,5 +349,5 @@ void Codegen::codegen() {
     success = false;
   }
 }
-  }
-}
+} // namespace codegen
+} // namespace scarlet

@@ -10,8 +10,6 @@
 #include <token/token.hh>
 #include <vector>
 
-
-
 // clang-format off
 /*
 
@@ -39,8 +37,8 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 
 */
 // clang-format on
-namespace scarlet{
-  namespace codegen{
+namespace scarlet {
+namespace codegen {
 enum class Regiser { EAX };
 
 class Codegen {
@@ -78,5 +76,5 @@ public:
   void pretty_print();
 };
 
-  }
-}
+} // namespace codegen
+} // namespace scarlet

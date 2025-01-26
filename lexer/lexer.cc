@@ -1,6 +1,6 @@
 #include "lexer.hh"
-namespace scarlet{
-  namespace lexer{
+namespace scarlet {
+namespace lexer {
 
 void lexer::tokenize() {
   std::ifstream file(file_path);
@@ -96,5 +96,5 @@ void lexer::print_tokens() {
 }
 
 std::vector<token::Token> lexer::get_tokens() { return tokens; }
-  }
-}
+} // namespace lexer
+} // namespace scarlet

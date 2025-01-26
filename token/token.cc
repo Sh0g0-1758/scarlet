@@ -1,7 +1,7 @@
 #include "token.hh"
 
-namespace scarlet{
-namespace token{
+namespace scarlet {
+namespace token {
 void print_token(TOKEN token) {
   switch (token) {
   case TOKEN::IDENTIFIER:
@@ -102,5 +102,5 @@ std::string to_string(TOKEN token) {
   }
   return "INVALID";
 }
-}
-}
+} // namespace token
+} // namespace scarlet

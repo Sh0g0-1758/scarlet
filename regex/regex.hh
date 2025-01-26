@@ -1,11 +1,11 @@
 #pragma once
 
-namespace scarlet{
-  namespace regex{
+namespace scarlet {
+namespace regex {
 class Regex {
 public:
   bool matchWord(char c);
   bool matchDigit(char c);
 };
-  }
-}
+} // namespace regex
+} // namespace scarlet

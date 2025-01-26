@@ -23,8 +23,8 @@ Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(int)
 */
 
 // clang-format on
-namespace scarlet{
-  namespace scasm{
+namespace scarlet {
+namespace scasm {
 class scasm {
 public:
   virtual std::string get_scasm_name() { return "scasm"; }
@@ -90,5 +90,5 @@ public:
   }
 };
 
-  }
-}
+} // namespace scasm
+} // namespace scarlet

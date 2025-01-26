@@ -1,6 +1,6 @@
 #include "parser.hh"
-namespace scarlet{
-  namespace parser{
+namespace scarlet {
+namespace parser {
 #define EXPECT(tok)                                                            \
   if (!success) {                                                              \
     return;                                                                    \
@@ -41,7 +41,7 @@ namespace scarlet{
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
-  ast::AST_int_Node int_node;                                                       \
+  ast::AST_int_Node int_node;                                                  \
   int_node.set_value(tokens[0].get_value().value());                           \
   exp.set_int_node(int_node);                                                  \
   tokens.erase(tokens.begin());
@@ -58,7 +58,7 @@ namespace scarlet{
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
-  ast::AST_identifier_Node identifier;                                              \
+  ast::AST_identifier_Node identifier;                                         \
   identifier.set_identifier(tokens[0].get_value().value());                    \
   function.set_identifier(identifier);                                         \
   tokens.erase(tokens.begin());
@@ -72,7 +72,8 @@ void parser::parse_program(std::vector<token::Token> tokens) {
   this->program = program;
 }
 
-ast::AST_Function_Node parser::parse_function(std::vector<token::Token> &tokens) {
+ast::AST_Function_Node
+parser::parse_function(std::vector<token::Token> &tokens) {
   ast::AST_Function_Node function;
   EXPECT_FUNC(token::TOKEN::INT);
   parse_identifier(tokens, function);
@@ -96,7 +97,8 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
   function.add_statement(statement);
 }
 
-void parser::parse_exp(std::vector<token::Token> &tokens, ast::AST_exp_Node &exp) {
+void parser::parse_exp(std::vector<token::Token> &tokens,
+                       ast::AST_exp_Node &exp) {
   if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
     parse_int(tokens, exp);
   } else if (tokens[0].get_token() == token::TOKEN::TILDE or
@@ -115,7 +117,8 @@ void parser::parse_exp(std::vector<token::Token> &tokens, ast::AST_exp_Node &exp
   }
 }
 
-void parser::parse_unary_op(std::vector<token::Token> &tokens, ast::AST_exp_Node &exp) {
+void parser::parse_unary_op(std::vector<token::Token> &tokens,
+                            ast::AST_exp_Node &exp) {
   if (tokens[0].get_token() == token::TOKEN::TILDE) {
     ast::AST_unop_Node unop;
     // TODO: This should be an enum
@@ -139,7 +142,8 @@ void parser::parse_identifier(std::vector<token::Token> &tokens,
   EXPECT_IDENTIFIER(token::TOKEN::IDENTIFIER);
 }
 
-void parser::parse_int(std::vector<token::Token> &tokens, ast::AST_exp_Node &exp) {
+void parser::parse_int(std::vector<token::Token> &tokens,
+                       ast::AST_exp_Node &exp) {
   EXPECT_INT(token::TOKEN::CONSTANT);
 }
 
@@ -187,5 +191,5 @@ void parser::pretty_print() {
   std::cerr << ")" << std::endl;
 }
 
-  }
-}
+} // namespace parser
+} // namespace scarlet
