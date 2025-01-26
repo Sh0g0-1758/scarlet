@@ -3,7 +3,8 @@ project(Scarlet LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_COMPILER g++-13)
+
+message(STATUS "Using ${CMAKE_CXX_COMPILER} (version ${CMAKE_CXX_COMPILER_VERSION}) to build Scarlet")
 
 set(SCARLET_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 execute_process(
@@ -22,7 +23,6 @@ function(set_basic_compile_options target)
     -Wall
     -Wextra
     -Werror
-    -fno-exceptions
     -fno-rtti
     -fpie
     -O3
@@ -46,6 +46,12 @@ if(Boost_FOUND)
 endif()
 
 add_executable(scarlet ${SOURCES})
+target_compile_options(scarlet PRIVATE 
+    -O3
+    -Wall
+    -Wextra
+    -Werror
+)
 
 add_dependencies(
     scarlet
