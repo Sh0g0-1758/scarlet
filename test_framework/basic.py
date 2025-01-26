@@ -8,6 +8,7 @@ import platform
 import subprocess
 import sys
 import unittest
+import os
 from enum import Flag, auto, unique
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Type
@@ -395,6 +396,11 @@ class TestChapter(unittest.TestCase):
         # run the executable
         # TODO cleaner handling if executable doesn't exist? or check that it exists above?
         exe = source_file.parent.parent.parent.parent / source_file.with_suffix("").name
+        parts = list(exe.parts)
+        index = parts.index("scarlet")
+        parts.insert(index + 1, "build")
+        exe = Path(*parts)
+
         result = subprocess.run(
             [exe], check=False, capture_output=True, text=True, timeout=10.0
         )
