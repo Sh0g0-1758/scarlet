@@ -542,7 +542,7 @@ RegexEngine::matchInternal(shared_ptr<RE> ast, const string &input_string,
       //  dynamic_pointer_cast<GroupNode>(ast)->children.size() :
       //  dynamic_pointer_cast<OrNode>(ast) ?
       //  dynamic_pointer_cast<OrNode>(ast)->children.size() : 0)<<endl;
-      //cout<<"Inside the main while loop, i = "<< i << ", str_i = " <<
+      // cout << "Inside the main while loop, i = " << i << ", str_i = " <<
       // str_i<< " and "<< input_string[str_i]<<endl;
       // curr_node = dc<GroupNode*>(ast.get()) ?
       // dc<GroupNode*>(ast.get())->children[i] :
@@ -744,8 +744,6 @@ RegexEngine::matchInternal(shared_ptr<RE> ast, const string &input_string,
               (max_matched_idx == -1 || new_str_i <= max_matched_idx)) {
             if ((new_str_i - tmp_str_i == 0) && j >= min_) {
               max_matched_idx = -1;
-              //cout<<"isGroupNode: Breaking inner while loop due to zero
-              // consumption."<<endl;
               break;
             }
             chars_consumed_list.push_back(new_str_i - tmp_str_i);
