@@ -9,7 +9,8 @@ set_basic_compile_options(scarCodegen)
 add_dependencies(
     scarCodegen
     scarToken
+    scar
   )
 
 target_include_directories(scarCodegen PUBLIC ${SCARLET_SOURCE_DIR})
-target_link_libraries(scarCodegen PUBLIC scarToken)
+target_link_libraries(scarCodegen PUBLIC scarToken scar)

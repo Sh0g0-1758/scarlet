@@ -29,6 +29,10 @@ namespace scarlet {
 namespace scar {
 
 enum class scar_instruction_type { RETURN, UNARY, BINARY };
+enum class scar_val_type { CONSTANT, VAR };
+
+std::string to_string(scar_instruction_type type);
+std::string to_string(scar_val_type type);
 
 class scar_Identifier_Node {
 private:
@@ -42,14 +46,14 @@ public:
 
 class scar_Val_Node {
 private:
-  std::string type;
+  scar_val_type type;
   std::string val;
   std::string reg_name;
 
 public:
   std::string get_scar_name() { return "Val"; }
-  std::string get_type() { return type; }
-  void set_type(std::string type) { this->type = std::move(type); }
+  scar_val_type get_type() { return type; }
+  void set_type(scar_val_type type) { this->type = std::move(type); }
   std::string get_value() { return val; }
   void set_value(std::string value) { this->val = std::move(value); }
   std::string get_reg() { return reg_name; }

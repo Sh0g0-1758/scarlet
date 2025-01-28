@@ -29,6 +29,7 @@ function(set_basic_compile_options target)
   )
 endfunction()
 
+add_subdirectory(scar)
 add_subdirectory(token)
 add_subdirectory(regex)
 add_subdirectory(unary_operations)
@@ -56,6 +57,7 @@ target_compile_options(scarlet PRIVATE
 
 add_dependencies(
     scarlet
+    scar
     scarRegex
     scarLexer
     scarParser
@@ -67,6 +69,7 @@ target_link_libraries(scarlet scarRegex)
 target_link_libraries(scarlet scarLexer)
 target_link_libraries(scarlet scarParser)
 target_link_libraries(scarlet scarCodegen)
+target_link_libraries(scarlet scar)
 target_compile_options(scarlet PRIVATE -O3)
 
 add_custom_target(test-scarlet
