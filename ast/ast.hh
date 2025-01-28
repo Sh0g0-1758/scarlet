@@ -99,13 +99,13 @@ exp ==
 
          binop
         /     \
-      exp     factor
+      exp     exp
 
 exp ==
 
          binop
         /     \
-      factor  factor
+      factor  exp
 
 We say that this is left assosciative because the expression is always evaluated
 from left to right.
@@ -114,8 +114,8 @@ from left to right.
 class AST_exp_Node {
 private:
   AST_binop_Node binop;
-  AST_factor_Node factor_left;
-  AST_factor_Node factor_right;
+  AST_factor_Node factor;
+  AST_exp_Node *right;
   AST_exp_Node *left;
 
 public:
@@ -124,14 +124,13 @@ public:
   void set_binop_node(AST_binop_Node &&binop) {
     this->binop = std::move(binop);
   }
-  AST_factor_Node &get_left_factor_node() { return factor_left; }
-  void set_left_factor_node(AST_factor_Node &&factor) {
-    this->factor_left = std::move(factor);
+
+  AST_factor_Node &get_factor_node() { return factor; }
+  void set_factor_node(AST_factor_Node &&factor) {
+    this->factor = std::move(factor);
   }
-  AST_factor_Node &get_right_factor_node() { return factor_right; }
-  void set_right_factor_node(AST_factor_Node &&factor) {
-    this->factor_right = std::move(factor);
-  }
+  void set_right(AST_exp_Node *right) { this->right = right; }
+  AST_exp_Node *get_right() { return right; }
   void set_left(AST_exp_Node *left) { this->left = left; }
   AST_exp_Node *get_left() { return left; }
 };

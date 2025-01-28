@@ -91,7 +91,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
   ast::AST_Statement_Node statement("Return");
   EXPECT(token::TOKEN::RETURN);
   ast::AST_exp_Node *exp = new ast::AST_exp_Node();
-  parse_exp(tokens, exp);
+  parse_exp(tokens, &exp);
   statement.add_exp(exp);
   EXPECT(token::TOKEN::SEMICOLON);
   function.add_statement(statement);
@@ -108,7 +108,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     ast::AST_exp_Node *exp = new ast::AST_exp_Node();
-    parse_exp(tokens, exp);
+    parse_exp(tokens, &exp);
     factor.set_exp_node(exp);
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
   } else {
@@ -120,23 +120,26 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
 }
 
 void parser::parse_exp(std::vector<token::Token> &tokens,
-                       ast::AST_exp_Node *root_exp) {
-  ast::AST_factor_Node lfactor;
-  parse_factor(tokens, lfactor);
-  root_exp->set_left_factor_node(std::move(lfactor));
-  while (tokens[0].get_token() == token::TOKEN::PLUS or
-         tokens[0].get_token() == token::TOKEN::HYPHEN) {
+                       ast::AST_exp_Node **root_exp, int prec) {
+  ast::AST_factor_Node factor;
+  parse_factor(tokens, factor);
+  std::cout << "Factor: " << factor.get_int_node().get_value() << std::endl;
+  (*root_exp)->set_factor_node(std::move(factor));
+  while (token::is_binary_op(tokens[0].get_token()) and
+         token::get_binop_prec(tokens[0].get_token()) >= prec) {
+    int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
     ast::AST_binop_Node binop;
     parse_binop(tokens, binop);
-    root_exp->set_binop_node(std::move(binop));
-    ast::AST_factor_Node rfactor;
-    parse_factor(tokens, rfactor);
-    root_exp->set_right_factor_node(std::move(rfactor));
-    if (tokens[0].get_token() == token::TOKEN::PLUS or
-        tokens[0].get_token() == token::TOKEN::HYPHEN) {
+    (*root_exp)->set_binop_node(std::move(binop));
+    ast::AST_exp_Node *rexp = new ast::AST_exp_Node();
+    parse_exp(tokens, &rexp, new_prec);
+    (*root_exp)->set_right(rexp);
+    if (token::is_binary_op(tokens[0].get_token()) and
+        token::get_binop_prec(tokens[0].get_token()) >= prec) {
       ast::AST_exp_Node *new_root_exp = new ast::AST_exp_Node();
-      new_root_exp->set_left(root_exp);
-      root_exp = new_root_exp;
+      new_root_exp->set_left(*root_exp);
+      (*root_exp) = new_root_exp;
+      std::cerr << new_root_exp << std::endl;
     }
   }
 }
@@ -241,15 +244,15 @@ void parser::pretty_print_exp(ast::AST_exp_Node *exp) {
     std::cerr << "\t\t\t\tBinop("
               << binop::to_string_binop(exp->get_binop_node().get_op()) << " ,";
     if (exp->get_left() == nullptr) {
-      pretty_print_factor(exp->get_left_factor_node());
+      pretty_print_factor(exp->get_factor_node());
     } else {
       std::cerr << "Earlier, ";
     }
-    pretty_print_factor(exp->get_right_factor_node());
+    pretty_print_exp(exp->get_right());
     std::cerr << ")" << std::endl;
   } else {
     std::cerr << "\t\t\t\t";
-    pretty_print_factor(exp->get_left_factor_node());
+    pretty_print_factor(exp->get_factor_node());
     std::cerr << std::endl;
   }
 }

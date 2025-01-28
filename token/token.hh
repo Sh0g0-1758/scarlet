@@ -44,5 +44,8 @@ public:
 
 void print_token(TOKEN token);
 std::string to_string(TOKEN token);
+bool is_unary_op(TOKEN token);
+bool is_binary_op(TOKEN token);
+int get_binop_prec(TOKEN token);
 } // namespace token
 } // namespace scarlet

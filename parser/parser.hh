@@ -19,7 +19,8 @@ private:
                        ast::AST_Function_Node &function);
   void parse_factor(std::vector<token::Token> &tokens,
                     ast::AST_factor_Node &factor);
-  void parse_exp(std::vector<token::Token> &tokens, ast::AST_exp_Node *exp);
+  void parse_exp(std::vector<token::Token> &tokens, ast::AST_exp_Node **exp,
+                 int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,
                       ast::AST_factor_Node &factor);
   void parse_identifier(std::vector<token::Token> &tokens,
