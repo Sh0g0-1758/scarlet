@@ -123,7 +123,6 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
                        ast::AST_exp_Node **root_exp, int prec) {
   ast::AST_factor_Node factor;
   parse_factor(tokens, factor);
-  std::cout << "Factor: " << factor.get_int_node().get_value() << std::endl;
   (*root_exp)->set_factor_node(std::move(factor));
   while (token::is_binary_op(tokens[0].get_token()) and
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
@@ -139,7 +138,6 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
       ast::AST_exp_Node *new_root_exp = new ast::AST_exp_Node();
       new_root_exp->set_left(*root_exp);
       (*root_exp) = new_root_exp;
-      std::cerr << new_root_exp << std::endl;
     }
   }
 }
@@ -221,12 +219,11 @@ void parser::pretty_print_factor(ast::AST_factor_Node &factor) {
   if (!factor.get_unop_nodes().empty()) {
     std::cerr << "Unop( ";
     for (auto unop : factor.get_unop_nodes()) {
-      std::cerr << unop.get_op() << ", ";
+      std::cerr << unop::to_string(unop.get_op()) << ", ";
     }
   }
   if (factor.get_exp_node() != nullptr) {
     pretty_print_exp(factor.get_exp_node());
-    return;
   } else {
     std::cerr << factor.get_int_node().get_AST_name() << "("
               << factor.get_int_node().get_value() << ")";
@@ -242,7 +239,7 @@ void parser::pretty_print_exp(ast::AST_exp_Node *exp) {
   pretty_print_exp(exp->get_left());
   if (exp->get_binop_node().get_op() != binop::BINOP::UNKNOWN) {
     std::cerr << "\t\t\t\tBinop("
-              << binop::to_string_binop(exp->get_binop_node().get_op()) << " ,";
+              << binop::to_string(exp->get_binop_node().get_op()) << " ,";
     if (exp->get_left() == nullptr) {
       pretty_print_factor(exp->get_factor_node());
     } else {

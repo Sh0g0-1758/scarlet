@@ -4,22 +4,31 @@
 
 #pragma once
 
+#include "binary_operations/binop.hh"
 #include "unary_operations/unop.hh"
 #include <string>
 #include <vector>
+
+// clang-format off
 
 /*
 Grammar:
 
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
-instruction = Return(val) | Unary(unary_operator, val src, val dst)
+instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst)
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate
+binary_operator = Add | Subtract | Multiply | Divide | Remainder
 
 */
+
+// clang-format on
+
 namespace scarlet {
 namespace scar {
+
+enum class scar_instruction_type { RETURN, UNARY, BINARY };
 
 class scar_Identifier_Node {
 private:
@@ -51,21 +60,27 @@ public:
 
 class scar_Instruction_Node {
 private:
-  std::string type;
-  unop::UNOP op;         // When the instruction is not a return instruction
+  scar_instruction_type type; // Return, Unary, Binary
+  unop::UNOP unop;            // When the instruction is a unary instruction
+  binop::BINOP binop;         // When the instruction is a binary instruction
   scar_Val_Node src_ret; // This can act as both the source and return value
+  scar_Val_Node src2;
   scar_Val_Node dst;
 
 public:
   std::string get_scar_name() { return "Instruction"; }
-  std::string get_type() { return type; }
-  void set_type(std::string type) { this->type = std::move(type); }
-  unop::UNOP get_op() { return op; }
-  void set_op(unop::UNOP op) { this->op = op; }
+  scar_instruction_type get_type() { return type; }
+  void set_type(scar_instruction_type type) { this->type = std::move(type); }
+  unop::UNOP get_unop() { return unop; }
+  void set_unop(unop::UNOP unop) { this->unop = unop; }
+  binop::BINOP get_binop() { return binop; }
+  void set_binop(binop::BINOP binop) { this->binop = binop; }
   scar_Val_Node &get_src_ret() { return src_ret; }
   void set_src_ret(scar_Val_Node src_ret) {
     this->src_ret = std::move(src_ret);
   }
+  scar_Val_Node &get_src2() { return src2; }
+  void set_src2(scar_Val_Node src2) { this->src2 = std::move(src2); }
   scar_Val_Node &get_dst() { return dst; }
   void set_dst(scar_Val_Node dst) { this->dst = std::move(dst); }
 };

@@ -3,7 +3,7 @@
 namespace scarlet {
 namespace binop {
 
-std::string to_string_binop(BINOP binop) {
+std::string to_string(BINOP binop) {
   switch (binop) {
   case ADD:
     return "ADD";

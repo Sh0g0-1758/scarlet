@@ -50,7 +50,7 @@ private:
 
 public:
   std::string get_AST_name() { return "Unop"; }
-  std::string get_op() { return unop::to_string_unop(op); }
+  unop::UNOP get_op() { return op; }
   void set_op(unop::UNOP unop) { this->op = unop; }
 };
 
@@ -92,8 +92,9 @@ members:
 
 1. Binary Operator (binop): The operator (e.g., +, -, *, /) that combines two
 operands
-2. Left Factor and Right Factor: The operands of the binary operator
+2. Factor: A factor node that represents a single value
 3. Left Child: A recursive reference to another expression node
+4. Right Child: A recursive reference to another expression node
 
 exp ==
 
