@@ -32,9 +32,10 @@ endfunction()
 add_subdirectory(token)
 add_subdirectory(regex)
 add_subdirectory(unary_operations)
+add_subdirectory(binary_operations)
 add_subdirectory(lexer)
 add_subdirectory(parser)
-add_subdirectory(codegen)
+# add_subdirectory(codegen)
 
 set(SOURCES ./driver/driver.cc)
 
@@ -58,14 +59,14 @@ add_dependencies(
     scarRegex
     scarLexer
     scarParser
-    scarCodegen
+    # scarCodegen
   )
 
 target_link_libraries(scarlet ${Boost_LIBRARIES})
 target_link_libraries(scarlet scarRegex)
 target_link_libraries(scarlet scarLexer)
 target_link_libraries(scarlet scarParser)
-target_link_libraries(scarlet scarCodegen)
+# target_link_libraries(scarlet scarCodegen)
 target_compile_options(scarlet PRIVATE -O3)
 
 add_custom_target(test-scarlet

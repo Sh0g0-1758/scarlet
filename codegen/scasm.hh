@@ -25,26 +25,20 @@ Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(int)
 // clang-format on
 namespace scarlet {
 namespace scasm {
-class scasm {
-public:
-  virtual std::string get_scasm_name() { return "scasm"; }
-  virtual ~scasm() = default;
-};
-
-class scasm_operand : public scasm {
+class scasm_operand {
 private:
   std::string type;
   std::string value;
 
 public:
-  std::string get_scasm_name() override { return "Operand"; }
+  std::string get_scasm_name() { return "Operand"; }
   std::string get_type() { return type; }
   void set_type(std::string type) { this->type = std::move(type); }
   std::string get_value() { return value; }
   void set_value(std::string value) { this->value = std::move(value); }
 };
 
-class scasm_instruction : public scasm {
+class scasm_instruction {
 private:
   std::string type;
   unop::UNOP op;
@@ -52,7 +46,7 @@ private:
   scasm_operand dst;
 
 public:
-  std::string get_scasm_name() override { return "Instruction"; }
+  std::string get_scasm_name() { return "Instruction"; }
   std::string get_type() { return type; }
   void set_type(std::string type) { this->type = std::move(type); }
   unop::UNOP get_op() { return op; }
@@ -63,13 +57,13 @@ public:
   void set_dst(scasm_operand dst) { this->dst = std::move(dst); }
 };
 
-class scasm_function : public scasm {
+class scasm_function {
 private:
   std::string name;
   std::vector<scasm_instruction> body;
 
 public:
-  std::string get_scasm_name() override { return "Function"; }
+  std::string get_scasm_name() { return "Function"; }
   std::string get_name() { return name; }
   void set_name(std::string name) { this->name = std::move(name); }
   std::vector<scasm_instruction> &get_instructions() { return body; }
@@ -78,12 +72,12 @@ public:
   }
 };
 
-class scasm_program : public scasm {
+class scasm_program {
 private:
   std::vector<scasm_function> functions;
 
 public:
-  std::string get_scasm_name() override { return "Program"; }
+  std::string get_scasm_name() { return "Program"; }
   std::vector<scasm_function> &get_functions() { return functions; }
   void add_function(scasm_function function) {
     functions.emplace_back(std::move(function));

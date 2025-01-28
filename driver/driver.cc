@@ -5,7 +5,7 @@
 #include <vector>
 
 #include <cmd/cmd.hh>
-#include <codegen/codegen.hh>
+// #include <codegen/codegen.hh>
 #include <lexer/lexer.hh>
 #include <parser/parser.hh>
 
@@ -117,93 +117,94 @@ int main(int argc, char *argv[]) {
   }
 
   // CODEGEN
-  scarlet::codegen::Codegen codegen(gnu.get_program());
+  // scarlet::codegen::Codegen codegen(gnu.get_program());
 
-  codegen.gen_scar();
+  // codegen.gen_scar();
 
-  if (cmd.has_option("tacky")) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
+  // if (cmd.has_option("tacky")) {
+  //   result = system(std::format("rm {}.scp", file_name).c_str());
 
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
-    codegen.pretty_print();
-    return 0;
-  }
-  codegen.set_file_name(std::format("{}.s", file_name));
-  codegen.codegen();
+  //   if (result != 0) {
+  //     std::cerr
+  //         << "[ERROR]: Unable to delete the intermediate preprocessed file"
+  //         << std::endl;
+  //     return 1;
+  //   }
+  //   codegen.pretty_print();
+  //   return 0;
+  // }
+  // codegen.set_file_name(std::format("{}.s", file_name));
+  // codegen.codegen();
 
-  if (!codegen.is_success()) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
+  // if (!codegen.is_success()) {
+  //   result = system(std::format("rm {}.scp", file_name).c_str());
 
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
-    std::cerr << "[ERROR]: Code generation failed" << std::endl;
-    return 1;
-  }
+  //   if (result != 0) {
+  //     std::cerr
+  //         << "[ERROR]: Unable to delete the intermediate preprocessed file"
+  //         << std::endl;
+  //     return 1;
+  //   }
+  //   std::cerr << "[ERROR]: Code generation failed" << std::endl;
+  //   return 1;
+  // }
 
-  if (cmd.has_option("codegen")) {
-    codegen.pretty_print();
-    result = system(std::format("rm {}.scp", file_name).c_str());
+  // if (cmd.has_option("codegen")) {
+  //   codegen.pretty_print();
+  //   result = system(std::format("rm {}.scp", file_name).c_str());
 
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
+  //   if (result != 0) {
+  //     std::cerr
+  //         << "[ERROR]: Unable to delete the intermediate preprocessed file"
+  //         << std::endl;
+  //     return 1;
+  //   }
 
-    result = system(std::format("rm {}.s", file_name).c_str());
-    if (result != 0) {
-      std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
-                << std::endl;
-      return 1;
-    }
-    return 0;
-  }
+  //   result = system(std::format("rm {}.s", file_name).c_str());
+  //   if (result != 0) {
+  //     std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
+  //               << std::endl;
+  //     return 1;
+  //   }
+  //   return 0;
+  // }
 
-  // delete the intermediate preprocessed file
-  result = system(std::format("rm {}.scp", file_name).c_str());
+  // // delete the intermediate preprocessed file
+  // result = system(std::format("rm {}.scp", file_name).c_str());
 
-  if (result != 0) {
-    std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file"
-              << std::endl;
-    return 1;
-  }
+  // if (result != 0) {
+  //   std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed
+  //   file"
+  //             << std::endl;
+  //   return 1;
+  // }
 
-  // convert the assembly file to object file
-  std::string output_file_name = file_name;
-  if (cmd.has_option("output-file")) {
-    output_file_name = cmd.get_option<std::string>("output-file");
-  }
-  result = system(
-      std::format("gcc {}.s -o {}", file_name, output_file_name).c_str());
+  // // convert the assembly file to object file
+  // std::string output_file_name = file_name;
+  // if (cmd.has_option("output-file")) {
+  //   output_file_name = cmd.get_option<std::string>("output-file");
+  // }
+  // result = system(
+  //     std::format("gcc {}.s -o {}", file_name, output_file_name).c_str());
 
-  if (result != 0) {
-    std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
-    return 1;
-  }
+  // if (result != 0) {
+  //   std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
+  //   return 1;
+  // }
 
-  // only generate the assembly file
-  if (cmd.has_option("asm")) {
-    std::cout << "[LOG]: Assembly file generated successfully" << std::endl;
-    return 0;
-  }
-  // delete the intermediate assembly file
-  result = system(std::format("rm {}.s", file_name).c_str());
+  // // only generate the assembly file
+  // if (cmd.has_option("asm")) {
+  //   std::cout << "[LOG]: Assembly file generated successfully" << std::endl;
+  //   return 0;
+  // }
+  // // delete the intermediate assembly file
+  // result = system(std::format("rm {}.s", file_name).c_str());
 
-  if (result != 0) {
-    std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
-              << std::endl;
-    return 1;
-  }
+  // if (result != 0) {
+  //   std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
+  //             << std::endl;
+  //   return 1;
+  // }
 
   std::cout << "[LOG]: Scarlet ran Successfully" << std::endl;
 
