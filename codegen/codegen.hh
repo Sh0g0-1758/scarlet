@@ -34,6 +34,11 @@ Prologue:   pushq %rbp          # Stores the value of the current base pointer o
             subq  $n, %rsp      # Decrement the stack pointer n * 8 bytes. This is where local variables are stored
 Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
             popq  %rbp          # Restores the base pointer to the original base pointer, thus making the earlier stack frame usable
+3. binary operations take as input: op, src and dst where:
+    3.a op is an instruction
+    3.b src is an immediate value, register or memory address
+    3.c dst is a register or memory address
+4. assembly instructions take l suffix if their operands are 32 bits and q suffix if their operands are 64 bits. 
 
 */
 // clang-format on

@@ -37,15 +37,21 @@ public:
   }
 
   void parse(int ac, char *av[]) {
-    po::store(po::command_line_parser(ac, av)
-                  .options(all_options)
-                  .positional(pos_desc)
-                  .run(),
-              vm);
-    po::notify(vm);
+    try {
+      po::store(po::command_line_parser(ac, av)
+                    .options(all_options)
+                    .positional(pos_desc)
+                    .run(),
+                vm);
+      po::notify(vm);
 
-    if (vm.count("input-file")) {
-      input_file = vm["input-file"].as<std::string>();
+      if (vm.count("input-file")) {
+        input_file = vm["input-file"].as<std::string>();
+      }
+    } catch (po::error &e) {
+      std::cerr << "ERROR: " << e.what() << std::endl;
+      std::cerr << desc << std::endl;
+      exit(1);
     }
   }
 
