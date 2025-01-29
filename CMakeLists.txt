@@ -96,4 +96,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage lex
     COMMAND echo "Running parser-3 test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage parse
+    COMMAND echo "Running scar-3 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage tacky
 )
