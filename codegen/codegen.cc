@@ -331,9 +331,6 @@ void Codegen::gen_scasm() {
         } else if (inst.get_binop() == binop::BINOP::LEFT_SHIFT or
                    inst.get_binop() == binop::BINOP::RIGHT_SHIFT) {
           // Mov(src1,dst)
-          // if src2==CONST
-          // Binary(binary operand, src2, dst)
-          // else
           // Mov(src2, Reg(CX))
           // Binary(binary operand, CL, dst)
 
@@ -348,47 +345,37 @@ void Codegen::gen_scasm() {
           scasm_inst.set_dst(scasm_dst);
           scasm_func.add_instruction(scasm_inst);
 
+          scasm::scasm_instruction scasm_inst2{};
+          scasm_inst2.set_type(scasm::instruction_type::MOV);
+          scasm::scasm_operand scasm_src_2{};
           if (inst.get_src2().get_type() == scar::val_type::CONSTANT) {
-            scasm::scasm_instruction scasm_inst2{};
-            scasm_inst2.set_type(scasm::instruction_type::BINARY);
-            scasm_inst2.set_binop(
-                scasm::scar_binop_to_scasm_binop(inst.get_binop()));
-            scasm::scasm_operand scasm_src2{};
-            scasm_src2.set_type(scasm::operand_type::IMM);
-            scasm_src2.set_imm(stoi(inst.get_src2().get_value()));
-            scasm_inst2.set_src(scasm_src2);
-            scasm::scasm_operand scasm_dst2{};
-            scasm_dst2.set_type(scasm::operand_type::PSEUDO);
-            scasm_dst2.set_identifier_stack(inst.get_dst().get_reg());
-            scasm_inst2.set_dst(scasm_dst2);
-            scasm_func.add_instruction(scasm_inst2);
-          } else {
-            scasm::scasm_instruction scasm_inst2{};
-            scasm_inst2.set_type(scasm::instruction_type::MOV);
-            scasm::scasm_operand scasm_src_2{};
+            scasm_src_2.set_type(scasm::operand_type::IMM);
+            scasm_src_2.set_imm(stoi(inst.get_src2().get_value()));
+          } else if (inst.get_src2().get_type() == scar::val_type::VAR) {
             scasm_src_2.set_type(scasm::operand_type::PSEUDO);
             scasm_src_2.set_identifier_stack(inst.get_src2().get_reg());
-            scasm_inst2.set_src(scasm_src_2);
-            scasm::scasm_operand scasm_dst2{};
-            scasm_dst2.set_type(scasm::operand_type::REG);
-            scasm_dst2.set_reg(scasm::register_type::CX);
-            scasm_inst2.set_dst(scasm_dst2);
-            scasm_func.add_instruction(scasm_inst2);
-
-            scasm::scasm_instruction scasm_inst3{};
-            scasm_inst3.set_type(scasm::instruction_type::BINARY);
-            scasm_inst3.set_binop(
-                scasm::scar_binop_to_scasm_binop(inst.get_binop()));
-            scasm::scasm_operand scasm_src3{};
-            scasm_src3.set_type(scasm::operand_type::REG);
-            scasm_src3.set_reg(scasm::register_type::CL);
-            scasm_inst3.set_src(scasm_src3);
-            scasm::scasm_operand scasm_dst3{};
-            scasm_dst3.set_type(scasm::operand_type::PSEUDO);
-            scasm_dst3.set_identifier_stack(inst.get_dst().get_reg());
-            scasm_inst3.set_dst(scasm_dst3);
-            scasm_func.add_instruction(scasm_inst3);
           }
+          scasm_inst2.set_src(scasm_src_2);
+          scasm::scasm_operand scasm_dst2{};
+          scasm_dst2.set_type(scasm::operand_type::REG);
+          scasm_dst2.set_reg(scasm::register_type::CX);
+          scasm_inst2.set_dst(scasm_dst2);
+          scasm_func.add_instruction(scasm_inst2);
+
+          scasm::scasm_instruction scasm_inst3{};
+          scasm_inst3.set_type(scasm::instruction_type::BINARY);
+          scasm_inst3.set_binop(
+              scasm::scar_binop_to_scasm_binop(inst.get_binop()));
+          scasm::scasm_operand scasm_src3{};
+          scasm_src3.set_type(scasm::operand_type::REG);
+          scasm_src3.set_reg(scasm::register_type::CL);
+          scasm_inst3.set_src(scasm_src3);
+          scasm::scasm_operand scasm_dst3{};
+          scasm_dst3.set_type(scasm::operand_type::PSEUDO);
+          scasm_dst3.set_identifier_stack(inst.get_dst().get_reg());
+          scasm_inst3.set_dst(scasm_dst3);
+          scasm_func.add_instruction(scasm_inst3);
+
         } else {
           // Mov(src1, dst)
           // Binary(binary_operator, src2, dst)

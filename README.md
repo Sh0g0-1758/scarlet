@@ -39,6 +39,7 @@ Scarlet currently supports the following architectures:
 - [x] Create a static library for the lexer, parser, and code generation components.
 - [x] Add support for Unary Operations (Neg, Not)
 - [x] Add support for Binary Operations (Add, Sub, Mul, Div, Rem)
+- [x] Add support for Bitwise Binary Operations (And, Or, Xor, LeftShift, RightShift)
 
 ## Contributing Guidelines
 
