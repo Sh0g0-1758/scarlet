@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ast/ast.hh>
-#include <binary_operations/binop.hh>
 #include <fstream>
 #include <map>
 #include <scar/scar.hh>

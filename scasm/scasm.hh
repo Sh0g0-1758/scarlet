@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <binary_operations/binop.hh>
 #include <string>
 #include <unary_operations/unop.hh>
 #include <vector>
@@ -44,6 +45,7 @@ enum class instruction_type {
 enum class register_type { UNKNOWN, AX, DX, R10, R11 };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
+Binop scar_binop_to_scasm_binop(binop::BINOP binop);
 
 class scasm_operand {
 private:
@@ -83,9 +85,9 @@ public:
   Binop get_binop() { return binop; }
   void set_binop(Binop op) { this->binop = op; }
   scasm_operand &get_src() { return src; }
-  void set_src(scasm_operand src) { this->src = std::move(src); }
+  void set_src(scasm_operand src) { this->src = src; }
   scasm_operand &get_dst() { return dst; }
-  void set_dst(scasm_operand dst) { this->dst = std::move(dst); }
+  void set_dst(scasm_operand dst) { this->dst = dst; }
 };
 
 class scasm_function {
