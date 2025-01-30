@@ -19,9 +19,9 @@ program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
 instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand)
 unary_operator = Neg | Not
-binary_operator = Add | Sub | Mul
+binary_operator = Add | Sub | Mul | And | Or | Xor | LeftShift | RightShift
 Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier)
-reg = AX | DX | R10 | R11
+reg = AX | DX | R10 | R11 | CX | CL
 
 */
 
@@ -31,7 +31,17 @@ namespace scasm {
 
 enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK };
 enum class Unop { UNKNOWN, NEG, NOT };
-enum class Binop { UNKNOWN, ADD, SUB, MUL };
+enum class Binop {
+  UNKNOWN,
+  ADD,
+  SUB,
+  MUL,
+  AND,
+  OR,
+  XOR,
+  LEFT_SHIFT,
+  RIGHT_SHIFT
+};
 enum class instruction_type {
   UNKNOWN,
   MOV,
@@ -42,7 +52,7 @@ enum class instruction_type {
   UNARY,
   ALLOCATE_STACK
 };
-enum class register_type { UNKNOWN, AX, DX, R10, R11 };
+enum class register_type { UNKNOWN, AX, DX, R10, R11, CX, CL };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);

@@ -19,7 +19,7 @@ function_definition = Function(identifier, instruction* body)
 instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst)
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate
-binary_operator = Add | Subtract | Multiply | Divide | Remainder
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | LeftShift | RightShift
 
 */
 

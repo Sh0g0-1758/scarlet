@@ -23,6 +23,16 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
     return Binop::SUB;
   case binop::BINOP::MUL:
     return Binop::MUL;
+  case binop::BINOP::AND:
+    return Binop::AND;
+  case binop::BINOP::OR:
+    return Binop::OR;
+  case binop::BINOP::XOR:
+    return Binop::XOR;
+  case binop::BINOP::LEFT_SHIFT:
+    return Binop::LEFT_SHIFT;
+  case binop::BINOP::RIGHT_SHIFT:
+    return Binop::RIGHT_SHIFT;
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::DIV:
   case binop::BINOP::MOD:
@@ -37,6 +47,10 @@ std::string to_string(register_type reg) {
     return "%eax";
   case register_type::DX:
     return "%edx";
+  case register_type::CX:
+    return "%ecx";
+  case register_type::CL:
+    return "%cl";
   case register_type::R10:
     return "%r10d";
   case register_type::R11:
@@ -67,6 +81,16 @@ std::string to_string(Binop binop) {
     return "subl";
   case Binop::MUL:
     return "imull";
+  case Binop::AND:
+    return "andl";
+  case Binop::OR:
+    return "orl";
+  case Binop::XOR:
+    return "xorl";
+  case Binop::LEFT_SHIFT:
+    return "sall";
+  case Binop::RIGHT_SHIFT:
+    return "sarl";
   case Binop::UNKNOWN:
     __builtin_unreachable();
   }

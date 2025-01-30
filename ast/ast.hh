@@ -16,7 +16,7 @@ Grammar:
 <exp> ::= <factor> | <exp> <binop> <exp>
 <factor> ::= <int> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-"
-<binop> ::= "+" | "-" | "*" | "/" | "%"
+<binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>"
 <identifier> ::= ? An identifier token ?
 <int> ::= ? A constant token ?
 
