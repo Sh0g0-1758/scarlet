@@ -31,5 +31,47 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   __builtin_unreachable();
 }
 
+std::string to_string(register_type reg) {
+  switch (reg) {
+  case register_type::AX:
+    return "%eax";
+  case register_type::DX:
+    return "%edx";
+  case register_type::R10:
+    return "%r10d";
+  case register_type::R11:
+    return "%r11d";
+  case register_type::UNKNOWN:
+    __builtin_unreachable();
+  }
+  __builtin_unreachable();
+}
+
+std::string to_string(Unop unop) {
+  switch (unop) {
+  case Unop::NEG:
+    return "negl";
+  case Unop::NOT:
+    return "notl";
+  case Unop::UNKNOWN:
+    __builtin_unreachable();
+  }
+  __builtin_unreachable();
+}
+
+std::string to_string(Binop binop) {
+  switch (binop) {
+  case Binop::ADD:
+    return "addl";
+  case Binop::SUB:
+    return "subl";
+  case Binop::MUL:
+    return "imull";
+  case Binop::UNKNOWN:
+    __builtin_unreachable();
+  }
+  __builtin_unreachable();
+}
+
 } // namespace scasm
 } // namespace scarlet

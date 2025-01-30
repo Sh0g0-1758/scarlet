@@ -46,6 +46,9 @@ enum class register_type { UNKNOWN, AX, DX, R10, R11 };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);
+std::string to_string(register_type reg);
+std::string to_string(Unop unop);
+std::string to_string(Binop binop);
 
 class scasm_operand {
 private:

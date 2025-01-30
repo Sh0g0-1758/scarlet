@@ -472,6 +472,21 @@ void Codegen::fix_instructions() {
   }
 }
 
+#define CODEGEN_SRC_DST()                                                      \
+  if (instr.get_src().get_type() == scasm::operand_type::IMM) {                \
+    assembly << "$" << instr.get_src().get_imm();                              \
+  } else if (instr.get_src().get_type() == scasm::operand_type::STACK) {       \
+    assembly << instr.get_src().get_identifier_stack();                        \
+  } else if (instr.get_src().get_type() == scasm::operand_type::REG) {         \
+    assembly << scasm::to_string(instr.get_src().get_reg());                   \
+  }                                                                            \
+  assembly << ", ";                                                            \
+  if (instr.get_dst().get_type() == scasm::operand_type::STACK) {              \
+    assembly << instr.get_dst().get_identifier_stack();                        \
+  } else if (instr.get_dst().get_type() == scasm::operand_type::REG) {         \
+    assembly << scasm::to_string(instr.get_dst().get_reg());                   \
+  }
+
 void Codegen::codegen() {
   // ###########################
   gen_scasm();
@@ -504,43 +519,30 @@ void Codegen::codegen() {
         assembly << "\tret\n";
       } else if (instr.get_type() == scasm::instruction_type::MOV) {
         assembly << "\tmovl ";
-        if (instr.get_src().get_type() == scasm::operand_type::IMM) {
-          assembly << "$" << instr.get_src().get_imm();
-        } else if (instr.get_src().get_type() == scasm::operand_type::STACK) {
-          assembly << instr.get_src().get_identifier_stack();
-        } else if (instr.get_src().get_type() == scasm::operand_type::REG) {
-          if (instr.get_src().get_reg() == scasm::register_type::AX) {
-            assembly << "%eax";
-          } else if (instr.get_src().get_reg() == scasm::register_type::R10) {
-            assembly << "%r10d";
-          }
-        }
-        assembly << ", ";
-        if (instr.get_dst().get_type() == scasm::operand_type::STACK) {
-          assembly << instr.get_dst().get_identifier_stack();
-        } else if (instr.get_dst().get_type() == scasm::operand_type::REG) {
-          if (instr.get_dst().get_reg() == scasm::register_type::AX) {
-            assembly << "%eax";
-          } else if (instr.get_dst().get_reg() == scasm::register_type::R10) {
-            assembly << "%r10d";
-          }
-        }
+        CODEGEN_SRC_DST();
         assembly << "\n";
       } else if (instr.get_type() == scasm::instruction_type::UNARY) {
-        if (instr.get_unop() == scasm::Unop::NEG) {
-          assembly << "\tnegl ";
-        } else if (instr.get_unop() == scasm::Unop::NOT) {
-          assembly << "\tnotl ";
-        }
+        assembly << "\t";
+        assembly << scasm::to_string(instr.get_unop()) << " ";
         if (instr.get_dst().get_type() == scasm::operand_type::STACK) {
           assembly << instr.get_dst().get_identifier_stack();
         } else if (instr.get_dst().get_type() == scasm::operand_type::REG) {
-          if (instr.get_dst().get_reg() == scasm::register_type::AX) {
-            assembly << "%eax";
-          } else if (instr.get_dst().get_reg() == scasm::register_type::R10) {
-            assembly << "%r10d";
-          }
+          assembly << scasm::to_string(instr.get_src().get_reg());
         }
+        assembly << "\n";
+      } else if (instr.get_type() == scasm::instruction_type::CDQ) {
+        assembly << "\tcdq\n";
+      } else if (instr.get_type() == scasm::instruction_type::IDIV) {
+        assembly << "\tidivl ";
+        if (instr.get_src().get_type() == scasm::operand_type::STACK) {
+          assembly << instr.get_src().get_identifier_stack();
+        } else if (instr.get_src().get_type() == scasm::operand_type::REG) {
+          assembly << scasm::to_string(instr.get_src().get_reg());
+        }
+      } else if (instr.get_type() == scasm::instruction_type::BINARY) {
+        assembly << "\t";
+        assembly << scasm::to_string(instr.get_binop()) << " ";
+        CODEGEN_SRC_DST();
         assembly << "\n";
       }
     }
