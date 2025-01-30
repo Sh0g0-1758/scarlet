@@ -6,23 +6,40 @@ void Codegen::gen_scar_factor(ast::AST_factor_Node &factor,
                               scar::scar_Function_Node &scar_function) {
   // firstly put all the unops (if they exist) in the unop buffer
   for (auto it : factor.get_unop_nodes()) {
-    unop_buffer.emplace_back(it.get_op());
+    unop_buffer[curr_buff].emplace_back(it.get_op());
+  }
+  // if exp exists, parse that. If exp is null, it will simply return
+  if (factor.get_exp_node() != nullptr) {
+    curr_buff++;
+    if (curr_buff >= (int)unop_buffer.size())
+      unop_buffer.resize(curr_buff + 1);
+    gen_scar_exp(factor.get_exp_node(), scar_function);
+    curr_buff--;
   }
   // If we have an integer node and unops to operate on, proceed...
-  if (!factor.get_int_node().get_value().empty() and !unop_buffer.empty()) {
-    int num_unpos = unop_buffer.size();
+  if (!unop_buffer[curr_buff].empty()) {
+    int num_unpos = unop_buffer[curr_buff].size();
     for (int i = num_unpos - 1; i >= 0; i--) {
       scar::scar_Instruction_Node scar_instruction;
       scar_instruction.set_type(scar::instruction_type::UNARY);
-      scar_instruction.set_unop(unop_buffer[i]);
+      scar_instruction.set_unop(unop_buffer[curr_buff][i]);
 
       scar::scar_Val_Node scar_val_src;
       scar::scar_Val_Node scar_val_dst;
 
       // deal with the source
       if (i == num_unpos - 1) {
-        scar_val_src.set_type(scar::val_type::CONSTANT);
-        scar_val_src.set_value(factor.get_int_node().get_value());
+        if (!factor.get_int_node().get_value().empty()) {
+          scar_val_src.set_type(scar::val_type::CONSTANT);
+          scar_val_src.set_value(factor.get_int_node().get_value());
+        } else if (!constant_buffer.empty()) {
+          scar_val_src.set_type(scar::val_type::CONSTANT);
+          scar_val_src.set_value(constant_buffer);
+          constant_buffer.clear();
+        } else {
+          scar_val_src.set_type(scar::val_type::VAR);
+          scar_val_src.set_reg_name(get_prev_reg_name());
+        }
         scar_instruction.set_src_ret(scar_val_src);
       } else {
         scar_val_src.set_type(scar::val_type::VAR);
@@ -38,12 +55,13 @@ void Codegen::gen_scar_factor(ast::AST_factor_Node &factor,
       scar_function.add_instruction(scar_instruction);
     }
     // empty the unop buffer
-    unop_buffer.clear();
+    unop_buffer[curr_buff].clear();
   } else {
     // save it for later return
-    constant_buffer = factor.get_int_node().get_value();
+    if (!factor.get_int_node().get_value().empty()) {
+      constant_buffer = factor.get_int_node().get_value();
+    }
   }
-  gen_scar_exp(factor.get_exp_node(), scar_function);
 }
 
 void Codegen::gen_scar_exp(ast::AST_exp_Node *exp,

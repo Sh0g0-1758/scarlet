@@ -50,10 +50,11 @@ private:
   scar::scar_Program_Node scar;
   scasm::scasm_program scasm;
   std::string file_name;
-  std::vector<unop::UNOP> unop_buffer;
+  int curr_buff = 0;
+  std::vector<std::vector<unop::UNOP>> unop_buffer;
   std::string constant_buffer;
   bool success = true;
-  int curr = 1;
+  int curr_regNum = 1;
   std::map<std::string, std::string> pseduo_registers;
   int stack_offset{};
   void gen_scar_exp(ast::AST_exp_Node *exp,
@@ -62,7 +63,9 @@ private:
                        scar::scar_Function_Node &scar_function);
 
 public:
-  Codegen(ast::AST_Program_Node program) : program(program) {}
+  Codegen(ast::AST_Program_Node program) : program(program) {
+    unop_buffer.resize(2);
+  }
   // ###### COMPILER PASSES ######
   // IR PASS
   void gen_scar();
@@ -78,12 +81,12 @@ public:
   void set_file_name(std::string file_name) { this->file_name = file_name; }
   bool is_success() { return success; }
   std::string get_reg_name() {
-    std::string reg_name = "temp." + std::to_string(curr);
-    curr++;
+    std::string reg_name = "temp." + std::to_string(curr_regNum);
+    curr_regNum++;
     return reg_name;
   }
   std::string get_prev_reg_name() {
-    std::string reg_name = "temp." + std::to_string(curr - 1);
+    std::string reg_name = "temp." + std::to_string(curr_regNum - 1);
     return reg_name;
   }
   void pretty_print();
