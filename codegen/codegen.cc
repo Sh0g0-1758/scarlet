@@ -398,20 +398,18 @@ void Codegen::fix_instructions() {
       if ((*it).get_src().get_type() == scasm::operand_type::STACK &&
           (*it).get_dst().get_type() == scasm::operand_type::STACK) {
         scasm::scasm_instruction scasm_inst{};
-        scasm_inst.set_type((*it).get_type());
-        scasm_inst.set_dst((*it).get_dst());
+        scasm_inst.set_type(scasm::instruction_type::MOV);
+        scasm_inst.set_src((*it).get_src());
 
         // fixing up stack to stack move
-        scasm::scasm_operand src{};
-        src.set_type(scasm::operand_type::REG);
-        src.set_reg(scasm::register_type::R10);
-        scasm_inst.set_src(src);
-
         scasm::scasm_operand dst{};
         dst.set_type(scasm::operand_type::REG);
         dst.set_reg(scasm::register_type::R10);
-        (*it).set_dst(dst);
-        it = funcs.get_instructions().insert(it + 1, scasm_inst);
+        scasm_inst.set_dst(dst);
+
+        (*it).set_src(dst);
+        it = funcs.get_instructions().insert(it, scasm_inst);
+        it++;
       }
     }
   }
@@ -539,6 +537,7 @@ void Codegen::codegen() {
         } else if (instr.get_src().get_type() == scasm::operand_type::REG) {
           assembly << scasm::to_string(instr.get_src().get_reg());
         }
+        assembly << "\n";
       } else if (instr.get_type() == scasm::instruction_type::BINARY) {
         assembly << "\t";
         assembly << scasm::to_string(instr.get_binop()) << " ";

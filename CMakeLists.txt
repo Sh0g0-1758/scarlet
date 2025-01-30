@@ -103,4 +103,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage tacky
     COMMAND echo "Running Codegen-3 test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage codegen
+    COMMAND echo "Running test all-3"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3
 )
