@@ -269,28 +269,6 @@ void Codegen::gen_scasm() {
   this->scasm = scasm_program;
 }
 
-std::string to_string(scasm::instruction_type type) {
-  switch (type) {
-  case scasm::instruction_type::UNKNOWN:
-    return "UNKNOWN";
-  case scasm::instruction_type::MOV:
-    return "MOV";
-  case scasm::instruction_type::BINARY:
-    return "BINARY";
-  case scasm::instruction_type::IDIV:
-    return "IDIV";
-  case scasm::instruction_type::CDQ:
-    return "CDQ";
-  case scasm::instruction_type::RET:
-    return "RET";
-  case scasm::instruction_type::UNARY:
-    return "UNARY";
-  case scasm::instruction_type::ALLOCATE_STACK:
-    return "ALLOCATE_STACK";
-  }
-  return "UNKNOWN";
-}
-
 void Codegen::fix_pseudo_registers() {
   int offset = 1;
   for (auto &funcs : scasm.get_functions()) {
