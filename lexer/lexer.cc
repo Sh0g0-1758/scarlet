@@ -31,6 +31,28 @@ void lexer::tokenize() {
       tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
     } else if (ch == '%') {
       tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
+    } else if (ch == '&') {
+      tokens.emplace_back(token::TOKEN::AND);
+    } else if (ch == '|') {
+      tokens.emplace_back(token::TOKEN::OR);
+    } else if (ch == '^') {
+      tokens.emplace_back(token::TOKEN::XOR);
+    } else if (ch == '<') {
+      file.get(ch);
+      if (ch == '<') {
+        tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::UNKNOWN);
+      }
+    } else if (ch == '>') {
+      file.get(ch);
+      if (ch == '>') {
+        tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::UNKNOWN);
+      }
     } else if (ch == '-') {
       file.get(ch);
       if (ch == '-') {

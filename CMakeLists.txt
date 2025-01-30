@@ -105,4 +105,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage codegen
     COMMAND echo "Running test all-3"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3
+    COMMAND echo "Running bitwise test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --bitwise
 )

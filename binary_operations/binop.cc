@@ -15,6 +15,16 @@ std::string to_string(BINOP binop) {
     return "DIVIDE";
   case MOD:
     return "MODULO";
+  case AND:
+    return "AND";
+  case OR:
+    return "OR";
+  case XOR:
+    return "XOR";
+  case LEFT_SHIFT:
+    return "LEFT_SHIFT";
+  case RIGHT_SHIFT:
+    return "RIGHT_SHIFT";
   default:
     return "UNKNOWN";
   }
