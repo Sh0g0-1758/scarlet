@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
 
   codegen.gen_scar();
 
-  if (cmd.has_option("tacky")) {
+  if (cmd.has_option("tacky") or cmd.has_option("scar")) {
     result = system(std::format("rm {}.scp", file_name).c_str());
 
     if (result != 0) {
@@ -150,7 +150,6 @@ int main(int argc, char *argv[]) {
   }
 
   if (cmd.has_option("codegen")) {
-    codegen.pretty_print();
     result = system(std::format("rm {}.scp", file_name).c_str());
 
     if (result != 0) {

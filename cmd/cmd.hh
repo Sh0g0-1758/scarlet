@@ -23,8 +23,8 @@ public:
         "version,v", "print version string")("lex",
                                              "run only till the lexer stage")(
         "parse", "run only till the parser stage and print the AST")(
-        "codegen",
-        "run only till the codegen stage and print the IR(scar) AST")(
+        "scar", "print scar(IR for scarlet)")(
+        "codegen", "run only till the codegen stage")(
         "asm,S", "generate .s file containing X86-64 assembly")(
         "output-file,o", po::value<std::string>(), "output file");
 
@@ -37,15 +37,21 @@ public:
   }
 
   void parse(int ac, char *av[]) {
-    po::store(po::command_line_parser(ac, av)
-                  .options(all_options)
-                  .positional(pos_desc)
-                  .run(),
-              vm);
-    po::notify(vm);
+    try {
+      po::store(po::command_line_parser(ac, av)
+                    .options(all_options)
+                    .positional(pos_desc)
+                    .run(),
+                vm);
+      po::notify(vm);
 
-    if (vm.count("input-file")) {
-      input_file = vm["input-file"].as<std::string>();
+      if (vm.count("input-file")) {
+        input_file = vm["input-file"].as<std::string>();
+      }
+    } catch (po::error &e) {
+      std::cerr << "ERROR: " << e.what() << std::endl;
+      std::cerr << desc << std::endl;
+      exit(1);
     }
   }
 

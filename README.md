@@ -37,6 +37,8 @@ Scarlet currently supports the following architectures:
 - [x] (Parser.cc) Refactor `unop set_op` (Line:125) to use enums.
 - [x] Generate a `.txt` file for the Scarlet output. {Not needed as it will incur a lot of overhead and serves no purpose}
 - [x] Create a static library for the lexer, parser, and code generation components.
+- [x] Add support for Unary Operations (Neg, Not)
+- [x] Add support for Binary Operations (Add, Sub, Mul, Div, Rem)
 
 ## Contributing Guidelines
 

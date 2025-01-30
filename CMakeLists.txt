@@ -32,6 +32,9 @@ endfunction()
 add_subdirectory(token)
 add_subdirectory(regex)
 add_subdirectory(unary_operations)
+add_subdirectory(binary_operations)
+add_subdirectory(scar)
+add_subdirectory(scasm)
 add_subdirectory(lexer)
 add_subdirectory(parser)
 add_subdirectory(codegen)
@@ -55,6 +58,8 @@ target_compile_options(scarlet PRIVATE
 
 add_dependencies(
     scarlet
+    scar
+    scasm
     scarRegex
     scarLexer
     scarParser
@@ -66,6 +71,8 @@ target_link_libraries(scarlet scarRegex)
 target_link_libraries(scarlet scarLexer)
 target_link_libraries(scarlet scarParser)
 target_link_libraries(scarlet scarCodegen)
+target_link_libraries(scarlet scar)
+target_link_libraries(scarlet scasm)
 target_compile_options(scarlet PRIVATE -O3)
 
 add_custom_target(test-scarlet
@@ -90,4 +97,12 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 2
     COMMAND echo "Running lexer-3 test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage lex
+    COMMAND echo "Running parser-3 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage parse
+    COMMAND echo "Running scar-3 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage tacky
+    COMMAND echo "Running Codegen-3 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --stage codegen
+    COMMAND echo "Running test all-3"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3
 )

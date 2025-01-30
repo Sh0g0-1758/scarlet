@@ -102,5 +102,25 @@ std::string to_string(TOKEN token) {
   }
   return "INVALID";
 }
+
+bool is_unary_op(TOKEN token) {
+  return token == TOKEN::TILDE or token == TOKEN::HYPHEN;
+}
+
+bool is_binary_op(TOKEN token) {
+  return token == TOKEN::PLUS or token == TOKEN::HYPHEN or
+         token == TOKEN::ASTERISK or token == TOKEN::FORWARD_SLASH or
+         token == TOKEN::PERCENT_SIGN;
+}
+
+int get_binop_prec(TOKEN token) {
+  if (token == TOKEN::PLUS or token == TOKEN::HYPHEN) {
+    return 45;
+  } else if (token == TOKEN::ASTERISK or token == TOKEN::FORWARD_SLASH or
+             token == TOKEN::PERCENT_SIGN) {
+    return 50;
+  }
+  __builtin_unreachable();
+}
 } // namespace token
 } // namespace scarlet
