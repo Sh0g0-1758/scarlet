@@ -31,7 +31,16 @@ namespace scasm {
 enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK };
 enum class Unop { UNKNOWN, NEG, NOT };
 enum class Binop { UNKNOWN, ADD, SUB, MUL };
-enum class instruction_type { UNKNOWN, MOV, BINARY, IDIV, CDQ, RET, UNARY, ALLOCATE_STACK };
+enum class instruction_type {
+  UNKNOWN,
+  MOV,
+  BINARY,
+  IDIV,
+  CDQ,
+  RET,
+  UNARY,
+  ALLOCATE_STACK
+};
 enum class register_type { UNKNOWN, AX, DX, R10, R11 };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
@@ -52,7 +61,9 @@ public:
   register_type get_reg() { return reg; }
   void set_reg(register_type reg) { this->reg = reg; }
   std::string get_identifier_stack() { return identifier_stack; }
-  void set_identifier_stack(std::string identifier_stack) { this->identifier_stack = identifier_stack; }
+  void set_identifier_stack(std::string identifier_stack) {
+    this->identifier_stack = identifier_stack;
+  }
 };
 
 class scasm_instruction {
