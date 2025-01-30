@@ -200,6 +200,17 @@ void Codegen::pretty_print() {
   std::cerr << ")" << std::endl;
 }
 
+#define SET_SCASM_SOURCE()                                                     \
+  scasm::scasm_operand scasm_src{};                                            \
+  if (inst.get_src_ret().get_type() == scar::val_type::CONSTANT) {             \
+    scasm_src.set_type(scasm::operand_type::IMM);                              \
+    scasm_src.set_imm(stoi(inst.get_src_ret().get_value()));                   \
+  } else if (inst.get_src_ret().get_type() == scar::val_type::VAR) {           \
+    scasm_src.set_type(scasm::operand_type::PSEUDO);                           \
+    scasm_src.set_identifier_stack(inst.get_src_ret().get_reg());              \
+  }                                                                            \
+  scasm_inst.set_src(scasm_src);
+
 void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto func : scar.get_functions()) {
@@ -209,15 +220,7 @@ void Codegen::gen_scasm() {
       if (inst.get_type() == scar::instruction_type::RETURN) {
         scasm::scasm_instruction scasm_inst{};
         scasm_inst.set_type(scasm::instruction_type::MOV);
-        scasm::scasm_operand scasm_src{};
-        if (inst.get_src_ret().get_type() == scar::val_type::CONSTANT) {
-          scasm_src.set_type(scasm::operand_type::IMM);
-          scasm_src.set_imm(stoi(inst.get_src_ret().get_value()));
-        } else if (inst.get_src_ret().get_type() == scar::val_type::VAR) {
-          scasm_src.set_type(scasm::operand_type::PSEUDO);
-          scasm_src.set_identifier_stack(inst.get_src_ret().get_reg());
-        }
-        scasm_inst.set_src(scasm_src);
+        SET_SCASM_SOURCE();
         scasm::scasm_operand scasm_dst{};
         scasm_dst.set_type(scasm::operand_type::REG);
         scasm_dst.set_reg(scasm::register_type::AX);
@@ -230,15 +233,7 @@ void Codegen::gen_scasm() {
         scasm::scasm_instruction scasm_inst{};
         scasm_inst.set_type(scasm::instruction_type::MOV);
 
-        scasm::scasm_operand scasm_src{};
-        if (inst.get_src_ret().get_type() == scar::val_type::CONSTANT) {
-          scasm_src.set_type(scasm::operand_type::IMM);
-          scasm_src.set_imm(stoi(inst.get_src_ret().get_value()));
-        } else if (inst.get_src_ret().get_type() == scar::val_type::VAR) {
-          scasm_src.set_type(scasm::operand_type::PSEUDO);
-          scasm_src.set_identifier_stack(inst.get_src_ret().get_reg());
-        }
-        scasm_inst.set_src(scasm_src);
+        SET_SCASM_SOURCE();
 
         scasm::scasm_operand scasm_dst{};
         if (inst.get_dst().get_type() == scar::val_type::VAR) {
@@ -261,6 +256,12 @@ void Codegen::gen_scasm() {
         scasm_inst2.set_dst(scasm_dst2);
 
         scasm_func.add_instruction(scasm_inst2);
+      } else if (inst.get_type() == scar::instruction_type::BINARY) {
+        if (inst.get_binop() == binop::BINOP::DIV) {
+          scasm::scasm_instruction scasm_inst{};
+          scasm_inst.set_type(scasm::instruction_type::MOV);
+          SET_SCASM_SOURCE();
+        }
       }
     }
     scasm_program.add_function(scasm_func);
