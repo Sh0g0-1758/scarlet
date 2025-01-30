@@ -269,38 +269,28 @@ void Codegen::gen_scasm() {
   this->scasm = scasm_program;
 }
 
+#define FIX_PSEUDO(target)                                                     \
+  if (inst.get_##target().get_type() == scasm::operand_type::PSEUDO) {         \
+    if (pseduo_registers.find(inst.get_##target().get_identifier_stack()) !=   \
+        pseduo_registers.end()) {                                              \
+      inst.get_##target().set_identifier_stack(                                \
+          pseduo_registers[inst.get_##target().get_identifier_stack()]);       \
+    } else {                                                                   \
+      std::string temp = inst.get_##target().get_identifier_stack();           \
+      inst.get_##target().set_identifier_stack(                                \
+          "-" + std::to_string(offset * 4) + "(%rbp)");                        \
+      pseduo_registers[temp] = inst.get_##target().get_identifier_stack();     \
+      offset++;                                                                \
+    }                                                                          \
+    inst.get_##target().set_type(scasm::operand_type::STACK);                  \
+  }
+
 void Codegen::fix_pseudo_registers() {
   int offset = 1;
   for (auto &funcs : scasm.get_functions()) {
     for (auto &inst : funcs.get_instructions()) {
-      if (inst.get_src().get_type() == scasm::operand_type::PSEUDO) {
-        if (pseduo_registers.find(inst.get_src().get_identifier_stack()) !=
-            pseduo_registers.end()) {
-          inst.get_src().set_identifier_stack(
-              pseduo_registers[inst.get_src().get_identifier_stack()]);
-        } else {
-          std::string temp = inst.get_src().get_identifier_stack();
-          inst.get_src().set_identifier_stack("-" + std::to_string(offset * 4) +
-                                              "(%rbp)");
-          pseduo_registers[temp] = inst.get_src().get_identifier_stack();
-          offset++;
-        }
-        inst.get_src().set_type(scasm::operand_type::STACK);
-      }
-      if (inst.get_dst().get_type() == scasm::operand_type::PSEUDO) {
-        if (pseduo_registers.find(inst.get_dst().get_identifier_stack()) !=
-            pseduo_registers.end()) {
-          inst.get_dst().set_identifier_stack(
-              pseduo_registers[inst.get_dst().get_identifier_stack()]);
-        } else {
-          std::string temp = inst.get_dst().get_identifier_stack();
-          inst.get_dst().set_identifier_stack("-" + std::to_string(offset * 4) +
-                                              "(%rbp)");
-          pseduo_registers[temp] = inst.get_dst().get_identifier_stack();
-          offset++;
-        }
-        inst.get_dst().set_type(scasm::operand_type::STACK);
-      }
+      FIX_PSEUDO(src);
+      FIX_PSEUDO(dst);
     }
   }
   stack_offset = 4 * (offset - 1);
