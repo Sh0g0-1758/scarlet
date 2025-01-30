@@ -28,11 +28,11 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder
 namespace scarlet {
 namespace scar {
 
-enum class scar_instruction_type { RETURN, UNARY, BINARY };
-enum class scar_val_type { CONSTANT, VAR };
+enum class instruction_type { RETURN, UNARY, BINARY };
+enum class val_type { CONSTANT, VAR };
 
-std::string to_string(scar_instruction_type type);
-std::string to_string(scar_val_type type);
+std::string to_string(instruction_type type);
+std::string to_string(val_type type);
 
 class scar_Identifier_Node {
 private:
@@ -46,14 +46,14 @@ public:
 
 class scar_Val_Node {
 private:
-  scar_val_type type;
+  val_type type;
   std::string val;
   std::string reg_name;
 
 public:
   std::string get_scar_name() { return "Val"; }
-  scar_val_type get_type() { return type; }
-  void set_type(scar_val_type type) { this->type = std::move(type); }
+  val_type get_type() { return type; }
+  void set_type(val_type type) { this->type = std::move(type); }
   std::string get_value() { return val; }
   void set_value(std::string value) { this->val = std::move(value); }
   std::string get_reg() { return reg_name; }
@@ -64,17 +64,17 @@ public:
 
 class scar_Instruction_Node {
 private:
-  scar_instruction_type type; // Return, Unary, Binary
-  unop::UNOP unop;            // When the instruction is a unary instruction
-  binop::BINOP binop;         // When the instruction is a binary instruction
+  instruction_type type; // Return, Unary, Binary
+  unop::UNOP unop;       // When the instruction is a unary instruction
+  binop::BINOP binop;    // When the instruction is a binary instruction
   scar_Val_Node src_ret; // This can act as both the source and return value
   scar_Val_Node src2;
   scar_Val_Node dst;
 
 public:
   std::string get_scar_name() { return "Instruction"; }
-  scar_instruction_type get_type() { return type; }
-  void set_type(scar_instruction_type type) { this->type = std::move(type); }
+  instruction_type get_type() { return type; }
+  void set_type(instruction_type type) { this->type = std::move(type); }
   unop::UNOP get_unop() { return unop; }
   void set_unop(unop::UNOP unop) { this->unop = unop; }
   binop::BINOP get_binop() { return binop; }

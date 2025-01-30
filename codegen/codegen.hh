@@ -1,10 +1,10 @@
 #pragma once
 
-#include "scasm.hh"
 #include <ast/ast.hh>
 #include <fstream>
 #include <map>
 #include <scar/scar.hh>
+#include <scasm/scasm.hh>
 #include <sstream>
 #include <string>
 #include <token/token.hh>

@@ -16,41 +16,61 @@ Grammar:
 
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
-instruction = Mov(Operand src, Operand dst) | Ret | Unary(Unary_operator, operand) | AllocateStack(Operand)
+instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand)
 unary_operator = Neg | Not
-Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(int)
+binary_operator = Add | Sub | Mul
+Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier)
+reg = AX | DX | R10 | R11
 
 */
 
 // clang-format on
 namespace scarlet {
 namespace scasm {
+
+enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK };
+enum class Unop { UNKNOWN, NEG, NOT };
+enum class Binop { UNKNOWN, ADD, SUB, MUL };
+enum class instruction_type { UNKNOWN, MOV, BINARY, IDIV, CDQ, RET, UNARY, ALLOCATE_STACK };
+enum class register_type { UNKNOWN, AX, DX, R10, R11 };
+
+Unop scar_unop_to_scasm_unop(unop::UNOP unop);
+
 class scasm_operand {
 private:
-  std::string type;
-  std::string value;
+  operand_type type;
+  int imm;
+  register_type reg;
+  std::string identifier_stack;
 
 public:
   std::string get_scasm_name() { return "Operand"; }
-  std::string get_type() { return type; }
-  void set_type(std::string type) { this->type = std::move(type); }
-  std::string get_value() { return value; }
-  void set_value(std::string value) { this->value = std::move(value); }
+  operand_type get_type() { return type; }
+  void set_type(operand_type type) { this->type = type; }
+  int get_imm() { return imm; }
+  void set_imm(int imm) { this->imm = imm; }
+  register_type get_reg() { return reg; }
+  void set_reg(register_type reg) { this->reg = reg; }
+  std::string get_identifier_stack() { return identifier_stack; }
+  void set_identifier_stack(std::string identifier_stack) { this->identifier_stack = identifier_stack; }
 };
 
 class scasm_instruction {
 private:
-  std::string type;
-  unop::UNOP op;
+  instruction_type type;
+  Unop unop;
+  Binop binop;
   scasm_operand src;
   scasm_operand dst;
 
 public:
   std::string get_scasm_name() { return "Instruction"; }
-  std::string get_type() { return type; }
-  void set_type(std::string type) { this->type = std::move(type); }
-  unop::UNOP get_op() { return op; }
-  void set_op(unop::UNOP op) { this->op = op; }
+  instruction_type get_type() { return type; }
+  void set_type(instruction_type type) { this->type = type; }
+  Unop get_unop() { return unop; }
+  void set_unop(unop::UNOP op) { this->unop = scar_unop_to_scasm_unop(op); }
+  Binop get_binop() { return binop; }
+  void set_binop(Binop op) { this->binop = op; }
   scasm_operand &get_src() { return src; }
   void set_src(scasm_operand src) { this->src = std::move(src); }
   scasm_operand &get_dst() { return dst; }

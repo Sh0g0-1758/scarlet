@@ -3,23 +3,23 @@
 namespace scarlet {
 namespace scar {
 
-std::string to_string(scar::scar_instruction_type type) {
+std::string to_string(scar::instruction_type type) {
   switch (type) {
-  case scar::scar_instruction_type::RETURN:
+  case scar::instruction_type::RETURN:
     return "Return";
-  case scar::scar_instruction_type::UNARY:
+  case scar::instruction_type::UNARY:
     return "Unary";
-  case scar::scar_instruction_type::BINARY:
+  case scar::instruction_type::BINARY:
     return "Binary";
   }
   __builtin_unreachable();
 }
 
-std::string to_string(scar::scar_val_type type) {
+std::string to_string(scar::val_type type) {
   switch (type) {
-  case scar::scar_val_type::CONSTANT:
+  case scar::val_type::CONSTANT:
     return "Constant";
-  case scar::scar_val_type::VAR:
+  case scar::val_type::VAR:
     return "Var";
   }
   __builtin_unreachable();
