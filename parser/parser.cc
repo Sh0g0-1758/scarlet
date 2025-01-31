@@ -94,9 +94,9 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
   std::shared_ptr<ast::AST_exp_Node> exp =
       std::make_shared<ast::AST_exp_Node>();
   parse_exp(tokens, exp);
-  statement.add_exp(exp);
+  statement.add_exp(std::move(exp));
   EXPECT(token::TOKEN::SEMICOLON);
-  function.add_statement(statement);
+  function.add_statement(std::move(statement));
 }
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
@@ -112,7 +112,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_exp_Node> exp =
         std::make_shared<ast::AST_exp_Node>();
     parse_exp(tokens, exp);
-    factor->set_exp_node(exp);
+    factor->set_exp_node(std::move(exp));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
   } else {
     success = false;
