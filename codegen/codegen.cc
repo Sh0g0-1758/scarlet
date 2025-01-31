@@ -2,18 +2,18 @@
 namespace scarlet {
 namespace codegen {
 
-void Codegen::gen_scar_factor(ast::AST_factor_Node &factor,
+void Codegen::gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                               scar::scar_Function_Node &scar_function) {
   // firstly put all the unops (if they exist) in the unop buffer
-  for (auto it : factor.get_unop_nodes()) {
-    unop_buffer[curr_buff].emplace_back(it.get_op());
+  for (auto it : factor->get_unop_nodes()) {
+    unop_buffer[curr_buff].emplace_back(it->get_op());
   }
   // if exp exists, parse that. If exp is null, it will simply return
-  if (factor.get_exp_node() != nullptr) {
+  if (factor->get_exp_node() != nullptr) {
     curr_buff++;
     if (curr_buff >= (int)unop_buffer.size())
       unop_buffer.resize(curr_buff + 1);
-    gen_scar_exp(factor.get_exp_node(), scar_function);
+    gen_scar_exp(factor->get_exp_node(), scar_function);
     curr_buff--;
   }
   // If we have an integer node and unops to operate on, proceed...
@@ -29,9 +29,10 @@ void Codegen::gen_scar_factor(ast::AST_factor_Node &factor,
 
       // deal with the source
       if (i == num_unpos - 1) {
-        if (!factor.get_int_node().get_value().empty()) {
+        if (factor->get_int_node() != nullptr and
+            !factor->get_int_node()->get_value().empty()) {
           scar_val_src.set_type(scar::val_type::CONSTANT);
-          scar_val_src.set_value(factor.get_int_node().get_value());
+          scar_val_src.set_value(factor->get_int_node()->get_value());
         } else if (!constant_buffer.empty()) {
           scar_val_src.set_type(scar::val_type::CONSTANT);
           scar_val_src.set_value(constant_buffer);
@@ -58,22 +59,24 @@ void Codegen::gen_scar_factor(ast::AST_factor_Node &factor,
     unop_buffer[curr_buff].clear();
   } else {
     // save it for later return
-    if (!factor.get_int_node().get_value().empty()) {
-      constant_buffer = factor.get_int_node().get_value();
+    if (factor->get_int_node() != nullptr and
+        !factor->get_int_node()->get_value().empty()) {
+      constant_buffer = factor->get_int_node()->get_value();
     }
   }
 }
 
-void Codegen::gen_scar_exp(ast::AST_exp_Node *exp,
+void Codegen::gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                            scar::scar_Function_Node &scar_function) {
   if (exp == nullptr)
     return;
   gen_scar_exp(exp->get_left(), scar_function);
-  if (exp->get_binop_node().get_op() != binop::BINOP::UNKNOWN) {
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
     // when we have a binary operator
     scar::scar_Instruction_Node scar_instruction;
     scar_instruction.set_type(scar::instruction_type::BINARY);
-    scar_instruction.set_binop(exp->get_binop_node().get_op());
+    scar_instruction.set_binop(exp->get_binop_node()->get_op());
     scar::scar_Val_Node scar_val_src1;
     scar::scar_Val_Node scar_val_src2;
     scar::scar_Val_Node scar_val_dst;
@@ -113,8 +116,7 @@ void Codegen::gen_scar_exp(ast::AST_exp_Node *exp,
     scar_function.add_instruction(scar_instruction);
   } else {
     // When we do not have a binary operator, so only parse the factor node
-    ast::AST_factor_Node factor = exp->get_factor_node();
-    gen_scar_factor(factor, scar_function);
+    gen_scar_factor(exp->get_factor_node(), scar_function);
   }
 }
 
