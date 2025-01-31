@@ -33,14 +33,14 @@ std::string to_string(BINOP binop) {
     return "EQUAL";
   case NOTEQUAL:
     return "NOTEQUAL";
-  case LESSER:
-    return "LESSER";
-  case GREATER:
-    return "GREATER";
-  case LESSEREQUAL:
-    return "LESSEREQUAL";
-  case GREATEREQUAL:
-    return "GREATEREQUAL";
+  case LESSTHAN:
+    return "LESSTHAN";
+  case GREATERTHAN:
+    return "GREATERTHAN";
+  case LESSTHANEQUAL:
+    return "LESSTHANEQUAL";
+  case GREATERTHANEQUAL:
+    return "GREATERTHANEQUAL";
   default:
     return "UNKNOWN";
   }

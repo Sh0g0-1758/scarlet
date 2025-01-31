@@ -1,4 +1,4 @@
-/* Test that we can parse an array declarator with a size greater than UINT_MAX
+/* Test that we can parse an array declarator with a size GREATERTHAN than UINT_MAX
  * Note that we don't actually allocate space for this array!
  */
 

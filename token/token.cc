@@ -85,16 +85,16 @@ void print_token(TOKEN token) {
   case TOKEN::NOTEQUAL:
     std::cerr << "!=";
     break;
-  case TOKEN::LESSER:
+  case TOKEN::LESSTHAN:
     std::cerr << "<";
     break;
-  case TOKEN::GREATER:
+  case TOKEN::GREATERTHAN:
     std::cerr << ">";
     break;
-  case TOKEN::LESSEREQUAL:
+  case TOKEN::LESSTHANEQUAL:
     std::cerr << "<=";
     break;
-  case TOKEN::GREATEREQUAL:
+  case TOKEN::GREATERTHANEQUAL:
     std::cerr << ">=";
     break;
   case TOKEN::UNKNOWN:
@@ -153,13 +153,13 @@ std::string to_string(TOKEN token) {
     return "==";
   case TOKEN::NOTEQUAL:
     return "!=";
-  case TOKEN::LESSER:
+  case TOKEN::LESSTHAN:
     return "<";
-  case TOKEN::GREATER:
+  case TOKEN::GREATERTHAN:
     return ">";
-  case TOKEN::LESSEREQUAL:
+  case TOKEN::LESSTHANEQUAL:
     return "<=";
-  case TOKEN::GREATEREQUAL:
+  case TOKEN::GREATERTHANEQUAL:
     return ">=";
   case TOKEN::XOR:
     return "^";
@@ -184,9 +184,9 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::AOR or token == TOKEN::XOR or
          token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT or
          token == TOKEN::LAND or token == TOKEN::LOR or token == TOKEN::EQUAL or
-         token == TOKEN::NOTEQUAL or token == TOKEN::LESSER or
-         token == TOKEN::GREATER or token == TOKEN::LESSEREQUAL or
-         token == TOKEN::GREATEREQUAL;
+         token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
+         token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
+         token == TOKEN::GREATERTHANEQUAL;
 }
 
 int get_binop_prec(TOKEN token) {
@@ -196,8 +196,9 @@ int get_binop_prec(TOKEN token) {
     return 10;
   } else if (token == TOKEN::NOTEQUAL or token == TOKEN::EQUAL) {
     return 15;
-  } else if (token == TOKEN::LESSER or token == TOKEN::GREATER or
-             token == TOKEN::LESSEREQUAL or token == TOKEN::GREATEREQUAL) {
+  } else if (token == TOKEN::LESSTHAN or token == TOKEN::GREATERTHAN or
+             token == TOKEN::LESSTHANEQUAL or
+             token == TOKEN::GREATERTHANEQUAL) {
     return 20;
   } else if (token == TOKEN::AOR) {
     return 25;

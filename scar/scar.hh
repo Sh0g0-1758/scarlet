@@ -16,10 +16,10 @@ Grammar:
 
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
-instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst)
+instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier)
 val = Constant(int) | Var(identifier)
-unary_operator = Complement | Negate
-binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | LeftShift | RightShift
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | LeftShift | RightShift | Equal | NotEqual | LessThan | LessOrEqual | GREATERTHANThan | GREATERTHANOrEqual
 
 */
 
@@ -28,7 +28,16 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xo
 namespace scarlet {
 namespace scar {
 
-enum class instruction_type { RETURN, UNARY, BINARY };
+enum class instruction_type {
+  RETURN,
+  UNARY,
+  BINARY,
+  COPY,
+  JUMP,
+  JUMP_IF_ZERO,
+  JUMP_IF_NOT_ZERO,
+  LABEL
+};
 enum class val_type { CONSTANT, VAR };
 
 std::string to_string(instruction_type type);

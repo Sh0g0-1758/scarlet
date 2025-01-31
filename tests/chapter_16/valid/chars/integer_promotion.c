@@ -2,7 +2,7 @@
 
 int add_chars(char c1, char c2, char c3) {
     // these are all promoted, so this won't overflow
-    // even if the result is greater than CHAR_MAX
+    // even if the result is GREATERTHAN than CHAR_MAX
     return c1 + c2 + c3;
 }
 

@@ -43,14 +43,14 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
     return Binop::EQUAL;
   case binop::BINOP::NOTEQUAL:
     return Binop::NOTEQUAL;
-  case binop::BINOP::LESSER:
-    return Binop::LESSER;
-  case binop::BINOP::GREATER:
-    return Binop::GREATER;
-  case binop::BINOP::LESSEREQUAL:
-    return Binop::LESSEREQUAL;
-  case binop::BINOP::GREATEREQUAL:
-    return Binop::GREATEREQUAL;
+  case binop::BINOP::LESSTHAN:
+    return Binop::LESSTHAN;
+  case binop::BINOP::GREATERTHAN:
+    return Binop::GREATERTHAN;
+  case binop::BINOP::LESSTHANEQUAL:
+    return Binop::LESSTHANEQUAL;
+  case binop::BINOP::GREATERTHANEQUAL:
+    return Binop::GREATERTHANEQUAL;
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::DIV:
   case binop::BINOP::MOD:
@@ -115,10 +115,10 @@ std::string to_string(Binop binop) {
   case Binop::LOR:
   case Binop::EQUAL:
   case Binop::NOTEQUAL:
-  case Binop::LESSER:
-  case Binop::GREATER:
-  case Binop::LESSEREQUAL:
-  case Binop::GREATEREQUAL:
+  case Binop::LESSTHAN:
+  case Binop::GREATERTHAN:
+  case Binop::LESSTHANEQUAL:
+  case Binop::GREATERTHANEQUAL:
     __builtin_unreachable();
   }
   __builtin_unreachable();

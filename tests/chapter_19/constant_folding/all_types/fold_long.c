@@ -54,8 +54,8 @@ int target_neq(void) {
 }
 
 int target_gt(void) {
-    // second operand is greater, but if we only looked at lower
-    // 32 bits we'd think the first was greater
+    // second operand is GREATERTHAN, but if we only looked at lower
+    // 32 bits we'd think the first was GREATERTHAN
     return 549755813889l > 17592186044416l ;  // 2^39 + 1 > 2^44
 }
 

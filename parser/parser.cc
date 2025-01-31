@@ -195,17 +195,17 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::NOTEQUAL) {
     binop->set_op(binop::BINOP::NOTEQUAL);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LESSER) {
-    binop->set_op(binop::BINOP::LESSER);
+  } else if (tokens[0].get_token() == token::TOKEN::LESSTHAN) {
+    binop->set_op(binop::BINOP::LESSTHAN);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::GREATER) {
-    binop->set_op(binop::BINOP::GREATER);
+  } else if (tokens[0].get_token() == token::TOKEN::GREATERTHAN) {
+    binop->set_op(binop::BINOP::GREATERTHAN);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LESSEREQUAL) {
-    binop->set_op(binop::BINOP::LESSEREQUAL);
+  } else if (tokens[0].get_token() == token::TOKEN::LESSTHANEQUAL) {
+    binop->set_op(binop::BINOP::LESSTHANEQUAL);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::GREATEREQUAL) {
-    binop->set_op(binop::BINOP::GREATEREQUAL);
+  } else if (tokens[0].get_token() == token::TOKEN::GREATERTHANEQUAL) {
+    binop->set_op(binop::BINOP::GREATERTHANEQUAL);
     tokens.erase(tokens.begin());
   } else {
     success = false;

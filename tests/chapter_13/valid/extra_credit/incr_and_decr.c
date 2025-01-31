@@ -39,7 +39,7 @@ int main(void) {
         return 9;
     }
 
-    // ++ and -- have no effect if gap between representable values is greater
+    // ++ and -- have no effect if gap between representable values is GREATERTHAN
     // than 1
     d = 10e20;
     d--;

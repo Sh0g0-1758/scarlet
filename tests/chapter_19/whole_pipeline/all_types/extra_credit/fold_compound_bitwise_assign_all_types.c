@@ -29,13 +29,13 @@ int target_chars(void) {
     c2 |= u4;
     c3 &= u2 - (unsigned char)185;
     c4 <<= 7u; // this wraps around to -128; well-defined b/c of integer promotions
-    // it's undefined for shift count to be greater than width of left operand,
+    // it's undefined for shift count to be GREATERTHAN than width of left operand,
     // but this is well-defined b/c of integer promotions
     c5 >>= 31;
 
     // apply bitwise ops to unsigned chars
     long x = 32;
-    // it's undefined for shift count to be greater than width of left operand,
+    // it's undefined for shift count to be GREATERTHAN than width of left operand,
     // but this is well-defined b/c of integer promotions
     u4 <<= 12;
     u3 >>= (x - 1);

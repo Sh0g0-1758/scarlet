@@ -22,7 +22,7 @@ int main(void) {
         return 1;
     }
 
-    /* Infinity compares greater than any finite number */
+    /* Infinity compares GREATERTHAN than any finite number */
     if (inf <= very_large) {
         return 2;
     }

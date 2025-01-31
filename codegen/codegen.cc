@@ -129,9 +129,8 @@ void Codegen::gen_scar() {
     scar_function.set_identifier(identifier);
     for (auto inst : it->get_statements()) {
       if (inst->get_type() == "Return") {
-        for (auto exp : inst->get_exps()) {
+        for (auto exp : inst->get_exps())
           gen_scar_exp(exp, scar_function);
-        }
         scar::scar_Instruction_Node scar_instruction;
         scar_instruction.set_type(scar::instruction_type::RETURN);
         scar::scar_Val_Node scar_val_ret;
@@ -171,11 +170,7 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else if (statement.get_type() == scar::instruction_type::UNARY) {
-        if (statement.get_unop() == unop::UNOP::COMPLEMENT) {
-          std::cerr << "Complement, ";
-        } else if (statement.get_unop() == unop::UNOP::NEGATE) {
-          std::cerr << "Negate, ";
-        }
+        std::cerr << unop::to_string(statement.get_unop()) << ", ";
         if (statement.get_src_ret().get_type() == scar::val_type::CONSTANT) {
           std::cerr << "Constant(" << statement.get_src_ret().get_value()
                     << ")";

@@ -11,6 +11,16 @@ std::string to_string(scar::instruction_type type) {
     return "Unary";
   case scar::instruction_type::BINARY:
     return "Binary";
+  case scar::instruction_type::COPY:
+    return "Copy";
+  case scar::instruction_type::JUMP:
+    return "Jump";
+  case scar::instruction_type::JUMP_IF_ZERO:
+    return "JumpIfZero";
+  case scar::instruction_type::JUMP_IF_NOT_ZERO:
+    return "JumpIfNotZero";
+  case scar::instruction_type::LABEL:
+    return "Label";
   }
   __builtin_unreachable();
 }

@@ -1,6 +1,6 @@
 /* Test comparisons between pointers to structures and structure members:
  * 1. Pointers to a structure and its first member compare equal
- * 2. Pointers to later structure members compare greater than pointers
+ * 2. Pointers to later structure members compare GREATERTHAN than pointers
  *    to earlier structure members
  */
 

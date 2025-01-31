@@ -70,20 +70,20 @@ void lexer::tokenize() {
       if (ch == '>') {
         tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
       } else if (ch == '=') {
-        tokens.emplace_back(token::TOKEN::GREATEREQUAL);
+        tokens.emplace_back(token::TOKEN::GREATERTHANEQUAL);
       } else {
         file.seekg(-1, std::ios::cur);
-        tokens.emplace_back(token::TOKEN::GREATER);
+        tokens.emplace_back(token::TOKEN::GREATERTHAN);
       }
     } else if (ch == '<') {
       file.get(ch);
       if (ch == '<') {
         tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
       } else if (ch == '=') {
-        tokens.emplace_back(token::TOKEN::LESSEREQUAL);
+        tokens.emplace_back(token::TOKEN::LESSTHANEQUAL);
       } else {
         file.seekg(-1, std::ios::cur);
-        tokens.emplace_back(token::TOKEN::LESSER);
+        tokens.emplace_back(token::TOKEN::LESSTHAN);
       }
     } else if (ch == '-') {
       file.get(ch);

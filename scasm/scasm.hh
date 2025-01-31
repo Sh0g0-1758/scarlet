@@ -45,10 +45,10 @@ enum class Binop {
   LOR,
   EQUAL,
   NOTEQUAL,
-  LESSER,
-  GREATER,
-  LESSEREQUAL,
-  GREATEREQUAL
+  LESSTHAN,
+  GREATERTHAN,
+  LESSTHANEQUAL,
+  GREATERTHANEQUAL
 };
 enum class instruction_type {
   UNKNOWN,
