@@ -1,6 +1,7 @@
 #pragma once
 #include <binary_operations/binop.hh>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <token/token.hh>
@@ -68,22 +69,31 @@ class AST_exp_Node;
 
 class AST_factor_Node {
 private:
-  AST_int_Node int_node;
-  std::vector<AST_unop_Node> unop_nodes;
-  AST_exp_Node *exp_node = nullptr;
+  std::shared_ptr<AST_int_Node> int_node;
+  std::vector<std::shared_ptr<AST_unop_Node>> unop_nodes;
+  // No need to make this a weak pointer because if an object of exp a points to
+  // factor b then factor b can never point to exp a. It can only point to
+  // another object of exp, say c. exp -> factor -> exp
+  //  a  ->    b   ->  c
+  std::shared_ptr<AST_exp_Node> exp_node;
 
 public:
   std::string get_AST_name() { return "Factor"; }
-  AST_int_Node &get_int_node() { return int_node; }
-  void set_int_node(AST_int_Node &&int_node) {
+
+  std::shared_ptr<AST_int_Node> get_int_node() { return int_node; }
+  void set_int_node(std::shared_ptr<AST_int_Node> int_node) {
     this->int_node = std::move(int_node);
   }
-  void set_unop_node(AST_unop_Node &&unop_node) {
-    this->unop_nodes.emplace_back(std::move(unop_node));
+  std::vector<std::shared_ptr<AST_unop_Node>> get_unop_nodes() {
+    return unop_nodes;
   }
-  std::vector<AST_unop_Node> &get_unop_nodes() { return unop_nodes; }
-  void set_exp_node(AST_exp_Node *exp_node) { this->exp_node = exp_node; }
-  AST_exp_Node *get_exp_node() { return exp_node; }
+  void set_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
+    unop_nodes.emplace_back(std::move(unop_node));
+  }
+  void set_exp_node(std::shared_ptr<AST_exp_Node> exp_node) {
+    this->exp_node = std::move(exp_node);
+  }
+  std::shared_ptr<AST_exp_Node> get_exp_node() { return exp_node; }
 };
 
 /*
@@ -114,31 +124,38 @@ from left to right.
 
 class AST_exp_Node {
 private:
-  AST_binop_Node binop;
-  AST_factor_Node factor;
-  AST_exp_Node *right;
-  AST_exp_Node *left;
+  std::shared_ptr<AST_binop_Node> binop;
+  std::shared_ptr<AST_factor_Node> factor;
+  std::shared_ptr<AST_exp_Node> right;
+  std::shared_ptr<AST_exp_Node> left;
 
 public:
   std::string get_AST_name() { return "Exp"; }
-  AST_binop_Node &get_binop_node() { return binop; }
-  void set_binop_node(AST_binop_Node &&binop) {
+
+  std::shared_ptr<AST_binop_Node> get_binop_node() { return binop; }
+  void set_binop_node(std::shared_ptr<AST_binop_Node> binop) {
     this->binop = std::move(binop);
   }
 
-  AST_factor_Node &get_factor_node() { return factor; }
-  void set_factor_node(AST_factor_Node &&factor) {
+  const std::shared_ptr<AST_factor_Node> get_factor_node() { return factor; }
+  void set_factor_node(std::shared_ptr<AST_factor_Node> factor) {
     this->factor = std::move(factor);
   }
-  void set_right(AST_exp_Node *right) { this->right = right; }
-  AST_exp_Node *get_right() { return right; }
-  void set_left(AST_exp_Node *left) { this->left = left; }
-  AST_exp_Node *get_left() { return left; }
+
+  std::shared_ptr<AST_exp_Node> get_right() { return right; }
+  void set_right(std::shared_ptr<AST_exp_Node> right) {
+    this->right = std::move(right);
+  }
+
+  std::shared_ptr<AST_exp_Node> get_left() { return left; }
+  void set_left(std::shared_ptr<AST_exp_Node> left) {
+    this->left = std::move(left);
+  }
 };
 
 class AST_Statement_Node {
 private:
-  std::vector<AST_exp_Node *> exps;
+  std::vector<std::shared_ptr<AST_exp_Node>> exps;
   std::string type;
 
 public:
@@ -147,39 +164,45 @@ public:
     this->type = type;
   }
   std::string get_AST_name() { return "Statement"; }
-  std::vector<AST_exp_Node *> &get_exps() { return exps; }
-  void add_exp(AST_exp_Node *exp) { exps.emplace_back(exp); }
   std::string get_type() { return type; }
+
+  std::vector<std::shared_ptr<AST_exp_Node>> get_exps() { return exps; }
+  void add_exp(std::shared_ptr<AST_exp_Node> exp) {
+    exps.emplace_back(std::move(exp));
+  }
 };
 
 class AST_Function_Node {
 private:
-  std::vector<AST_Statement_Node> statements;
+  std::vector<std::shared_ptr<AST_Statement_Node>> statements;
   AST_identifier_Node identifier;
 
 public:
-  AST_Function_Node() { statements.reserve(2); }
   std::string get_AST_name() { return "Function"; }
-  std::vector<AST_Statement_Node> &get_statements() { return statements; }
   AST_identifier_Node &get_identifier() { return identifier; }
-  void add_statement(AST_Statement_Node statement) {
-    statements.emplace_back(statement);
-  }
   void set_identifier(AST_identifier_Node identifier) {
     this->identifier = std::move(identifier);
+  }
+  std::vector<std::shared_ptr<AST_Statement_Node>> get_statements() {
+    return statements;
+  }
+  void add_statement(std::shared_ptr<AST_Statement_Node> statement) {
+    statements.emplace_back(std::move(statement));
   }
 };
 
 class AST_Program_Node {
 private:
-  std::vector<AST_Function_Node> functions;
+  std::vector<std::shared_ptr<AST_Function_Node>> functions;
 
 public:
   AST_Program_Node() { functions.reserve(2); }
   std::string get_AST_name() { return "Program"; }
-  std::vector<AST_Function_Node> &get_functions() { return functions; }
-  void add_function(AST_Function_Node function) {
-    functions.emplace_back(function);
+  std::vector<std::shared_ptr<AST_Function_Node>> get_functions() {
+    return functions;
+  }
+  void add_function(std::shared_ptr<AST_Function_Node> function) {
+    functions.emplace_back(std::move(function));
   }
 };
 } // namespace ast
