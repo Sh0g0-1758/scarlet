@@ -174,7 +174,7 @@ std::string to_string(TOKEN token) {
 }
 
 bool is_unary_op(TOKEN token) {
-  return token == TOKEN::TILDE or token == TOKEN::HYPHEN;
+  return token == TOKEN::TILDE or token == TOKEN::HYPHEN or token == TOKEN::NOT;
 }
 
 bool is_binary_op(TOKEN token) {
@@ -182,11 +182,24 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::ASTERISK or token == TOKEN::FORWARD_SLASH or
          token == TOKEN::PERCENT_SIGN or token == TOKEN::AAND or
          token == TOKEN::AOR or token == TOKEN::XOR or
-         token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT;
+         token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT or
+         token == TOKEN::LAND or token == TOKEN::LOR or token == TOKEN::EQUAL or
+         token == TOKEN::NOTEQUAL or token == TOKEN::LESSER or
+         token == TOKEN::GREATER or token == TOKEN::LESSEREQUAL or
+         token == TOKEN::GREATEREQUAL;
 }
 
 int get_binop_prec(TOKEN token) {
-  if (token == TOKEN::AOR) {
+  if (token == TOKEN::LOR) {
+    return 5;
+  } else if (token == TOKEN::LAND) {
+    return 10;
+  } else if (token == TOKEN::NOTEQUAL or token == TOKEN::EQUAL) {
+    return 15;
+  } else if (token == TOKEN::LESSER or token == TOKEN::GREATER or
+             token == TOKEN::LESSEREQUAL or token == TOKEN::GREATEREQUAL) {
+    return 20;
+  } else if (token == TOKEN::AOR) {
     return 25;
   } else if (token == TOKEN::XOR) {
     return 30;

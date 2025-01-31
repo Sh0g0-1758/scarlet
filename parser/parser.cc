@@ -105,7 +105,8 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
   if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
     parse_int(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::TILDE or
-             tokens[0].get_token() == token::TOKEN::HYPHEN) {
+             tokens[0].get_token() == token::TOKEN::HYPHEN or
+             tokens[0].get_token() == token::TOKEN::NOT) {
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
@@ -168,10 +169,10 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
     binop->set_op(binop::BINOP::SUB);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::AAND) {
-    binop->set_op(binop::BINOP::AND);
+    binop->set_op(binop::BINOP::AAND);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::AOR) {
-    binop->set_op(binop::BINOP::OR);
+    binop->set_op(binop::BINOP::AOR);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::XOR) {
     binop->set_op(binop::BINOP::XOR);
@@ -181,6 +182,30 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::RIGHT_SHIFT) {
     binop->set_op(binop::BINOP::RIGHT_SHIFT);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::LAND) {
+    binop->set_op(binop::BINOP::LAND);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::LOR) {
+    binop->set_op(binop::BINOP::LOR);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::EQUAL) {
+    binop->set_op(binop::BINOP::EQUAL);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::NOTEQUAL) {
+    binop->set_op(binop::BINOP::NOTEQUAL);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::LESSER) {
+    binop->set_op(binop::BINOP::LESSER);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::GREATER) {
+    binop->set_op(binop::BINOP::GREATER);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::LESSEREQUAL) {
+    binop->set_op(binop::BINOP::LESSEREQUAL);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::GREATEREQUAL) {
+    binop->set_op(binop::BINOP::GREATEREQUAL);
     tokens.erase(tokens.begin());
   } else {
     success = false;
@@ -201,6 +226,12 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_unop_Node> unop =
         std::make_shared<ast::AST_unop_Node>();
     unop->set_op(unop::UNOP::NEGATE);
+    factor->set_unop_node(std::move(unop));
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::NOT) {
+    std::shared_ptr<ast::AST_unop_Node> unop =
+        std::make_shared<ast::AST_unop_Node>();
+    unop->set_op(unop::UNOP::NOT);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
   } else {

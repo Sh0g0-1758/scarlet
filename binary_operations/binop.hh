@@ -11,11 +11,19 @@ enum BINOP {
   MUL,
   DIV,
   MOD,
-  AND,
-  OR,
+  AAND,
+  AOR,
   XOR,
   LEFT_SHIFT,
-  RIGHT_SHIFT
+  RIGHT_SHIFT,
+  LAND,
+  LOR,
+  EQUAL,
+  NOTEQUAL,
+  LESSER,
+  GREATER,
+  LESSEREQUAL,
+  GREATEREQUAL
 };
 
 std::string to_string(BINOP binop);

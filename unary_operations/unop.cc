@@ -9,6 +9,9 @@ std::string to_string(UNOP unop) {
   if (unop == UNOP::NEGATE) {
     return "Negate";
   }
+  if (unop == UNOP::NOT) {
+    return "Not";
+  }
   return "";
 }
 } // namespace unop
