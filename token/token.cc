@@ -55,10 +55,10 @@ void print_token(TOKEN token) {
   case TOKEN::DECREMENT_OPERATOR:
     std::cerr << "--";
     break;
-  case TOKEN::AND:
+  case TOKEN::AAND:
     std::cerr << "&";
     break;
-  case TOKEN::OR:
+  case TOKEN::AOR:
     std::cerr << "|";
     break;
   case TOKEN::XOR:
@@ -69,6 +69,33 @@ void print_token(TOKEN token) {
     break;
   case TOKEN::RIGHT_SHIFT:
     std::cerr << ">>";
+    break;
+  case TOKEN::NOT:
+    std::cerr << "!";
+    break;
+  case TOKEN::LAND:
+    std::cerr << "&&";
+    break;
+  case TOKEN::LOR:
+    std::cerr << "||";
+    break;
+  case TOKEN::EQUAL:
+    std::cerr << "==";
+    break;
+  case TOKEN::NOTEQUAL:
+    std::cerr << "!=";
+    break;
+  case TOKEN::LESSER:
+    std::cerr << "<";
+    break;
+  case TOKEN::GREATER:
+    std::cerr << ">";
+    break;
+  case TOKEN::LESSEREQUAL:
+    std::cerr << "<=";
+    break;
+  case TOKEN::GREATEREQUAL:
+    std::cerr << ">=";
     break;
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
@@ -112,10 +139,28 @@ std::string to_string(TOKEN token) {
     return "%";
   case TOKEN::DECREMENT_OPERATOR:
     return "--";
-  case TOKEN::AND:
+  case TOKEN::AAND:
     return "&";
-  case TOKEN::OR:
+  case TOKEN::AOR:
     return "|";
+  case TOKEN::NOT:
+    return "!";
+  case TOKEN::LAND:
+    return "&&";
+  case TOKEN::LOR:
+    return "||";
+  case TOKEN::EQUAL:
+    return "==";
+  case TOKEN::NOTEQUAL:
+    return "!=";
+  case TOKEN::LESSER:
+    return "<";
+  case TOKEN::GREATER:
+    return ">";
+  case TOKEN::LESSEREQUAL:
+    return "<=";
+  case TOKEN::GREATEREQUAL:
+    return ">=";
   case TOKEN::XOR:
     return "^";
   case TOKEN::LEFT_SHIFT:
@@ -135,17 +180,17 @@ bool is_unary_op(TOKEN token) {
 bool is_binary_op(TOKEN token) {
   return token == TOKEN::PLUS or token == TOKEN::HYPHEN or
          token == TOKEN::ASTERISK or token == TOKEN::FORWARD_SLASH or
-         token == TOKEN::PERCENT_SIGN or token == TOKEN::AND or
-         token == TOKEN::OR or token == TOKEN::XOR or
+         token == TOKEN::PERCENT_SIGN or token == TOKEN::AAND or
+         token == TOKEN::AOR or token == TOKEN::XOR or
          token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT;
 }
 
 int get_binop_prec(TOKEN token) {
-  if (token == TOKEN::OR) {
+  if (token == TOKEN::AOR) {
     return 25;
   } else if (token == TOKEN::XOR) {
     return 30;
-  } else if (token == TOKEN::AND) {
+  } else if (token == TOKEN::AAND) {
     return 35;
   } else if (token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT) {
     return 40;

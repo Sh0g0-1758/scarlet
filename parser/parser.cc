@@ -167,10 +167,10 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::HYPHEN) {
     binop->set_op(binop::BINOP::SUB);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::AND) {
+  } else if (tokens[0].get_token() == token::TOKEN::AAND) {
     binop->set_op(binop::BINOP::AND);
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::OR) {
+  } else if (tokens[0].get_token() == token::TOKEN::AOR) {
     binop->set_op(binop::BINOP::OR);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::XOR) {

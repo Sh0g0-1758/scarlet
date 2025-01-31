@@ -107,4 +107,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3
     COMMAND echo "Running bitwise test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 3 --bitwise
+    COMMAND echo "Running lexer-4 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --stage lex
 )
