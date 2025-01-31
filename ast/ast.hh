@@ -174,32 +174,35 @@ public:
 
 class AST_Function_Node {
 private:
-  std::vector<AST_Statement_Node> statements;
+  std::vector<std::shared_ptr<AST_Statement_Node>> statements;
   AST_identifier_Node identifier;
 
 public:
-  AST_Function_Node() { statements.reserve(2); }
   std::string get_AST_name() { return "Function"; }
-  std::vector<AST_Statement_Node> &get_statements() { return statements; }
   AST_identifier_Node &get_identifier() { return identifier; }
-  void add_statement(AST_Statement_Node statement) {
-    statements.emplace_back(statement);
-  }
   void set_identifier(AST_identifier_Node identifier) {
     this->identifier = std::move(identifier);
+  }
+  std::vector<std::shared_ptr<AST_Statement_Node>> get_statements() {
+    return statements;
+  }
+  void add_statement(std::shared_ptr<AST_Statement_Node> statement) {
+    statements.emplace_back(std::move(statement));
   }
 };
 
 class AST_Program_Node {
 private:
-  std::vector<AST_Function_Node> functions;
+  std::vector<std::shared_ptr<AST_Function_Node>> functions;
 
 public:
   AST_Program_Node() { functions.reserve(2); }
   std::string get_AST_name() { return "Program"; }
-  std::vector<AST_Function_Node> &get_functions() { return functions; }
-  void add_function(AST_Function_Node function) {
-    functions.emplace_back(function);
+  std::vector<std::shared_ptr<AST_Function_Node>> get_functions() {
+    return functions;
+  }
+  void add_function(std::shared_ptr<AST_Function_Node> function) {
+    functions.emplace_back(std::move(function));
   }
 };
 } // namespace ast

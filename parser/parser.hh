@@ -14,9 +14,10 @@ private:
   bool success = true;
   std::vector<std::string> error_messages;
   ast::AST_Program_Node program;
-  ast::AST_Function_Node parse_function(std::vector<token::Token> &tokens);
+  std::shared_ptr<ast::AST_Function_Node>
+  parse_function(std::vector<token::Token> &tokens);
   void parse_statement(std::vector<token::Token> &tokens,
-                       ast::AST_Function_Node &function);
+                       std::shared_ptr<ast::AST_Function_Node> function);
   void parse_factor(std::vector<token::Token> &tokens,
                     std::shared_ptr<ast::AST_factor_Node> factor);
   void parse_exp(std::vector<token::Token> &tokens,
@@ -24,7 +25,7 @@ private:
   void parse_unary_op(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_factor_Node> factor);
   void parse_identifier(std::vector<token::Token> &tokens,
-                        ast::AST_Function_Node &function);
+                        std::shared_ptr<ast::AST_Function_Node> function);
   void parse_int(std::vector<token::Token> &tokens,
                  std::shared_ptr<ast::AST_factor_Node> factor);
   void parse_binop(std::vector<token::Token> &tokens,

@@ -61,21 +61,21 @@ namespace parser {
   }                                                                            \
   ast::AST_identifier_Node identifier;                                         \
   identifier.set_identifier(tokens[0].get_value().value());                    \
-  function.set_identifier(identifier);                                         \
+  function->set_identifier(identifier);                                        \
   tokens.erase(tokens.begin());
 
 void parser::parse_program(std::vector<token::Token> tokens) {
   ast::AST_Program_Node program;
   while (!tokens.empty() and success) {
-    ast::AST_Function_Node func = parse_function(tokens);
-    program.add_function(func);
+    program.add_function(parse_function(tokens));
   }
   this->program = program;
 }
 
-ast::AST_Function_Node
+std::shared_ptr<ast::AST_Function_Node>
 parser::parse_function(std::vector<token::Token> &tokens) {
-  ast::AST_Function_Node function;
+  std::shared_ptr<ast::AST_Function_Node> function =
+      std::make_shared<ast::AST_Function_Node>();
   EXPECT_FUNC(token::TOKEN::INT);
   parse_identifier(tokens, function);
   EXPECT_FUNC(token::TOKEN::OPEN_PARANTHESES);
@@ -88,15 +88,16 @@ parser::parse_function(std::vector<token::Token> &tokens) {
 }
 
 void parser::parse_statement(std::vector<token::Token> &tokens,
-                             ast::AST_Function_Node &function) {
-  ast::AST_Statement_Node statement("Return");
+                             std::shared_ptr<ast::AST_Function_Node> function) {
+  std::shared_ptr<ast::AST_Statement_Node> statement =
+      std::make_shared<ast::AST_Statement_Node>("Return");
   EXPECT(token::TOKEN::RETURN);
   std::shared_ptr<ast::AST_exp_Node> exp =
       std::make_shared<ast::AST_exp_Node>();
   parse_exp(tokens, exp);
-  statement.add_exp(std::move(exp));
+  statement->add_exp(std::move(exp));
   EXPECT(token::TOKEN::SEMICOLON);
-  function.add_statement(std::move(statement));
+  function->add_statement(std::move(statement));
 }
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
@@ -209,8 +210,9 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
   }
 }
 
-void parser::parse_identifier(std::vector<token::Token> &tokens,
-                              ast::AST_Function_Node &function) {
+void parser::parse_identifier(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_Function_Node> function) {
   EXPECT_IDENTIFIER(token::TOKEN::IDENTIFIER);
 }
 
@@ -283,12 +285,12 @@ void parser::pretty_print() {
   std::cerr << "Program(" << std::endl;
   for (auto function : program.get_functions()) {
     std::cerr << "\tFunction(" << std::endl;
-    std::cerr << "\t\tname=\"" << function.get_identifier().get_value() << "\","
-              << std::endl;
+    std::cerr << "\t\tname=\"" << function->get_identifier().get_value()
+              << "\"," << std::endl;
     std::cerr << "\t\tbody=[" << std::endl;
-    for (auto statement : function.get_statements()) {
-      std::cerr << "\t\t\t" << statement.get_type() << "(" << std::endl;
-      for (std::shared_ptr<ast::AST_exp_Node> exp : statement.get_exps()) {
+    for (auto statement : function->get_statements()) {
+      std::cerr << "\t\t\t" << statement->get_type() << "(" << std::endl;
+      for (std::shared_ptr<ast::AST_exp_Node> exp : statement->get_exps()) {
         pretty_print_exp(exp);
       }
       std::cerr << "\t\t\t)," << std::endl;

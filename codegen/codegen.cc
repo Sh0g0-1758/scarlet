@@ -125,11 +125,11 @@ void Codegen::gen_scar() {
   for (auto it : program.get_functions()) {
     scar::scar_Function_Node scar_function;
     scar::scar_Identifier_Node identifier;
-    identifier.set_value(it.get_identifier().get_value());
+    identifier.set_value(it->get_identifier().get_value());
     scar_function.set_identifier(identifier);
-    for (auto inst : it.get_statements()) {
-      if (inst.get_type() == "Return") {
-        for (auto exp : inst.get_exps()) {
+    for (auto inst : it->get_statements()) {
+      if (inst->get_type() == "Return") {
+        for (auto exp : inst->get_exps()) {
           gen_scar_exp(exp, scar_function);
         }
         scar::scar_Instruction_Node scar_instruction;
