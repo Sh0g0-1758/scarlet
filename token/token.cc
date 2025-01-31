@@ -55,6 +55,21 @@ void print_token(TOKEN token) {
   case TOKEN::DECREMENT_OPERATOR:
     std::cerr << "--";
     break;
+  case TOKEN::AND:
+    std::cerr << "&";
+    break;
+  case TOKEN::OR:
+    std::cerr << "|";
+    break;
+  case TOKEN::XOR:
+    std::cerr << "^";
+    break;
+  case TOKEN::LEFT_SHIFT:
+    std::cerr << "<<";
+    break;
+  case TOKEN::RIGHT_SHIFT:
+    std::cerr << ">>";
+    break;
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
@@ -97,6 +112,16 @@ std::string to_string(TOKEN token) {
     return "%";
   case TOKEN::DECREMENT_OPERATOR:
     return "--";
+  case TOKEN::AND:
+    return "&";
+  case TOKEN::OR:
+    return "|";
+  case TOKEN::XOR:
+    return "^";
+  case TOKEN::LEFT_SHIFT:
+    return "<<";
+  case TOKEN::RIGHT_SHIFT:
+    return ">>";
   case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
@@ -110,11 +135,21 @@ bool is_unary_op(TOKEN token) {
 bool is_binary_op(TOKEN token) {
   return token == TOKEN::PLUS or token == TOKEN::HYPHEN or
          token == TOKEN::ASTERISK or token == TOKEN::FORWARD_SLASH or
-         token == TOKEN::PERCENT_SIGN;
+         token == TOKEN::PERCENT_SIGN or token == TOKEN::AND or
+         token == TOKEN::OR or token == TOKEN::XOR or
+         token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT;
 }
 
 int get_binop_prec(TOKEN token) {
-  if (token == TOKEN::PLUS or token == TOKEN::HYPHEN) {
+  if (token == TOKEN::OR) {
+    return 25;
+  } else if (token == TOKEN::XOR) {
+    return 30;
+  } else if (token == TOKEN::AND) {
+    return 35;
+  } else if (token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT) {
+    return 40;
+  } else if (token == TOKEN::PLUS or token == TOKEN::HYPHEN) {
     return 45;
   } else if (token == TOKEN::ASTERISK or token == TOKEN::FORWARD_SLASH or
              token == TOKEN::PERCENT_SIGN) {
