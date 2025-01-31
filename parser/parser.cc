@@ -167,19 +167,19 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
     binop->set_op(binop::BINOP::SUB);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::AND) {
-    binop.set_op(binop::BINOP::AND);
+    binop->set_op(binop::BINOP::AND);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::OR) {
-    binop.set_op(binop::BINOP::OR);
+    binop->set_op(binop::BINOP::OR);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::XOR) {
-    binop.set_op(binop::BINOP::XOR);
+    binop->set_op(binop::BINOP::XOR);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::LEFT_SHIFT) {
-    binop.set_op(binop::BINOP::LEFT_SHIFT);
+    binop->set_op(binop::BINOP::LEFT_SHIFT);
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::RIGHT_SHIFT) {
-    binop.set_op(binop::BINOP::RIGHT_SHIFT);
+    binop->set_op(binop::BINOP::RIGHT_SHIFT);
     tokens.erase(tokens.begin());
   } else {
     success = false;
