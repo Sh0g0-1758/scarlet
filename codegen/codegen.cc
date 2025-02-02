@@ -22,12 +22,15 @@ void Codegen::gen_scar_factor(
     int num_unpos = unop_buffer[curr_buff].size();
     for (int i = num_unpos - 1; i >= 0; i--) {
       // scar::scar_Instruction_Node scar_instruction;
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction;
+      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
+          std::make_shared<scar::scar_Instruction_Node>();
       scar_instruction->set_type(scar::instruction_type::UNARY);
       scar_instruction->set_unop(unop_buffer[curr_buff][i]);
 
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src;
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst;
+      std::shared_ptr<scar::scar_Val_Node> scar_val_src =
+          std::make_shared<scar::scar_Val_Node>();
+      std::shared_ptr<scar::scar_Val_Node> scar_val_dst =
+          std::make_shared<scar::scar_Val_Node>();
 
       // deal with the source
       if (i == num_unpos - 1) {
@@ -77,12 +80,16 @@ void Codegen::gen_scar_exp(
   if (exp->get_binop_node() != nullptr and
       exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
     // when we have a binary operator
-    std::shared_ptr<scar::scar_Instruction_Node> scar_instruction;
+    std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
+        std::make_shared<scar::scar_Instruction_Node>();
     scar_instruction->set_type(scar::instruction_type::BINARY);
     scar_instruction->set_binop(exp->get_binop_node()->get_op());
-    std::shared_ptr<scar::scar_Val_Node> scar_val_src1;
-    std::shared_ptr<scar::scar_Val_Node> scar_val_src2;
-    std::shared_ptr<scar::scar_Val_Node> scar_val_dst;
+    std::shared_ptr<scar::scar_Val_Node> scar_val_src1 =
+        std::make_shared<scar::scar_Val_Node>();
+    std::shared_ptr<scar::scar_Val_Node> scar_val_src2 =
+        std::make_shared<scar::scar_Val_Node>();
+    std::shared_ptr<scar::scar_Val_Node> scar_val_dst =
+        std::make_shared<scar::scar_Val_Node>();
 
     if (exp->get_left() == nullptr) {
       gen_scar_factor(exp->get_factor_node(), scar_function);
@@ -126,8 +133,10 @@ void Codegen::gen_scar_exp(
 void Codegen::gen_scar() {
   scar::scar_Program_Node scar_program;
   for (auto it : program.get_functions()) {
-    std::shared_ptr<scar::scar_Function_Node> scar_function;
-    std::shared_ptr<scar::scar_Identifier_Node> identifier;
+    std::shared_ptr<scar::scar_Function_Node> scar_function =
+        std::make_shared<scar::scar_Function_Node>();
+    std::shared_ptr<scar::scar_Identifier_Node> identifier =
+        std::make_shared<scar::scar_Identifier_Node>();
     identifier->set_value(it->get_identifier().get_value());
     scar_function->set_identifier(identifier);
     for (auto inst : it->get_statements()) {
@@ -135,9 +144,11 @@ void Codegen::gen_scar() {
         for (auto exp : inst->get_exps()) {
           gen_scar_exp(exp, scar_function);
         }
-        std::shared_ptr<scar::scar_Instruction_Node> scar_instruction;
+        std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
+            std::make_shared<scar::scar_Instruction_Node>();
         scar_instruction->set_type(scar::instruction_type::RETURN);
-        std::shared_ptr<scar::scar_Val_Node> scar_val_ret;
+        std::shared_ptr<scar::scar_Val_Node> scar_val_ret =
+            std::make_shared<scar::scar_Val_Node>();
         if (constant_buffer.empty()) {
           scar_val_ret->set_type(scar::val_type::VAR);
           scar_val_ret->set_reg_name(get_prev_reg_name());
