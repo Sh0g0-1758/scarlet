@@ -42,7 +42,7 @@ private:
 public:
   std::string get_scar_name() { return "Identifier"; }
   std::string get_value() { return value; }
-  void set_value(std::string tvalue) { value = tvalue; }
+  void set_value(std::string value) { this->value = std::move(value); }
 };
 
 class scar_Val_Node {
