@@ -6,6 +6,7 @@
 
 #include "binary_operations/binop.hh"
 #include "unary_operations/unop.hh"
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,7 +42,7 @@ private:
 public:
   std::string get_scar_name() { return "Identifier"; }
   std::string get_value() { return value; }
-  void set_value(std::string value) { this->value = std::move(value); }
+  void set_value(std::string tvalue) { value = tvalue; }
 };
 
 class scar_Val_Node {
@@ -67,9 +68,10 @@ private:
   instruction_type type; // Return, Unary, Binary
   unop::UNOP unop;       // When the instruction is a unary instruction
   binop::BINOP binop;    // When the instruction is a binary instruction
-  scar_Val_Node src_ret; // This can act as both the source and return value
-  scar_Val_Node src2;
-  scar_Val_Node dst;
+  std::shared_ptr<scar_Val_Node>
+      src_ret; // This can act as both the source and return value
+  std::shared_ptr<scar_Val_Node> src2;
+  std::shared_ptr<scar_Val_Node> dst;
 
 public:
   std::string get_scar_name() { return "Instruction"; }
@@ -79,44 +81,54 @@ public:
   void set_unop(unop::UNOP unop) { this->unop = unop; }
   binop::BINOP get_binop() { return binop; }
   void set_binop(binop::BINOP binop) { this->binop = binop; }
-  scar_Val_Node &get_src_ret() { return src_ret; }
-  void set_src_ret(scar_Val_Node src_ret) {
+  std::shared_ptr<scar_Val_Node> get_src_ret() { return src_ret; }
+  void set_src_ret(std::shared_ptr<scar_Val_Node> src_ret) {
     this->src_ret = std::move(src_ret);
   }
-  scar_Val_Node &get_src2() { return src2; }
-  void set_src2(scar_Val_Node src2) { this->src2 = std::move(src2); }
-  scar_Val_Node &get_dst() { return dst; }
-  void set_dst(scar_Val_Node dst) { this->dst = std::move(dst); }
+  std::shared_ptr<scar_Val_Node> get_src2() { return src2; }
+  void set_src2(std::shared_ptr<scar_Val_Node> src2) {
+    this->src2 = std::move(src2);
+  }
+  std::shared_ptr<scar_Val_Node> get_dst() { return dst; }
+  void set_dst(std::shared_ptr<scar_Val_Node> dst) {
+    this->dst = std::move(dst);
+  }
 };
 
 class scar_Function_Node {
 private:
-  scar_Identifier_Node identifier;
-  std::vector<scar_Instruction_Node> body;
+  ;
+  std::shared_ptr<scar_Identifier_Node> identifier;
+  std::vector<std::shared_ptr<scar_Instruction_Node>> body;
 
 public:
   scar_Function_Node() { body.reserve(2); }
   std::string get_scar_name() { return "Function"; }
-  scar_Identifier_Node &get_identifier() { return identifier; }
-  void set_identifier(scar_Identifier_Node identifier) {
+  std::shared_ptr<scar_Identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<scar_Identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
-  void add_instruction(scar_Instruction_Node instruction) {
-    body.emplace_back(instruction);
+
+  void add_instruction(std::shared_ptr<scar_Instruction_Node> instruction) {
+    body.emplace_back(std::move(instruction));
   }
-  std::vector<scar_Instruction_Node> &get_instructions() { return body; }
+  std::vector<std::shared_ptr<scar_Instruction_Node>> get_instructions() {
+    return body;
+  }
 };
 
 class scar_Program_Node {
 private:
-  std::vector<scar_Function_Node> functions;
+  std::vector<std::shared_ptr<scar_Function_Node>> functions;
 
 public:
   scar_Program_Node() { functions.reserve(2); }
   std::string get_scar_name() { return "Program"; }
-  std::vector<scar_Function_Node> &get_functions() { return functions; }
-  void add_function(scar_Function_Node function) {
-    functions.emplace_back(function);
+  std::vector<std::shared_ptr<scar_Function_Node>> get_functions() {
+    return functions;
+  }
+  void add_function(std::shared_ptr<scar_Function_Node> function) {
+    functions.emplace_back(std::move(function));
   }
 };
 

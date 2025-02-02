@@ -2,8 +2,9 @@
 namespace scarlet {
 namespace codegen {
 
-void Codegen::gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
-                              scar::scar_Function_Node &scar_function) {
+void Codegen::gen_scar_factor(
+    std::shared_ptr<ast::AST_factor_Node> factor,
+    std::shared_ptr<scar::scar_Function_Node> scar_function) {
   // firstly put all the unops (if they exist) in the unop buffer
   for (auto it : factor->get_unop_nodes()) {
     unop_buffer[curr_buff].emplace_back(it->get_op());
@@ -20,40 +21,41 @@ void Codegen::gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   if (!unop_buffer[curr_buff].empty()) {
     int num_unpos = unop_buffer[curr_buff].size();
     for (int i = num_unpos - 1; i >= 0; i--) {
-      scar::scar_Instruction_Node scar_instruction;
-      scar_instruction.set_type(scar::instruction_type::UNARY);
-      scar_instruction.set_unop(unop_buffer[curr_buff][i]);
+      // scar::scar_Instruction_Node scar_instruction;
+      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction;
+      scar_instruction->set_type(scar::instruction_type::UNARY);
+      scar_instruction->set_unop(unop_buffer[curr_buff][i]);
 
-      scar::scar_Val_Node scar_val_src;
-      scar::scar_Val_Node scar_val_dst;
+      std::shared_ptr<scar::scar_Val_Node> scar_val_src;
+      std::shared_ptr<scar::scar_Val_Node> scar_val_dst;
 
       // deal with the source
       if (i == num_unpos - 1) {
         if (factor->get_int_node() != nullptr and
             !factor->get_int_node()->get_value().empty()) {
-          scar_val_src.set_type(scar::val_type::CONSTANT);
-          scar_val_src.set_value(factor->get_int_node()->get_value());
+          scar_val_src->set_type(scar::val_type::CONSTANT);
+          scar_val_src->set_value(factor->get_int_node()->get_value());
         } else if (!constant_buffer.empty()) {
-          scar_val_src.set_type(scar::val_type::CONSTANT);
-          scar_val_src.set_value(constant_buffer);
+          scar_val_src->set_type(scar::val_type::CONSTANT);
+          scar_val_src->set_value(constant_buffer);
           constant_buffer.clear();
         } else {
-          scar_val_src.set_type(scar::val_type::VAR);
-          scar_val_src.set_reg_name(get_prev_reg_name());
+          scar_val_src->set_type(scar::val_type::VAR);
+          scar_val_src->set_reg_name(get_prev_reg_name());
         }
-        scar_instruction.set_src_ret(scar_val_src);
+        scar_instruction->set_src_ret(scar_val_src);
       } else {
-        scar_val_src.set_type(scar::val_type::VAR);
-        scar_val_src.set_reg_name(get_prev_reg_name());
-        scar_instruction.set_src_ret(scar_val_src);
+        scar_val_src->set_type(scar::val_type::VAR);
+        scar_val_src->set_reg_name(get_prev_reg_name());
+        scar_instruction->set_src_ret(scar_val_src);
       }
 
       // deal with the destination
-      scar_val_dst.set_type(scar::val_type::VAR);
-      scar_val_dst.set_reg_name(get_reg_name());
-      scar_instruction.set_dst(scar_val_dst);
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(get_reg_name());
+      scar_instruction->set_dst(scar_val_dst);
 
-      scar_function.add_instruction(scar_instruction);
+      scar_function->add_instruction(scar_instruction);
     }
     // empty the unop buffer
     unop_buffer[curr_buff].clear();
@@ -66,54 +68,55 @@ void Codegen::gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
-void Codegen::gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-                           scar::scar_Function_Node &scar_function) {
+void Codegen::gen_scar_exp(
+    std::shared_ptr<ast::AST_exp_Node> exp,
+    std::shared_ptr<scar::scar_Function_Node> scar_function) {
   if (exp == nullptr)
     return;
   gen_scar_exp(exp->get_left(), scar_function);
   if (exp->get_binop_node() != nullptr and
       exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
     // when we have a binary operator
-    scar::scar_Instruction_Node scar_instruction;
-    scar_instruction.set_type(scar::instruction_type::BINARY);
-    scar_instruction.set_binop(exp->get_binop_node()->get_op());
-    scar::scar_Val_Node scar_val_src1;
-    scar::scar_Val_Node scar_val_src2;
-    scar::scar_Val_Node scar_val_dst;
+    std::shared_ptr<scar::scar_Instruction_Node> scar_instruction;
+    scar_instruction->set_type(scar::instruction_type::BINARY);
+    scar_instruction->set_binop(exp->get_binop_node()->get_op());
+    std::shared_ptr<scar::scar_Val_Node> scar_val_src1;
+    std::shared_ptr<scar::scar_Val_Node> scar_val_src2;
+    std::shared_ptr<scar::scar_Val_Node> scar_val_dst;
 
     if (exp->get_left() == nullptr) {
       gen_scar_factor(exp->get_factor_node(), scar_function);
       if (constant_buffer.empty()) {
-        scar_val_src1.set_type(scar::val_type::VAR);
-        scar_val_src1.set_reg_name(get_prev_reg_name());
+        scar_val_src1->set_type(scar::val_type::VAR);
+        scar_val_src1->set_reg_name(get_prev_reg_name());
       } else {
-        scar_val_src1.set_type(scar::val_type::CONSTANT);
-        scar_val_src1.set_value(constant_buffer);
+        scar_val_src1->set_type(scar::val_type::CONSTANT);
+        scar_val_src1->set_value(constant_buffer);
         constant_buffer.clear();
       }
     } else {
-      scar_val_src1.set_type(scar::val_type::VAR);
-      scar_val_src1.set_reg_name(get_prev_reg_name());
+      scar_val_src1->set_type(scar::val_type::VAR);
+      scar_val_src1->set_reg_name(get_prev_reg_name());
     }
 
     gen_scar_exp(exp->get_right(), scar_function);
     if (constant_buffer.empty()) {
-      scar_val_src2.set_type(scar::val_type::VAR);
-      scar_val_src2.set_reg_name(get_prev_reg_name());
+      scar_val_src2->set_type(scar::val_type::VAR);
+      scar_val_src2->set_reg_name(get_prev_reg_name());
     } else {
-      scar_val_src2.set_type(scar::val_type::CONSTANT);
-      scar_val_src2.set_value(constant_buffer);
+      scar_val_src2->set_type(scar::val_type::CONSTANT);
+      scar_val_src2->set_value(constant_buffer);
       constant_buffer.clear();
     }
 
-    scar_val_dst.set_type(scar::val_type::VAR);
-    scar_val_dst.set_reg_name(get_reg_name());
+    scar_val_dst->set_type(scar::val_type::VAR);
+    scar_val_dst->set_reg_name(get_reg_name());
 
-    scar_instruction.set_src_ret(scar_val_src1);
-    scar_instruction.set_src2(scar_val_src2);
-    scar_instruction.set_dst(scar_val_dst);
+    scar_instruction->set_src_ret(scar_val_src1);
+    scar_instruction->set_src2(scar_val_src2);
+    scar_instruction->set_dst(scar_val_dst);
 
-    scar_function.add_instruction(scar_instruction);
+    scar_function->add_instruction(scar_instruction);
   } else {
     // When we do not have a binary operator, so only parse the factor node
     gen_scar_factor(exp->get_factor_node(), scar_function);
@@ -123,28 +126,28 @@ void Codegen::gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 void Codegen::gen_scar() {
   scar::scar_Program_Node scar_program;
   for (auto it : program.get_functions()) {
-    scar::scar_Function_Node scar_function;
-    scar::scar_Identifier_Node identifier;
-    identifier.set_value(it->get_identifier().get_value());
-    scar_function.set_identifier(identifier);
+    std::shared_ptr<scar::scar_Function_Node> scar_function;
+    std::shared_ptr<scar::scar_Identifier_Node> identifier;
+    identifier->set_value(it->get_identifier().get_value());
+    scar_function->set_identifier(identifier);
     for (auto inst : it->get_statements()) {
       if (inst->get_type() == "Return") {
         for (auto exp : inst->get_exps()) {
           gen_scar_exp(exp, scar_function);
         }
-        scar::scar_Instruction_Node scar_instruction;
-        scar_instruction.set_type(scar::instruction_type::RETURN);
-        scar::scar_Val_Node scar_val_ret;
+        std::shared_ptr<scar::scar_Instruction_Node> scar_instruction;
+        scar_instruction->set_type(scar::instruction_type::RETURN);
+        std::shared_ptr<scar::scar_Val_Node> scar_val_ret;
         if (constant_buffer.empty()) {
-          scar_val_ret.set_type(scar::val_type::VAR);
-          scar_val_ret.set_reg_name(get_prev_reg_name());
+          scar_val_ret->set_type(scar::val_type::VAR);
+          scar_val_ret->set_reg_name(get_prev_reg_name());
         } else {
-          scar_val_ret.set_type(scar::val_type::CONSTANT);
-          scar_val_ret.set_value(constant_buffer);
+          scar_val_ret->set_type(scar::val_type::CONSTANT);
+          scar_val_ret->set_value(constant_buffer);
           constant_buffer.clear();
         }
-        scar_instruction.set_src_ret(scar_val_ret);
-        scar_function.add_instruction(scar_instruction);
+        scar_instruction->set_src_ret(scar_val_ret);
+        scar_function->add_instruction(scar_instruction);
       }
     }
     scar_program.add_function(scar_function);
@@ -157,59 +160,63 @@ void Codegen::pretty_print() {
   std::cerr << "Program(" << std::endl;
   for (auto function : scar.get_functions()) {
     std::cerr << "\tFunction(" << std::endl;
-    std::cerr << "\t\tname=\"" << function.get_identifier().get_value() << "\","
-              << std::endl;
+    std::cerr << "\t\tname=\"" << function->get_identifier()->get_value()
+              << "\"," << std::endl;
     std::cerr << "\t\tbody=[" << std::endl;
-    for (auto statement : function.get_instructions()) {
-      std::cerr << "\t\t\t" << to_string(statement.get_type()) << "(";
-      if (statement.get_type() == scar::instruction_type::RETURN) {
-        if (statement.get_src_ret().get_type() == scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement.get_src_ret().get_value()
+    for (auto statement : function->get_instructions()) {
+      std::cerr << "\t\t\t" << to_string(statement->get_type()) << "(";
+      if (statement->get_type() == scar::instruction_type::RETURN) {
+        if (statement->get_src_ret()->get_type() == scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
                     << ")";
-        } else if (statement.get_src_ret().get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement.get_src_ret().get_reg() << ")";
+        } else if (statement->get_src_ret()->get_type() ==
+                   scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
         }
         std::cerr << ")" << std::endl;
-      } else if (statement.get_type() == scar::instruction_type::UNARY) {
-        if (statement.get_unop() == unop::UNOP::COMPLEMENT) {
+      } else if (statement->get_type() == scar::instruction_type::UNARY) {
+        if (statement->get_unop() == unop::UNOP::COMPLEMENT) {
           std::cerr << "Complement, ";
-        } else if (statement.get_unop() == unop::UNOP::NEGATE) {
+        } else if (statement->get_unop() == unop::UNOP::NEGATE) {
           std::cerr << "Negate, ";
         }
-        if (statement.get_src_ret().get_type() == scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement.get_src_ret().get_value()
+        if (statement->get_src_ret()->get_type() == scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
                     << ")";
-        } else if (statement.get_src_ret().get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement.get_src_ret().get_reg() << ")";
+        } else if (statement->get_src_ret()->get_type() ==
+                   scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
         }
         std::cerr << ", ";
-        if (statement.get_dst().get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement.get_dst().get_reg() << ")";
-        } else if (statement.get_dst().get_type() == scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement.get_dst().get_value() << ")";
+        if (statement->get_dst()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_dst()->get_reg() << ")";
+        } else if (statement->get_dst()->get_type() ==
+                   scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_dst()->get_value() << ")";
         }
         std::cerr << ")" << std::endl;
-      } else if (statement.get_type() == scar::instruction_type::BINARY) {
-        std::cerr << binop::to_string(statement.get_binop()) << ", ";
-        if (statement.get_src_ret().get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement.get_src_ret().get_reg() << ")";
-        } else if (statement.get_src_ret().get_type() ==
+      } else if (statement->get_type() == scar::instruction_type::BINARY) {
+        std::cerr << binop::to_string(statement->get_binop()) << ", ";
+        if (statement->get_src_ret()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
+        } else if (statement->get_src_ret()->get_type() ==
                    scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement.get_src_ret().get_value()
+          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
                     << ")";
         }
         std::cerr << ", ";
-        if (statement.get_src2().get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement.get_src2().get_reg() << ")";
-        } else if (statement.get_src2().get_type() ==
+        if (statement->get_src2()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src2()->get_reg() << ")";
+        } else if (statement->get_src2()->get_type() ==
                    scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement.get_src2().get_value() << ")";
+          std::cerr << "Constant(" << statement->get_src2()->get_value() << ")";
         }
         std::cerr << ", ";
-        if (statement.get_dst().get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement.get_dst().get_reg() << ")";
-        } else if (statement.get_dst().get_type() == scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement.get_dst().get_value() << ")";
+        if (statement->get_dst()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_dst()->get_reg() << ")";
+        } else if (statement->get_dst()->get_type() ==
+                   scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_dst()->get_value() << ")";
         }
         std::cerr << ")" << std::endl;
       }
@@ -222,12 +229,12 @@ void Codegen::pretty_print() {
 
 #define SET_MOV_SOURCE()                                                       \
   scasm::scasm_operand scasm_src{};                                            \
-  if (inst.get_src_ret().get_type() == scar::val_type::CONSTANT) {             \
+  if (inst->get_src_ret()->get_type() == scar::val_type::CONSTANT) {           \
     scasm_src.set_type(scasm::operand_type::IMM);                              \
-    scasm_src.set_imm(stoi(inst.get_src_ret().get_value()));                   \
-  } else if (inst.get_src_ret().get_type() == scar::val_type::VAR) {           \
+    scasm_src.set_imm(stoi(inst->get_src_ret()->get_value()));                 \
+  } else if (inst->get_src_ret()->get_type() == scar::val_type::VAR) {         \
     scasm_src.set_type(scasm::operand_type::PSEUDO);                           \
-    scasm_src.set_identifier_stack(inst.get_src_ret().get_reg());              \
+    scasm_src.set_identifier_stack(inst->get_src_ret()->get_reg());            \
   }                                                                            \
   scasm_inst.set_src(scasm_src)
 
@@ -235,9 +242,9 @@ void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto func : scar.get_functions()) {
     scasm::scasm_function scasm_func{};
-    scasm_func.set_name(func.get_identifier().get_value());
-    for (auto inst : func.get_instructions()) {
-      if (inst.get_type() == scar::instruction_type::RETURN) {
+    scasm_func.set_name(func->get_identifier()->get_value());
+    for (auto inst : func->get_instructions()) {
+      if (inst->get_type() == scar::instruction_type::RETURN) {
 
         scasm::scasm_instruction scasm_inst{};
         scasm_inst.set_type(scasm::instruction_type::MOV);
@@ -252,16 +259,16 @@ void Codegen::gen_scasm() {
         scasm_inst2.set_type(scasm::instruction_type::RET);
         scasm_func.add_instruction(scasm_inst2);
 
-      } else if (inst.get_type() == scar::instruction_type::UNARY) {
+      } else if (inst->get_type() == scar::instruction_type::UNARY) {
         scasm::scasm_instruction scasm_inst{};
         scasm_inst.set_type(scasm::instruction_type::MOV);
 
         SET_MOV_SOURCE();
 
         scasm::scasm_operand scasm_dst{};
-        if (inst.get_dst().get_type() == scar::val_type::VAR) {
+        if (inst->get_dst()->get_type() == scar::val_type::VAR) {
           scasm_dst.set_type(scasm::operand_type::PSEUDO);
-          scasm_dst.set_identifier_stack(inst.get_dst().get_reg());
+          scasm_dst.set_identifier_stack(inst->get_dst()->get_reg());
         }
         scasm_inst.set_dst(scasm_dst);
 
@@ -269,19 +276,19 @@ void Codegen::gen_scasm() {
 
         scasm::scasm_instruction scasm_inst2{};
         scasm_inst2.set_type(scasm::instruction_type::UNARY);
-        scasm_inst2.set_unop(inst.get_unop());
+        scasm_inst2.set_unop(inst->get_unop());
 
         scasm::scasm_operand scasm_dst2{};
-        if (inst.get_dst().get_type() == scar::val_type::VAR) {
+        if (inst->get_dst()->get_type() == scar::val_type::VAR) {
           scasm_dst2.set_type(scasm::operand_type::PSEUDO);
-          scasm_dst2.set_identifier_stack(inst.get_dst().get_reg());
+          scasm_dst2.set_identifier_stack(inst->get_dst()->get_reg());
         }
         scasm_inst2.set_dst(scasm_dst2);
 
         scasm_func.add_instruction(scasm_inst2);
-      } else if (inst.get_type() == scar::instruction_type::BINARY) {
-        if (inst.get_binop() == binop::BINOP::DIV or
-            inst.get_binop() == binop::BINOP::MOD) {
+      } else if (inst->get_type() == scar::instruction_type::BINARY) {
+        if (inst->get_binop() == binop::BINOP::DIV or
+            inst->get_binop() == binop::BINOP::MOD) {
           // Mov(src1, Reg(AX))
           // Cdq
           // Idiv(src2)
@@ -303,12 +310,12 @@ void Codegen::gen_scasm() {
           scasm::scasm_instruction scasm_inst3{};
           scasm_inst3.set_type(scasm::instruction_type::IDIV);
           scasm::scasm_operand scasm_src2{};
-          if (inst.get_src2().get_type() == scar::val_type::VAR) {
+          if (inst->get_src2()->get_type() == scar::val_type::VAR) {
             scasm_src2.set_type(scasm::operand_type::PSEUDO);
-            scasm_src2.set_identifier_stack(inst.get_src2().get_reg());
-          } else if (inst.get_src2().get_type() == scar::val_type::CONSTANT) {
+            scasm_src2.set_identifier_stack(inst->get_src2()->get_reg());
+          } else if (inst->get_src2()->get_type() == scar::val_type::CONSTANT) {
             scasm_src2.set_type(scasm::operand_type::IMM);
-            scasm_src2.set_imm(stoi(inst.get_src2().get_value()));
+            scasm_src2.set_imm(stoi(inst->get_src2()->get_value()));
           }
           scasm_inst3.set_src(scasm_src2);
           scasm_func.add_instruction(scasm_inst3);
@@ -316,22 +323,22 @@ void Codegen::gen_scasm() {
           scasm::scasm_instruction scasm_inst4{};
           scasm_inst4.set_type(scasm::instruction_type::MOV);
           scasm::scasm_operand scasm_dst2{};
-          if (inst.get_dst().get_type() == scar::val_type::VAR) {
+          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst2.set_type(scasm::operand_type::PSEUDO);
-            scasm_dst2.set_identifier_stack(inst.get_dst().get_reg());
+            scasm_dst2.set_identifier_stack(inst->get_dst()->get_reg());
           }
           scasm_inst4.set_dst(scasm_dst2);
           scasm::scasm_operand scasm_src3{};
           scasm_src3.set_type(scasm::operand_type::REG);
-          if (inst.get_binop() == binop::BINOP::DIV) {
+          if (inst->get_binop() == binop::BINOP::DIV) {
             scasm_src3.set_reg(scasm::register_type::AX);
           } else {
             scasm_src3.set_reg(scasm::register_type::DX);
           }
           scasm_inst4.set_src(scasm_src3);
           scasm_func.add_instruction(scasm_inst4);
-        } else if (inst.get_binop() == binop::BINOP::LEFT_SHIFT or
-                   inst.get_binop() == binop::BINOP::RIGHT_SHIFT) {
+        } else if (inst->get_binop() == binop::BINOP::LEFT_SHIFT or
+                   inst->get_binop() == binop::BINOP::RIGHT_SHIFT) {
           // Mov(src1,dst)
           // Mov(src2, Reg(CX))
           // Binary(binary operand, CL, dst)
@@ -340,9 +347,9 @@ void Codegen::gen_scasm() {
           scasm_inst.set_type(scasm::instruction_type::MOV);
           SET_MOV_SOURCE();
           scasm::scasm_operand scasm_dst{};
-          if (inst.get_dst().get_type() == scar::val_type::VAR) {
+          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst.set_type(scasm::operand_type::PSEUDO);
-            scasm_dst.set_identifier_stack(inst.get_dst().get_reg());
+            scasm_dst.set_identifier_stack(inst->get_dst()->get_reg());
           }
           scasm_inst.set_dst(scasm_dst);
           scasm_func.add_instruction(scasm_inst);
@@ -350,12 +357,12 @@ void Codegen::gen_scasm() {
           scasm::scasm_instruction scasm_inst2{};
           scasm_inst2.set_type(scasm::instruction_type::MOV);
           scasm::scasm_operand scasm_src_2{};
-          if (inst.get_src2().get_type() == scar::val_type::CONSTANT) {
+          if (inst->get_src2()->get_type() == scar::val_type::CONSTANT) {
             scasm_src_2.set_type(scasm::operand_type::IMM);
-            scasm_src_2.set_imm(stoi(inst.get_src2().get_value()));
-          } else if (inst.get_src2().get_type() == scar::val_type::VAR) {
+            scasm_src_2.set_imm(stoi(inst->get_src2()->get_value()));
+          } else if (inst->get_src2()->get_type() == scar::val_type::VAR) {
             scasm_src_2.set_type(scasm::operand_type::PSEUDO);
-            scasm_src_2.set_identifier_stack(inst.get_src2().get_reg());
+            scasm_src_2.set_identifier_stack(inst->get_src2()->get_reg());
           }
           scasm_inst2.set_src(scasm_src_2);
           scasm::scasm_operand scasm_dst2{};
@@ -367,14 +374,14 @@ void Codegen::gen_scasm() {
           scasm::scasm_instruction scasm_inst3{};
           scasm_inst3.set_type(scasm::instruction_type::BINARY);
           scasm_inst3.set_binop(
-              scasm::scar_binop_to_scasm_binop(inst.get_binop()));
+              scasm::scar_binop_to_scasm_binop(inst->get_binop()));
           scasm::scasm_operand scasm_src3{};
           scasm_src3.set_type(scasm::operand_type::REG);
           scasm_src3.set_reg(scasm::register_type::CL);
           scasm_inst3.set_src(scasm_src3);
           scasm::scasm_operand scasm_dst3{};
           scasm_dst3.set_type(scasm::operand_type::PSEUDO);
-          scasm_dst3.set_identifier_stack(inst.get_dst().get_reg());
+          scasm_dst3.set_identifier_stack(inst->get_dst()->get_reg());
           scasm_inst3.set_dst(scasm_dst3);
           scasm_func.add_instruction(scasm_inst3);
 
@@ -386,9 +393,9 @@ void Codegen::gen_scasm() {
           scasm_inst.set_type(scasm::instruction_type::MOV);
           SET_MOV_SOURCE();
           scasm::scasm_operand scasm_dst{};
-          if (inst.get_dst().get_type() == scar::val_type::VAR) {
+          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst.set_type(scasm::operand_type::PSEUDO);
-            scasm_dst.set_identifier_stack(inst.get_dst().get_reg());
+            scasm_dst.set_identifier_stack(inst->get_dst()->get_reg());
           }
           scasm_inst.set_dst(scasm_dst);
           scasm_func.add_instruction(scasm_inst);
@@ -396,20 +403,20 @@ void Codegen::gen_scasm() {
           scasm::scasm_instruction scasm_inst2{};
           scasm_inst2.set_type(scasm::instruction_type::BINARY);
           scasm_inst2.set_binop(
-              scasm::scar_binop_to_scasm_binop(inst.get_binop()));
+              scasm::scar_binop_to_scasm_binop(inst->get_binop()));
           scasm::scasm_operand scasm_src2{};
-          if (inst.get_src2().get_type() == scar::val_type::VAR) {
+          if (inst->get_src2()->get_type() == scar::val_type::VAR) {
             scasm_src2.set_type(scasm::operand_type::PSEUDO);
-            scasm_src2.set_identifier_stack(inst.get_src2().get_reg());
-          } else if (inst.get_src2().get_type() == scar::val_type::CONSTANT) {
+            scasm_src2.set_identifier_stack(inst->get_src2()->get_reg());
+          } else if (inst->get_src2()->get_type() == scar::val_type::CONSTANT) {
             scasm_src2.set_type(scasm::operand_type::IMM);
-            scasm_src2.set_imm(stoi(inst.get_src2().get_value()));
+            scasm_src2.set_imm(stoi(inst->get_src2()->get_value()));
           }
           scasm_inst2.set_src(scasm_src2);
           scasm::scasm_operand scasm_dst2{};
-          if (inst.get_dst().get_type() == scar::val_type::VAR) {
+          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst2.set_type(scasm::operand_type::PSEUDO);
-            scasm_dst2.set_identifier_stack(inst.get_dst().get_reg());
+            scasm_dst2.set_identifier_stack(inst->get_dst()->get_reg());
           }
           scasm_inst2.set_dst(scasm_dst2);
           scasm_func.add_instruction(scasm_inst2);
