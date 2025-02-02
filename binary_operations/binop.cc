@@ -46,5 +46,7 @@ std::string to_string(BINOP binop) {
   }
 }
 
+bool short_circuit(BINOP binop) { return binop == LAND or binop == LOR; }
+
 } // namespace binop
 } // namespace scarlet

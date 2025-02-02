@@ -31,6 +31,8 @@ std::string to_string(scar::val_type type) {
     return "Constant";
   case scar::val_type::VAR:
     return "Var";
+  case scar::val_type::UNKNOWN:
+    return "";
   }
   __builtin_unreachable();
 }

@@ -66,6 +66,34 @@ void Codegen::gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
+#define SETUPLANDLOR(num)                                                      \
+  if (exp->get_binop_node()->get_op() == binop::BINOP::LAND) {                 \
+    /* Logical and */                                                          \
+    scar_instruction##num.set_type(scar::instruction_type::JUMP_IF_ZERO);      \
+  } else {                                                                     \
+    /* Logical or */                                                           \
+    scar_instruction##num.set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);  \
+  }                                                                            \
+                                                                               \
+  if (exp->get_left() == nullptr) {                                            \
+    if (num == 1)                                                              \
+      gen_scar_factor(exp->get_factor_node(), scar_function);                  \
+    if (constant_buffer.empty()) {                                             \
+      scar_val_src##num.set_type(scar::val_type::VAR);                         \
+      scar_val_src##num.set_reg_name(get_prev_reg_name());                     \
+    } else {                                                                   \
+      scar_val_src##num.set_type(scar::val_type::CONSTANT);                    \
+      scar_val_src##num.set_value(constant_buffer);                            \
+      constant_buffer.clear();                                                 \
+    }                                                                          \
+  } else {                                                                     \
+    scar_val_src##num.set_type(scar::val_type::VAR);                           \
+    scar_val_src##num.set_reg_name(get_prev_reg_name());                       \
+  }                                                                            \
+                                                                               \
+  scar_instruction##num.set_src_ret(scar_val_src##num);                        \
+  scar_val_dst##num.set_type(scar::val_type::UNKNOWN);
+
 void Codegen::gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                            scar::scar_Function_Node &scar_function) {
   if (exp == nullptr)
@@ -74,46 +102,125 @@ void Codegen::gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   if (exp->get_binop_node() != nullptr and
       exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
     // when we have a binary operator
-    scar::scar_Instruction_Node scar_instruction;
-    scar_instruction.set_type(scar::instruction_type::BINARY);
-    scar_instruction.set_binop(exp->get_binop_node()->get_op());
-    scar::scar_Val_Node scar_val_src1;
-    scar::scar_Val_Node scar_val_src2;
-    scar::scar_Val_Node scar_val_dst;
+    // deal with && and || separately using jmpif(not)zero, labels and copy
+    // operations since we need to apply short circuit for them
+    //
+    if (binop::short_circuit(exp->get_binop_node()->get_op())) {
+      // check if the first result is zero / notzero
+      // first instruction
+      scar::scar_Instruction_Node scar_instruction1;
+      scar::scar_Val_Node scar_val_src1;
+      scar::scar_Val_Node scar_val_dst1;
 
-    if (exp->get_left() == nullptr) {
-      gen_scar_factor(exp->get_factor_node(), scar_function);
-      if (constant_buffer.empty()) {
+      SETUPLANDLOR(1)
+
+      // create a label to jump to now
+      // this is a lable, so setting the val type to unknown. its just an
+      // identifier
+      scar_val_dst1.set_value(get_fr_label_name());
+      scar_instruction1.set_dst(scar_val_dst1);
+      scar_function.add_instruction(scar_instruction1);
+
+      // second instruction
+      gen_scar_exp(exp->get_right(), scar_function);
+      std::cout << constant_buffer << std::endl;
+
+      scar::scar_Instruction_Node scar_instruction2;
+      scar::scar_Val_Node scar_val_src2;
+      scar::scar_Val_Node scar_val_dst2;
+
+      SETUPLANDLOR(2)
+
+      scar_val_dst2.set_value(get_last_fr_label_name());
+      scar_instruction2.set_dst(scar_val_dst2);
+      scar_function.add_instruction(scar_instruction2);
+
+      // now copy 1 into result
+      scar::scar_Instruction_Node scar_instruction3;
+      scar_instruction3.set_type(scar::instruction_type::COPY);
+      scar::scar_Val_Node scar_val_src3;
+      scar_val_src3.set_type(scar::val_type::CONSTANT);
+      scar_val_src3.set_value(std::to_string(1));
+      scar_instruction3.set_src_ret(scar_val_src3);
+      scar_function.add_instruction(scar_instruction3);
+
+      // Now jump to the end
+      scar::scar_Instruction_Node scar_instruction4;
+      scar_instruction4.set_type(scar::instruction_type::JUMP);
+      scar::scar_Val_Node scar_val_src4;
+      scar_val_src4.set_type(scar::val_type::UNKNOWN);
+      scar_val_src4.set_value(get_res_label_name());
+      scar_instruction4.set_src_ret(scar_val_src4);
+      scar_function.add_instruction(scar_instruction4);
+
+      // now generate the label that the 0 result will jump to
+      scar::scar_Instruction_Node scar_instruction5;
+      scar_instruction5.set_type(scar::instruction_type::LABEL);
+      scar::scar_Val_Node scar_val_src5;
+      scar_val_src5.set_type(scar::val_type::UNKNOWN);
+      scar_val_src5.set_value(get_last_fr_label_name());
+      scar_instruction5.set_src_ret(scar_val_src5);
+      scar_function.add_instruction(scar_instruction5);
+
+      // now copy 0 into result
+      scar::scar_Instruction_Node scar_instruction6;
+      scar_instruction6.set_type(scar::instruction_type::COPY);
+      scar::scar_Val_Node scar_val_src6;
+      scar_val_src6.set_type(scar::val_type::CONSTANT);
+      scar_val_src6.set_value(std::to_string(0));
+      scar_instruction6.set_src_ret(scar_val_src6);
+      scar_function.add_instruction(scar_instruction6);
+
+      // now generate the label that the 1 result will jump to
+      scar::scar_Instruction_Node scar_instruction7;
+      scar_instruction7.set_type(scar::instruction_type::LABEL);
+      scar::scar_Val_Node scar_val_src7;
+      scar_val_src7.set_type(scar::val_type::UNKNOWN);
+      scar_val_src7.set_value(get_last_res_label_name());
+      scar_instruction7.set_src_ret(scar_val_src7);
+      scar_function.add_instruction(scar_instruction7);
+    } else {
+      scar::scar_Instruction_Node scar_instruction;
+      scar_instruction.set_type(scar::instruction_type::BINARY);
+      scar_instruction.set_binop(exp->get_binop_node()->get_op());
+      scar::scar_Val_Node scar_val_src1;
+      scar::scar_Val_Node scar_val_src2;
+      scar::scar_Val_Node scar_val_dst;
+
+      if (exp->get_left() == nullptr) {
+        gen_scar_factor(exp->get_factor_node(), scar_function);
+        if (constant_buffer.empty()) {
+          scar_val_src1.set_type(scar::val_type::VAR);
+          scar_val_src1.set_reg_name(get_prev_reg_name());
+        } else {
+          scar_val_src1.set_type(scar::val_type::CONSTANT);
+          scar_val_src1.set_value(constant_buffer);
+          constant_buffer.clear();
+        }
+      } else {
         scar_val_src1.set_type(scar::val_type::VAR);
         scar_val_src1.set_reg_name(get_prev_reg_name());
+      }
+
+      gen_scar_exp(exp->get_right(), scar_function);
+      if (constant_buffer.empty()) {
+        scar_val_src2.set_type(scar::val_type::VAR);
+        scar_val_src2.set_reg_name(get_prev_reg_name());
       } else {
-        scar_val_src1.set_type(scar::val_type::CONSTANT);
-        scar_val_src1.set_value(constant_buffer);
+        scar_val_src2.set_type(scar::val_type::CONSTANT);
+        scar_val_src2.set_value(constant_buffer);
         constant_buffer.clear();
       }
-    } else {
-      scar_val_src1.set_type(scar::val_type::VAR);
-      scar_val_src1.set_reg_name(get_prev_reg_name());
+
+      scar_val_dst.set_type(scar::val_type::VAR);
+      scar_val_dst.set_reg_name(get_reg_name());
+
+      scar_instruction.set_src_ret(scar_val_src1);
+      scar_instruction.set_src2(scar_val_src2);
+      scar_instruction.set_dst(scar_val_dst);
+
+      scar_function.add_instruction(scar_instruction);
     }
-
-    gen_scar_exp(exp->get_right(), scar_function);
-    if (constant_buffer.empty()) {
-      scar_val_src2.set_type(scar::val_type::VAR);
-      scar_val_src2.set_reg_name(get_prev_reg_name());
-    } else {
-      scar_val_src2.set_type(scar::val_type::CONSTANT);
-      scar_val_src2.set_value(constant_buffer);
-      constant_buffer.clear();
-    }
-
-    scar_val_dst.set_type(scar::val_type::VAR);
-    scar_val_dst.set_reg_name(get_reg_name());
-
-    scar_instruction.set_src_ret(scar_val_src1);
-    scar_instruction.set_src2(scar_val_src2);
-    scar_instruction.set_dst(scar_val_dst);
-
-    scar_function.add_instruction(scar_instruction);
   } else {
     // When we do not have a binary operator, so only parse the factor node
     gen_scar_factor(exp->get_factor_node(), scar_function);
@@ -207,6 +314,24 @@ void Codegen::pretty_print() {
           std::cerr << "Constant(" << statement.get_dst().get_value() << ")";
         }
         std::cerr << ")" << std::endl;
+      } else if (statement.get_type() == scar::instruction_type::COPY) {
+        std::cerr << statement.get_src_ret().get_value() << " ,result" << ")"
+                  << std::endl;
+      } else if (statement.get_type() == scar::instruction_type::JUMP or
+                 statement.get_type() == scar::instruction_type::LABEL) {
+        std::cerr << statement.get_src_ret().get_value() << ")" << std::endl;
+      } else if (statement.get_type() == scar::instruction_type::JUMP_IF_ZERO or
+                 statement.get_type() ==
+                     scar::instruction_type::JUMP_IF_NOT_ZERO) {
+        if (statement.get_src_ret().get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement.get_src_ret().get_reg() << ")";
+        } else if (statement.get_src_ret().get_type() ==
+                   scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement.get_src_ret().get_value()
+                    << ")";
+        }
+        std::cerr << ", ";
+        std::cerr << statement.get_dst().get_value() << ")" << std::endl;
       }
     }
     std::cerr << "\t\t]" << std::endl;

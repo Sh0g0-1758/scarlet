@@ -61,6 +61,8 @@ private:
                     scar::scar_Function_Node &scar_function);
   void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                        scar::scar_Function_Node &scar_function);
+  int fr_label_counter = 1;
+  int res_label_counter = 1;
 
 public:
   Codegen(ast::AST_Program_Node program) : program(program) {
@@ -90,6 +92,26 @@ public:
     return reg_name;
   }
   void pretty_print();
+  std::string get_fr_label_name() {
+    std::string label_name = "label_par." + std::to_string(fr_label_counter);
+    fr_label_counter++;
+    return label_name;
+  }
+  std::string get_last_fr_label_name() {
+    std::string label_name =
+        "label_par." + std::to_string(fr_label_counter - 1);
+    return label_name;
+  }
+  std::string get_res_label_name() {
+    std::string label_name = "label_res." + std::to_string(res_label_counter);
+    res_label_counter++;
+    return label_name;
+  }
+  std::string get_last_res_label_name() {
+    std::string label_name =
+        "label_res." + std::to_string(res_label_counter - 1);
+    return label_name;
+  }
 };
 
 } // namespace codegen
