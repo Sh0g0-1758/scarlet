@@ -121,7 +121,7 @@ public:
   void add_instruction(std::shared_ptr<scar_Instruction_Node> instruction) {
     body.emplace_back(std::move(instruction));
   }
-  std::vector<std::shared_ptr<scar_Instruction_Node>> get_instructions() {
+  std::vector<std::shared_ptr<scar_Instruction_Node>> &get_instructions() {
     return body;
   }
 };
@@ -133,7 +133,7 @@ private:
 public:
   scar_Program_Node() { functions.reserve(2); }
   std::string get_scar_name() { return "Program"; }
-  std::vector<std::shared_ptr<scar_Function_Node>> get_functions() {
+  std::vector<std::shared_ptr<scar_Function_Node>> &get_functions() {
     return functions;
   }
   void add_function(std::shared_ptr<scar_Function_Node> function) {
