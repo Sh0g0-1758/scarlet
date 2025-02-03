@@ -111,14 +111,16 @@ public:
 class scasm_function {
 private:
   std::string name;
-  std::vector<scasm_instruction> body;
+  std::vector<std::shared_ptr<scasm_instruction>> body;
 
 public:
   std::string get_scasm_name() { return "Function"; }
   std::string get_name() { return name; }
   void set_name(std::string name) { this->name = std::move(name); }
-  std::vector<scasm_instruction> &get_instructions() { return body; }
-  void add_instruction(scasm_instruction instruction) {
+  std::vector<std::shared_ptr<scasm_instruction>> &get_instructions() {
+    return body;
+  }
+  void add_instruction(std::shared_ptr<scasm_instruction> instruction) {
     body.emplace_back(std::move(instruction));
   }
 };
