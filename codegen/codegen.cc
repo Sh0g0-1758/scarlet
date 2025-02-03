@@ -457,7 +457,7 @@ void Codegen::gen_scasm() {
 }
 
 #define FIX_PSEUDO(target)                                                     \
-  if (inst.get_##target() != nullptr &&                                        \
+  if (NOTNULL(inst.get_##target()) &&                                          \
       inst.get_##target()->get_type() == scasm::operand_type::PSEUDO) {        \
     if (pseduo_registers.find(inst.get_##target()->get_identifier_stack()) !=  \
         pseduo_registers.end()) {                                              \
@@ -499,7 +499,8 @@ void Codegen::fix_instructions() {
   for (auto &funcs : scasm.get_functions()) {
     for (auto it = funcs.get_instructions().begin();
          it != funcs.get_instructions().end(); it++) {
-      if ((*it).get_src()->get_type() == scasm::operand_type::STACK &&
+      if (NOTNULL((*it).get_src()) && NOTNULL((*it).get_dst()) &&
+          (*it).get_src()->get_type() == scasm::operand_type::STACK &&
           (*it).get_dst()->get_type() == scasm::operand_type::STACK) {
         scasm::scasm_instruction scasm_inst{};
         scasm_inst.set_type(scasm::instruction_type::MOV);
@@ -594,13 +595,9 @@ void Codegen::fix_instructions() {
 
 void Codegen::codegen() {
   // ###########################
-  std::cerr << "ONE" << std::endl;
   gen_scasm();
-  std::cerr << "TWO" << std::endl;
   fix_pseudo_registers();
-  std::cerr << "THREE" << std::endl;
   fix_instructions();
-  std::cerr << "FOUR" << std::endl;
   // ###########################
   std::stringstream assembly;
 
