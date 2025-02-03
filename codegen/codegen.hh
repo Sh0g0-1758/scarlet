@@ -48,7 +48,7 @@ class Codegen {
 private:
   ast::AST_Program_Node program;
   scar::scar_Program_Node scar;
-  scasm::scasm_program scasm;
+  std::shared_ptr<scasm::scasm_program> scasm;
   std::string file_name;
   int curr_buff = 0;
   std::vector<std::vector<unop::UNOP>> unop_buffer;
