@@ -127,12 +127,14 @@ public:
 
 class scasm_program {
 private:
-  std::vector<scasm_function> functions;
+  std::vector<std::shared_ptr<scasm_function>> functions;
 
 public:
   std::string get_scasm_name() { return "Program"; }
-  std::vector<scasm_function> &get_functions() { return functions; }
-  void add_function(scasm_function function) {
+  std::vector<std::shared_ptr<scasm_function>> &get_functions() {
+    return functions;
+  }
+  void add_function(std::shared_ptr<scasm_function> function) {
     functions.emplace_back(std::move(function));
   }
 };
