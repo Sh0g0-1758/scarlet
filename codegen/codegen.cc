@@ -457,7 +457,8 @@ void Codegen::gen_scasm() {
 }
 
 #define FIX_PSEUDO(target)                                                     \
-  if (inst.get_##target()->get_type() == scasm::operand_type::PSEUDO) {        \
+  if (inst.get_##target() != nullptr &&                                        \
+      inst.get_##target()->get_type() == scasm::operand_type::PSEUDO) {        \
     if (pseduo_registers.find(inst.get_##target()->get_identifier_stack()) !=  \
         pseduo_registers.end()) {                                              \
       inst.get_##target()->set_identifier_stack(                               \
@@ -593,9 +594,13 @@ void Codegen::fix_instructions() {
 
 void Codegen::codegen() {
   // ###########################
+  std::cerr << "ONE" << std::endl;
   gen_scasm();
+  std::cerr << "TWO" << std::endl;
   fix_pseudo_registers();
+  std::cerr << "THREE" << std::endl;
   fix_instructions();
+  std::cerr << "FOUR" << std::endl;
   // ###########################
   std::stringstream assembly;
 
