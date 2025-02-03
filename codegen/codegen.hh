@@ -44,6 +44,8 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 namespace scarlet {
 namespace codegen {
 
+#define NOTNULL(x) x != nullptr
+
 class Codegen {
 private:
   ast::AST_Program_Node program;
