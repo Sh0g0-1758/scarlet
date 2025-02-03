@@ -44,6 +44,8 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 namespace scarlet {
 namespace codegen {
 
+#define NOTNULL(x) x != nullptr
+
 class Codegen {
 private:
   ast::AST_Program_Node program;
@@ -58,9 +60,8 @@ private:
   std::map<std::string, std::string> pseduo_registers;
   int stack_offset{};
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-                    scar::scar_Function_Node &scar_function);
-  void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
-                       scar::scar_Function_Node &scar_function);
+                    std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor, std::shared_ptr<scar::scar_Function_Node> scar_function);
   int fr_label_counter = 1;
   int res_label_counter = 1;
 

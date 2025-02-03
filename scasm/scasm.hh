@@ -5,6 +5,7 @@
 #pragma once
 
 #include <binary_operations/binop.hh>
+#include <memory>
 #include <string>
 #include <unary_operations/unop.hh>
 #include <vector>
@@ -94,8 +95,8 @@ private:
   instruction_type type;
   Unop unop;
   Binop binop;
-  scasm_operand src;
-  scasm_operand dst;
+  std::shared_ptr<scasm_operand> src;
+  std::shared_ptr<scasm_operand> dst;
 
 public:
   std::string get_scasm_name() { return "Instruction"; }
@@ -105,35 +106,43 @@ public:
   void set_unop(unop::UNOP op) { this->unop = scar_unop_to_scasm_unop(op); }
   Binop get_binop() { return binop; }
   void set_binop(Binop op) { this->binop = op; }
-  scasm_operand &get_src() { return src; }
-  void set_src(scasm_operand src) { this->src = src; }
-  scasm_operand &get_dst() { return dst; }
-  void set_dst(scasm_operand dst) { this->dst = dst; }
+  std::shared_ptr<scasm_operand> get_src() { return src; }
+  void set_src(std::shared_ptr<scasm_operand> src) {
+    this->src = std::move(src);
+  }
+  std::shared_ptr<scasm_operand> get_dst() { return dst; }
+  void set_dst(std::shared_ptr<scasm_operand> dst) {
+    this->dst = std::move(dst);
+  }
 };
 
 class scasm_function {
 private:
   std::string name;
-  std::vector<scasm_instruction> body;
+  std::vector<std::shared_ptr<scasm_instruction>> body;
 
 public:
   std::string get_scasm_name() { return "Function"; }
   std::string get_name() { return name; }
   void set_name(std::string name) { this->name = std::move(name); }
-  std::vector<scasm_instruction> &get_instructions() { return body; }
-  void add_instruction(scasm_instruction instruction) {
+  std::vector<std::shared_ptr<scasm_instruction>> &get_instructions() {
+    return body;
+  }
+  void add_instruction(std::shared_ptr<scasm_instruction> instruction) {
     body.emplace_back(std::move(instruction));
   }
 };
 
 class scasm_program {
 private:
-  std::vector<scasm_function> functions;
+  std::vector<std::shared_ptr<scasm_function>> functions;
 
 public:
   std::string get_scasm_name() { return "Program"; }
-  std::vector<scasm_function> &get_functions() { return functions; }
-  void add_function(scasm_function function) {
+  std::vector<std::shared_ptr<scasm_function>> &get_functions() {
+    return functions;
+  }
+  void add_function(std::shared_ptr<scasm_function> function) {
     functions.emplace_back(std::move(function));
   }
 };
