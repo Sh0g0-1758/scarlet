@@ -1,7 +1,7 @@
 #include "lexer.hh"
 namespace scarlet {
 namespace lexer {
-
+// clang check
 void lexer::tokenize() {
   std::ifstream file(file_path);
   if (!file.is_open()) {
