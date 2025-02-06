@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  valgrind_ubuntu_clang:
+  run:
     name: VALGRIND => test memory leaks (ubuntu, clang)
     runs-on: ubuntu-latest
 

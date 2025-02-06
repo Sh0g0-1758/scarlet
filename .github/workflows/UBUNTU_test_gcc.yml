@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  ubuntu_gcc_build_test:
+  run:
     name: UBUNTU => Build and Test (gcc)
     runs-on: ubuntu-latest
 
