@@ -63,7 +63,7 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::EQUAL);
       } else {
         file.seekg(-1, std::ios::cur);
-        tokens.emplace_back(token::TOKEN::UNKNOWN);
+        tokens.emplace_back(token::TOKEN::ASSIGNMENT);
       }
     } else if (ch == '>') {
       file.get(ch);
