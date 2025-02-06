@@ -1,0 +1,28 @@
+name: VALGRIND => test memory leaks (ubuntu, gcc)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install deps
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        sudo apt update
+        sudo apt install gcc g++ libboost-all-dev valgrind
+
+    - name: Build scarlet
+      run: |
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make
+
+    - name: Test memory leaks
+      run: |
+        ./valgrind/check_memory_leaks.sh
