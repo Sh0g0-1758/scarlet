@@ -95,22 +95,22 @@ public:
   }
   void pretty_print();
   std::string get_fr_label_name() {
-    std::string label_name = "label." + std::to_string(fr_label_counter);
+    std::string label_name = "label" + std::to_string(fr_label_counter);
     fr_label_counter++;
     return label_name;
   }
   std::string get_last_fr_label_name() {
-    std::string label_name = "label." + std::to_string(fr_label_counter - 1);
+    std::string label_name = "label" + std::to_string(fr_label_counter - 1);
     return label_name;
   }
   std::string get_res_label_name() {
-    std::string label_name = "label_res." + std::to_string(res_label_counter);
+    std::string label_name = "labelRes" + std::to_string(res_label_counter);
     res_label_counter++;
     return label_name;
   }
   std::string get_last_res_label_name() {
     std::string label_name =
-        "label_res." + std::to_string(res_label_counter - 1);
+        "labelRes." + std::to_string(res_label_counter - 1);
     return label_name;
   }
 };
