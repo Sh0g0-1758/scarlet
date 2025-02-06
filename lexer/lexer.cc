@@ -139,7 +139,7 @@ void lexer::tokenize() {
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::IDENTIFIER, identifier));
       }
-    } else if (regex.matchDigit(ch)) {
+    } else if (regex.matchDigit(ch) or ch == '.') {
       std::string constant;
       while (regex.matchDigit(ch)) {
         constant += ch;
@@ -158,13 +158,38 @@ void lexer::tokenize() {
         }
       }
       constant += literal_suffix;
-      file.seekg(-1, std::ios::cur);
-      if (regex.matchWord(ch)) {
+      if (ch == '.' and literal_suffix.size() == 0) {
+        constant += '.';
+        file.get(ch);
+        while (regex.matchDigit(ch)) {
+          constant += ch;
+          file.get(ch);
+        }
+      }
+      if ((ch == 'e' or ch == 'E') and literal_suffix.size() == 0) {
+        file.get(ch);
+        if (ch == '+' or ch == '-') {
+          constant += ch;
+          file.get(ch);
+        }
+        if (regex.matchDigit(ch)) {
+          while (regex.matchDigit(ch)) {
+            constant += ch;
+            file.get(ch);
+          }
+        } else {
+          success = false;
+          tokens.emplace_back(token::TOKEN::UNKNOWN);
+        }
+      }
+
+      if (regex.matchWord(ch) or ch == '.') {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::CONSTANT, constant));
       }
+      file.seekg(-1, std::ios::cur);
     } else if (ch == '\n' or ch == ' ' or ch == '\t') {
       // do nothing
     } else if (ch == '/') {
