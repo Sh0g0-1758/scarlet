@@ -48,5 +48,11 @@ std::string to_string(BINOP binop) {
 
 bool short_circuit(BINOP binop) { return binop == LAND or binop == LOR; }
 
+bool is_relational(BINOP binop) {
+  return binop == EQUAL or binop == NOTEQUAL or binop == LESSTHAN or
+         binop == GREATERTHAN or binop == LESSTHANEQUAL or
+         binop == GREATERTHANEQUAL;
+}
+
 } // namespace binop
 } // namespace scarlet

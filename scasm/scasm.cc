@@ -59,21 +59,53 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   __builtin_unreachable();
 }
 
-std::string to_string(register_type reg) {
+// If small is set, return the 8-bit version of the register
+// else return the 32-bit version of the register
+std::string to_string(register_type reg, bool small) {
   switch (reg) {
   case register_type::AX:
+    if (small)
+      return "%al";
     return "%eax";
   case register_type::DX:
+    if (small)
+      return "%dl";
     return "%edx";
   case register_type::CX:
+    if (small)
+      return "%cl";
     return "%ecx";
   case register_type::CL:
     return "%cl";
   case register_type::R10:
+    if (small)
+      return "%r10b";
     return "%r10d";
   case register_type::R11:
+    if (small)
+      return "%r11b";
     return "%r11d";
   case register_type::UNKNOWN:
+    __builtin_unreachable();
+  }
+  __builtin_unreachable();
+}
+
+std::string to_string(cond_code code) {
+  switch (code) {
+  case cond_code::E:
+    return "e";
+  case cond_code::NE:
+    return "ne";
+  case cond_code::G:
+    return "g";
+  case cond_code::GE:
+    return "ge";
+  case cond_code::L:
+    return "l";
+  case cond_code::LE:
+    return "le";
+  case cond_code::UNKNOWN:
     __builtin_unreachable();
   }
   __builtin_unreachable();
@@ -111,6 +143,9 @@ std::string to_string(Binop binop) {
   case Binop::RIGHT_SHIFT:
     return "sarl";
   case Binop::UNKNOWN:
+  // All relational operators are handled by the cmpl instruction using register
+  // flags and results are interpreted from the flags using setcc instruction,
+  // so these cases should never be reached.
   case Binop::LAND:
   case Binop::LOR:
   case Binop::EQUAL:

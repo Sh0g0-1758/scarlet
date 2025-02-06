@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  format-check:
+  run:
     name: Check Formatting
     runs-on: ubuntu-latest
 

@@ -5,7 +5,8 @@ on:
   pull_request:
     branches: [ "main" ]
 jobs:
-  build:
+  run:
+    name: MACOS => Build and Test (clang)
     runs-on: macos-13
     env:
       HOMEBREW_PREFIX: /usr/local
