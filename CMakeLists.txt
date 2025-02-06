@@ -115,6 +115,8 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --stage tacky
     COMMAND echo "Running Codegen-4 test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --stage codegen
+    COMMAND echo "Running test all-4"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4
     COMMAND echo "Running lexer-5 test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --stage lex
 )

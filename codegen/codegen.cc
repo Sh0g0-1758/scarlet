@@ -24,15 +24,12 @@ void Codegen::gen_scar_factor(
     int num_unpos = unop_buffer[curr_buff].size();
     for (int i = num_unpos - 1; i >= 0; i--) {
       // scar::scar_Instruction_Node scar_instruction;
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
-          std::make_shared<scar::scar_Instruction_Node>();
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       scar_instruction->set_type(scar::instruction_type::UNARY);
       scar_instruction->set_unop(unop_buffer[curr_buff][i]);
 
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst =
-          std::make_shared<scar::scar_Val_Node>();
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
 
       // deal with the source
       if (i == num_unpos - 1) {
@@ -112,151 +109,142 @@ void Codegen::gen_scar_exp(
     // when we have a binary operator
     // deal with && and || separately using jmpif(not)zero, labels and copy
     // operations since we need to apply short circuit for them
-    if (binop::short_circuit(exp->get_binop_node()->get_op())) {
-      // check if the first result is zero / notzero
-      // first instruction
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction1 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src1 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst1 =
-          std::make_shared<scar::scar_Val_Node>();
+    bool short_circuit = binop::short_circuit(exp->get_binop_node()->get_op());
+    binop::BINOP sc_binop = exp->get_binop_node()->get_op();
 
-      SETUPLANDLOR(1)
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+    if (short_circuit) {
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
+      } else {
+        scar_instruction->set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);
+      }
+    } else {
+      scar_instruction->set_type(scar::instruction_type::BINARY);
+      scar_instruction->set_binop(sc_binop);
+    }
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
 
-      // create a label to jump to now
-      // this is a lable, so setting the val type to unknown. its just an
-      // identifier
+    if (exp->get_left() == nullptr) {
+      gen_scar_factor(exp->get_factor_node(), scar_function);
+      if (constant_buffer.empty()) {
+        scar_val_src1->set_type(scar::val_type::VAR);
+        scar_val_src1->set_reg_name(get_prev_reg_name());
+      } else {
+        scar_val_src1->set_type(scar::val_type::CONSTANT);
+        scar_val_src1->set_value(constant_buffer);
+        constant_buffer.clear();
+      }
+    } else {
+      scar_val_src1->set_type(scar::val_type::VAR);
+      scar_val_src1->set_reg_name(get_prev_reg_name());
+    }
+
+    scar_instruction->set_src_ret(std::move(scar_val_src1));
+
+    if (short_circuit) {
+      // create a label to jump to
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst1);
+      scar_val_dst1->set_type(scar::val_type::UNKNOWN);
       scar_val_dst1->set_value(get_fr_label_name());
-      scar_instruction1->set_dst(std::move(scar_val_dst1));
-      scar_function->add_instruction(std::move(scar_instruction1));
+      scar_instruction->set_dst(std::move(scar_val_dst1));
+      scar_function->add_instruction(std::move(scar_instruction));
+    }
 
-      // second instruction
-      gen_scar_exp(exp->get_right(), scar_function);
-      std::cout << constant_buffer << std::endl;
+    gen_scar_exp(exp->get_right(), scar_function);
+    if (constant_buffer.empty()) {
+      scar_val_src2->set_type(scar::val_type::VAR);
+      scar_val_src2->set_reg_name(get_prev_reg_name());
+    } else {
+      scar_val_src2->set_type(scar::val_type::CONSTANT);
+      scar_val_src2->set_value(constant_buffer);
+      constant_buffer.clear();
+    }
 
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction2 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src2 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst2 =
-          std::make_shared<scar::scar_Val_Node>();
-
-      SETUPLANDLOR(2)
-
+    if (short_circuit) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_instruction2->set_type(scar::instruction_type::JUMP_IF_ZERO);
+      } else {
+        scar_instruction2->set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);
+      }
+      scar_instruction2->set_src_ret(std::move(scar_val_src2));
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+      scar_val_dst2->set_type(scar::val_type::UNKNOWN);
       scar_val_dst2->set_value(get_last_fr_label_name());
       scar_instruction2->set_dst(std::move(scar_val_dst2));
       scar_function->add_instruction(std::move(scar_instruction2));
 
-      // now copy 1 into result
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction3 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src3 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst3 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now copy 1(LAND) / 0(LOR) into a scar register
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst3);
       scar_instruction3->set_type(scar::instruction_type::COPY);
       scar_val_src3->set_type(scar::val_type::CONSTANT);
-      scar_val_src3->set_value(std::to_string(1));
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_val_src3->set_value(std::to_string(1));
+      } else {
+        scar_val_src3->set_value(std::to_string(0));
+      }
       scar_val_dst3->set_type(scar::val_type::VAR);
       scar_val_dst3->set_reg_name(get_reg_name());
       scar_instruction3->set_src_ret(std::move(scar_val_src3));
       scar_instruction3->set_dst(std::move(scar_val_dst3));
       scar_function->add_instruction(std::move(scar_instruction3));
 
-      // Now jump to the end
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction4 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src4 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now jump to the end
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction4);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
       scar_instruction4->set_type(scar::instruction_type::JUMP);
       scar_val_src4->set_type(scar::val_type::UNKNOWN);
       scar_val_src4->set_value(get_res_label_name());
       scar_instruction4->set_src_ret(std::move(scar_val_src4));
       scar_function->add_instruction(std::move(scar_instruction4));
 
-      // now generate the label that the 0 result will jump to
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction5 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src5 =
-          std::make_shared<scar::scar_Val_Node>();
+      // Now generate the intermediate label
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction5);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src5);
       scar_instruction5->set_type(scar::instruction_type::LABEL);
       scar_val_src5->set_type(scar::val_type::UNKNOWN);
-      scar_val_src5->set_value(get_last_fr_label_name());
+      scar_val_src5->set_value(get_last_fr_label_name(true));
       scar_instruction5->set_src_ret(std::move(scar_val_src5));
       scar_function->add_instruction(std::move(scar_instruction5));
 
-      // now copy 0 into result
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction6 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src6 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst6 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now copy 0(LAND) / 1(LOR) into a scar register
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction6);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src6);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst6);
       scar_instruction6->set_type(scar::instruction_type::COPY);
       scar_val_src6->set_type(scar::val_type::CONSTANT);
-      scar_val_src6->set_value(std::to_string(0));
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_val_src6->set_value(std::to_string(0));
+      } else {
+        scar_val_src6->set_value(std::to_string(1));
+      }
       scar_val_dst6->set_type(scar::val_type::VAR);
       scar_val_dst6->set_reg_name(get_prev_reg_name());
       scar_instruction6->set_src_ret(std::move(scar_val_src6));
       scar_instruction6->set_dst(std::move(scar_val_dst6));
       scar_function->add_instruction(std::move(scar_instruction6));
 
-      // now generate the label that the 1 result will jump to
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction7 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src7 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now generate the final label
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction7);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src7);
       scar_instruction7->set_type(scar::instruction_type::LABEL);
       scar_val_src7->set_type(scar::val_type::UNKNOWN);
       scar_val_src7->set_value(get_last_res_label_name());
       scar_instruction7->set_src_ret(std::move(scar_val_src7));
       scar_function->add_instruction(std::move(scar_instruction7));
     } else {
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
-          std::make_shared<scar::scar_Instruction_Node>();
-      scar_instruction->set_type(scar::instruction_type::BINARY);
-      scar_instruction->set_binop(exp->get_binop_node()->get_op());
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src1 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src2 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst =
-          std::make_shared<scar::scar_Val_Node>();
-
-      if (exp->get_left() == nullptr) {
-        gen_scar_factor(exp->get_factor_node(), scar_function);
-        if (constant_buffer.empty()) {
-          scar_val_src1->set_type(scar::val_type::VAR);
-          scar_val_src1->set_reg_name(get_prev_reg_name());
-        } else {
-          scar_val_src1->set_type(scar::val_type::CONSTANT);
-          scar_val_src1->set_value(constant_buffer);
-          constant_buffer.clear();
-        }
-      } else {
-        scar_val_src1->set_type(scar::val_type::VAR);
-        scar_val_src1->set_reg_name(get_prev_reg_name());
-      }
-
-      gen_scar_exp(exp->get_right(), scar_function);
-      if (constant_buffer.empty()) {
-        scar_val_src2->set_type(scar::val_type::VAR);
-        scar_val_src2->set_reg_name(get_prev_reg_name());
-      } else {
-        scar_val_src2->set_type(scar::val_type::CONSTANT);
-        scar_val_src2->set_value(constant_buffer);
-        constant_buffer.clear();
-      }
-
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
       scar_val_dst->set_type(scar::val_type::VAR);
       scar_val_dst->set_reg_name(get_reg_name());
 
-      scar_instruction->set_src_ret(scar_val_src1);
-      scar_instruction->set_src2(scar_val_src2);
-      scar_instruction->set_dst(scar_val_dst);
+      scar_instruction->set_src2(std::move(scar_val_src2));
+      scar_instruction->set_dst(std::move(scar_val_dst));
 
-      scar_function->add_instruction(scar_instruction);
+      scar_function->add_instruction(std::move(scar_instruction));
     }
   } else {
     // When we do not have a binary operator, so only parse the factor node
