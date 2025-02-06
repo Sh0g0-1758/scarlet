@@ -8,7 +8,6 @@ on:
 
 jobs:
   run:
-    name: UBUNTU => Build and Test (clang)
     runs-on: ubuntu-latest
 
     steps:

@@ -8,7 +8,6 @@ on:
 
 jobs:
   run:
-    name: VALGRIND => test memory leaks (ubuntu, gcc)
     runs-on: ubuntu-latest
 
     steps:
