@@ -349,8 +349,8 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::COPY) {
-        std::cerr << statement->get_src_ret()->get_value() << " ,result"
-                  << ")" << std::endl;
+        std::cerr << statement->get_src_ret()->get_value() << " ,result" << ")"
+                  << std::endl;
       } else if (statement->get_type() == scar::instruction_type::JUMP or
                  statement->get_type() == scar::instruction_type::LABEL) {
         std::cerr << statement->get_src_ret()->get_value() << ")" << std::endl;
@@ -761,11 +761,8 @@ void Codegen::codegen() {
   for (auto funcs : scasm.get_functions()) {
 #ifdef __APPLE__
     if (funcs->get_name() == "main") {
-      assembly << "\t.globl "
-               << "_main"
-               << "\n";
-      assembly << "_main"
-               << ":\n";
+      assembly << "\t.globl " << "_main" << "\n";
+      assembly << "_main" << ":\n";
     } else {
       assembly << "\t.globl " << funcs->get_name() << "\n";
       assembly << funcs->get_name() << ":\n";
