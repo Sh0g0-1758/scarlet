@@ -52,6 +52,9 @@ void print_token(TOKEN token) {
   case TOKEN::PERCENT_SIGN:
     std::cerr << "%";
     break;
+  case TOKEN::ASSIGNMENT:
+    std::cerr << "=";
+    break;
   case TOKEN::DECREMENT_OPERATOR:
     std::cerr << "--";
     break;
@@ -137,6 +140,8 @@ std::string to_string(TOKEN token) {
     return "/";
   case TOKEN::PERCENT_SIGN:
     return "%";
+  case TOKEN::ASSIGNMENT:
+    return "=";
   case TOKEN::DECREMENT_OPERATOR:
     return "--";
   case TOKEN::AAND:
@@ -186,11 +191,13 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::LAND or token == TOKEN::LOR or token == TOKEN::EQUAL or
          token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
          token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
-         token == TOKEN::GREATERTHANEQUAL;
+         token == TOKEN::GREATERTHANEQUAL or token == TOKEN::ASSIGNMENT;
 }
 
 int get_binop_prec(TOKEN token) {
-  if (token == TOKEN::LOR) {
+  if (token == TOKEN::ASSIGNMENT) {
+    return 0;
+  } else if (token == TOKEN::LOR) {
     return 5;
   } else if (token == TOKEN::LAND) {
     return 10;
