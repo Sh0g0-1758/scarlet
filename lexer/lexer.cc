@@ -145,22 +145,26 @@ void lexer::tokenize() {
         constant += ch;
         file.get(ch);
       }
-      if (ch == 'l' or ch == 'L') { // to check for long int
-        tokens.emplace_back(token::Token(token::TOKEN::CONSTANT, constant));
+      std::string literal_suffix = "";
+      if (ch == 'l' || ch == 'L' || ch == 'u' || ch == 'U') {
+        literal_suffix += ch;
+        char prev_ch = ch;
         file.get(ch);
-        if (regex.matchWord(ch)) {
-          success = false;
-          tokens.emplace_back(token::TOKEN::UNKNOWN);
-        } else {
-          file.seekg(-1, std::ios::cur);
+        if (ch == 'l' || ch == 'L' || ch == 'u' || ch == 'U') {
+          if (std::toupper(prev_ch) != std::toupper(ch)) {
+            literal_suffix += ch;
+            file.get(ch);
+          }
         }
-      } else if (regex.matchWord(ch)) {
+      }
+      constant += literal_suffix;
+      file.seekg(-1, std::ios::cur);
+      if (regex.matchWord(ch)) {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::CONSTANT, constant));
       }
-      file.seekg(-1, std::ios::cur);
     } else if (ch == '\n' or ch == ' ' or ch == '\t') {
       // do nothing
     } else if (ch == '/') {
