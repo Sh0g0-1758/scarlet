@@ -25,4 +25,4 @@ jobs:
 
     - name: Test memory leaks
       run: |
-        ./valgrind/check_memory_leaks.sh
+        cd valgrind && ./check_memory_leaks.sh
