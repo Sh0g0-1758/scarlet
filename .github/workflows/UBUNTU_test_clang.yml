@@ -7,7 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  ubuntu_clang_build_test:
+    name: UBUNTU => Build and Test (clang)
     runs-on: ubuntu-latest
 
     steps:
