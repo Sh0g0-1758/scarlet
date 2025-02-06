@@ -391,8 +391,6 @@ void Codegen::pretty_print() {
 }
 
 #define SET_MOV_SOURCE()                                                       \
-  std::shared_ptr<scasm::scasm_operand> scasm_src =                            \
-      std::make_shared<scasm::scasm_operand>();                                \
   switch (inst->get_src_ret()->get_type()) {                                   \
   case scar::val_type::VAR:                                                    \
     scasm_src->set_type(scasm::operand_type::PSEUDO);                          \
@@ -407,6 +405,16 @@ void Codegen::pretty_print() {
   }                                                                            \
   scasm_inst->set_src(std::move(scasm_src))
 
+#define SET_DST(dst)                                                           \
+  switch (inst->get_dst()->get_type()) {                                       \
+  case scar::val_type::VAR:                                                    \
+    dst->set_type(scasm::operand_type::PSEUDO);                                \
+    dst->set_identifier_stack(inst->get_dst()->get_reg());                     \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
 void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto func : scar.get_functions()) {
@@ -419,6 +427,7 @@ void Codegen::gen_scasm() {
         std::shared_ptr<scasm::scasm_instruction> scasm_inst =
             std::make_shared<scasm::scasm_instruction>();
         scasm_inst->set_type(scasm::instruction_type::MOV);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
         SET_MOV_SOURCE();
         std::shared_ptr<scasm::scasm_operand> scasm_dst =
             std::make_shared<scasm::scasm_operand>();
@@ -467,14 +476,7 @@ void Codegen::gen_scasm() {
           scasm_src2->set_imm(0);
           scasm_inst2->set_src(std::move(scasm_src2));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
-          switch (inst->get_dst()->get_type()) {
-          case scar::val_type::VAR:
-            scasm_dst2->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst2->set_identifier_stack(inst->get_dst()->get_reg());
-            break;
-          default:
-            break;
-          }
+          SET_DST(scasm_dst2);
           scasm_inst2->set_dst(std::move(scasm_dst2));
           scasm_func->add_instruction(std::move(scasm_inst2));
 
@@ -499,7 +501,7 @@ void Codegen::gen_scasm() {
           std::shared_ptr<scasm::scasm_instruction> scasm_inst =
               std::make_shared<scasm::scasm_instruction>();
           scasm_inst->set_type(scasm::instruction_type::MOV);
-
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
           SET_MOV_SOURCE();
 
           std::shared_ptr<scasm::scasm_operand> scasm_dst =
@@ -528,26 +530,91 @@ void Codegen::gen_scasm() {
           scasm_func->add_instruction(std::move(scasm_inst2));
         }
       } else if (inst->get_type() == scar::instruction_type::BINARY) {
-        if (inst->get_binop() == binop::BINOP::DIV or
-            inst->get_binop() == binop::BINOP::MOD) {
+        if (binop::is_relational(inst->get_binop())) {
+          // Cmp(src1, src2)
+          // Mov(Imm(0), dst)
+          // SetCC(conditional, dst)
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::CMP);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          SET_MOV_SOURCE();
+          scasm_inst->set_src(std::move(scasm_src));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          switch (inst->get_src2()->get_type()) {
+          case scar::val_type::VAR:
+            scasm_dst->set_type(scasm::operand_type::PSEUDO);
+            scasm_dst->set_identifier_stack(inst->get_src2()->get_reg());
+            break;
+          case scar::val_type::CONSTANT:
+            scasm_dst->set_type(scasm::operand_type::IMM);
+            scasm_dst->set_imm(stoi(inst->get_src2()->get_value()));
+            break;
+          default:
+            break;
+          }
+          scasm_inst->set_dst(std::move(scasm_dst));
+          scasm_func->add_instruction(std::move(scasm_inst));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+          scasm_src2->set_type(scasm::operand_type::IMM);
+          scasm_src2->set_imm(0);
+          scasm_inst2->set_src(std::move(scasm_src2));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          SET_DST(scasm_dst2);
+          scasm_inst2->set_dst(std::move(scasm_dst2));
+          scasm_func->add_instruction(std::move(scasm_inst2));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
+          scasm_inst3->set_type(scasm::instruction_type::SETCC);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src3);
+          scasm_src3->set_type(scasm::operand_type::COND);
+          switch (inst->get_binop()) {
+          case binop::BINOP::EQUAL:
+            scasm_src3->set_cond(scasm::cond_code::E);
+            break;
+          case binop::BINOP::NOTEQUAL:
+            scasm_src3->set_cond(scasm::cond_code::NE);
+            break;
+          case binop::BINOP::LESSTHAN:
+            scasm_src3->set_cond(scasm::cond_code::L);
+            break;
+          case binop::BINOP::LESSTHANEQUAL:
+            scasm_src3->set_cond(scasm::cond_code::LE);
+            break;
+          case binop::BINOP::GREATERTHAN:
+            scasm_src3->set_cond(scasm::cond_code::G);
+            break;
+          case binop::BINOP::GREATERTHANEQUAL:
+            scasm_src3->set_cond(scasm::cond_code::GE);
+            break;
+          default:
+            break;
+          }
+          scasm_inst3->set_src(std::move(scasm_src3));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
+          SET_DST(scasm_dst3);
+          scasm_inst3->set_dst(std::move(scasm_dst3));
+          scasm_func->add_instruction(std::move(scasm_inst3));
+        } else if (inst->get_binop() == binop::BINOP::DIV or
+                   inst->get_binop() == binop::BINOP::MOD) {
           // Mov(src1, Reg(AX))
           // Cdq
           // Idiv(src2)
           // Mov(Reg(AX), dst) | Mov(Reg(DX), dst)
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
           SET_MOV_SOURCE();
-          std::shared_ptr<scasm::scasm_operand> scasm_dst =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           scasm_dst->set_type(scasm::operand_type::REG);
           scasm_dst->set_reg(scasm::register_type::AX);
           scasm_inst->set_dst(std::move(scasm_dst));
           scasm_func->add_instruction(std::move(scasm_inst));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst2 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
           scasm_inst2->set_type(scasm::instruction_type::CDQ);
           scasm_func->add_instruction(std::move(scasm_inst2));
 
@@ -566,15 +633,10 @@ void Codegen::gen_scasm() {
           scasm_inst3->set_src(std::move(scasm_src2));
           scasm_func->add_instruction(std::move(scasm_inst3));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst4 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst4);
           scasm_inst4->set_type(scasm::instruction_type::MOV);
-          std::shared_ptr<scasm::scasm_operand> scasm_dst2 =
-              std::make_shared<scasm::scasm_operand>();
-          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
-            scasm_dst2->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst2->set_identifier_stack(inst->get_dst()->get_reg());
-          }
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          SET_DST(scasm_dst2);
           scasm_inst4->set_dst(std::move(scasm_dst2));
           std::shared_ptr<scasm::scasm_operand> scasm_src3 =
               std::make_shared<scasm::scasm_operand>();
@@ -595,6 +657,7 @@ void Codegen::gen_scasm() {
           std::shared_ptr<scasm::scasm_instruction> scasm_inst =
               std::make_shared<scasm::scasm_instruction>();
           scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
           SET_MOV_SOURCE();
           std::shared_ptr<scasm::scasm_operand> scasm_dst =
               std::make_shared<scasm::scasm_operand>();
@@ -649,6 +712,7 @@ void Codegen::gen_scasm() {
           std::shared_ptr<scasm::scasm_instruction> scasm_inst =
               std::make_shared<scasm::scasm_instruction>();
           scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
           SET_MOV_SOURCE();
           std::shared_ptr<scasm::scasm_operand> scasm_dst =
               std::make_shared<scasm::scasm_operand>();
@@ -687,6 +751,7 @@ void Codegen::gen_scasm() {
         std::shared_ptr<scasm::scasm_instruction> scasm_inst =
             std::make_shared<scasm::scasm_instruction>();
         scasm_inst->set_type(scasm::instruction_type::MOV);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
         SET_MOV_SOURCE();
         std::shared_ptr<scasm::scasm_operand> scasm_dst =
             std::make_shared<scasm::scasm_operand>();

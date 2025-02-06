@@ -28,5 +28,6 @@ enum BINOP {
 
 std::string to_string(BINOP binop);
 bool short_circuit(BINOP binop);
+bool is_relational(BINOP binop);
 } // namespace binop
 } // namespace scarlet
