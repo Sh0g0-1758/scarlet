@@ -6,6 +6,7 @@
 #include <scar/scar.hh>
 #include <scasm/scasm.hh>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -65,6 +66,8 @@ private:
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   int fr_label_counter = 1;
   int res_label_counter = 1;
+  std::stack<std::string> fr_label_stack;
+  std::stack<std::string> res_label_stack;
 
 public:
   Codegen(ast::AST_Program_Node program) : program(program) {
@@ -95,24 +98,27 @@ public:
   }
   void pretty_print();
   std::string get_fr_label_name() {
-    std::string label_name = "label_par." + std::to_string(fr_label_counter);
+    std::string label_name = "label" + std::to_string(fr_label_counter);
     fr_label_counter++;
+    fr_label_stack.push(label_name);
     return label_name;
   }
-  std::string get_last_fr_label_name() {
-    std::string label_name =
-        "label_par." + std::to_string(fr_label_counter - 1);
-    return label_name;
+  std::string get_last_fr_label_name(bool pop = false) {
+    std::string tmp = fr_label_stack.top();
+    if (pop)
+      fr_label_stack.pop();
+    return tmp;
   }
   std::string get_res_label_name() {
-    std::string label_name = "label_res." + std::to_string(res_label_counter);
+    std::string label_name = "labelRes" + std::to_string(res_label_counter);
     res_label_counter++;
+    res_label_stack.push(label_name);
     return label_name;
   }
   std::string get_last_res_label_name() {
-    std::string label_name =
-        "label_res." + std::to_string(res_label_counter - 1);
-    return label_name;
+    std::string tmp = res_label_stack.top();
+    res_label_stack.pop();
+    return tmp;
   }
 };
 

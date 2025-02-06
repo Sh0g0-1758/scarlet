@@ -1,4 +1,6 @@
 #include "codegen.hh"
+
+#define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
 namespace scarlet {
 namespace codegen {
 
@@ -22,15 +24,12 @@ void Codegen::gen_scar_factor(
     int num_unpos = unop_buffer[curr_buff].size();
     for (int i = num_unpos - 1; i >= 0; i--) {
       // scar::scar_Instruction_Node scar_instruction;
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
-          std::make_shared<scar::scar_Instruction_Node>();
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       scar_instruction->set_type(scar::instruction_type::UNARY);
       scar_instruction->set_unop(unop_buffer[curr_buff][i]);
 
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst =
-          std::make_shared<scar::scar_Val_Node>();
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
 
       // deal with the source
       if (i == num_unpos - 1) {
@@ -110,142 +109,142 @@ void Codegen::gen_scar_exp(
     // when we have a binary operator
     // deal with && and || separately using jmpif(not)zero, labels and copy
     // operations since we need to apply short circuit for them
-    //
-    if (binop::short_circuit(exp->get_binop_node()->get_op())) {
-      // check if the first result is zero / notzero
-      // first instruction
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction1 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src1 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst1 =
-          std::make_shared<scar::scar_Val_Node>();
+    bool short_circuit = binop::short_circuit(exp->get_binop_node()->get_op());
+    binop::BINOP sc_binop = exp->get_binop_node()->get_op();
 
-      SETUPLANDLOR(1)
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+    if (short_circuit) {
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
+      } else {
+        scar_instruction->set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);
+      }
+    } else {
+      scar_instruction->set_type(scar::instruction_type::BINARY);
+      scar_instruction->set_binop(sc_binop);
+    }
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
 
-      // create a label to jump to now
-      // this is a lable, so setting the val type to unknown. its just an
-      // identifier
+    if (exp->get_left() == nullptr) {
+      gen_scar_factor(exp->get_factor_node(), scar_function);
+      if (constant_buffer.empty()) {
+        scar_val_src1->set_type(scar::val_type::VAR);
+        scar_val_src1->set_reg_name(get_prev_reg_name());
+      } else {
+        scar_val_src1->set_type(scar::val_type::CONSTANT);
+        scar_val_src1->set_value(constant_buffer);
+        constant_buffer.clear();
+      }
+    } else {
+      scar_val_src1->set_type(scar::val_type::VAR);
+      scar_val_src1->set_reg_name(get_prev_reg_name());
+    }
+
+    scar_instruction->set_src_ret(std::move(scar_val_src1));
+
+    if (short_circuit) {
+      // create a label to jump to
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst1);
+      scar_val_dst1->set_type(scar::val_type::UNKNOWN);
       scar_val_dst1->set_value(get_fr_label_name());
-      scar_instruction1->set_dst(std::move(scar_val_dst1));
-      scar_function->add_instruction(std::move(scar_instruction1));
+      scar_instruction->set_dst(std::move(scar_val_dst1));
+      scar_function->add_instruction(std::move(scar_instruction));
+    }
 
-      // second instruction
-      gen_scar_exp(exp->get_right(), scar_function);
-      std::cout << constant_buffer << std::endl;
+    gen_scar_exp(exp->get_right(), scar_function);
+    if (constant_buffer.empty()) {
+      scar_val_src2->set_type(scar::val_type::VAR);
+      scar_val_src2->set_reg_name(get_prev_reg_name());
+    } else {
+      scar_val_src2->set_type(scar::val_type::CONSTANT);
+      scar_val_src2->set_value(constant_buffer);
+      constant_buffer.clear();
+    }
 
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction2 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src2 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst2 =
-          std::make_shared<scar::scar_Val_Node>();
-
-      SETUPLANDLOR(2)
-
+    if (short_circuit) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_instruction2->set_type(scar::instruction_type::JUMP_IF_ZERO);
+      } else {
+        scar_instruction2->set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);
+      }
+      scar_instruction2->set_src_ret(std::move(scar_val_src2));
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+      scar_val_dst2->set_type(scar::val_type::UNKNOWN);
       scar_val_dst2->set_value(get_last_fr_label_name());
       scar_instruction2->set_dst(std::move(scar_val_dst2));
       scar_function->add_instruction(std::move(scar_instruction2));
 
-      // now copy 1 into result
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction3 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src3 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now copy 1(LAND) / 0(LOR) into a scar register
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst3);
       scar_instruction3->set_type(scar::instruction_type::COPY);
       scar_val_src3->set_type(scar::val_type::CONSTANT);
-      scar_val_src3->set_value(std::to_string(1));
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_val_src3->set_value(std::to_string(1));
+      } else {
+        scar_val_src3->set_value(std::to_string(0));
+      }
+      scar_val_dst3->set_type(scar::val_type::VAR);
+      scar_val_dst3->set_reg_name(get_reg_name());
       scar_instruction3->set_src_ret(std::move(scar_val_src3));
+      scar_instruction3->set_dst(std::move(scar_val_dst3));
       scar_function->add_instruction(std::move(scar_instruction3));
 
-      // Now jump to the end
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction4 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src4 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now jump to the end
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction4);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
       scar_instruction4->set_type(scar::instruction_type::JUMP);
       scar_val_src4->set_type(scar::val_type::UNKNOWN);
       scar_val_src4->set_value(get_res_label_name());
       scar_instruction4->set_src_ret(std::move(scar_val_src4));
       scar_function->add_instruction(std::move(scar_instruction4));
 
-      // now generate the label that the 0 result will jump to
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction5 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src5 =
-          std::make_shared<scar::scar_Val_Node>();
+      // Now generate the intermediate label
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction5);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src5);
       scar_instruction5->set_type(scar::instruction_type::LABEL);
       scar_val_src5->set_type(scar::val_type::UNKNOWN);
-      scar_val_src5->set_value(get_last_fr_label_name());
+      scar_val_src5->set_value(get_last_fr_label_name(true));
       scar_instruction5->set_src_ret(std::move(scar_val_src5));
       scar_function->add_instruction(std::move(scar_instruction5));
 
-      // now copy 0 into result
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction6 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src6 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now copy 0(LAND) / 1(LOR) into a scar register
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction6);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src6);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst6);
       scar_instruction6->set_type(scar::instruction_type::COPY);
       scar_val_src6->set_type(scar::val_type::CONSTANT);
-      scar_val_src6->set_value(std::to_string(0));
+      if (sc_binop == binop::BINOP::LAND) {
+        scar_val_src6->set_value(std::to_string(0));
+      } else {
+        scar_val_src6->set_value(std::to_string(1));
+      }
+      scar_val_dst6->set_type(scar::val_type::VAR);
+      scar_val_dst6->set_reg_name(get_prev_reg_name());
       scar_instruction6->set_src_ret(std::move(scar_val_src6));
+      scar_instruction6->set_dst(std::move(scar_val_dst6));
       scar_function->add_instruction(std::move(scar_instruction6));
 
-      // now generate the label that the 1 result will jump to
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction7 =
-          std::make_shared<scar::scar_Instruction_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src7 =
-          std::make_shared<scar::scar_Val_Node>();
+      // now generate the final label
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction7);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src7);
       scar_instruction7->set_type(scar::instruction_type::LABEL);
       scar_val_src7->set_type(scar::val_type::UNKNOWN);
       scar_val_src7->set_value(get_last_res_label_name());
       scar_instruction7->set_src_ret(std::move(scar_val_src7));
       scar_function->add_instruction(std::move(scar_instruction7));
     } else {
-      std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
-          std::make_shared<scar::scar_Instruction_Node>();
-      scar_instruction->set_type(scar::instruction_type::BINARY);
-      scar_instruction->set_binop(exp->get_binop_node()->get_op());
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src1 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_src2 =
-          std::make_shared<scar::scar_Val_Node>();
-      std::shared_ptr<scar::scar_Val_Node> scar_val_dst =
-          std::make_shared<scar::scar_Val_Node>();
-
-      if (exp->get_left() == nullptr) {
-        gen_scar_factor(exp->get_factor_node(), scar_function);
-        if (constant_buffer.empty()) {
-          scar_val_src1->set_type(scar::val_type::VAR);
-          scar_val_src1->set_reg_name(get_prev_reg_name());
-        } else {
-          scar_val_src1->set_type(scar::val_type::CONSTANT);
-          scar_val_src1->set_value(constant_buffer);
-          constant_buffer.clear();
-        }
-      } else {
-        scar_val_src1->set_type(scar::val_type::VAR);
-        scar_val_src1->set_reg_name(get_prev_reg_name());
-      }
-
-      gen_scar_exp(exp->get_right(), scar_function);
-      if (constant_buffer.empty()) {
-        scar_val_src2->set_type(scar::val_type::VAR);
-        scar_val_src2->set_reg_name(get_prev_reg_name());
-      } else {
-        scar_val_src2->set_type(scar::val_type::CONSTANT);
-        scar_val_src2->set_value(constant_buffer);
-        constant_buffer.clear();
-      }
-
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
       scar_val_dst->set_type(scar::val_type::VAR);
       scar_val_dst->set_reg_name(get_reg_name());
 
-      scar_instruction->set_src_ret(scar_val_src1);
-      scar_instruction->set_src2(scar_val_src2);
-      scar_instruction->set_dst(scar_val_dst);
+      scar_instruction->set_src2(std::move(scar_val_src2));
+      scar_instruction->set_dst(std::move(scar_val_dst));
 
-      scar_function->add_instruction(scar_instruction);
+      scar_function->add_instruction(std::move(scar_instruction));
     }
   } else {
     // When we do not have a binary operator, so only parse the factor node
@@ -256,21 +255,17 @@ void Codegen::gen_scar_exp(
 void Codegen::gen_scar() {
   scar::scar_Program_Node scar_program;
   for (auto it : program.get_functions()) {
-    std::shared_ptr<scar::scar_Function_Node> scar_function =
-        std::make_shared<scar::scar_Function_Node>();
-    std::shared_ptr<scar::scar_Identifier_Node> identifier =
-        std::make_shared<scar::scar_Identifier_Node>();
+    MAKE_SHARED(scar::scar_Function_Node, scar_function);
+    MAKE_SHARED(scar::scar_Identifier_Node, identifier);
     identifier->set_value(it->get_identifier().get_value());
     scar_function->set_identifier(identifier);
     for (auto inst : it->get_statements()) {
       if (inst->get_type() == "Return") {
         for (auto exp : inst->get_exps())
           gen_scar_exp(exp, scar_function);
-        std::shared_ptr<scar::scar_Instruction_Node> scar_instruction =
-            std::make_shared<scar::scar_Instruction_Node>();
+        MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
         scar_instruction->set_type(scar::instruction_type::RETURN);
-        std::shared_ptr<scar::scar_Val_Node> scar_val_ret =
-            std::make_shared<scar::scar_Val_Node>();
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
         if (constant_buffer.empty()) {
           scar_val_ret->set_type(scar::val_type::VAR);
           scar_val_ret->set_reg_name(get_prev_reg_name());
@@ -349,8 +344,12 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::COPY) {
-        std::cerr << statement->get_src_ret()->get_value() << " ,result" << ")"
-                  << std::endl;
+        std::cerr << statement->get_src_ret()->get_value();
+        std::cerr << " ,";
+        if (statement->get_dst()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_dst()->get_reg() << ")";
+        }
+        std::cerr << std::endl;
       } else if (statement->get_type() == scar::instruction_type::JUMP or
                  statement->get_type() == scar::instruction_type::LABEL) {
         std::cerr << statement->get_src_ret()->get_value() << ")" << std::endl;
@@ -376,102 +375,238 @@ void Codegen::pretty_print() {
 }
 
 #define SET_MOV_SOURCE()                                                       \
-  std::shared_ptr<scasm::scasm_operand> scasm_src =                            \
-      std::make_shared<scasm::scasm_operand>();                                \
-  if (inst->get_src_ret()->get_type() == scar::val_type::CONSTANT) {           \
-    scasm_src->set_type(scasm::operand_type::IMM);                             \
-    scasm_src->set_imm(stoi(inst->get_src_ret()->get_value()));                \
-  } else if (inst->get_src_ret()->get_type() == scar::val_type::VAR) {         \
+  switch (inst->get_src_ret()->get_type()) {                                   \
+  case scar::val_type::VAR:                                                    \
     scasm_src->set_type(scasm::operand_type::PSEUDO);                          \
     scasm_src->set_identifier_stack(inst->get_src_ret()->get_reg());           \
+    break;                                                                     \
+  case scar::val_type::CONSTANT:                                               \
+    scasm_src->set_type(scasm::operand_type::IMM);                             \
+    scasm_src->set_imm(stoi(inst->get_src_ret()->get_value()));                \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
   }                                                                            \
   scasm_inst->set_src(std::move(scasm_src))
+
+#define SET_DST(dst)                                                           \
+  switch (inst->get_dst()->get_type()) {                                       \
+  case scar::val_type::VAR:                                                    \
+    dst->set_type(scasm::operand_type::PSEUDO);                                \
+    dst->set_identifier_stack(inst->get_dst()->get_reg());                     \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
 
 void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto func : scar.get_functions()) {
-    std::shared_ptr<scasm::scasm_function> scasm_func =
-        std::make_shared<scasm::scasm_function>();
+    MAKE_SHARED(scasm::scasm_function, scasm_func);
     scasm_func->set_name(func->get_identifier()->get_value());
     for (auto inst : func->get_instructions()) {
       if (inst->get_type() == scar::instruction_type::RETURN) {
-
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-            std::make_shared<scasm::scasm_instruction>();
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
         SET_MOV_SOURCE();
-        std::shared_ptr<scasm::scasm_operand> scasm_dst =
-            std::make_shared<scasm::scasm_operand>();
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         scasm_dst->set_type(scasm::operand_type::REG);
         scasm_dst->set_reg(scasm::register_type::AX);
         scasm_inst->set_dst(std::move(scasm_dst));
         scasm_func->add_instruction(std::move(scasm_inst));
 
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst2 =
-            std::make_shared<scasm::scasm_instruction>();
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
         scasm_inst2->set_type(scasm::instruction_type::RET);
         scasm_func->add_instruction(std::move(scasm_inst2));
 
       } else if (inst->get_type() == scar::instruction_type::UNARY) {
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-            std::make_shared<scasm::scasm_instruction>();
-        scasm_inst->set_type(scasm::instruction_type::MOV);
+        if (inst->get_unop() == unop::UNOP::NOT) {
+          // Cmp(Imm(0), src)
+          // Mov(Imm(0), dst)
+          // SetCC(E, dst)
 
-        SET_MOV_SOURCE();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::CMP);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          scasm_src->set_type(scasm::operand_type::IMM);
+          scasm_src->set_imm(0);
+          scasm_inst->set_src(std::move(scasm_src));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          switch (inst->get_src_ret()->get_type()) {
+          case scar::val_type::VAR:
+            scasm_dst->set_type(scasm::operand_type::PSEUDO);
+            scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
+            break;
+          case scar::val_type::CONSTANT:
+            scasm_dst->set_type(scasm::operand_type::IMM);
+            scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
+            break;
+          default:
+            break;
+          }
+          scasm_inst->set_dst(std::move(scasm_dst));
+          scasm_func->add_instruction(std::move(scasm_inst));
 
-        std::shared_ptr<scasm::scasm_operand> scasm_dst =
-            std::make_shared<scasm::scasm_operand>();
-        if (inst->get_dst()->get_type() == scar::val_type::VAR) {
-          scasm_dst->set_type(scasm::operand_type::PSEUDO);
-          scasm_dst->set_identifier_stack(inst->get_dst()->get_reg());
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+          scasm_src2->set_type(scasm::operand_type::IMM);
+          scasm_src2->set_imm(0);
+          scasm_inst2->set_src(std::move(scasm_src2));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          SET_DST(scasm_dst2);
+          scasm_inst2->set_dst(std::move(scasm_dst2));
+          scasm_func->add_instruction(std::move(scasm_inst2));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
+          scasm_inst3->set_type(scasm::instruction_type::SETCC);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src3);
+          scasm_src3->set_type(scasm::operand_type::COND);
+          scasm_src3->set_cond(scasm::cond_code::E);
+          scasm_inst3->set_src(std::move(scasm_src3));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
+          switch (inst->get_dst()->get_type()) {
+          case scar::val_type::VAR:
+            scasm_dst3->set_type(scasm::operand_type::PSEUDO);
+            scasm_dst3->set_identifier_stack(inst->get_dst()->get_reg());
+            break;
+          default:
+            break;
+          }
+          scasm_inst3->set_dst(std::move(scasm_dst3));
+          scasm_func->add_instruction(std::move(scasm_inst3));
+        } else {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          SET_MOV_SOURCE();
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
+            scasm_dst->set_type(scasm::operand_type::PSEUDO);
+            scasm_dst->set_identifier_stack(inst->get_dst()->get_reg());
+          }
+          scasm_inst->set_dst(std::move(scasm_dst));
+
+          scasm_func->add_instruction(std::move(scasm_inst));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::UNARY);
+          scasm_inst2->set_unop(inst->get_unop());
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
+            scasm_dst2->set_type(scasm::operand_type::PSEUDO);
+            scasm_dst2->set_identifier_stack(inst->get_dst()->get_reg());
+          }
+          scasm_inst2->set_dst(std::move(scasm_dst2));
+
+          scasm_func->add_instruction(std::move(scasm_inst2));
         }
-        scasm_inst->set_dst(std::move(scasm_dst));
-
-        scasm_func->add_instruction(std::move(scasm_inst));
-
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst2 =
-            std::make_shared<scasm::scasm_instruction>();
-        scasm_inst2->set_type(scasm::instruction_type::UNARY);
-        scasm_inst2->set_unop(inst->get_unop());
-
-        std::shared_ptr<scasm::scasm_operand> scasm_dst2 =
-            std::make_shared<scasm::scasm_operand>();
-        if (inst->get_dst()->get_type() == scar::val_type::VAR) {
-          scasm_dst2->set_type(scasm::operand_type::PSEUDO);
-          scasm_dst2->set_identifier_stack(inst->get_dst()->get_reg());
-        }
-        scasm_inst2->set_dst(std::move(scasm_dst2));
-
-        scasm_func->add_instruction(std::move(scasm_inst2));
       } else if (inst->get_type() == scar::instruction_type::BINARY) {
-        if (inst->get_binop() == binop::BINOP::DIV or
-            inst->get_binop() == binop::BINOP::MOD) {
+        if (binop::is_relational(inst->get_binop())) {
+          // Cmp(src2, src1)
+          // Mov(Imm(0), dst)
+          // SetCC(conditional, dst)
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::CMP);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          switch (inst->get_src2()->get_type()) {
+          case scar::val_type::VAR:
+            scasm_src->set_type(scasm::operand_type::PSEUDO);
+            scasm_src->set_identifier_stack(inst->get_src2()->get_reg());
+            break;
+          case scar::val_type::CONSTANT:
+            scasm_src->set_type(scasm::operand_type::IMM);
+            scasm_src->set_imm(stoi(inst->get_src2()->get_value()));
+            break;
+          default:
+            break;
+          }
+          scasm_inst->set_src(std::move(scasm_src));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          switch (inst->get_src_ret()->get_type()) {
+          case scar::val_type::VAR:
+            scasm_dst->set_type(scasm::operand_type::PSEUDO);
+            scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
+            break;
+          case scar::val_type::CONSTANT:
+            scasm_dst->set_type(scasm::operand_type::IMM);
+            scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
+            break;
+          default:
+            break;
+          }
+          scasm_inst->set_dst(std::move(scasm_dst));
+          scasm_func->add_instruction(std::move(scasm_inst));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+          scasm_src2->set_type(scasm::operand_type::IMM);
+          scasm_src2->set_imm(0);
+          scasm_inst2->set_src(std::move(scasm_src2));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          SET_DST(scasm_dst2);
+          scasm_inst2->set_dst(std::move(scasm_dst2));
+          scasm_func->add_instruction(std::move(scasm_inst2));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
+          scasm_inst3->set_type(scasm::instruction_type::SETCC);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src3);
+          scasm_src3->set_type(scasm::operand_type::COND);
+          switch (inst->get_binop()) {
+          case binop::BINOP::EQUAL:
+            scasm_src3->set_cond(scasm::cond_code::E);
+            break;
+          case binop::BINOP::NOTEQUAL:
+            scasm_src3->set_cond(scasm::cond_code::NE);
+            break;
+          case binop::BINOP::LESSTHAN:
+            scasm_src3->set_cond(scasm::cond_code::L);
+            break;
+          case binop::BINOP::LESSTHANEQUAL:
+            scasm_src3->set_cond(scasm::cond_code::LE);
+            break;
+          case binop::BINOP::GREATERTHAN:
+            scasm_src3->set_cond(scasm::cond_code::G);
+            break;
+          case binop::BINOP::GREATERTHANEQUAL:
+            scasm_src3->set_cond(scasm::cond_code::GE);
+            break;
+          default:
+            break;
+          }
+          scasm_inst3->set_src(std::move(scasm_src3));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
+          SET_DST(scasm_dst3);
+          scasm_inst3->set_dst(std::move(scasm_dst3));
+          scasm_func->add_instruction(std::move(scasm_inst3));
+        } else if (inst->get_binop() == binop::BINOP::DIV or
+                   inst->get_binop() == binop::BINOP::MOD) {
           // Mov(src1, Reg(AX))
           // Cdq
           // Idiv(src2)
           // Mov(Reg(AX), dst) | Mov(Reg(DX), dst)
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
           SET_MOV_SOURCE();
-          std::shared_ptr<scasm::scasm_operand> scasm_dst =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           scasm_dst->set_type(scasm::operand_type::REG);
           scasm_dst->set_reg(scasm::register_type::AX);
           scasm_inst->set_dst(std::move(scasm_dst));
           scasm_func->add_instruction(std::move(scasm_inst));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst2 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
           scasm_inst2->set_type(scasm::instruction_type::CDQ);
           scasm_func->add_instruction(std::move(scasm_inst2));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst3 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
           scasm_inst3->set_type(scasm::instruction_type::IDIV);
-          std::shared_ptr<scasm::scasm_operand> scasm_src2 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
           if (inst->get_src2()->get_type() == scar::val_type::VAR) {
             scasm_src2->set_type(scasm::operand_type::PSEUDO);
             scasm_src2->set_identifier_stack(inst->get_src2()->get_reg());
@@ -482,18 +617,12 @@ void Codegen::gen_scasm() {
           scasm_inst3->set_src(std::move(scasm_src2));
           scasm_func->add_instruction(std::move(scasm_inst3));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst4 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst4);
           scasm_inst4->set_type(scasm::instruction_type::MOV);
-          std::shared_ptr<scasm::scasm_operand> scasm_dst2 =
-              std::make_shared<scasm::scasm_operand>();
-          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
-            scasm_dst2->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst2->set_identifier_stack(inst->get_dst()->get_reg());
-          }
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          SET_DST(scasm_dst2);
           scasm_inst4->set_dst(std::move(scasm_dst2));
-          std::shared_ptr<scasm::scasm_operand> scasm_src3 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_src3);
           scasm_src3->set_type(scasm::operand_type::REG);
           if (inst->get_binop() == binop::BINOP::DIV) {
             scasm_src3->set_reg(scasm::register_type::AX);
@@ -508,12 +637,11 @@ void Codegen::gen_scasm() {
           // Mov(src2, Reg(CX))
           // Binary(binary operand, CL, dst)
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
           SET_MOV_SOURCE();
-          std::shared_ptr<scasm::scasm_operand> scasm_dst =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst->set_type(scasm::operand_type::PSEUDO);
             scasm_dst->set_identifier_stack(inst->get_dst()->get_reg());
@@ -521,11 +649,9 @@ void Codegen::gen_scasm() {
           scasm_inst->set_dst(std::move(scasm_dst));
           scasm_func->add_instruction(std::move(scasm_inst));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst2 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
           scasm_inst2->set_type(scasm::instruction_type::MOV);
-          std::shared_ptr<scasm::scasm_operand> scasm_src2 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
           if (inst->get_src2()->get_type() == scar::val_type::CONSTANT) {
             scasm_src2->set_type(scasm::operand_type::IMM);
             scasm_src2->set_imm(stoi(inst->get_src2()->get_value()));
@@ -534,25 +660,21 @@ void Codegen::gen_scasm() {
             scasm_src2->set_identifier_stack(inst->get_src2()->get_reg());
           }
           scasm_inst2->set_src(std::move(scasm_src2));
-          std::shared_ptr<scasm::scasm_operand> scasm_dst2 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
           scasm_dst2->set_type(scasm::operand_type::REG);
           scasm_dst2->set_reg(scasm::register_type::CX);
           scasm_inst2->set_dst(std::move(scasm_dst2));
           scasm_func->add_instruction(std::move(scasm_inst2));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst3 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
           scasm_inst3->set_type(scasm::instruction_type::BINARY);
           scasm_inst3->set_binop(
               scasm::scar_binop_to_scasm_binop(inst->get_binop()));
-          std::shared_ptr<scasm::scasm_operand> scasm_src3 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_src3);
           scasm_src3->set_type(scasm::operand_type::REG);
           scasm_src3->set_reg(scasm::register_type::CL);
           scasm_inst3->set_src(std::move(scasm_src3));
-          std::shared_ptr<scasm::scasm_operand> scasm_dst3 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
           scasm_dst3->set_type(scasm::operand_type::PSEUDO);
           scasm_dst3->set_identifier_stack(inst->get_dst()->get_reg());
           scasm_inst3->set_dst(std::move(scasm_dst3));
@@ -562,12 +684,11 @@ void Codegen::gen_scasm() {
           // Mov(src1, dst)
           // Binary(binary_operator, src2, dst)
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
           SET_MOV_SOURCE();
-          std::shared_ptr<scasm::scasm_operand> scasm_dst =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst->set_type(scasm::operand_type::PSEUDO);
             scasm_dst->set_identifier_stack(inst->get_dst()->get_reg());
@@ -575,13 +696,11 @@ void Codegen::gen_scasm() {
           scasm_inst->set_dst(std::move(scasm_dst));
           scasm_func->add_instruction(std::move(scasm_inst));
 
-          std::shared_ptr<scasm::scasm_instruction> scasm_inst2 =
-              std::make_shared<scasm::scasm_instruction>();
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
           scasm_inst2->set_type(scasm::instruction_type::BINARY);
           scasm_inst2->set_binop(
               scasm::scar_binop_to_scasm_binop(inst->get_binop()));
-          std::shared_ptr<scasm::scasm_operand> scasm_src2 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
           if (inst->get_src2()->get_type() == scar::val_type::VAR) {
             scasm_src2->set_type(scasm::operand_type::PSEUDO);
             scasm_src2->set_identifier_stack(inst->get_src2()->get_reg());
@@ -590,8 +709,7 @@ void Codegen::gen_scasm() {
             scasm_src2->set_imm(stoi(inst->get_src2()->get_value()));
           }
           scasm_inst2->set_src(std::move(scasm_src2));
-          std::shared_ptr<scasm::scasm_operand> scasm_dst2 =
-              std::make_shared<scasm::scasm_operand>();
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
           if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst2->set_type(scasm::operand_type::PSEUDO);
             scasm_dst2->set_identifier_stack(inst->get_dst()->get_reg());
@@ -599,6 +717,75 @@ void Codegen::gen_scasm() {
           scasm_inst2->set_dst(std::move(scasm_dst2));
           scasm_func->add_instruction(std::move(scasm_inst2));
         }
+      } else if (inst->get_type() == scar::instruction_type::COPY) {
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        SET_MOV_SOURCE();
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        if (inst->get_dst()->get_type() == scar::val_type::VAR) {
+          scasm_dst->set_type(scasm::operand_type::PSEUDO);
+          scasm_dst->set_identifier_stack(inst->get_dst()->get_reg());
+        }
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+      } else if (inst->get_type() == scar::instruction_type::LABEL) {
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::LABEL);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        scasm_src->set_type(scasm::operand_type::LABEL);
+        scasm_src->set_identifier_stack(inst->get_src_ret()->get_value());
+        scasm_inst->set_src(std::move(scasm_src));
+        scasm_func->add_instruction(std::move(scasm_inst));
+      } else if (inst->get_type() == scar::instruction_type::JUMP) {
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::JMP);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        scasm_src->set_type(scasm::operand_type::LABEL);
+        scasm_src->set_identifier_stack(inst->get_src_ret()->get_value());
+        scasm_inst->set_src(std::move(scasm_src));
+        scasm_func->add_instruction(std::move(scasm_inst));
+      } else if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO or
+                 inst->get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO) {
+        // Cmp(Imm(0), condition)
+        // JmpCC(E, label) | JmpCC(NE, label)
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::CMP);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        scasm_src->set_type(scasm::operand_type::IMM);
+        scasm_src->set_imm(0);
+        scasm_inst->set_src(std::move(scasm_src));
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        switch (inst->get_src_ret()->get_type()) {
+        case scar::val_type::VAR:
+          scasm_dst->set_type(scasm::operand_type::PSEUDO);
+          scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
+          break;
+        case scar::val_type::CONSTANT:
+          scasm_dst->set_type(scasm::operand_type::IMM);
+          scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
+          break;
+        default:
+          break;
+        }
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+        scasm_inst2->set_type(scasm::instruction_type::JMPCC);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+        scasm_src2->set_type(scasm::operand_type::COND);
+        if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO) {
+          scasm_src2->set_cond(scasm::cond_code::E);
+        } else {
+          scasm_src2->set_cond(scasm::cond_code::NE);
+        }
+        scasm_inst2->set_src(std::move(scasm_src2));
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+        scasm_dst2->set_type(scasm::operand_type::LABEL);
+        scasm_dst2->set_identifier_stack(inst->get_dst()->get_value());
+        scasm_inst2->set_dst(std::move(scasm_dst2));
+        scasm_func->add_instruction(std::move(scasm_inst2));
       }
     }
     scasm_program.add_function(std::move(scasm_func));
@@ -636,11 +823,9 @@ void Codegen::fix_pseudo_registers() {
 }
 
 void Codegen::fix_instructions() {
-  std::shared_ptr<scasm::scasm_instruction> scasm_stack_instr =
-      std::make_shared<scasm::scasm_instruction>();
+  MAKE_SHARED(scasm::scasm_instruction, scasm_stack_instr);
   scasm_stack_instr->set_type(scasm::instruction_type::ALLOCATE_STACK);
-  std::shared_ptr<scasm::scasm_operand> val =
-      std::make_shared<scasm::scasm_operand>();
+  MAKE_SHARED(scasm::scasm_operand, val);
   val->set_type(scasm::operand_type::IMM);
   val->set_imm(stack_offset);
   scasm_stack_instr->set_src(std::move(val));
@@ -655,14 +840,12 @@ void Codegen::fix_instructions() {
       if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
           (*it)->get_src()->get_type() == scasm::operand_type::STACK &&
           (*it)->get_dst()->get_type() == scasm::operand_type::STACK) {
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-            std::make_shared<scasm::scasm_instruction>();
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_src((*it)->get_src());
 
         // fixing up stack to stack move
-        std::shared_ptr<scasm::scasm_operand> dst =
-            std::make_shared<scasm::scasm_operand>();
+        MAKE_SHARED(scasm::scasm_operand, dst);
         dst->set_type(scasm::operand_type::REG);
         dst->set_reg(scasm::register_type::R10);
         scasm_inst->set_dst(dst);
@@ -679,6 +862,25 @@ void Codegen::fix_instructions() {
   for (auto &funcs : scasm.get_functions()) {
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
+
+      if ((*it)->get_type() == scasm::instruction_type::CMP and
+          (*it)->get_dst()->get_type() == scasm::operand_type::IMM) {
+        // cmpl stack/reg, $5
+        //       |
+        //       v
+        // movl $5, %r11d
+        // cmpl stack/reg, %r11d
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_src((*it)->get_dst());
+        MAKE_SHARED(scasm::scasm_operand, dst);
+        dst->set_type(scasm::operand_type::REG);
+        dst->set_reg(scasm::register_type::R11);
+        scasm_inst->set_dst(dst);
+        (*it)->set_dst(std::move(dst));
+        it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+        it++;
+      }
       if ((*it)->get_type() == scasm::instruction_type::IDIV and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
         // idivl $3
@@ -686,12 +888,10 @@ void Codegen::fix_instructions() {
         //   v
         // movl $3, %r10d
         // idivl %r10d
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-            std::make_shared<scasm::scasm_instruction>();
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_src((*it)->get_src());
-        std::shared_ptr<scasm::scasm_operand> dst =
-            std::make_shared<scasm::scasm_operand>();
+        MAKE_SHARED(scasm::scasm_operand, dst);
         dst->set_type(scasm::operand_type::REG);
         dst->set_reg(scasm::register_type::R10);
         scasm_inst->set_dst(dst);
@@ -708,19 +908,16 @@ void Codegen::fix_instructions() {
         // imull $3, %r11d
         // movl %r11d, STACK
 
-        std::shared_ptr<scasm::scasm_operand> dst =
-            std::make_shared<scasm::scasm_operand>();
+        MAKE_SHARED(scasm::scasm_operand, dst);
         dst->set_type(scasm::operand_type::REG);
         dst->set_reg(scasm::register_type::R11);
 
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst =
-            std::make_shared<scasm::scasm_instruction>();
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_src((*it)->get_dst());
         scasm_inst->set_dst(dst);
 
-        std::shared_ptr<scasm::scasm_instruction> scasm_inst2 =
-            std::make_shared<scasm::scasm_instruction>();
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
         scasm_inst2->set_type(scasm::instruction_type::MOV);
         scasm_inst2->set_src(dst);
         scasm_inst2->set_dst((*it)->get_dst());
@@ -807,6 +1004,41 @@ void Codegen::codegen() {
         assembly << "\t";
         assembly << scasm::to_string(instr->get_binop()) << " ";
         CODEGEN_SRC_DST();
+        assembly << "\n";
+      } else if (instr->get_type() == scasm::instruction_type::JMP) {
+#ifdef __APPLE__
+        assembly << "\tjmp " << "L" << instr->get_src()->get_identifier_stack()
+                 << "\n";
+#else
+        assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier_stack()
+                 << "\n";
+#endif
+      } else if (instr->get_type() == scasm::instruction_type::LABEL) {
+#ifdef __APPLE__
+        assembly << "L" << instr->get_src()->get_identifier_stack() << ":\n";
+#else
+        assembly << ".L" << instr->get_src()->get_identifier_stack() << ":\n";
+#endif
+      } else if (instr->get_type() == scasm::instruction_type::CMP) {
+        assembly << "\tcmpl ";
+        CODEGEN_SRC_DST();
+        assembly << "\n";
+      } else if (instr->get_type() == scasm::instruction_type::JMPCC) {
+        assembly << "\tj";
+        assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
+#ifdef __APPLE__
+        assembly << "L" << instr->get_dst()->get_identifier_stack() << "\n";
+#else
+        assembly << ".L" << instr->get_dst()->get_identifier_stack() << "\n";
+#endif
+      } else if (instr->get_type() == scasm::instruction_type::SETCC) {
+        assembly << "\tset";
+        assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
+        if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {
+          assembly << instr->get_dst()->get_identifier_stack();
+        } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
+          assembly << scasm::to_string(instr->get_dst()->get_reg(), true);
+        }
         assembly << "\n";
       }
     }
