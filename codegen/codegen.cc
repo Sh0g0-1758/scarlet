@@ -1061,6 +1061,41 @@ void Codegen::codegen() {
         assembly << scasm::to_string(instr->get_binop()) << " ";
         CODEGEN_SRC_DST();
         assembly << "\n";
+      } else if (instr->get_type() == scasm::instruction_type::JMP) {
+#ifdef __APPLE__
+        assembly << "\tjmp " << "L" << instr->get_src()->get_identifier_stack()
+                 << "\n";
+#else
+        assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier_stack()
+                 << "\n";
+#endif
+      } else if (instr->get_type() == scasm::instruction_type::LABEL) {
+#ifdef __APPLE__
+        assembly << "L" << instr->get_src()->get_identifier_stack() << ":\n";
+#else
+        assembly << ".L" << instr->get_src()->get_identifier_stack() << ":\n";
+#endif
+      } else if (instr->get_type() == scasm::instruction_type::CMP) {
+        assembly << "\tcmpl ";
+        CODEGEN_SRC_DST();
+        assembly << "\n";
+      } else if (instr->get_type() == scasm::instruction_type::JMPCC) {
+        assembly << "\tj";
+        assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
+#ifdef __APPLE__
+        assembly << "L" << instr->get_dst()->get_identifier_stack() << "\n";
+#else
+        assembly << ".L" << instr->get_dst()->get_identifier_stack() << "\n";
+#endif
+      } else if (instr->get_type() == scasm::instruction_type::SETCC) {
+        assembly << "\tset";
+        assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
+        if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {
+          assembly << instr->get_dst()->get_identifier_stack();
+        } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
+          assembly << scasm::to_string(instr->get_dst()->get_reg(), true);
+        }
+        assembly << "\n";
       }
     }
   }

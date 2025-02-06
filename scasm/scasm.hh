@@ -76,9 +76,10 @@ enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);
-std::string to_string(register_type reg);
+std::string to_string(register_type reg, bool small = false);
 std::string to_string(Unop unop);
 std::string to_string(Binop binop);
+std::string to_string(cond_code cond);
 
 class scasm_operand {
 private:
