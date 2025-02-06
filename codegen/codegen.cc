@@ -781,6 +781,47 @@ void Codegen::gen_scasm() {
         scasm_src->set_identifier_stack(inst->get_src_ret()->get_value());
         scasm_inst->set_src(std::move(scasm_src));
         scasm_func->add_instruction(std::move(scasm_inst));
+      } else if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO or
+                 inst->get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO) {
+        // Cmp(Imm(0), condition)
+        // JmpCC(E, label) | JmpCC(NE, label)
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::CMP);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        scasm_src->set_type(scasm::operand_type::IMM);
+        scasm_src->set_imm(0);
+        scasm_inst->set_src(std::move(scasm_src));
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        switch (inst->get_src_ret()->get_type()) {
+        case scar::val_type::VAR:
+          scasm_dst->set_type(scasm::operand_type::PSEUDO);
+          scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
+          break;
+        case scar::val_type::CONSTANT:
+          scasm_dst->set_type(scasm::operand_type::IMM);
+          scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
+          break;
+        default:
+          break;
+        }
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+        scasm_inst2->set_type(scasm::instruction_type::JMPCC);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+        scasm_src2->set_type(scasm::operand_type::COND);
+        if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO) {
+          scasm_src2->set_cond(scasm::cond_code::E);
+        } else {
+          scasm_src2->set_cond(scasm::cond_code::NE);
+        }
+        scasm_inst2->set_src(std::move(scasm_src2));
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+        scasm_dst2->set_type(scasm::operand_type::LABEL);
+        scasm_dst2->set_identifier_stack(inst->get_dst()->get_value());
+        scasm_inst2->set_dst(std::move(scasm_dst2));
+        scasm_func->add_instruction(std::move(scasm_inst2));
       }
     }
     scasm_program.add_function(std::move(scasm_func));
