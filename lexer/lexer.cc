@@ -21,6 +21,12 @@ void lexer::tokenize() {
       tokens.emplace_back(token::TOKEN::CLOSE_BRACE);
     } else if (ch == ';') {
       tokens.emplace_back(token::TOKEN::SEMICOLON);
+    } else if (ch == ':') {
+      tokens.emplace_back(token::TOKEN::COLON);
+    } else if (ch == '?') {
+      tokens.emplace_back(token::TOKEN::QUESTION_MARK);
+    } else if (ch == ',') {
+      tokens.emplace_back(token::TOKEN::COMMA);
     } else if (ch == '~') {
       tokens.emplace_back(token::TOKEN::TILDE);
     } else if (ch == '+') {
@@ -106,6 +112,30 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::VOID);
       } else if (identifier == "return") {
         tokens.emplace_back(token::TOKEN::RETURN);
+      } else if (identifier == "if") {
+        tokens.emplace_back(token::TOKEN::IF);
+      } else if (identifier == "else") {
+        tokens.emplace_back(token::TOKEN::ELSE);
+      } else if (identifier == "do") {
+        tokens.emplace_back(token::TOKEN::DO);
+      } else if (identifier == "while") {
+        tokens.emplace_back(token::TOKEN::WHILE);
+      } else if (identifier == "for") {
+        tokens.emplace_back(token::TOKEN::FOR);
+      } else if (identifier == "break") {
+        tokens.emplace_back(token::TOKEN::BREAK);
+      } else if (identifier == "continue") {
+        tokens.emplace_back(token::TOKEN::CONTINUE);
+      } else if (identifier == "static") {
+        tokens.emplace_back(token::TOKEN::STATIC);
+      } else if (identifier == "extern") {
+        tokens.emplace_back(token::TOKEN::EXTERN);
+      } else if (identifier == "long") {
+        tokens.emplace_back(token::TOKEN::LONG);
+      } else if (identifier == "signed") {
+        tokens.emplace_back(token::TOKEN::SIGNED);
+      } else if (identifier == "unsigned") {
+        tokens.emplace_back(token::TOKEN::UNSIGNED);
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::IDENTIFIER, identifier));
       }
@@ -115,13 +145,24 @@ void lexer::tokenize() {
         constant += ch;
         file.get(ch);
       }
-      file.seekg(-1, std::ios::cur);
-      if (regex.matchWord(ch)) {
+      if(ch=='l' or ch=='L'){     //to check for long int
+        tokens.emplace_back(token::Token(token::TOKEN::CONSTANT, constant));
+        file.get(ch);
+        if (regex.matchWord(ch)) {
+          success = false;
+          tokens.emplace_back(token::TOKEN::UNKNOWN);
+        }
+        else {
+          file.seekg(-1, std::ios::cur);
+        }
+      }
+      else if (regex.matchWord(ch)) {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::CONSTANT, constant));
       }
+    file.seekg(-1, std::ios::cur);
     } else if (ch == '\n' or ch == ' ' or ch == '\t') {
       // do nothing
     } else if (ch == '/') {

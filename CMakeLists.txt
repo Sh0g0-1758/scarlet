@@ -115,4 +115,14 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --stage tacky
     COMMAND echo "Running lexer-5 test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --stage lex
+    COMMAND echo "Running lexer-6 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 6 --stage lex
+    COMMAND echo "Running lexer-8 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 8 --stage lex
+    COMMAND echo "Running lexer-9 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 9 --stage lex
+    COMMAND echo "Running lexer-10 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10 --stage lex
+    COMMAND echo "Running lexer-11 test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage lex
 )
