@@ -17,10 +17,10 @@ Grammar:
 
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
-instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst)
+instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier)
 val = Constant(int) | Var(identifier)
-unary_operator = Complement | Negate
-binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | LeftShift | RightShift
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | leftShift | rightShift | Equal | notEqual | lessThan | LessOrEqual | greaterThan | greaterThanOrEqual
 
 */
 
@@ -29,8 +29,17 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xo
 namespace scarlet {
 namespace scar {
 
-enum class instruction_type { RETURN, UNARY, BINARY };
-enum class val_type { CONSTANT, VAR };
+enum class instruction_type {
+  RETURN,
+  UNARY,
+  BINARY,
+  COPY,
+  JUMP,
+  JUMP_IF_ZERO,
+  JUMP_IF_NOT_ZERO,
+  LABEL
+};
+enum class val_type { UNKNOWN, CONSTANT, VAR };
 
 std::string to_string(instruction_type type);
 std::string to_string(val_type type);
@@ -112,7 +121,7 @@ public:
   void add_instruction(std::shared_ptr<scar_Instruction_Node> instruction) {
     body.emplace_back(std::move(instruction));
   }
-  std::vector<std::shared_ptr<scar_Instruction_Node>> get_instructions() {
+  std::vector<std::shared_ptr<scar_Instruction_Node>> &get_instructions() {
     return body;
   }
 };
@@ -124,7 +133,7 @@ private:
 public:
   scar_Program_Node() { functions.reserve(2); }
   std::string get_scar_name() { return "Program"; }
-  std::vector<std::shared_ptr<scar_Function_Node>> get_functions() {
+  std::vector<std::shared_ptr<scar_Function_Node>> &get_functions() {
     return functions;
   }
   void add_function(std::shared_ptr<scar_Function_Node> function) {

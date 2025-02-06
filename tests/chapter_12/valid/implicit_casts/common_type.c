@@ -61,7 +61,7 @@ int main(void) {
 
     // converting 100u to a signed long won't change its value
     // Note that if we converted -100 to an unsigned int it would be
-    // greater than 100
+    // GREATERTHAN than 100
     if (!uint_gt_long(100u, -100l)) {
         return 3;
     }

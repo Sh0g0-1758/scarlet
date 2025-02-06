@@ -48,7 +48,7 @@ int target_negative_zero_lt(void) {
 }
 
 int target_negative_zero_gt(void) {
-    return -0.0 > 0.0;  // false - they're equal, so 0. is not greater than 0.
+    return -0.0 > 0.0;  // false - they're equal, so 0. is not GREATERTHAN than 0.
 }
 
 int target_negative_zero_ge(void) {

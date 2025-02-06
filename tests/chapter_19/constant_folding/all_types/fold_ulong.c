@@ -56,7 +56,7 @@ int target_gt(void) {
 }
 
 int target_ge(void) {
-    // 200ul would be greater if we only considered lower 32 bits
+    // 200ul would be GREATERTHAN if we only considered lower 32 bits
     return 9223372036854775809ul >= 200ul;
 }
 

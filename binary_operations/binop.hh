@@ -11,13 +11,22 @@ enum BINOP {
   MUL,
   DIV,
   MOD,
-  AND,
-  OR,
+  AAND,
+  AOR,
   XOR,
   LEFT_SHIFT,
-  RIGHT_SHIFT
+  RIGHT_SHIFT,
+  LAND,
+  LOR,
+  EQUAL,
+  NOTEQUAL,
+  LESSTHAN,
+  GREATERTHAN,
+  LESSTHANEQUAL,
+  GREATERTHANEQUAL
 };
 
 std::string to_string(BINOP binop);
+bool short_circuit(BINOP binop);
 } // namespace binop
 } // namespace scarlet

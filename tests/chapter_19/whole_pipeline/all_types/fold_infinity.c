@@ -41,7 +41,7 @@ int target_infinity_equal(void) {
 
 int target_infinity_gt(void) {
     // 1.0 / 0.0 evaluates to infinity
-    // infinity compares greater than all finite value
+    // infinity compares GREATERTHAN than all finite value
     return 1.0 / 0.0 > 1.79E308;
 }
 

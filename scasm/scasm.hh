@@ -31,17 +31,25 @@ namespace scarlet {
 namespace scasm {
 
 enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK };
-enum class Unop { UNKNOWN, NEG, NOT };
+enum class Unop { UNKNOWN, NEG, ANOT, LNOT };
 enum class Binop {
   UNKNOWN,
   ADD,
   SUB,
   MUL,
-  AND,
-  OR,
+  AAND,
+  AOR,
   XOR,
   LEFT_SHIFT,
-  RIGHT_SHIFT
+  RIGHT_SHIFT,
+  LAND,
+  LOR,
+  EQUAL,
+  NOTEQUAL,
+  LESSTHAN,
+  GREATERTHAN,
+  LESSTHANEQUAL,
+  GREATERTHANEQUAL
 };
 enum class instruction_type {
   UNKNOWN,

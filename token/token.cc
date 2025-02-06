@@ -55,10 +55,10 @@ void print_token(TOKEN token) {
   case TOKEN::DECREMENT_OPERATOR:
     std::cerr << "--";
     break;
-  case TOKEN::AND:
+  case TOKEN::AAND:
     std::cerr << "&";
     break;
-  case TOKEN::OR:
+  case TOKEN::AOR:
     std::cerr << "|";
     break;
   case TOKEN::XOR:
@@ -69,6 +69,33 @@ void print_token(TOKEN token) {
     break;
   case TOKEN::RIGHT_SHIFT:
     std::cerr << ">>";
+    break;
+  case TOKEN::NOT:
+    std::cerr << "!";
+    break;
+  case TOKEN::LAND:
+    std::cerr << "&&";
+    break;
+  case TOKEN::LOR:
+    std::cerr << "||";
+    break;
+  case TOKEN::EQUAL:
+    std::cerr << "==";
+    break;
+  case TOKEN::NOTEQUAL:
+    std::cerr << "!=";
+    break;
+  case TOKEN::LESSTHAN:
+    std::cerr << "<";
+    break;
+  case TOKEN::GREATERTHAN:
+    std::cerr << ">";
+    break;
+  case TOKEN::LESSTHANEQUAL:
+    std::cerr << "<=";
+    break;
+  case TOKEN::GREATERTHANEQUAL:
+    std::cerr << ">=";
     break;
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
@@ -112,10 +139,28 @@ std::string to_string(TOKEN token) {
     return "%";
   case TOKEN::DECREMENT_OPERATOR:
     return "--";
-  case TOKEN::AND:
+  case TOKEN::AAND:
     return "&";
-  case TOKEN::OR:
+  case TOKEN::AOR:
     return "|";
+  case TOKEN::NOT:
+    return "!";
+  case TOKEN::LAND:
+    return "&&";
+  case TOKEN::LOR:
+    return "||";
+  case TOKEN::EQUAL:
+    return "==";
+  case TOKEN::NOTEQUAL:
+    return "!=";
+  case TOKEN::LESSTHAN:
+    return "<";
+  case TOKEN::GREATERTHAN:
+    return ">";
+  case TOKEN::LESSTHANEQUAL:
+    return "<=";
+  case TOKEN::GREATERTHANEQUAL:
+    return ">=";
   case TOKEN::XOR:
     return "^";
   case TOKEN::LEFT_SHIFT:
@@ -129,23 +174,37 @@ std::string to_string(TOKEN token) {
 }
 
 bool is_unary_op(TOKEN token) {
-  return token == TOKEN::TILDE or token == TOKEN::HYPHEN;
+  return token == TOKEN::TILDE or token == TOKEN::HYPHEN or token == TOKEN::NOT;
 }
 
 bool is_binary_op(TOKEN token) {
   return token == TOKEN::PLUS or token == TOKEN::HYPHEN or
          token == TOKEN::ASTERISK or token == TOKEN::FORWARD_SLASH or
-         token == TOKEN::PERCENT_SIGN or token == TOKEN::AND or
-         token == TOKEN::OR or token == TOKEN::XOR or
-         token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT;
+         token == TOKEN::PERCENT_SIGN or token == TOKEN::AAND or
+         token == TOKEN::AOR or token == TOKEN::XOR or
+         token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT or
+         token == TOKEN::LAND or token == TOKEN::LOR or token == TOKEN::EQUAL or
+         token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
+         token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
+         token == TOKEN::GREATERTHANEQUAL;
 }
 
 int get_binop_prec(TOKEN token) {
-  if (token == TOKEN::OR) {
+  if (token == TOKEN::LOR) {
+    return 5;
+  } else if (token == TOKEN::LAND) {
+    return 10;
+  } else if (token == TOKEN::NOTEQUAL or token == TOKEN::EQUAL) {
+    return 15;
+  } else if (token == TOKEN::LESSTHAN or token == TOKEN::GREATERTHAN or
+             token == TOKEN::LESSTHANEQUAL or
+             token == TOKEN::GREATERTHANEQUAL) {
+    return 20;
+  } else if (token == TOKEN::AOR) {
     return 25;
   } else if (token == TOKEN::XOR) {
     return 30;
-  } else if (token == TOKEN::AND) {
+  } else if (token == TOKEN::AAND) {
     return 35;
   } else if (token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT) {
     return 40;

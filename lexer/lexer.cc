@@ -32,15 +32,35 @@ void lexer::tokenize() {
     } else if (ch == '%') {
       tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
     } else if (ch == '&') {
-      tokens.emplace_back(token::TOKEN::AND);
+      file.get(ch);
+      if (ch == '&') {
+        tokens.emplace_back(token::TOKEN::LAND);
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::AAND);
+      }
     } else if (ch == '|') {
-      tokens.emplace_back(token::TOKEN::OR);
+      file.get(ch);
+      if (ch == '|') {
+        tokens.emplace_back(token::TOKEN::LOR);
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::AOR);
+      }
     } else if (ch == '^') {
       tokens.emplace_back(token::TOKEN::XOR);
-    } else if (ch == '<') {
+    } else if (ch == '!') {
       file.get(ch);
-      if (ch == '<') {
-        tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::NOTEQUAL);
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::NOT);
+      }
+    } else if (ch == '=') {
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::EQUAL);
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::UNKNOWN);
@@ -49,9 +69,21 @@ void lexer::tokenize() {
       file.get(ch);
       if (ch == '>') {
         tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
+      } else if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::GREATERTHANEQUAL);
       } else {
         file.seekg(-1, std::ios::cur);
-        tokens.emplace_back(token::TOKEN::UNKNOWN);
+        tokens.emplace_back(token::TOKEN::GREATERTHAN);
+      }
+    } else if (ch == '<') {
+      file.get(ch);
+      if (ch == '<') {
+        tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+      } else if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::LESSTHANEQUAL);
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::LESSTHAN);
       }
     } else if (ch == '-') {
       file.get(ch);

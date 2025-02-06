@@ -16,10 +16,10 @@ Grammar:
 <statement> ::= "return" <exp> ";"
 <exp> ::= <factor> | <exp> <binop> <exp>
 <factor> ::= <int> | <unop> <factor> | "(" <exp> ")"
-<unop> ::= "~" | "-"
-<binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>"
-<identifier> ::= ? An identifier token ?
-<int> ::= ? A constant token ?
+<unop> ::= "~" | "-" | "!"
+<binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" |
+"!=" | "<" | "<=" | ">" | ">=" | "&&" | "||" <identifier> ::= ? An identifier
+token ? <int> ::= ? A constant token ?
 
 */
 namespace scarlet {
