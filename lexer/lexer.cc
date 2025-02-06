@@ -12,31 +12,43 @@ void lexer::tokenize() {
   char ch;
   while (file.get(ch)) {
     if (ch == '(') {
-      tokens.emplace_back(token::TOKEN::OPEN_PARANTHESES);
+      tokens.emplace_back(token::Token(token::TOKEN::OPEN_PARANTHESES,
+                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
     } else if (ch == ')') {
-      tokens.emplace_back(token::TOKEN::CLOSE_PARANTHESES);
+      tokens.emplace_back(token::Token(token::TOKEN::CLOSE_PARANTHESES,token::TOKEN_TYPE::SPECIAL_SYMBOLS);
     } else if (ch == '{') {
-      tokens.emplace_back(token::TOKEN::OPEN_BRACE);
+      tokens.emplace_back(token::Token(token::TOKEN::OPEN_BRACE,
+                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
     } else if (ch == '}') {
-      tokens.emplace_back(token::TOKEN::CLOSE_BRACE);
+      tokens.emplace_back(token::Token(token::TOKEN::CLOSE_BRACE,
+                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
     } else if (ch == ';') {
-      tokens.emplace_back(token::TOKEN::SEMICOLON);
+      tokens.emplace_back(token::Token(token::TOKEN::SEMICOLON,
+                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
     } else if (ch == ':') {
-      tokens.emplace_back(token::TOKEN::COLON);
+      tokens.emplace_back(token::Token(token::TOKEN::COLON,
+                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
     } else if (ch == '?') {
-      tokens.emplace_back(token::TOKEN::QUESTION_MARK);
+      tokens.emplace_back(token::Token(token::TOKEN::QUESTION_MARK,
+                                       token::TOKEN_TYPE::OPERATORS));
     } else if (ch == ',') {
-      tokens.emplace_back(token::TOKEN::COMMA);
+      tokens.emplace_back(
+          token::Token(token::TOKEN::COMMA, token::TOKEN_TYPE::OPERATORS));
     } else if (ch == '~') {
-      tokens.emplace_back(token::TOKEN::TILDE);
+      tokens.emplace_back(
+          token::Token(token::TOKEN::TILDE, token::TOKEN_TYPE::OPERATORS));
     } else if (ch == '+') {
-      tokens.emplace_back(token::TOKEN::PLUS);
+      tokens.emplace_back(
+          token::Token(token::TOKEN::PLUS, token::TOKEN_TYPE::KEYWORDS));
     } else if (ch == '*') {
-      tokens.emplace_back(token::TOKEN::ASTERISK);
+      tokens.emplace_back(
+          token::Token(token::TOKEN::ASTERISK, token::TOKEN_TYPE::KEYWORDS));
     } else if (ch == '/') {
-      tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
+      tokens.emplace_back(token::Token(token::TOKEN::FORWARD_SLASH,
+                                       token::TOKEN_TYPE::KEYWORDS));
     } else if (ch == '%') {
-      tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
+      tokens.emplace_back(token::Token(token::TOKEN::PERCENT_SIGN,
+                                       token::TOKEN_TYPE::KEYWORDS));
     } else if (ch == '&') {
       file.get(ch);
       if (ch == '&') {
