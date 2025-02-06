@@ -152,10 +152,15 @@ void Codegen::gen_scar_exp(
           std::make_shared<scar::scar_Instruction_Node>();
       std::shared_ptr<scar::scar_Val_Node> scar_val_src3 =
           std::make_shared<scar::scar_Val_Node>();
+      std::shared_ptr<scar::scar_Val_Node> scar_val_dst3 =
+          std::make_shared<scar::scar_Val_Node>();
       scar_instruction3->set_type(scar::instruction_type::COPY);
       scar_val_src3->set_type(scar::val_type::CONSTANT);
       scar_val_src3->set_value(std::to_string(1));
+      scar_val_dst3->set_type(scar::val_type::VAR);
+      scar_val_dst3->set_reg_name(get_reg_name());
       scar_instruction3->set_src_ret(std::move(scar_val_src3));
+      scar_instruction3->set_dst(std::move(scar_val_dst3));
       scar_function->add_instruction(std::move(scar_instruction3));
 
       // Now jump to the end
@@ -185,10 +190,15 @@ void Codegen::gen_scar_exp(
           std::make_shared<scar::scar_Instruction_Node>();
       std::shared_ptr<scar::scar_Val_Node> scar_val_src6 =
           std::make_shared<scar::scar_Val_Node>();
+      std::shared_ptr<scar::scar_Val_Node> scar_val_dst6 =
+          std::make_shared<scar::scar_Val_Node>();
       scar_instruction6->set_type(scar::instruction_type::COPY);
       scar_val_src6->set_type(scar::val_type::CONSTANT);
       scar_val_src6->set_value(std::to_string(0));
+      scar_val_dst6->set_type(scar::val_type::VAR);
+      scar_val_dst6->set_reg_name(get_prev_reg_name());
       scar_instruction6->set_src_ret(std::move(scar_val_src6));
+      scar_instruction6->set_dst(std::move(scar_val_dst6));
       scar_function->add_instruction(std::move(scar_instruction6));
 
       // now generate the label that the 1 result will jump to
@@ -349,8 +359,12 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::COPY) {
-        std::cerr << statement->get_src_ret()->get_value() << " ,result" << ")"
-                  << std::endl;
+        std::cerr << statement->get_src_ret()->get_value();
+        std::cerr << " ,";
+        if (statement->get_dst()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_dst()->get_reg() << ")";
+        }
+        std::cerr << std::endl;
       } else if (statement->get_type() == scar::instruction_type::JUMP or
                  statement->get_type() == scar::instruction_type::LABEL) {
         std::cerr << statement->get_src_ret()->get_value() << ")" << std::endl;

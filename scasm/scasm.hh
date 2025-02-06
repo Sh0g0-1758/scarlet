@@ -18,10 +18,11 @@ Grammar:
 
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
-instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand)
+instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand) | Cmp(Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, Identifier) | SetCC(cond_code, operand) | Label(Identifier)
 unary_operator = Neg | Not
 binary_operator = Add | Sub | Mul | And | Or | Xor | LeftShift | RightShift
 Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier)
+cond_code = E | NE | G | GE | L | LE
 reg = AX | DX | R10 | R11 | CX | CL
 
 */
