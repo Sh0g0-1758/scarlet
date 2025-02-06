@@ -531,23 +531,34 @@ void Codegen::gen_scasm() {
         }
       } else if (inst->get_type() == scar::instruction_type::BINARY) {
         if (binop::is_relational(inst->get_binop())) {
-          // Cmp(src1, src2)
+          // Cmp(src2, src1)
           // Mov(Imm(0), dst)
           // SetCC(conditional, dst)
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::CMP);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          SET_MOV_SOURCE();
-          scasm_inst->set_src(std::move(scasm_src));
-          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           switch (inst->get_src2()->get_type()) {
           case scar::val_type::VAR:
+            scasm_src->set_type(scasm::operand_type::PSEUDO);
+            scasm_src->set_identifier_stack(inst->get_src2()->get_reg());
+            break;
+          case scar::val_type::CONSTANT:
+            scasm_src->set_type(scasm::operand_type::IMM);
+            scasm_src->set_imm(stoi(inst->get_src2()->get_value()));
+            break;
+          default:
+            break;
+          }
+          scasm_inst->set_src(std::move(scasm_src));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          switch (inst->get_src_ret()->get_type()) {
+          case scar::val_type::VAR:
             scasm_dst->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst->set_identifier_stack(inst->get_src2()->get_reg());
+            scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
             break;
           case scar::val_type::CONSTANT:
             scasm_dst->set_type(scasm::operand_type::IMM);
-            scasm_dst->set_imm(stoi(inst->get_src2()->get_value()));
+            scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
             break;
           default:
             break;
@@ -902,6 +913,25 @@ void Codegen::fix_instructions() {
   for (auto &funcs : scasm.get_functions()) {
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
+
+      if ((*it)->get_type() == scasm::instruction_type::CMP and
+          (*it)->get_dst()->get_type() == scasm::operand_type::IMM) {
+        // cmpl stack/reg, $5
+        //       |
+        //       v
+        // movl $5, %r11d
+        // cmpl stack/reg, %r11d
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_src((*it)->get_dst());
+        MAKE_SHARED(scasm::scasm_operand, dst);
+        dst->set_type(scasm::operand_type::REG);
+        dst->set_reg(scasm::register_type::R11);
+        scasm_inst->set_dst(dst);
+        (*it)->set_dst(std::move(dst));
+        it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+        it++;
+      }
       if ((*it)->get_type() == scasm::instruction_type::IDIV and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
         // idivl $3
