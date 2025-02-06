@@ -18,10 +18,10 @@ Grammar:
 
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
-instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand) | Cmp(Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, Identifier) | SetCC(cond_code, operand) | Label(Identifier)
+instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand) | Cmp(Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label)
 unary_operator = Neg | Not
 binary_operator = Add | Sub | Mul | And | Or | Xor | LeftShift | RightShift
-Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier)
+Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier) | Label(identifier)
 cond_code = E | NE | G | GE | L | LE
 reg = AX | DX | R10 | R11 | CX | CL
 
@@ -31,7 +31,8 @@ reg = AX | DX | R10 | R11 | CX | CL
 namespace scarlet {
 namespace scasm {
 
-enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK };
+// NOTE: Every Pseudo Operand gets converted into a stack operand
+enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK, LABEL, COND };
 enum class Unop { UNKNOWN, NEG, ANOT, LNOT };
 enum class Binop {
   UNKNOWN,
@@ -52,6 +53,7 @@ enum class Binop {
   LESSTHANEQUAL,
   GREATERTHANEQUAL
 };
+
 enum class instruction_type {
   UNKNOWN,
   MOV,
@@ -60,9 +62,17 @@ enum class instruction_type {
   CDQ,
   RET,
   UNARY,
-  ALLOCATE_STACK
+  ALLOCATE_STACK,
+  CMP,
+  JMP,
+  JMPCC,
+  SETCC,
+  LABEL
 };
+
 enum class register_type { UNKNOWN, AX, DX, R10, R11, CX, CL };
+
+enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);
@@ -75,6 +85,7 @@ private:
   operand_type type;
   int imm;
   register_type reg;
+  cond_code cond;
   std::string identifier_stack;
 
 public:
@@ -85,6 +96,8 @@ public:
   void set_imm(int imm) { this->imm = imm; }
   register_type get_reg() { return reg; }
   void set_reg(register_type reg) { this->reg = reg; }
+  cond_code get_cond() { return cond; }
+  void set_cond(cond_code cond) { this->cond = cond; }
   std::string get_identifier_stack() { return identifier_stack; }
   void set_identifier_stack(std::string identifier_stack) {
     this->identifier_stack = identifier_stack;
