@@ -8,9 +8,11 @@ namespace scarlet {
 namespace token {
 enum class TOKEN {
   UNKNOWN,
-  // KEYWORDS
+  // IDENTIFIER
   IDENTIFIER,
+  // CONSTANTS
   CONSTANT,
+  // KEYWORDS
   INT,
   VOID,
   RETURN,
@@ -63,30 +65,17 @@ enum class TOKEN {
   GREATERTHANEQUAL
 };
 
-enum class TOKEN_TYPE {
-  KEYWORDS,
-  IDENTIFIERS,
-  CONSTANTS,
-  OPERATORS,
-  SPECIAL_SYMBOLS,
-  PRE_DIRECTIVES,
-  UNKNOWN
-};
-
 class Token {
 private:
   TOKEN token;
   std::optional<std::string> value;
-  TOKEN_TYPE token_type;
 
 public:
-  Token(TOKEN token, std::optional<std::string> value, TOKEN_TYPE token_type)
-      : token(token), value(value), token_type(token_type) {}
-  Token(TOKEN token, TOKEN_TYPE token_type)
-      : token(token), token_type(token_type) {}
+  Token(TOKEN token, std::optional<std::string> value)
+      : token(token), value(value) {}
+  Token(TOKEN token) : token(token) {}
 
   TOKEN get_token() { return token; }
-  std::string get_token_type() { return token_type; }
   std::optional<std::string> get_value() { return value; }
 };
 
@@ -95,5 +84,6 @@ std::string to_string(TOKEN token);
 bool is_unary_op(TOKEN token);
 bool is_binary_op(TOKEN token);
 int get_binop_prec(TOKEN token);
+std::string get_token_type(TOKEN token);
 } // namespace token
 } // namespace scarlet

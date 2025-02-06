@@ -270,6 +270,22 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::COLON or token == TOKEN::QUESTION_MARK;
 }
 
+std::string get_token_type(TOKEN token) {
+  int token_val = static_cast<int>(token);
+  if (token_val == 1) {
+    return "IDENTIFIER";
+  } else if (token_val == 2) {
+    return "CONSTANT";
+  } else if (token_val >= 3 && token_val <= 17) {
+    return "KEYWORD";
+  } else if (token_val >= 18 && token_val <= 22) {
+    return "SPECIAL SYMBOL";
+  } else if (token_val >= 23) {
+    return "OPERATORS";
+  }
+  return "UNKNWON";
+}
+
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;

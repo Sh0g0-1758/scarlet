@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
   scarlet::lexer::lexer lex;
   lex.set_file_path(std::format("{}.scp", file_name));
   lex.tokenize();
+  lex.print_symbol_table();
   if (!lex.is_success()) {
     result = system(std::format("rm {}.scp", file_name).c_str());
 

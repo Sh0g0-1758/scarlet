@@ -12,43 +12,31 @@ void lexer::tokenize() {
   char ch;
   while (file.get(ch)) {
     if (ch == '(') {
-      tokens.emplace_back(token::Token(token::TOKEN::OPEN_PARANTHESES,
-                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
+      tokens.emplace_back(token::TOKEN::OPEN_PARANTHESES);
     } else if (ch == ')') {
-      tokens.emplace_back(token::Token(token::TOKEN::CLOSE_PARANTHESES,token::TOKEN_TYPE::SPECIAL_SYMBOLS);
+      tokens.emplace_back(token::TOKEN::CLOSE_PARANTHESES);
     } else if (ch == '{') {
-      tokens.emplace_back(token::Token(token::TOKEN::OPEN_BRACE,
-                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
+      tokens.emplace_back(token::TOKEN::OPEN_BRACE);
     } else if (ch == '}') {
-      tokens.emplace_back(token::Token(token::TOKEN::CLOSE_BRACE,
-                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
+      tokens.emplace_back(token::TOKEN::CLOSE_BRACE);
     } else if (ch == ';') {
-      tokens.emplace_back(token::Token(token::TOKEN::SEMICOLON,
-                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
+      tokens.emplace_back(token::TOKEN::SEMICOLON);
     } else if (ch == ':') {
-      tokens.emplace_back(token::Token(token::TOKEN::COLON,
-                                       token::TOKEN_TYPE::SPECIAL_SYMBOLS));
+      tokens.emplace_back(token::TOKEN::COLON);
     } else if (ch == '?') {
-      tokens.emplace_back(token::Token(token::TOKEN::QUESTION_MARK,
-                                       token::TOKEN_TYPE::OPERATORS));
+      tokens.emplace_back(token::TOKEN::QUESTION_MARK);
     } else if (ch == ',') {
-      tokens.emplace_back(
-          token::Token(token::TOKEN::COMMA, token::TOKEN_TYPE::OPERATORS));
+      tokens.emplace_back(token::TOKEN::COMMA);
     } else if (ch == '~') {
-      tokens.emplace_back(
-          token::Token(token::TOKEN::TILDE, token::TOKEN_TYPE::OPERATORS));
+      tokens.emplace_back(token::TOKEN::TILDE);
     } else if (ch == '+') {
-      tokens.emplace_back(
-          token::Token(token::TOKEN::PLUS, token::TOKEN_TYPE::KEYWORDS));
+      tokens.emplace_back(token::TOKEN::PLUS);
     } else if (ch == '*') {
-      tokens.emplace_back(
-          token::Token(token::TOKEN::ASTERISK, token::TOKEN_TYPE::KEYWORDS));
+      tokens.emplace_back(token::TOKEN::ASTERISK);
     } else if (ch == '/') {
-      tokens.emplace_back(token::Token(token::TOKEN::FORWARD_SLASH,
-                                       token::TOKEN_TYPE::KEYWORDS));
+      tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
     } else if (ch == '%') {
-      tokens.emplace_back(token::Token(token::TOKEN::PERCENT_SIGN,
-                                       token::TOKEN_TYPE::KEYWORDS));
+      tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
     } else if (ch == '&') {
       file.get(ch);
       if (ch == '&') {
@@ -222,7 +210,29 @@ void lexer::tokenize() {
     }
   }
 }
-
+void lexer::print_symbol_table() {
+  const int w = 20;
+  std::cout << BOLD << CYAN << std::left << std::string(2 * w, '-')
+            << std::endl;
+  std::cout << std::left << std::setw(w) << "Lexeme" << std::setw(w) << "Tokens"
+            << std::endl;
+  std::cout << std::left << std::string(2 * w, '-') << RESET << std::endl;
+  for (auto &token_ : lexer::tokens) {
+    if (token_.get_value().has_value()) {
+      std::cout << RED << std::left << std::setw(w)
+                << token_.get_value().value() << GREEN << std::setw(w)
+                << token::get_token_type(token_.get_token()) << RESET
+                << std::endl;
+    } else {
+      std::cout << RED << std::left << std::setw(w)
+                << token::to_string(token_.get_token()) << GREEN << std::setw(w)
+                << token::get_token_type(token_.get_token()) << RESET
+                << std::endl;
+    }
+  }
+  std::cout << BOLD << CYAN << std::left << std::string(2 * w, '-') << RESET
+            << std::endl;
+}
 void lexer::print_tokens() {
   for (auto token : tokens)
     print_token(token.get_token());
