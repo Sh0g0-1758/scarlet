@@ -271,7 +271,7 @@ bool is_binary_op(TOKEN token) {
 }
 
 int get_binop_prec(TOKEN token) {
-  if(token == TOKEN::COMMA) {
+  if (token == TOKEN::COMMA) {
     return 0;
   } else if (token == TOKEN::ASSIGNMENT) {
     return 5;
