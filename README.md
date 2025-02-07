@@ -2,6 +2,11 @@
 
 Scarlet is a custom compiler developed in C++, designed with the primary goal of enhancing our understanding of compiler construction. The overarching objective is to implement an exceptionally fast machine learning framework built atop this compiler.
 
+## Assignment-1 Submission
+
+We have made a `run.sh` script which invokes Scarlet's Lexer after building it. The test cases for the Lexer can be found in `tests` directory.
+To run your own test cases, execute `./build/scarlet --lex path/to/your/code`.
+
 ## Building Scarlet
 
 To build Scarlet, invoke `cmake` with the `DCMAKE_CXX_COMPILER` flag within the build directory.
