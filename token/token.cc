@@ -270,6 +270,21 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::COLON or token == TOKEN::QUESTION_MARK;
 }
 
+std::string get_token_type(TOKEN token) {
+  if (token == TOKEN::IDENTIFIER) {
+    return "IDENTIFIER";
+  } else if (token == TOKEN::CONSTANT) {
+    return "CONSTANT";
+  } else if (token >= TOKEN::INT && token <= TOKEN::UNSIGNED) {
+    return "KEYWORD";
+  } else if (token >= TOKEN::OPEN_PARANTHESES && token <= TOKEN::SEMICOLON) {
+    return "SPECIAL SYMBOL";
+  } else if (token >= TOKEN::TILDE) {
+    return "OPERATORS";
+  }
+  return "UNKNOWN";
+}
+
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;

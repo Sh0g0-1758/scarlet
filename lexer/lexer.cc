@@ -210,7 +210,29 @@ void lexer::tokenize() {
     }
   }
 }
-
+void lexer::print_symbol_table() {
+  const int w = 20;
+  std::cout << BOLD << CYAN << std::left << std::string(2 * w, '-')
+            << std::endl;
+  std::cout << std::left << std::setw(w) << "Lexeme" << std::setw(w) << "Tokens"
+            << std::endl;
+  std::cout << std::left << std::string(2 * w, '-') << RESET << std::endl;
+  for (auto &token_ : lexer::tokens) {
+    if (token_.get_value().has_value()) {
+      std::cout << RED << std::left << std::setw(w)
+                << token_.get_value().value() << GREEN << std::setw(w)
+                << token::get_token_type(token_.get_token()) << RESET
+                << std::endl;
+    } else {
+      std::cout << RED << std::left << std::setw(w)
+                << token::to_string(token_.get_token()) << GREEN << std::setw(w)
+                << token::get_token_type(token_.get_token()) << RESET
+                << std::endl;
+    }
+  }
+  std::cout << BOLD << CYAN << std::left << std::string(2 * w, '-') << RESET
+            << std::endl;
+}
 void lexer::print_tokens() {
   for (auto token : tokens)
     print_token(token.get_token());
