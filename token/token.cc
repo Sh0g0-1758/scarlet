@@ -166,6 +166,12 @@ void print_token(TOKEN token) {
   case TOKEN::COMMA:
     std::cerr << ",";
     break;
+  case TOKEN::ARROW_OPERATOR:
+    std::cerr << "->";
+    break;
+  case TOKEN::DOT:
+    std::cerr << ".";
+    break;
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
@@ -282,6 +288,10 @@ std::string to_string(TOKEN token) {
     return ">>";
   case TOKEN::COMMA:
     return ",";
+  case TOKEN::ARROW_OPERATOR:
+    return "->";
+  case TOKEN::DOT:
+    return ".";
   case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
@@ -303,6 +313,49 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
          token == TOKEN::GREATERTHANEQUAL or token == TOKEN::ASSIGNMENT or
          token == TOKEN::COLON or token == TOKEN::QUESTION_MARK;
+}
+
+std::string char_to_esc(char c) {
+  std::string ret;
+  switch (c) {
+  case 'a':
+    ret = "\\a";
+    break;
+  case 'n':
+    ret = "\\n";
+    break;
+  case 'f':
+    ret = "\\f";
+    break;
+  case 'b':
+    ret = "\\b";
+    break;
+  case 'r':
+    ret = "\\r";
+    break;
+  case 't':
+    ret = "\\t";
+    break;
+  case 'v':
+    ret = "\\v";
+    break;
+  case '\'':
+    ret = "\\\'";
+    break;
+  case '"':
+    ret = "\\";
+    break;
+  case '?':
+    ret = "\\?";
+    break;
+  case '\\':
+    ret = "\\\\";
+    break;
+  default:
+    ret = "\\0";
+    break;
+  }
+  return ret;
 }
 
 std::string get_token_type(TOKEN token) {

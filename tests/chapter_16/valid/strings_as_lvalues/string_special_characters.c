@@ -49,7 +49,7 @@ int main(void) {
     puts(with_newline);
 
     // literal tab
-    char *tab = "	";
+    char *tab = "   ";
     if (strcmp(tab, "\t")) {
         return 7;
     }

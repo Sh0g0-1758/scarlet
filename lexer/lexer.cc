@@ -134,6 +134,9 @@ void lexer::tokenize() {
       if (ch == '-') {
         tokens.emplace_back(token::TOKEN::DECREMENT_OPERATOR);
         col_number += 2;
+      } else if (ch == '>') {
+        tokens.emplace_back(token::TOKEN::ARROW_OPERATOR);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::HYPHEN);
@@ -142,57 +145,86 @@ void lexer::tokenize() {
     } else if (ch == '\'') {
       file.get(ch);
       std::string tmp;
+      col_number += 2;
       if (ch == '\\') {
         // parse the next character as escape character
         file.get(ch);
+        col_number++;
         if (regex.matchEscape(ch)) {
-          tmp += "\\" + ch;
+          tmp += token::char_to_esc(ch);
         } else {
           success = false;
           tokens.emplace_back(token::TOKEN::UNKNOWN);
+          error_recovery.emplace_back(
+              std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET +
+                                 " " + "unkown escape character" + tmp,
+                             "please use escape characters from c standard"));
         }
-        file.get(ch);
       } else if (regex.matchASCIIPrintable(ch) and ch != '\'') {
         tmp += ch;
-        file.get(ch);
       } else {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
+        error_recovery.emplace_back(
+            std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
+                               "unkwown character" + tmp,
+                           "please use characters from c standard"));
       }
-
+      file.get(ch);
+      col_number++;
       if (ch != '\'' and success != false) {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
+        error_recovery.emplace_back(
+            std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
+                               "no end quote for character " + tmp,
+                           "please add end quotes"));
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::CHAR, tmp));
       }
+      col_number++;
     } else if (ch == '\"') {
       std::string literal;
       file.get(ch);
-
+      col_number += 2;
       while (ch != '"' and regex.matchASCIIPrintable(ch)) {
         if (ch == '\\') {
           // parse the next character as escape character
           file.get(ch);
+          col_number++;
           if (regex.matchEscape(ch)) {
-            literal += "\\" + ch;
+            literal += token::char_to_esc(ch);
           } else {
             success = false;
             tokens.emplace_back(token::TOKEN::UNKNOWN);
+            error_recovery.emplace_back(std::make_pair(
+                ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
+                    "bad escape character in" + literal + ": " + ch,
+                "please use escape characters from c standard"));
           }
         } else if (regex.matchASCIIPrintable(ch) and ch != '\\') {
           literal += ch;
         } else { // will this ever be called?
           success = false;
           tokens.emplace_back(token::TOKEN::UNKNOWN);
+          error_recovery.emplace_back(std::make_pair(
+              ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
+                  "unkwown character in " + literal + " : " + ch,
+              "please use characters from c standard"));
         }
         file.get(ch);
+        col_number++;
       }
       if (ch == '\"') {
         tokens.emplace_back(token::Token(token::TOKEN::CHAR_ARR, literal));
       } else {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
+        error_recovery.emplace_back(
+            std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
+                               "string missing end quotes" + " \"" + literal,
+                           "please add end quotes"));
+        file.seekg(-1, std::ios::cur);
       }
     } else if (regex.matchWord(ch)) {
       std::string identifier;
@@ -200,7 +232,18 @@ void lexer::tokenize() {
         identifier += ch;
         file.get(ch);
       }
-      file.seekg(-1, std::ios::cur);
+      while (ch == ' ' or ch == '\n') {
+        if (ch == '\n') {
+          line_number++;
+          col_number = 1;
+        } else {
+          col_number++;
+        }
+        if (!file.get(ch))
+          break;
+      }
+      // cases when we have a struct and need to
+      // access its members
       if (identifier == "int") {
         tokens.emplace_back(token::TOKEN::INT);
       } else if (identifier == "void") {
@@ -237,6 +280,12 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::STRUCT);
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::IDENTIFIER, identifier));
+      }
+      if (ch == '.') {
+        tokens.emplace_back(token::TOKEN::DOT);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::cur);
       }
       col_number += (identifier.length());
     } else if (regex.matchDigit(ch) or ch == '.') {
@@ -334,7 +383,7 @@ void lexer::tokenize() {
 }
 
 void lexer::print_symbol_table() {
-  const int w = 20;
+  const int w = 64;
   std::cout << BOLD << CYAN << std::left << std::string(2 * w, '-')
             << std::endl;
   std::cout << std::left << std::setw(w) << "Lexeme" << std::setw(w) << "Tokens"
