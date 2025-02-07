@@ -296,17 +296,17 @@ int get_binop_prec(TOKEN token) {
     return 15;
   } else if (token == TOKEN::LAND) {
     return 20;
-  } else if (token == TOKEN::NOTEQUAL or token == TOKEN::EQUAL) {
+  } else if (token == TOKEN::AOR) {
     return 25;
+  } else if (token == TOKEN::XOR) {
+    return 30;
+  } else if (token == TOKEN::AAND) {
+    return 35;
+  } else if (token == TOKEN::NOTEQUAL or token == TOKEN::EQUAL) {
+    return 40;
   } else if (token == TOKEN::LESSTHAN or token == TOKEN::GREATERTHAN or
              token == TOKEN::LESSTHANEQUAL or
              token == TOKEN::GREATERTHANEQUAL) {
-    return 30;
-  } else if (token == TOKEN::AOR) {
-    return 35;
-  } else if (token == TOKEN::XOR) {
-    return 40;
-  } else if (token == TOKEN::AAND) {
     return 45;
   } else if (token == TOKEN::LEFT_SHIFT or token == TOKEN::RIGHT_SHIFT) {
     return 50;
