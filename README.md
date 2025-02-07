@@ -4,10 +4,11 @@ Scarlet is a custom compiler developed in C++, designed with the primary goal of
 
 ## Building Scarlet
 
-To build Scarlet, invoke `cmake` with the `DCMAKE_CXX_COMPILER` flag within the build directory.
+To build Scarlet, invoke `cmake` with the `DCMAKE_CXX_COMPILER` flag within the build directory and then run make.
 
 ```sh
 cmake -DCMAKE_CXX_COMPILER=<compiler> ..
+make
 ```
 
 ## Testing Scarlet
