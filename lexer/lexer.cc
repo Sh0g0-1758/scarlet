@@ -146,6 +146,7 @@ void lexer::tokenize() {
         file.get(ch);
       }
       std::string literal_suffix = "";
+      // supported suffixes: l, L, u, U, lu, lU, Lu, LU, ul, uL, Ul, UL
       if (ch == 'l' || ch == 'L' || ch == 'u' || ch == 'U') {
         literal_suffix += ch;
         char prev_ch = ch;
@@ -158,6 +159,7 @@ void lexer::tokenize() {
         }
       }
       constant += literal_suffix;
+      // This if for a float ie. when there is no proceeding l,L,u,U suffix
       if (ch == '.' and literal_suffix.size() == 0) {
         constant += '.';
         file.get(ch);
@@ -183,6 +185,7 @@ void lexer::tokenize() {
         }
       }
 
+      // If a character follows a number or if we have two dots in a row
       if (regex.matchWord(ch) or ch == '.') {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
