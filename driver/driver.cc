@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
   lex.set_file_path(std::format("{}.scp", file_name));
   lex.tokenize();
   if (!lex.is_success()) {
+    lex.print_error_recovery();
     result = system(std::format("rm {}.scp", file_name).c_str());
 
     if (result != 0) {
@@ -70,7 +71,6 @@ int main(int argc, char *argv[]) {
           << std::endl;
       return 1;
     }
-    std::cerr << "[ERROR]: Lexical analysis failed" << std::endl;
     return 1;
   }
 
