@@ -14,5 +14,17 @@ bool Regex::matchDigit(char c) {
     return true;
   return false;
 }
+bool Regex::matchASCIIPrintable(char c) {
+  if (int(c) >= 32)
+    return true;
+  return false;
+}
+bool Regex::matchEscape(char c) {
+  // compares c against all characters possible in escape sequence
+  if (c == '\'' or c == '\"' or c == '?' or c == 'a' or c == 'b' or c == 'f' or
+      c == 'n' or c == 'r' or c == 't' or c == 'v' or c == '\\')
+    return true;
+  return false;
+}
 } // namespace regex
 } // namespace scarlet

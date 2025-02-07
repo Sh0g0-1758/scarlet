@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  int result = system(std::format("gcc -x c++ -E -P {} -o {}.scp",
+  int result = system(std::format("gcc -x c++ -E -w -P {} -o {}.scp",
                                   cmd.get_input_file(), file_name)
                           .c_str());
 

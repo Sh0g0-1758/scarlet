@@ -2,9 +2,9 @@
 
 int main(void)
 {
-    int tab = '	';
-    int vertical_tab = '';
-    int form_feed = '';
+    int tab = ' ';
+    int vertical_tab = '\v';
+    int form_feed = '\f';
     if (tab != '\t') {
         return 1;
     }

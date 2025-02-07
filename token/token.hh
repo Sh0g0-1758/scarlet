@@ -12,6 +12,8 @@ enum class TOKEN {
   IDENTIFIER,
   // CONSTANTS
   CONSTANT,
+  CHARACTER_CONSTANT,
+  CHAR_ARR,
   // KEYWORDS
   INT,
   VOID,
@@ -28,12 +30,17 @@ enum class TOKEN {
   LONG,
   SIGNED,
   UNSIGNED,
+  CHAR,
+  SIZEOF,
+  STRUCT,
   // GRAMMAR TOKENS
   OPEN_PARANTHESES,
   CLOSE_PARANTHESES,
   OPEN_BRACE,
   CLOSE_BRACE,
   SEMICOLON,
+  OPEN_BRACKET,
+  CLOSE_BRACKET,
   // UNARY OPERATORS
   TILDE,
   HYPHEN,
@@ -45,8 +52,10 @@ enum class TOKEN {
   PERCENT_SIGN,
   ASSIGNMENT,
   COLON,
+  DOT,
   QUESTION_MARK,
   COMMA,
+  ARROW_OPERATOR,
   // BITWISE OPERATORS
   AAND,
   AOR,
@@ -83,6 +92,7 @@ void print_token(TOKEN token);
 std::string to_string(TOKEN token);
 bool is_unary_op(TOKEN token);
 bool is_binary_op(TOKEN token);
+std::string char_to_esc(char c);
 int get_binop_prec(TOKEN token);
 std::string get_token_type(TOKEN token);
 } // namespace token

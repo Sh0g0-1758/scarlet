@@ -10,6 +10,12 @@ void print_token(TOKEN token) {
   case TOKEN::CONSTANT:
     std::cerr << "constant ";
     break;
+  case TOKEN::CHARACTER_CONSTANT:
+    std::cerr << "character constant ";
+    break;
+  case TOKEN::CHAR_ARR:
+    std::cerr << "string ";
+    break;
   case TOKEN::INT:
     std::cerr << "int ";
     break;
@@ -55,6 +61,15 @@ void print_token(TOKEN token) {
   case TOKEN::UNSIGNED:
     std::cerr << "unsigned ";
     break;
+  case TOKEN::CHAR:
+    std::cerr << "char ";
+    break;
+  case TOKEN::SIZEOF:
+    std::cerr << "sizeof ";
+    break;
+  case TOKEN::STRUCT:
+    std::cerr << "struct ";
+    break;
   case TOKEN::OPEN_PARANTHESES:
     std::cerr << "( ";
     break;
@@ -69,6 +84,12 @@ void print_token(TOKEN token) {
     break;
   case TOKEN::SEMICOLON:
     std::cerr << "; ";
+    break;
+  case TOKEN::OPEN_BRACKET:
+    std::cerr << "[ ";
+    break;
+  case TOKEN::CLOSE_BRACKET:
+    std::cerr << "] ";
     break;
   case TOKEN::COLON:
     std::cerr << ": ";
@@ -145,6 +166,12 @@ void print_token(TOKEN token) {
   case TOKEN::COMMA:
     std::cerr << ",";
     break;
+  case TOKEN::ARROW_OPERATOR:
+    std::cerr << "->";
+    break;
+  case TOKEN::DOT:
+    std::cerr << ".";
+    break;
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
@@ -157,6 +184,10 @@ std::string to_string(TOKEN token) {
     return "identifier";
   case TOKEN::CONSTANT:
     return "constant";
+  case TOKEN::CHARACTER_CONSTANT:
+    return "character constant";
+  case TOKEN::CHAR_ARR:
+    return "string";
   case TOKEN::INT:
     return "int";
   case TOKEN::VOID:
@@ -187,6 +218,12 @@ std::string to_string(TOKEN token) {
     return "signed";
   case TOKEN::UNSIGNED:
     return "unsigned";
+  case TOKEN::CHAR:
+    return "char";
+  case TOKEN::SIZEOF:
+    return "sizeof";
+  case TOKEN::STRUCT:
+    return "struct";
   case TOKEN::OPEN_PARANTHESES:
     return "(";
   case TOKEN::CLOSE_PARANTHESES:
@@ -199,6 +236,10 @@ std::string to_string(TOKEN token) {
     return ";";
   case TOKEN::COLON:
     return ":";
+  case TOKEN::OPEN_BRACKET:
+    return "[";
+  case TOKEN::CLOSE_BRACKET:
+    return "]";
   case TOKEN::QUESTION_MARK:
     return "?";
   case TOKEN::TILDE:
@@ -247,6 +288,10 @@ std::string to_string(TOKEN token) {
     return ">>";
   case TOKEN::COMMA:
     return ",";
+  case TOKEN::ARROW_OPERATOR:
+    return "->";
+  case TOKEN::DOT:
+    return ".";
   case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
@@ -270,12 +315,55 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::COLON or token == TOKEN::QUESTION_MARK;
 }
 
+std::string char_to_esc(char c) {
+  std::string ret;
+  switch (c) {
+  case 'a':
+    ret = "\\a";
+    break;
+  case 'n':
+    ret = "\\n";
+    break;
+  case 'f':
+    ret = "\\f";
+    break;
+  case 'b':
+    ret = "\\b";
+    break;
+  case 'r':
+    ret = "\\r";
+    break;
+  case 't':
+    ret = "\\t";
+    break;
+  case 'v':
+    ret = "\\v";
+    break;
+  case '\'':
+    ret = "\\\'";
+    break;
+  case '"':
+    ret = "\\";
+    break;
+  case '?':
+    ret = "\\?";
+    break;
+  case '\\':
+    ret = "\\\\";
+    break;
+  default:
+    ret = "\\0";
+    break;
+  }
+  return ret;
+}
+
 std::string get_token_type(TOKEN token) {
   if (token == TOKEN::IDENTIFIER) {
     return "IDENTIFIER";
-  } else if (token == TOKEN::CONSTANT) {
+  } else if (token >= TOKEN::CONSTANT && token <= TOKEN::CHAR_ARR) {
     return "CONSTANT";
-  } else if (token >= TOKEN::INT && token <= TOKEN::UNSIGNED) {
+  } else if (token >= TOKEN::INT && token <= TOKEN::STRUCT) {
     return "KEYWORD";
   } else if (token >= TOKEN::OPEN_PARANTHESES && token <= TOKEN::SEMICOLON) {
     return "SPECIAL SYMBOL";

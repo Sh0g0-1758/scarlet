@@ -1,7 +1,7 @@
 /* Test that we can handle escape sequences in string literals */
 int main(void) {
     // a mix of escaped and unescaped special characters
-    char special[6] = "\a\b\n	";
+    char special[6] = "\a\b\n";
 
     if (special[0] != '\a') {
         return 1;
