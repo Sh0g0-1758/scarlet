@@ -157,7 +157,7 @@ void lexer::tokenize() {
           tokens.emplace_back(token::TOKEN::UNKNOWN);
           error_recovery.emplace_back(
               std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET +
-                                 " " + "unkown escape character" + tmp,
+                                 " " + "unkown escape character " + tmp,
                              "please use escape characters from c standard"));
         }
       } else if (regex.matchASCIIPrintable(ch) and ch != '\'') {
@@ -167,7 +167,7 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::UNKNOWN);
         error_recovery.emplace_back(
             std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
-                               "unkwown character" + tmp,
+                               "unkwown character " + tmp,
                            "please use characters from c standard"));
       }
       file.get(ch);
@@ -199,7 +199,7 @@ void lexer::tokenize() {
             tokens.emplace_back(token::TOKEN::UNKNOWN);
             error_recovery.emplace_back(std::make_pair(
                 ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
-                    "bad escape character in" + literal + ": " + ch,
+                    "bad escape character in " + literal + ": " + ch,
                 "please use escape characters from c standard"));
           }
         } else if (regex.matchASCIIPrintable(ch) and ch != '\\') {
@@ -222,7 +222,7 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::UNKNOWN);
         error_recovery.emplace_back(
             std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
-                               "string missing end quotes" + " \"" + literal,
+                               "string missing end quotes " + " \"" + literal,
                            "please add end quotes"));
         file.seekg(-1, std::ios::cur);
       }
