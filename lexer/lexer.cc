@@ -32,6 +32,10 @@ void lexer::tokenize() {
     } else if (ch == ';') {
       tokens.emplace_back(token::TOKEN::SEMICOLON);
       col_number++;
+    } else if (ch == '[') {
+      tokens.emplace_back(token::TOKEN::OPEN_BRACKET);
+    } else if (ch == ']') {
+      tokens.emplace_back(token::TOKEN::CLOSE_BRACKET);
     } else if (ch == ':') {
       tokens.emplace_back(token::TOKEN::COLON);
       col_number++;
@@ -135,6 +139,61 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::HYPHEN);
         col_number++;
       }
+    } else if (ch == '\'') {
+      file.get(ch);
+      std::string tmp;
+      if (ch == '\\') {
+        // parse the next character as escape character
+        file.get(ch);
+        if (regex.matchEscape(ch)) {
+          tmp += "\\" + ch;
+        } else {
+          success = false;
+          tokens.emplace_back(token::TOKEN::UNKNOWN);
+        }
+        file.get(ch);
+      } else if (regex.matchASCIIPrintable(ch) and ch != '\'') {
+        tmp += ch;
+        file.get(ch);
+      } else {
+        success = false;
+        tokens.emplace_back(token::TOKEN::UNKNOWN);
+      }
+
+      if (ch != '\'' and success != false) {
+        success = false;
+        tokens.emplace_back(token::TOKEN::UNKNOWN);
+      } else {
+        tokens.emplace_back(token::Token(token::TOKEN::CHAR, tmp));
+      }
+    } else if (ch == '\"') {
+      std::string literal;
+      file.get(ch);
+
+      while (ch != '"' and regex.matchASCIIPrintable(ch)) {
+        if (ch == '\\') {
+          // parse the next character as escape character
+          file.get(ch);
+          if (regex.matchEscape(ch)) {
+            literal += "\\" + ch;
+          } else {
+            success = false;
+            tokens.emplace_back(token::TOKEN::UNKNOWN);
+          }
+        } else if (regex.matchASCIIPrintable(ch) and ch != '\\') {
+          literal += ch;
+        } else { // will this ever be called?
+          success = false;
+          tokens.emplace_back(token::TOKEN::UNKNOWN);
+        }
+        file.get(ch);
+      }
+      if (ch == '\"') {
+        tokens.emplace_back(token::Token(token::TOKEN::STRING, literal));
+      } else {
+        success = false;
+        tokens.emplace_back(token::TOKEN::UNKNOWN);
+      }
     } else if (regex.matchWord(ch)) {
       std::string identifier;
       while (regex.matchWord(ch) || regex.matchDigit(ch)) {
@@ -172,6 +231,10 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::SIGNED);
       } else if (identifier == "unsigned") {
         tokens.emplace_back(token::TOKEN::UNSIGNED);
+      } else if (identifier == "sizeof") {
+        tokens.emplace_back(token::TOKEN::SIZEOF);
+      } else if (identifier == "struct") {
+        tokens.emplace_back(token::TOKEN::STRUCT);
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::IDENTIFIER, identifier));
       }
