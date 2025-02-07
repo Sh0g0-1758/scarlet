@@ -189,7 +189,7 @@ void lexer::tokenize() {
         file.get(ch);
       }
       if (ch == '\"') {
-        tokens.emplace_back(token::Token(token::TOKEN::STRING, literal));
+        tokens.emplace_back(token::Token(token::TOKEN::CHAR_ARR, literal));
       } else {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);

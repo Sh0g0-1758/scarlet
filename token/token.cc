@@ -13,7 +13,7 @@ void print_token(TOKEN token) {
   case TOKEN::CHARACTER_CONSTANT:
     std::cerr << "character constant ";
     break;
-  case TOKEN::STRING:
+  case TOKEN::CHAR_ARR:
     std::cerr << "string ";
     break;
   case TOKEN::INT:
@@ -180,7 +180,7 @@ std::string to_string(TOKEN token) {
     return "constant";
   case TOKEN::CHARACTER_CONSTANT:
     return "character constant";
-  case TOKEN::STRING:
+  case TOKEN::CHAR_ARR:
     return "string";
   case TOKEN::INT:
     return "int";
@@ -308,7 +308,7 @@ bool is_binary_op(TOKEN token) {
 std::string get_token_type(TOKEN token) {
   if (token == TOKEN::IDENTIFIER) {
     return "IDENTIFIER";
-  } else if (token >= TOKEN::CONSTANT && token <= TOKEN::STRING) {
+  } else if (token >= TOKEN::CONSTANT && token <= TOKEN::CHAR_ARR) {
     return "CONSTANT";
   } else if (token >= TOKEN::INT && token <= TOKEN::STRUCT) {
     return "KEYWORD";
