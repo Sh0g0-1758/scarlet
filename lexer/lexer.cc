@@ -2,9 +2,15 @@
 namespace scarlet {
 namespace lexer {
 
+#define ERROR_LOCATION                                                         \
+  file_path.substr(0, file_path.length() - 1) + ":" +                          \
+      std::to_string(line_number) + ":" + std::to_string(col_number)
+
 void lexer::tokenize() {
   std::ifstream file(file_path);
   if (!file.is_open()) {
+    error_recovery.emplace_back(std::make_pair(
+        "Unable to open the file> " + file_path, "Please check file path"));
     success = false;
     return;
   }
@@ -13,91 +19,121 @@ void lexer::tokenize() {
   while (file.get(ch)) {
     if (ch == '(') {
       tokens.emplace_back(token::TOKEN::OPEN_PARANTHESES);
+      col_number++;
     } else if (ch == ')') {
       tokens.emplace_back(token::TOKEN::CLOSE_PARANTHESES);
+      col_number++;
     } else if (ch == '{') {
       tokens.emplace_back(token::TOKEN::OPEN_BRACE);
+      col_number++;
     } else if (ch == '}') {
       tokens.emplace_back(token::TOKEN::CLOSE_BRACE);
+      col_number++;
     } else if (ch == ';') {
       tokens.emplace_back(token::TOKEN::SEMICOLON);
+      col_number++;
     } else if (ch == ':') {
       tokens.emplace_back(token::TOKEN::COLON);
+      col_number++;
     } else if (ch == '?') {
       tokens.emplace_back(token::TOKEN::QUESTION_MARK);
+      col_number++;
     } else if (ch == ',') {
       tokens.emplace_back(token::TOKEN::COMMA);
+      col_number++;
     } else if (ch == '~') {
       tokens.emplace_back(token::TOKEN::TILDE);
+      col_number++;
     } else if (ch == '+') {
       tokens.emplace_back(token::TOKEN::PLUS);
+      col_number++;
     } else if (ch == '*') {
       tokens.emplace_back(token::TOKEN::ASTERISK);
+      col_number++;
     } else if (ch == '/') {
       tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
+      col_number++;
     } else if (ch == '%') {
       tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
+      col_number++;
     } else if (ch == '&') {
       file.get(ch);
       if (ch == '&') {
         tokens.emplace_back(token::TOKEN::LAND);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::AAND);
+        col_number++;
       }
     } else if (ch == '|') {
       file.get(ch);
       if (ch == '|') {
         tokens.emplace_back(token::TOKEN::LOR);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::AOR);
+        col_number++;
       }
     } else if (ch == '^') {
       tokens.emplace_back(token::TOKEN::XOR);
+      col_number++;
     } else if (ch == '!') {
       file.get(ch);
       if (ch == '=') {
         tokens.emplace_back(token::TOKEN::NOTEQUAL);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::NOT);
+        col_number++;
       }
     } else if (ch == '=') {
       file.get(ch);
       if (ch == '=') {
         tokens.emplace_back(token::TOKEN::EQUAL);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::ASSIGNMENT);
+        col_number++;
       }
     } else if (ch == '>') {
       file.get(ch);
       if (ch == '>') {
         tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
+        col_number += 2;
       } else if (ch == '=') {
         tokens.emplace_back(token::TOKEN::GREATERTHANEQUAL);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::GREATERTHAN);
+        col_number++;
       }
     } else if (ch == '<') {
       file.get(ch);
       if (ch == '<') {
         tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+        col_number += 2;
       } else if (ch == '=') {
         tokens.emplace_back(token::TOKEN::LESSTHANEQUAL);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::LESSTHAN);
+        col_number++;
       }
     } else if (ch == '-') {
       file.get(ch);
       if (ch == '-') {
         tokens.emplace_back(token::TOKEN::DECREMENT_OPERATOR);
+        col_number += 2;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::HYPHEN);
+        col_number++;
       }
     } else if (regex.matchWord(ch)) {
       std::string identifier;
@@ -139,6 +175,7 @@ void lexer::tokenize() {
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::IDENTIFIER, identifier));
       }
+      col_number += (identifier.length());
     } else if (regex.matchDigit(ch) or ch == '.') {
       std::string constant;
       while (regex.matchDigit(ch)) {
@@ -180,39 +217,59 @@ void lexer::tokenize() {
             file.get(ch);
           }
         } else {
+          col_number += (constant.length());
+          error_recovery.emplace_back(std::make_pair(
+              ERROR_LOCATION + " " + RED + "error:" + RESET + " " + ch +
+                  " follows e/E in a number> " + std::string(1, ch),
+              "some digit/+/- must follow a number that has e/E"));
           success = false;
           tokens.emplace_back(token::TOKEN::UNKNOWN);
+          file.seekg(-1, std::ios::cur);
+          continue;
         }
       }
 
       // If a character follows a number or if we have two dots in a row
       if (regex.matchWord(ch) or ch == '.') {
+        col_number += (constant.length());
+        if (ch == '.') {
+          error_recovery.emplace_back(
+              std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET +
+                                 " . follows another . in a float number",
+                             "a float must have only one ."));
+        } else {
+          error_recovery.emplace_back(
+              std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET +
+                                 " " + ch + " follows a digit",
+                             "characters cannot follow a number"));
+        }
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);
+        file.seekg(-1, std::ios::cur);
+        continue;
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::CONSTANT, constant));
       }
       file.seekg(-1, std::ios::cur);
-    } else if (ch == '\n' or ch == ' ' or ch == '\t') {
-      // do nothing
-    } else if (ch == '/') {
-      file.get(ch);
-      if (ch == '/') {
-        while (ch != '\n') {
-          file.get(ch);
-        }
-        file.seekg(-1, std::ios::cur);
+      col_number += (constant.length());
+    } else if (ch == '\n' or ch == ' ') {
+      if (ch == '\n') {
+        line_number++;
+        col_number = 1;
       } else {
-        file.seekg(-1, std::ios::cur);
-        success = false;
-        tokens.emplace_back(token::TOKEN::UNKNOWN);
+        col_number++;
       }
     } else {
+      error_recovery.emplace_back(
+          std::make_pair(ERROR_LOCATION + " " + RED + "error:" + RESET +
+                             " invalid token> " + std::string(1, ch),
+                         "Please check the code"));
       success = false;
       tokens.emplace_back(token::TOKEN::UNKNOWN);
     }
   }
 }
+
 void lexer::print_symbol_table() {
   const int w = 20;
   std::cout << BOLD << CYAN << std::left << std::string(2 * w, '-')
@@ -236,6 +293,14 @@ void lexer::print_symbol_table() {
   std::cout << BOLD << CYAN << std::left << std::string(2 * w, '-') << RESET
             << std::endl;
 }
+
+void lexer::print_error_recovery() {
+  for (auto &error : error_recovery) {
+    std::cout << error.first << std::endl;
+    std::cout << GREEN << "info:" << RESET << " " << error.second << std::endl;
+  }
+}
+
 void lexer::print_tokens() {
   for (auto token : tokens)
     print_token(token.get_token());

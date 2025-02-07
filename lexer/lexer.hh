@@ -6,23 +6,20 @@
 #include <regex/regex.hh>
 #include <string>
 #include <token/token.hh>
+#include <tools/color/color.hh>
 #include <vector>
 
-#define RESET "\033[0m"
-#define RED "\033[31m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define CYAN "\033[36m"
-#define BOLD "\033[1m"
 namespace scarlet {
 namespace lexer {
 class lexer {
 private:
   std::vector<token::Token> tokens;
+  std::vector<std::pair<std::string, std::string>> error_recovery;
   regex::Regex regex;
   bool success = true;
   std::string file_path;
+  int line_number = 1;
+  int col_number = 1;
 
 public:
   void tokenize();
@@ -32,6 +29,7 @@ public:
     this->file_path = std::move(file_path);
   };
   void print_symbol_table();
+  void print_error_recovery();
   bool is_success() { return success; }
 };
 } // namespace lexer
