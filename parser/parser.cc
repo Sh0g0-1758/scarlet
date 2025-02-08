@@ -327,7 +327,8 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     // no factor node or factor node is a constant, not a variable
     // Here we exploit the benefit of short circuiting power of the logical
     // operator this means that as we proceed, we are ensured that the earlier
-    // checks must be satisfied
+    // checks must not be satisfied. Note that an identifier with unops
+    // makes it an rvalue.
     if (exp->get_factor_node() == nullptr or
         exp->get_factor_node()->get_identifier_node() == nullptr or
         exp->get_factor_node()->get_unop_nodes().size() > 0) {
