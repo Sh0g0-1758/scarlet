@@ -13,16 +13,6 @@
 // clang-format off
 /*
 
-Grammar:
-
-<program> ::= function_definition
-<function_definition> ::= <identifier> <instruction>+
-<instruction> = "movl" <operand> "," <operand> | "ret"
-<operand> ::= <imm> | <register>
-<imm> ::= "$" <number>
-<register> ::= "%eax"
-<identifier> ::= ? An identifier token ?
-
 Notes about X86-64 Assembly:
 
 1.  Non Executable stack: .section	.note.GNU-stack,"",@progbits
@@ -57,7 +47,7 @@ private:
   std::vector<std::vector<unop::UNOP>> unop_buffer;
   std::string constant_buffer;
   bool success = true;
-  int curr_regNum = 1;
+  int curr_regNum;
   std::map<std::string, std::string> pseduo_registers;
   int stack_offset{};
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
