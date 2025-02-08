@@ -1,6 +1,9 @@
 #include "parser.hh"
 namespace scarlet {
 namespace parser {
+
+#define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
+
 #define EXPECT(tok)                                                            \
   if (!success) {                                                              \
     return;                                                                    \
@@ -41,8 +44,7 @@ namespace parser {
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
-  std::shared_ptr<ast::AST_int_Node> int_node =                                \
-      std::make_shared<ast::AST_int_Node>();                                   \
+  MAKE_SHARED(ast::AST_int_Node, int_node);                                    \
   int_node->set_value(tokens[0].get_value().value());                          \
   factor->set_int_node(std::move(int_node));                                   \
   tokens.erase(tokens.begin());
@@ -74,8 +76,7 @@ void parser::parse_program(std::vector<token::Token> tokens) {
 
 std::shared_ptr<ast::AST_Function_Node>
 parser::parse_function(std::vector<token::Token> &tokens) {
-  std::shared_ptr<ast::AST_Function_Node> function =
-      std::make_shared<ast::AST_Function_Node>();
+  MAKE_SHARED(ast::AST_Function_Node, function);
   EXPECT_FUNC(token::TOKEN::INT);
   parse_identifier(tokens, function);
   EXPECT_FUNC(token::TOKEN::OPEN_PARANTHESES);
@@ -89,11 +90,11 @@ parser::parse_function(std::vector<token::Token> &tokens) {
 
 void parser::parse_statement(std::vector<token::Token> &tokens,
                              std::shared_ptr<ast::AST_Function_Node> function) {
+
   std::shared_ptr<ast::AST_Statement_Node> statement =
       std::make_shared<ast::AST_Statement_Node>("Return");
   EXPECT(token::TOKEN::RETURN);
-  std::shared_ptr<ast::AST_exp_Node> exp =
-      std::make_shared<ast::AST_exp_Node>();
+  MAKE_SHARED(ast::AST_exp_Node, exp);
   parse_exp(tokens, exp);
   statement->add_exp(std::move(exp));
   EXPECT(token::TOKEN::SEMICOLON);
@@ -111,8 +112,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
-    std::shared_ptr<ast::AST_exp_Node> exp =
-        std::make_shared<ast::AST_exp_Node>();
+    MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     factor->set_exp_node(std::move(exp));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
@@ -126,25 +126,21 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
 
 void parser::parse_exp(std::vector<token::Token> &tokens,
                        std::shared_ptr<ast::AST_exp_Node> &root_exp, int prec) {
-  std::shared_ptr<ast::AST_factor_Node> factor =
-      std::make_shared<ast::AST_factor_Node>();
+  MAKE_SHARED(ast::AST_factor_Node, factor);
   parse_factor(tokens, factor);
   root_exp->set_factor_node(std::move(factor));
   while (token::is_binary_op(tokens[0].get_token()) and
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
-    std::shared_ptr<ast::AST_binop_Node> binop =
-        std::make_shared<ast::AST_binop_Node>();
+    MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
     root_exp->set_binop_node(std::move(binop));
-    std::shared_ptr<ast::AST_exp_Node> rexp =
-        std::make_shared<ast::AST_exp_Node>();
+    MAKE_SHARED(ast::AST_exp_Node, rexp);
     parse_exp(tokens, rexp, new_prec);
     root_exp->set_right(std::move(rexp));
     if (token::is_binary_op(tokens[0].get_token()) and
         token::get_binop_prec(tokens[0].get_token()) >= prec) {
-      std::shared_ptr<ast::AST_exp_Node> new_root_exp =
-          std::make_shared<ast::AST_exp_Node>();
+      MAKE_SHARED(ast::AST_exp_Node, new_root_exp);
       new_root_exp->set_left(root_exp);
       root_exp = new_root_exp;
     }
@@ -217,20 +213,17 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
                             std::shared_ptr<ast::AST_factor_Node> factor) {
   if (tokens[0].get_token() == token::TOKEN::TILDE) {
-    std::shared_ptr<ast::AST_unop_Node> unop =
-        std::make_shared<ast::AST_unop_Node>();
+    MAKE_SHARED(ast::AST_unop_Node, unop);
     unop->set_op(unop::UNOP::COMPLEMENT);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::HYPHEN) {
-    std::shared_ptr<ast::AST_unop_Node> unop =
-        std::make_shared<ast::AST_unop_Node>();
+    MAKE_SHARED(ast::AST_unop_Node, unop);
     unop->set_op(unop::UNOP::NEGATE);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::NOT) {
-    std::shared_ptr<ast::AST_unop_Node> unop =
-        std::make_shared<ast::AST_unop_Node>();
+    MAKE_SHARED(ast::AST_unop_Node, unop);
     unop->set_op(unop::UNOP::NOT);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
