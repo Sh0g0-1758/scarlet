@@ -16,8 +16,8 @@ private:
   ast::AST_Program_Node program;
   std::shared_ptr<ast::AST_Function_Node>
   parse_function(std::vector<token::Token> &tokens);
-  void parse_statement(std::vector<token::Token> &tokens,
-                       std::shared_ptr<ast::AST_Function_Node> function);
+  void parse_block_item(std::vector<token::Token> &tokens,
+                        std::shared_ptr<ast::AST_Function_Node> function);
   void parse_factor(std::vector<token::Token> &tokens,
                     std::shared_ptr<ast::AST_factor_Node> factor);
   void parse_exp(std::vector<token::Token> &tokens,

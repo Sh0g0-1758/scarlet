@@ -7,21 +7,30 @@
 #include <token/token.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
+
+// clang-format off
 /*
 
 Grammar:
 
 <program> ::= <function>
-<function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-<statement> ::= "return" <exp> ";"
+<function> ::= "int" <identifier> "(" "void" ")" "{" { <block_item> } "}"
+<block_item> ::= <statement> | <declaration>
+<declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";"
 <exp> ::= <factor> | <exp> <binop> <exp>
-<factor> ::= <int> | <unop> <factor> | "(" <exp> ")"
+<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-" | "!"
-<binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" |
-"!=" | "<" | "<=" | ">" | ">=" | "&&" | "||" <identifier> ::= ? An identifier
+<binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
+<identifier> ::= ? An identifier
 token ? <int> ::= ? A constant token ?
 
+NOTE: in EBNF notation,
+1. {} means 0 or more instances of the enclosed expression
+2. [] means 0 or 1 instances of the enclosed expression ie. it is optional
+
 */
+// clang-format on
 namespace scarlet {
 namespace ast {
 
@@ -70,6 +79,7 @@ class AST_exp_Node;
 class AST_factor_Node {
 private:
   std::shared_ptr<AST_int_Node> int_node;
+  std::shared_ptr<AST_identifier_Node> identifier_node;
   std::vector<std::shared_ptr<AST_unop_Node>> unop_nodes;
   // No need to make this a weak pointer because if an object of exp a points to
   // factor b then factor b can never point to exp a. It can only point to
@@ -83,6 +93,13 @@ public:
   std::shared_ptr<AST_int_Node> get_int_node() { return int_node; }
   void set_int_node(std::shared_ptr<AST_int_Node> int_node) {
     this->int_node = std::move(int_node);
+  }
+  std::shared_ptr<AST_identifier_Node> get_identifier_node() {
+    return identifier_node;
+  }
+  void
+  set_identifier_node(std::shared_ptr<AST_identifier_Node> identifier_node) {
+    this->identifier_node = std::move(identifier_node);
   }
   std::vector<std::shared_ptr<AST_unop_Node>> get_unop_nodes() {
     return unop_nodes;
@@ -153,41 +170,95 @@ public:
   }
 };
 
+// We don't include the empty statement (just having a semicolon) in the AST
+enum class StatementType { RETURN, EXP };
+
 class AST_Statement_Node {
 private:
-  std::vector<std::shared_ptr<AST_exp_Node>> exps;
-  std::string type;
+  std::shared_ptr<AST_exp_Node> exps;
+  StatementType type;
 
 public:
-  AST_Statement_Node(std::string type) {
-    exps.reserve(2);
-    this->type = type;
-  }
   std::string get_AST_name() { return "Statement"; }
-  std::string get_type() { return type; }
+  void set_type(StatementType type) { this->type = type; }
+  StatementType get_type() { return type; }
 
-  std::vector<std::shared_ptr<AST_exp_Node>> get_exps() { return exps; }
-  void add_exp(std::shared_ptr<AST_exp_Node> exp) {
-    exps.emplace_back(std::move(exp));
+  std::shared_ptr<AST_exp_Node> get_exps() { return exps; }
+  void set_exp(std::shared_ptr<AST_exp_Node> exp) {
+    this->exps = std::move(exp);
   }
+};
+
+enum class DeclarationType { INT };
+
+class AST_Declaration_Node {
+private:
+  std::shared_ptr<AST_identifier_Node> identifier;
+  std::optional<std::shared_ptr<AST_exp_Node>> exp;
+  DeclarationType type;
+
+public:
+  // need to update this when we support more types
+  AST_Declaration_Node() { type = DeclarationType::INT; }
+  std::string get_AST_name() { return "Declaration"; }
+  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->identifier = std::move(identifier);
+  }
+  std::shared_ptr<AST_exp_Node> get_exp() {
+    if (exp.has_value()) {
+      return exp.value();
+    }
+    return nullptr;
+  }
+  void set_exp(std::shared_ptr<AST_exp_Node> exp) {
+    this->exp = std::move(exp);
+  }
+};
+
+enum class BlockItemType { UNKNOWN, STATEMENT, DECLARATION };
+
+// Right now, we determine whether a block item is a statement or a declaration
+// by simply peeking the next token. If its an int, we say its a declaration,
+// else its a statement.
+class AST_Block_Item_Node {
+private:
+  std::shared_ptr<AST_Statement_Node> statement;
+  std::shared_ptr<AST_Declaration_Node> declaration;
+  BlockItemType type;
+
+public:
+  std::string get_AST_name() { return "BlockItem"; }
+  std::shared_ptr<AST_Statement_Node> get_statement() { return statement; }
+  void set_statement(std::shared_ptr<AST_Statement_Node> statement) {
+    this->statement = std::move(statement);
+  }
+  std::shared_ptr<AST_Declaration_Node> get_declaration() {
+    return declaration;
+  }
+  void set_declaration(std::shared_ptr<AST_Declaration_Node> declaration) {
+    this->declaration = std::move(declaration);
+  }
+  BlockItemType get_type() { return type; }
+  void set_type(BlockItemType type) { this->type = type; }
 };
 
 class AST_Function_Node {
 private:
-  std::vector<std::shared_ptr<AST_Statement_Node>> statements;
-  AST_identifier_Node identifier;
+  std::vector<std::shared_ptr<AST_Block_Item_Node>> blockItems;
+  std::shared_ptr<AST_identifier_Node> identifier;
 
 public:
   std::string get_AST_name() { return "Function"; }
-  AST_identifier_Node &get_identifier() { return identifier; }
-  void set_identifier(AST_identifier_Node identifier) {
+  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
-  std::vector<std::shared_ptr<AST_Statement_Node>> get_statements() {
-    return statements;
+  std::vector<std::shared_ptr<AST_Block_Item_Node>> get_blockItems() {
+    return blockItems;
   }
-  void add_statement(std::shared_ptr<AST_Statement_Node> statement) {
-    statements.emplace_back(std::move(statement));
+  void add_blockItem(std::shared_ptr<AST_Block_Item_Node> statement) {
+    blockItems.emplace_back(std::move(statement));
   }
 };
 
