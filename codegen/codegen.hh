@@ -70,7 +70,8 @@ private:
   std::stack<std::string> res_label_stack;
 
 public:
-  Codegen(ast::AST_Program_Node program) : program(program) {
+  Codegen(ast::AST_Program_Node program, int counter)
+      : program(program), curr_regNum(counter) {
     unop_buffer.resize(2);
   }
   // ###### COMPILER PASSES ######

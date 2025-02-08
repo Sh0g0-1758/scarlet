@@ -18,19 +18,22 @@ public:
   scarcmd()
       : desc("Usage: scarlet [options] file...\nOptions"),
         hidden("Hidden options"), all_options("All options") {
+    // clang-format off
+    desc.add_options()
+      ("help,h", "produce this help message")
+      ("version,v", "print version string")
+      ("lex", "run only till the lexer stage")
+      ("parse", "run only till the parser stage and print the AST")
+      ("validate", "run semantic analysis and print the AST")
+      ("scar", "print scar(IR for scarlet)")
+      ("codegen", "run only till the codegen stage")
+      ("asm,S", "generate .s file containing X86-64 assembly")
+      ("output-file,o", po::value<std::string>(), "output file");
 
-    desc.add_options()("help,h", "produce this help message")(
-        "version,v", "print version string")("lex",
-                                             "run only till the lexer stage")(
-        "parse", "run only till the parser stage and print the AST")(
-        "scar", "print scar(IR for scarlet)")(
-        "codegen", "run only till the codegen stage")(
-        "asm,S", "generate .s file containing X86-64 assembly")(
-        "output-file,o", po::value<std::string>(), "output file");
-
-    hidden.add_options()(
-        "tacky", "run only till the codegen stage and print the IR(scar) AST")(
-        "input-file", po::value<std::string>(), "input file");
+    hidden.add_options()
+      ("tacky", "run only till the codegen stage and print the IR(scar) AST")
+      ("input-file", po::value<std::string>(), "input file");
+    // clang-format on
 
     pos_desc.add("input-file", -1);
     all_options.add(desc).add(hidden);

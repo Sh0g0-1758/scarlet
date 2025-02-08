@@ -174,16 +174,14 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
   while (token::is_binary_op(tokens[0].get_token()) and
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
+    // Handle right associative operators by reducing the new precedence by 1
+    if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT)
+      new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
     root_exp->set_binop_node(std::move(binop));
     MAKE_SHARED(ast::AST_exp_Node, rexp);
-    // Handle right associative operators by reducing the new precedence by 1
-    if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT) {
-      parse_exp(tokens, rexp, new_prec - 1);
-    } else {
-      parse_exp(tokens, rexp, new_prec);
-    }
+    parse_exp(tokens, rexp, new_prec);
     root_exp->set_right(std::move(rexp));
     if (token::is_binary_op(tokens[0].get_token()) and
         token::get_binop_prec(tokens[0].get_token()) >= prec) {
@@ -301,6 +299,72 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
     success = false;
     error_messages.emplace_back("Expected token " + to_string(expected_token) +
                                 " but got " + to_string(actual_token));
+  }
+}
+
+void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
+  if (exp == nullptr)
+    return;
+  analyze_exp(exp->get_left());
+  // here we check that the factor of the expresssion is not an undeclared
+  // variable
+  if (exp->get_factor_node() != nullptr and
+      exp->get_factor_node()->get_identifier_node() != nullptr) {
+    std::string var_name =
+        exp->get_factor_node()->get_identifier_node()->get_value();
+    if (symbol_table.find(var_name) == symbol_table.end()) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name + " not declared");
+    } else {
+      exp->get_factor_node()->get_identifier_node()->set_identifier(
+          symbol_table[var_name]);
+    }
+  }
+  // now we check that if the exp is of type assignment, then factor is an
+  // identifier
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
+    // no factor node or factor node is a constant, not a variable
+    // Here we exploit the benefit of short circuiting power of the logical
+    // operator this means that as we proceed, we are ensured that the earlier
+    // checks must be satisfied
+    if (exp->get_factor_node() == nullptr or
+        exp->get_factor_node()->get_identifier_node() == nullptr or
+        exp->get_factor_node()->get_unop_nodes().size() > 0) {
+      success = false;
+      error_messages.emplace_back("Expected a modifiable lvalue on the left "
+                                  "side of the assignment operator");
+    }
+  }
+  analyze_exp(exp->get_right());
+}
+
+void parser::semantic_analysis() {
+  // variable resolution
+  for (auto funcs : program.get_functions()) {
+    for (auto blockItem : funcs->get_blockItems()) {
+      if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
+        std::string var_name =
+            blockItem->get_declaration()->get_identifier()->get_value();
+        if (symbol_table.find(var_name) != symbol_table.end()) {
+          // the symbol has been declared twice which is illegal
+          success = false;
+          error_messages.emplace_back("Variable " + var_name +
+                                      " already declared");
+        } else {
+          symbol_table[var_name] = get_temp_name(var_name);
+          blockItem->get_declaration()->get_identifier()->set_identifier(
+              symbol_table[var_name]);
+          if (blockItem->get_declaration()->get_exp() != nullptr) {
+            analyze_exp(blockItem->get_declaration()->get_exp());
+          }
+        }
+      } else if (blockItem->get_type() == ast::BlockItemType::STATEMENT) {
+        // every variable that is used in any of the statement should already
+        // have been declared.
+        analyze_exp(blockItem->get_statement()->get_exps());
+      }
+    }
   }
 }
 

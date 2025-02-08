@@ -3,6 +3,7 @@
 #include <ast/ast.hh>
 #include <binary_operations/binop.hh>
 #include <iostream>
+#include <map>
 #include <string>
 #include <token/token.hh>
 #include <unary_operations/unop.hh>
@@ -13,6 +14,8 @@ class parser {
 private:
   bool success = true;
   std::vector<std::string> error_messages;
+  int symbol_counter = 0;
+  std::map<std::string, std::string> symbol_table;
   ast::AST_Program_Node program;
   std::shared_ptr<ast::AST_Function_Node>
   parse_function(std::vector<token::Token> &tokens);
@@ -34,13 +37,21 @@ private:
   void eof_error(token::Token token);
   void pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor);
+  std::string get_temp_name(std::string &name) {
+    std::string tmp = name + "." + std::to_string(symbol_counter);
+    symbol_counter++;
+    return tmp;
+  }
+  void analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp);
 
 public:
   void parse_program(std::vector<token::Token> tokens);
+  void semantic_analysis();
   bool is_success() { return success; }
   void display_errors();
   ast::AST_Program_Node get_program() { return program; }
   void pretty_print();
+  int get_symbol_counter() { return symbol_counter; }
 };
 } // namespace parser
 } // namespace scarlet
