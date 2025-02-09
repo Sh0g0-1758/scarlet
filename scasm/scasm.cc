@@ -147,7 +147,8 @@ std::string to_string(Binop binop) {
   case Binop::UNKNOWN:
   // All relational operators are handled by the cmpl instruction using register
   // flags and results are interpreted from the flags using setcc instruction,
-  // so these cases should never be reached.
+  // so these cases should never be reached. Assign instruction in turn is
+  // handled by the mov instruction. So, these cases should never be reached.
   case Binop::ASSIGN:
   case Binop::LAND:
   case Binop::LOR:
