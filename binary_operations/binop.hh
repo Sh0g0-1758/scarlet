@@ -23,7 +23,8 @@ enum BINOP {
   LESSTHAN,
   GREATERTHAN,
   LESSTHANEQUAL,
-  GREATERTHANEQUAL
+  GREATERTHANEQUAL,
+  ASSIGN
 };
 
 std::string to_string(BINOP binop);

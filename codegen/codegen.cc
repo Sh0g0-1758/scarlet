@@ -37,10 +37,19 @@ void Codegen::gen_scar_factor(
             !factor->get_int_node()->get_value().empty()) {
           scar_val_src->set_type(scar::val_type::CONSTANT);
           scar_val_src->set_value(factor->get_int_node()->get_value());
+        } else if (factor->get_identifier_node() != nullptr and
+                   !factor->get_identifier_node()->get_value().empty()) {
+          scar_val_src->set_type(scar::val_type::VAR);
+          scar_val_src->set_reg_name(
+              factor->get_identifier_node()->get_value());
         } else if (!constant_buffer.empty()) {
           scar_val_src->set_type(scar::val_type::CONSTANT);
           scar_val_src->set_value(constant_buffer);
           constant_buffer.clear();
+        } else if (!variable_buffer.empty()) {
+          scar_val_src->set_type(scar::val_type::VAR);
+          scar_val_src->set_reg_name(variable_buffer);
+          variable_buffer.clear();
         } else {
           scar_val_src->set_type(scar::val_type::VAR);
           scar_val_src->set_reg_name(get_prev_reg_name());
@@ -62,13 +71,36 @@ void Codegen::gen_scar_factor(
     // empty the unop buffer
     unop_buffer[curr_buff].clear();
   } else {
-    // save it for later return
+    // NOTE: It is guaranteed that the factor node will have either an int node
+    // or an identifier node
+
+    // save constant for later use
     if (factor->get_int_node() != nullptr and
         !factor->get_int_node()->get_value().empty()) {
       constant_buffer = factor->get_int_node()->get_value();
     }
+
+    // save variable for later use
+    if (factor->get_identifier_node() != nullptr and
+        !factor->get_identifier_node()->get_value().empty()) {
+      variable_buffer = factor->get_identifier_node()->get_value();
+    }
   }
 }
+
+#define SETVARCONSTANTREG(src)                                                 \
+  if (!variable_buffer.empty()) {                                              \
+    src->set_type(scar::val_type::VAR);                                        \
+    src->set_reg_name(variable_buffer);                                        \
+    variable_buffer.clear();                                                   \
+  } else if (!constant_buffer.empty()) {                                       \
+    src->set_type(scar::val_type::CONSTANT);                                   \
+    src->set_value(constant_buffer);                                           \
+    constant_buffer.clear();                                                   \
+  } else {                                                                     \
+    src->set_type(scar::val_type::VAR);                                        \
+    src->set_reg_name(get_prev_reg_name());                                    \
+  }
 
 #define SETUPLANDLOR(num)                                                      \
   if (exp->get_binop_node()->get_op() == binop::BINOP::LAND) {                 \
@@ -82,14 +114,7 @@ void Codegen::gen_scar_factor(
   if (exp->get_left() == nullptr) {                                            \
     if (num == 1)                                                              \
       gen_scar_factor(exp->get_factor_node(), scar_function);                  \
-    if (constant_buffer.empty()) {                                             \
-      scar_val_src##num->set_type(scar::val_type::VAR);                        \
-      scar_val_src##num->set_reg_name(get_prev_reg_name());                    \
-    } else {                                                                   \
-      scar_val_src##num->set_type(scar::val_type::CONSTANT);                   \
-      scar_val_src##num->set_value(constant_buffer);                           \
-      constant_buffer.clear();                                                 \
-    }                                                                          \
+    SETVARCONSTANTREG(scar_val_src##num);                                      \
   } else {                                                                     \
     scar_val_src##num->set_type(scar::val_type::VAR);                          \
     scar_val_src##num->set_reg_name(get_prev_reg_name());                      \
@@ -109,6 +134,33 @@ void Codegen::gen_scar_exp(
     // when we have a binary operator
     // deal with && and || separately using jmpif(not)zero, labels and copy
     // operations since we need to apply short circuit for them
+    //
+    // There will be a separate case for the assignment operator as that
+    // will be represented by a simple copy operation
+    if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+      scar_instruction->set_type(scar::instruction_type::COPY);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+      // the semantic analyis phase should have ensured that the left child
+      // is null, factor is an identifier with no unops and the right child
+      // is an expression
+      gen_scar_exp(exp->get_right(), scar_function);
+      SETVARCONSTANTREG(scar_val_src);
+      scar_instruction->set_src_ret(std::move(scar_val_src));
+
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(
+          exp->get_factor_node()->get_identifier_node()->get_value());
+      // NOTE: we update the current scar register name to use the variable
+      // since we can have expressions like:
+      // int b = a = 5;
+      reg_name = scar_val_dst->get_reg();
+      scar_instruction->set_dst(std::move(scar_val_dst));
+
+      scar_function->add_instruction(std::move(scar_instruction));
+      return;
+    }
     bool short_circuit = binop::short_circuit(exp->get_binop_node()->get_op());
     binop::BINOP sc_binop = exp->get_binop_node()->get_op();
 
@@ -128,14 +180,7 @@ void Codegen::gen_scar_exp(
 
     if (exp->get_left() == nullptr) {
       gen_scar_factor(exp->get_factor_node(), scar_function);
-      if (constant_buffer.empty()) {
-        scar_val_src1->set_type(scar::val_type::VAR);
-        scar_val_src1->set_reg_name(get_prev_reg_name());
-      } else {
-        scar_val_src1->set_type(scar::val_type::CONSTANT);
-        scar_val_src1->set_value(constant_buffer);
-        constant_buffer.clear();
-      }
+      SETVARCONSTANTREG(scar_val_src1);
     } else {
       scar_val_src1->set_type(scar::val_type::VAR);
       scar_val_src1->set_reg_name(get_prev_reg_name());
@@ -153,14 +198,7 @@ void Codegen::gen_scar_exp(
     }
 
     gen_scar_exp(exp->get_right(), scar_function);
-    if (constant_buffer.empty()) {
-      scar_val_src2->set_type(scar::val_type::VAR);
-      scar_val_src2->set_reg_name(get_prev_reg_name());
-    } else {
-      scar_val_src2->set_type(scar::val_type::CONSTANT);
-      scar_val_src2->set_value(constant_buffer);
-      constant_buffer.clear();
-    }
+    SETVARCONSTANTREG(scar_val_src2);
 
     if (short_circuit) {
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
@@ -257,26 +295,51 @@ void Codegen::gen_scar() {
   for (auto it : program.get_functions()) {
     MAKE_SHARED(scar::scar_Function_Node, scar_function);
     MAKE_SHARED(scar::scar_Identifier_Node, identifier);
-    identifier->set_value(it->get_identifier().get_value());
+    identifier->set_value(it->get_identifier()->get_value());
     scar_function->set_identifier(identifier);
-    for (auto inst : it->get_statements()) {
-      if (inst->get_type() == "Return") {
-        for (auto exp : inst->get_exps())
-          gen_scar_exp(exp, scar_function);
-        MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-        scar_instruction->set_type(scar::instruction_type::RETURN);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
-        if (constant_buffer.empty()) {
-          scar_val_ret->set_type(scar::val_type::VAR);
-          scar_val_ret->set_reg_name(get_prev_reg_name());
-        } else {
-          scar_val_ret->set_type(scar::val_type::CONSTANT);
-          scar_val_ret->set_value(constant_buffer);
-          constant_buffer.clear();
+    // If the function has no return statement, we add one at the end
+    bool have_return = false;
+    for (auto inst : it->get_blockItems()) {
+      if (inst->get_type() == ast::BlockItemType::STATEMENT) {
+        if (inst->get_statement()->get_type() == ast::StatementType::RETURN) {
+          gen_scar_exp(inst->get_statement()->get_exps(), scar_function);
+          MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+          scar_instruction->set_type(scar::instruction_type::RETURN);
+          MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
+          SETVARCONSTANTREG(scar_val_ret);
+          scar_instruction->set_src_ret(scar_val_ret);
+          scar_function->add_instruction(scar_instruction);
+          have_return = true;
+        } else if (inst->get_statement()->get_type() ==
+                   ast::StatementType::EXP) {
+          gen_scar_exp(inst->get_statement()->get_exps(), scar_function);
         }
-        scar_instruction->set_src_ret(scar_val_ret);
-        scar_function->add_instruction(scar_instruction);
+      } else if (inst->get_type() == ast::BlockItemType::DECLARATION) {
+        // if there is no definition, we ignore it
+        if (inst->get_declaration()->get_exp() != nullptr) {
+          gen_scar_exp(inst->get_declaration()->get_exp(), scar_function);
+          MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+          scar_instruction->set_type(scar::instruction_type::COPY);
+          MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+          SETVARCONSTANTREG(scar_val_src);
+          scar_instruction->set_src_ret(scar_val_src);
+          MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+          scar_val_dst->set_type(scar::val_type::VAR);
+          scar_val_dst->set_reg_name(
+              inst->get_declaration()->get_identifier()->get_value());
+          scar_instruction->set_dst(scar_val_dst);
+          scar_function->add_instruction(scar_instruction);
+        }
       }
+    }
+    if (scar_function->get_instructions().size() == 0 or !have_return) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+      scar_instruction->set_type(scar::instruction_type::RETURN);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
+      scar_val_ret->set_type(scar::val_type::CONSTANT);
+      scar_val_ret->set_value("0");
+      scar_instruction->set_src_ret(scar_val_ret);
+      scar_function->add_instruction(scar_instruction);
     }
     scar_program.add_function(scar_function);
   }
@@ -344,12 +407,18 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::COPY) {
-        std::cerr << statement->get_src_ret()->get_value();
+        if (statement->get_src_ret()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
+        } else if (statement->get_src_ret()->get_type() ==
+                   scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
+                    << ")";
+        }
         std::cerr << " ,";
         if (statement->get_dst()->get_type() == scar::val_type::VAR) {
           std::cerr << "Var(" << statement->get_dst()->get_reg() << ")";
         }
-        std::cerr << std::endl;
+        std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::JUMP or
                  statement->get_type() == scar::instruction_type::LABEL) {
         std::cerr << statement->get_src_ret()->get_value() << ")" << std::endl;

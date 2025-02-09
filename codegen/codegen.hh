@@ -13,16 +13,6 @@
 // clang-format off
 /*
 
-Grammar:
-
-<program> ::= function_definition
-<function_definition> ::= <identifier> <instruction>+
-<instruction> = "movl" <operand> "," <operand> | "ret"
-<operand> ::= <imm> | <register>
-<imm> ::= "$" <number>
-<register> ::= "%eax"
-<identifier> ::= ? An identifier token ?
-
 Notes about X86-64 Assembly:
 
 1.  Non Executable stack: .section	.note.GNU-stack,"",@progbits
@@ -56,8 +46,10 @@ private:
   int curr_buff = 0;
   std::vector<std::vector<unop::UNOP>> unop_buffer;
   std::string constant_buffer;
+  std::string variable_buffer;
   bool success = true;
-  int curr_regNum = 1;
+  int curr_regNum;
+  std::string reg_name;
   std::map<std::string, std::string> pseduo_registers;
   int stack_offset{};
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
@@ -70,7 +62,8 @@ private:
   std::stack<std::string> res_label_stack;
 
 public:
-  Codegen(ast::AST_Program_Node program) : program(program) {
+  Codegen(ast::AST_Program_Node program, int counter)
+      : program(program), curr_regNum(counter) {
     unop_buffer.resize(2);
   }
   // ###### COMPILER PASSES ######
@@ -88,14 +81,11 @@ public:
   void set_file_name(std::string file_name) { this->file_name = file_name; }
   bool is_success() { return success; }
   std::string get_reg_name() {
-    std::string reg_name = "temp." + std::to_string(curr_regNum);
+    reg_name = "temp." + std::to_string(curr_regNum);
     curr_regNum++;
     return reg_name;
   }
-  std::string get_prev_reg_name() {
-    std::string reg_name = "temp." + std::to_string(curr_regNum - 1);
-    return reg_name;
-  }
+  std::string get_prev_reg_name() { return reg_name; }
   void pretty_print();
   std::string get_fr_label_name() {
     std::string label_name = "label" + std::to_string(fr_label_counter);

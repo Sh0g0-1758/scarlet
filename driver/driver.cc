@@ -117,8 +117,38 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  // SEMANTIC ANALYSIS
+  gnu.semantic_analysis();
+  if (!gnu.is_success()) {
+    result = system(std::format("rm {}.scp", file_name).c_str());
+
+    if (result != 0) {
+      std::cerr
+          << "[ERROR]: Unable to delete the intermediate preprocessed file"
+          << std::endl;
+      return 1;
+    }
+    gnu.display_errors();
+    std::cerr << "[ERROR]: Semantic analysis failed" << std::endl;
+    return 1;
+  }
+
+  if (cmd.has_option("validate")) {
+    result = system(std::format("rm {}.scp", file_name).c_str());
+
+    if (result != 0) {
+      std::cerr
+          << "[ERROR]: Unable to delete the intermediate preprocessed file"
+          << std::endl;
+      return 1;
+    }
+    gnu.pretty_print();
+    return 0;
+  }
+
   // CODEGEN
-  scarlet::codegen::Codegen codegen(gnu.get_program());
+  scarlet::codegen::Codegen codegen(gnu.get_program(),
+                                    gnu.get_symbol_counter());
 
   codegen.gen_scar();
 

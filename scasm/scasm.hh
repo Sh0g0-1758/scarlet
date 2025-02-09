@@ -51,7 +51,8 @@ enum class Binop {
   LESSTHAN,
   GREATERTHAN,
   LESSTHANEQUAL,
-  GREATERTHANEQUAL
+  GREATERTHANEQUAL,
+  ASSIGN
 };
 
 enum class instruction_type {

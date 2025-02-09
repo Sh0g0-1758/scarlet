@@ -51,6 +51,8 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
     return Binop::LESSTHANEQUAL;
   case binop::BINOP::GREATERTHANEQUAL:
     return Binop::GREATERTHANEQUAL;
+  case binop::BINOP::ASSIGN:
+    return Binop::ASSIGN;
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::DIV:
   case binop::BINOP::MOD:
@@ -144,8 +146,10 @@ std::string to_string(Binop binop) {
     return "sarl";
   case Binop::UNKNOWN:
   // All relational operators are handled by the cmpl instruction using register
-  // flags and results are interpreted from the flags using setcc instruction,
-  // so these cases should never be reached.
+  // flags and results are interpreted from the flags using setcc instruction.
+  // Assign instruction in turn is handled by the mov instruction.
+  // So, these cases should never be reached.
+  case Binop::ASSIGN:
   case Binop::LAND:
   case Binop::LOR:
   case Binop::EQUAL:

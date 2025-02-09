@@ -1,6 +1,9 @@
 #include "parser.hh"
 namespace scarlet {
 namespace parser {
+
+#define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
+
 #define EXPECT(tok)                                                            \
   if (!success) {                                                              \
     return;                                                                    \
@@ -41,27 +44,25 @@ namespace parser {
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
-  std::shared_ptr<ast::AST_int_Node> int_node =                                \
-      std::make_shared<ast::AST_int_Node>();                                   \
+  MAKE_SHARED(ast::AST_int_Node, int_node);                                    \
   int_node->set_value(tokens[0].get_value().value());                          \
   factor->set_int_node(std::move(int_node));                                   \
   tokens.erase(tokens.begin());
 
-#define EXPECT_IDENTIFIER(tok)                                                 \
+#define EXPECT_IDENTIFIER()                                                    \
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
   if (tokens.empty()) {                                                        \
-    eof_error(tok);                                                            \
+    eof_error(token::TOKEN::IDENTIFIER);                                       \
     return;                                                                    \
   }                                                                            \
-  expect(tokens[0].get_token(), tok);                                          \
+  expect(tokens[0].get_token(), token::TOKEN::IDENTIFIER);                     \
   if (!success) {                                                              \
     return;                                                                    \
   }                                                                            \
-  ast::AST_identifier_Node identifier;                                         \
-  identifier.set_identifier(tokens[0].get_value().value());                    \
-  function->set_identifier(identifier);                                        \
+  MAKE_SHARED(ast::AST_identifier_Node, identifier);                           \
+  identifier->set_identifier(tokens[0].get_value().value());                   \
   tokens.erase(tokens.begin());
 
 void parser::parse_program(std::vector<token::Token> tokens) {
@@ -74,36 +75,79 @@ void parser::parse_program(std::vector<token::Token> tokens) {
 
 std::shared_ptr<ast::AST_Function_Node>
 parser::parse_function(std::vector<token::Token> &tokens) {
-  std::shared_ptr<ast::AST_Function_Node> function =
-      std::make_shared<ast::AST_Function_Node>();
+  MAKE_SHARED(ast::AST_Function_Node, function);
   EXPECT_FUNC(token::TOKEN::INT);
   parse_identifier(tokens, function);
   EXPECT_FUNC(token::TOKEN::OPEN_PARANTHESES);
   EXPECT_FUNC(token::TOKEN::VOID);
   EXPECT_FUNC(token::TOKEN::CLOSE_PARANTHESES);
   EXPECT_FUNC(token::TOKEN::OPEN_BRACE);
-  parse_statement(tokens, function);
+  // parse all the block items in the current scope
+  while (!tokens.empty() and success and
+         tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
+    parse_block_item(tokens, function);
+  }
   EXPECT_FUNC(token::TOKEN::CLOSE_BRACE);
   return function;
 }
 
-void parser::parse_statement(std::vector<token::Token> &tokens,
-                             std::shared_ptr<ast::AST_Function_Node> function) {
-  std::shared_ptr<ast::AST_Statement_Node> statement =
-      std::make_shared<ast::AST_Statement_Node>("Return");
-  EXPECT(token::TOKEN::RETURN);
-  std::shared_ptr<ast::AST_exp_Node> exp =
-      std::make_shared<ast::AST_exp_Node>();
-  parse_exp(tokens, exp);
-  statement->add_exp(std::move(exp));
-  EXPECT(token::TOKEN::SEMICOLON);
-  function->add_statement(std::move(statement));
+void parser::parse_block_item(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_Function_Node> function) {
+  // We have a variable declaration / defintion
+  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
+  if (tokens[0].get_token() == token::TOKEN::INT) {
+    block_item->set_type(ast::BlockItemType::DECLARATION);
+    MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+    EXPECT(token::TOKEN::INT);
+    EXPECT_IDENTIFIER();
+    declaration->set_identifier(std::move(identifier));
+    if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
+      // the variable just have a declaration
+      tokens.erase(tokens.begin());
+    } else {
+      // the variable has a definition as well
+      EXPECT(token::TOKEN::ASSIGNMENT);
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      declaration->set_exp(std::move(exp));
+      EXPECT(token::TOKEN::SEMICOLON);
+    }
+    block_item->set_declaration(std::move(declaration));
+  } else {
+    // we have a return statement, a null statement, or an expression
+    block_item->set_type(ast::BlockItemType::STATEMENT);
+    MAKE_SHARED(ast::AST_Statement_Node, statement);
+    if (tokens[0].get_token() == token::TOKEN::RETURN) {
+      tokens.erase(tokens.begin());
+      statement->set_type(ast::StatementType::RETURN);
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      statement->set_exp(std::move(exp));
+      EXPECT(token::TOKEN::SEMICOLON);
+    } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
+      // ignore the empty statement
+      tokens.erase(tokens.begin());
+      return;
+    } else {
+      statement->set_type(ast::StatementType::EXP);
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      statement->set_exp(std::move(exp));
+      EXPECT(token::TOKEN::SEMICOLON);
+    }
+    block_item->set_statement(std::move(statement));
+  }
+  function->add_blockItem(std::move(block_item));
 }
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> factor) {
   if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
     parse_int(tokens, factor);
+  } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+    EXPECT_IDENTIFIER();
+    factor->set_identifier_node(std::move(identifier));
   } else if (tokens[0].get_token() == token::TOKEN::TILDE or
              tokens[0].get_token() == token::TOKEN::HYPHEN or
              tokens[0].get_token() == token::TOKEN::NOT) {
@@ -111,8 +155,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
-    std::shared_ptr<ast::AST_exp_Node> exp =
-        std::make_shared<ast::AST_exp_Node>();
+    MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     factor->set_exp_node(std::move(exp));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
@@ -126,25 +169,24 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
 
 void parser::parse_exp(std::vector<token::Token> &tokens,
                        std::shared_ptr<ast::AST_exp_Node> &root_exp, int prec) {
-  std::shared_ptr<ast::AST_factor_Node> factor =
-      std::make_shared<ast::AST_factor_Node>();
+  MAKE_SHARED(ast::AST_factor_Node, factor);
   parse_factor(tokens, factor);
   root_exp->set_factor_node(std::move(factor));
   while (token::is_binary_op(tokens[0].get_token()) and
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
-    std::shared_ptr<ast::AST_binop_Node> binop =
-        std::make_shared<ast::AST_binop_Node>();
+    // Handle right associative operators by reducing the new precedence by 1
+    if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT)
+      new_prec--;
+    MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
     root_exp->set_binop_node(std::move(binop));
-    std::shared_ptr<ast::AST_exp_Node> rexp =
-        std::make_shared<ast::AST_exp_Node>();
+    MAKE_SHARED(ast::AST_exp_Node, rexp);
     parse_exp(tokens, rexp, new_prec);
     root_exp->set_right(std::move(rexp));
     if (token::is_binary_op(tokens[0].get_token()) and
         token::get_binop_prec(tokens[0].get_token()) >= prec) {
-      std::shared_ptr<ast::AST_exp_Node> new_root_exp =
-          std::make_shared<ast::AST_exp_Node>();
+      MAKE_SHARED(ast::AST_exp_Node, new_root_exp);
       new_root_exp->set_left(root_exp);
       root_exp = new_root_exp;
     }
@@ -207,6 +249,9 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::GREATERTHANEQUAL) {
     binop->set_op(binop::BINOP::GREATERTHANEQUAL);
     tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT) {
+    binop->set_op(binop::BINOP::ASSIGN);
+    tokens.erase(tokens.begin());
   } else {
     success = false;
     error_messages.emplace_back("Expected binary operator but got " +
@@ -217,20 +262,17 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
                             std::shared_ptr<ast::AST_factor_Node> factor) {
   if (tokens[0].get_token() == token::TOKEN::TILDE) {
-    std::shared_ptr<ast::AST_unop_Node> unop =
-        std::make_shared<ast::AST_unop_Node>();
+    MAKE_SHARED(ast::AST_unop_Node, unop);
     unop->set_op(unop::UNOP::COMPLEMENT);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::HYPHEN) {
-    std::shared_ptr<ast::AST_unop_Node> unop =
-        std::make_shared<ast::AST_unop_Node>();
+    MAKE_SHARED(ast::AST_unop_Node, unop);
     unop->set_op(unop::UNOP::NEGATE);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::NOT) {
-    std::shared_ptr<ast::AST_unop_Node> unop =
-        std::make_shared<ast::AST_unop_Node>();
+    MAKE_SHARED(ast::AST_unop_Node, unop);
     unop->set_op(unop::UNOP::NOT);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
@@ -244,7 +286,8 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
 void parser::parse_identifier(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Function_Node> function) {
-  EXPECT_IDENTIFIER(token::TOKEN::IDENTIFIER);
+  EXPECT_IDENTIFIER();
+  function->set_identifier(std::move(identifier));
 }
 
 void parser::parse_int(std::vector<token::Token> &tokens,
@@ -260,6 +303,77 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
   }
 }
 
+void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
+  if (exp == nullptr)
+    return;
+  analyze_exp(exp->get_left());
+  // here we check that the factor of the expresssion is not an undeclared
+  // variable
+  if (exp->get_factor_node() != nullptr and
+      exp->get_factor_node()->get_identifier_node() != nullptr) {
+    std::string var_name =
+        exp->get_factor_node()->get_identifier_node()->get_value();
+    if (symbol_table.find(var_name) == symbol_table.end()) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name + " not declared");
+    } else {
+      exp->get_factor_node()->get_identifier_node()->set_identifier(
+          symbol_table[var_name]);
+    }
+  }
+  // now we check that if the exp is of type assignment, then factor is an
+  // identifier
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
+    // no factor node or factor node is a constant, not a variable
+    // Here we exploit the benefit of short circuiting power of the logical
+    // operator this means that as we proceed, we are ensured that the earlier
+    // checks must not be satisfied. Note that an identifier with unops
+    // makes it an rvalue.
+    if (exp->get_factor_node() == nullptr or
+        exp->get_factor_node()->get_identifier_node() == nullptr or
+        exp->get_factor_node()->get_unop_nodes().size() > 0) {
+      success = false;
+      error_messages.emplace_back("Expected a modifiable lvalue on the left "
+                                  "side of the assignment operator");
+    }
+  }
+  // since the factor can have its own exp as well, we recursively check that
+  if (exp->get_factor_node() != nullptr)
+    analyze_exp(exp->get_factor_node()->get_exp_node());
+  // now we recursively check the right side of the expression
+  analyze_exp(exp->get_right());
+}
+
+void parser::semantic_analysis() {
+  // variable resolution
+  for (auto funcs : program.get_functions()) {
+    for (auto blockItem : funcs->get_blockItems()) {
+      if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
+        std::string var_name =
+            blockItem->get_declaration()->get_identifier()->get_value();
+        if (symbol_table.find(var_name) != symbol_table.end()) {
+          // the symbol has been declared twice which is illegal
+          success = false;
+          error_messages.emplace_back("Variable " + var_name +
+                                      " already declared");
+        } else {
+          symbol_table[var_name] = get_temp_name(var_name);
+          blockItem->get_declaration()->get_identifier()->set_identifier(
+              symbol_table[var_name]);
+          if (blockItem->get_declaration()->get_exp() != nullptr) {
+            analyze_exp(blockItem->get_declaration()->get_exp());
+          }
+        }
+      } else if (blockItem->get_type() == ast::BlockItemType::STATEMENT) {
+        // every variable that is used in any of the statement should already
+        // have been declared.
+        analyze_exp(blockItem->get_statement()->get_exps());
+      }
+    }
+  }
+}
+
 void parser::display_errors() {
   for (auto error : error_messages) {
     std::cerr << error << std::endl;
@@ -272,6 +386,30 @@ void parser::eof_error(token::Token token) {
                               " but got end of file");
 }
 
+std::string to_string(ast::BlockItemType type) {
+  switch (type) {
+  case ast::BlockItemType::STATEMENT:
+    return "Statement";
+  case ast::BlockItemType::DECLARATION:
+    return "Declaration";
+  case ast::BlockItemType::UNKNOWN:
+    __builtin_unreachable();
+  }
+  __builtin_unreachable();
+}
+
+std::string to_string(ast::StatementType type) {
+  switch (type) {
+  case ast::StatementType::RETURN:
+    return "Return";
+  case ast::StatementType::EXP:
+    return "Exp";
+  case ast::StatementType::UNKNOWN:
+    __builtin_unreachable();
+  }
+  __builtin_unreachable();
+}
+
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!factor->get_unop_nodes().empty()) {
     std::cerr << "Unop( ";
@@ -281,9 +419,15 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
   }
   if (factor->get_exp_node() != nullptr) {
     pretty_print_exp(factor->get_exp_node());
-  } else {
+  } else if (factor->get_int_node() != nullptr) {
     std::cerr << factor->get_int_node()->get_AST_name() << "("
               << factor->get_int_node()->get_value() << ")";
+    if (!factor->get_unop_nodes().empty()) {
+      std::cerr << ")";
+    }
+  } else {
+    std::cerr << factor->get_identifier_node()->get_AST_name() << "("
+              << factor->get_identifier_node()->get_value() << ")";
     if (!factor->get_unop_nodes().empty()) {
       std::cerr << ")";
     }
@@ -296,7 +440,7 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   pretty_print_exp(exp->get_left());
   if (exp->get_binop_node() != nullptr and
       exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
-    std::cerr << "\t\t\t\tBinop("
+    std::cerr << "\t\t\t\t\tBinop("
               << binop::to_string(exp->get_binop_node()->get_op()) << " ,";
     if (exp->get_left() == nullptr) {
       pretty_print_factor(exp->get_factor_node());
@@ -306,7 +450,7 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     pretty_print_exp(exp->get_right());
     std::cerr << ")" << std::endl;
   } else {
-    std::cerr << "\t\t\t\t";
+    std::cerr << "\t\t\t\t\t";
     pretty_print_factor(exp->get_factor_node());
     std::cerr << std::endl;
   }
@@ -316,13 +460,28 @@ void parser::pretty_print() {
   std::cerr << "Program(" << std::endl;
   for (auto function : program.get_functions()) {
     std::cerr << "\tFunction(" << std::endl;
-    std::cerr << "\t\tname=\"" << function->get_identifier().get_value()
+    std::cerr << "\t\tname=\"" << function->get_identifier()->get_value()
               << "\"," << std::endl;
     std::cerr << "\t\tbody=[" << std::endl;
-    for (auto statement : function->get_statements()) {
-      std::cerr << "\t\t\t" << statement->get_type() << "(" << std::endl;
-      for (std::shared_ptr<ast::AST_exp_Node> exp : statement->get_exps()) {
-        pretty_print_exp(exp);
+    for (auto blockItem : function->get_blockItems()) {
+      std::cerr << "\t\t\t" << to_string(blockItem->get_type()) << "("
+                << std::endl;
+      if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
+        std::cerr << "\t\t\t\tidentifier=\""
+                  << blockItem->get_declaration()->get_identifier()->get_value()
+                  << "\"," << std::endl;
+        if (blockItem->get_declaration()->get_exp() != nullptr) {
+          std::cerr << "\t\t\t\texp=(" << std::endl;
+          pretty_print_exp(blockItem->get_declaration()->get_exp());
+          std::cerr << "\t\t\t\t)," << std::endl;
+        }
+      } else {
+        std::cerr << "\t\t\t\ttype="
+                  << to_string(blockItem->get_statement()->get_type()) << ","
+                  << std::endl;
+        std::cerr << "\t\t\t\texp=(" << std::endl;
+        pretty_print_exp(blockItem->get_statement()->get_exps());
+        std::cerr << "\t\t\t\t)," << std::endl;
       }
       std::cerr << "\t\t\t)," << std::endl;
     }

@@ -23,7 +23,8 @@ function(set_basic_compile_options target)
     -Wall
     -Wextra
     -Werror
-    -fno-rtti
+    -fno-strict-aliasing
+    -fwrapv
     -fpie
     -O3
   )
@@ -78,15 +79,17 @@ target_compile_options(scarlet PRIVATE -O3)
 add_custom_target(test-scarlet
     DEPENDS scarlet
     COMMAND echo "Running lexer test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 17 --stage lex
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --stage lex
     COMMAND echo "Running parser test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --stage parse
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --stage parse
+    COMMAND echo "Running semantic analysis test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --stage validate
     COMMAND echo "Running scar test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --stage tacky
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --stage tacky
     COMMAND echo "Running Codegen test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --stage codegen
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --stage codegen
     COMMAND echo "Running bitwise test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --extra-credit
     COMMAND echo "Running test asm"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5
 )

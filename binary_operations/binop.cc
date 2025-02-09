@@ -41,6 +41,8 @@ std::string to_string(BINOP binop) {
     return "LESSTHANEQUAL";
   case GREATERTHANEQUAL:
     return "GREATERTHANEQUAL";
+  case ASSIGN:
+    return "ASSIGN";
   default:
     return "UNKNOWN";
   }
