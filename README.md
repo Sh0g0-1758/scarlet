@@ -41,6 +41,8 @@ Scarlet currently supports the following architectures:
 - [x] Add support for Unary Operations (Neg, Not)
 - [x] Add support for Binary Operations (Add, Sub, Mul, Div, Rem)
 - [x] Add support for Bitwise Binary Operations (And, Or, Xor, LeftShift, RightShift)
+- [x] Add support for logical and relational operators (! && || == !=  < > <= >=)
+- [x] Add support for user defined local variables
 
 ## Contributing Guidelines
 
