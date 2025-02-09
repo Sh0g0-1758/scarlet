@@ -152,6 +152,10 @@ void Codegen::gen_scar_exp(
       scar_val_dst->set_type(scar::val_type::VAR);
       scar_val_dst->set_reg_name(
           exp->get_factor_node()->get_identifier_node()->get_value());
+      // NOTE: we update the current scar register name to use the variable
+      // since we can have expressions like:
+      // int b = a = 5;
+      reg_name = scar_val_dst->get_reg();
       scar_instruction->set_dst(std::move(scar_val_dst));
 
       scar_function->add_instruction(std::move(scar_instruction));
@@ -314,6 +318,7 @@ void Codegen::gen_scar() {
           MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
           scar_instruction->set_type(scar::instruction_type::COPY);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+          std::cout << "PREV REG NAME: " << get_prev_reg_name() << std::endl;
           SETVARCONSTANTREG(scar_val_src);
           scar_instruction->set_src_ret(scar_val_src);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -406,7 +411,13 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::COPY) {
-        std::cerr << statement->get_src_ret()->get_value();
+        if (statement->get_src_ret()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
+        } else if (statement->get_src_ret()->get_type() ==
+                   scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
+                    << ")";
+        }
         std::cerr << " ,";
         if (statement->get_dst()->get_type() == scar::val_type::VAR) {
           std::cerr << "Var(" << statement->get_dst()->get_reg() << ")";
