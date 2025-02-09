@@ -46,6 +46,7 @@ private:
   int curr_buff = 0;
   std::vector<std::vector<unop::UNOP>> unop_buffer;
   std::string constant_buffer;
+  std::string variable_buffer;
   bool success = true;
   int curr_regNum;
   std::map<std::string, std::string> pseduo_registers;
