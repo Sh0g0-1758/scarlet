@@ -338,6 +338,10 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                   "side of the assignment operator");
     }
   }
+  // since the factor can have its own exp as well, we recursively check that
+  if (exp->get_factor_node() != nullptr)
+    analyze_exp(exp->get_factor_node()->get_exp_node());
+  // now we recursively check the right side of the expression
   analyze_exp(exp->get_right());
 }
 

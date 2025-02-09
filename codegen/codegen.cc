@@ -321,7 +321,6 @@ void Codegen::gen_scar() {
           MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
           scar_instruction->set_type(scar::instruction_type::COPY);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-          std::cout << "PREV REG NAME: " << get_prev_reg_name() << std::endl;
           SETVARCONSTANTREG(scar_val_src);
           scar_instruction->set_src_ret(scar_val_src);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -419,7 +418,7 @@ void Codegen::pretty_print() {
         if (statement->get_dst()->get_type() == scar::val_type::VAR) {
           std::cerr << "Var(" << statement->get_dst()->get_reg() << ")";
         }
-        std::cerr << std::endl;
+        std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::JUMP or
                  statement->get_type() == scar::instruction_type::LABEL) {
         std::cerr << statement->get_src_ret()->get_value() << ")" << std::endl;
