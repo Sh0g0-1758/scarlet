@@ -128,6 +128,7 @@ void parser::parse_block_item(
     } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
       // ignore the empty statement
       tokens.erase(tokens.begin());
+      return;
     } else {
       statement->set_type(ast::StatementType::EXP);
       MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -399,6 +400,8 @@ std::string to_string(ast::StatementType type) {
     return "Return";
   case ast::StatementType::EXP:
     return "Exp";
+  case ast::StatementType::UNKNOWN:
+    __builtin_unreachable();
   }
   __builtin_unreachable();
 }

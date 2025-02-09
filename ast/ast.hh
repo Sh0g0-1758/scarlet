@@ -171,7 +171,7 @@ public:
 };
 
 // We don't include the empty statement (just having a semicolon) in the AST
-enum class StatementType { RETURN, EXP };
+enum class StatementType { UNKNOWN, RETURN, EXP };
 
 class AST_Statement_Node {
 private:

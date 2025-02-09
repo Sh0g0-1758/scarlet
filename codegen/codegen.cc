@@ -297,6 +297,8 @@ void Codegen::gen_scar() {
     MAKE_SHARED(scar::scar_Identifier_Node, identifier);
     identifier->set_value(it->get_identifier()->get_value());
     scar_function->set_identifier(identifier);
+    // If the function has no return statement, we add one at the end
+    bool have_return = false;
     for (auto inst : it->get_blockItems()) {
       if (inst->get_type() == ast::BlockItemType::STATEMENT) {
         if (inst->get_statement()->get_type() == ast::StatementType::RETURN) {
@@ -307,6 +309,7 @@ void Codegen::gen_scar() {
           SETVARCONSTANTREG(scar_val_ret);
           scar_instruction->set_src_ret(scar_val_ret);
           scar_function->add_instruction(scar_instruction);
+          have_return = true;
         } else if (inst->get_statement()->get_type() ==
                    ast::StatementType::EXP) {
           gen_scar_exp(inst->get_statement()->get_exps(), scar_function);
@@ -330,22 +333,16 @@ void Codegen::gen_scar() {
         }
       }
     }
+    if (scar_function->get_instructions().size() == 0 or !have_return) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+      scar_instruction->set_type(scar::instruction_type::RETURN);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
+      scar_val_ret->set_type(scar::val_type::CONSTANT);
+      scar_val_ret->set_value("0");
+      scar_instruction->set_src_ret(scar_val_ret);
+      scar_function->add_instruction(scar_instruction);
+    }
     scar_program.add_function(scar_function);
-  }
-
-  // If the last instruction is not a return statement, we add a return 0
-  if (scar_program.get_functions()
-          .back()
-          ->get_instructions()
-          .back()
-          ->get_type() != scar::instruction_type::RETURN) {
-    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-    scar_instruction->set_type(scar::instruction_type::RETURN);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
-    scar_val_ret->set_type(scar::val_type::CONSTANT);
-    scar_val_ret->set_value("0");
-    scar_instruction->set_src_ret(scar_val_ret);
-    scar_program.get_functions().back()->add_instruction(scar_instruction);
   }
 
   this->scar = scar_program;
