@@ -330,12 +330,12 @@ void Codegen::gen_scar() {
           scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
           SETVARCONSTANTREG(scar_val_src);
-          scar_instruction->set_src1(scar_val_src);
+          scar_instruction->set_src1(std::move(scar_val_src));
           MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
           scar_val_dst->set_type(scar::val_type::UNKNOWN);
           scar_val_dst->set_value(get_fr_label_name());
-          scar_instruction->set_dst(scar_val_dst);
-          scar_function->add_instruction(scar_instruction);
+          scar_instruction->set_dst(std::move(scar_val_dst));
+          scar_function->add_instruction(std::move(scar_instruction));
         } else if (inst->get_statement()->get_type() ==
                    ast::statementType::_IF_END) {
           MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
@@ -343,18 +343,18 @@ void Codegen::gen_scar() {
           MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
           scar_val_src->set_type(scar::val_type::UNKNOWN);
           scar_val_src->set_value(get_last_fr_label_name(true));
-          scar_instruction->set_src1(scar_val_src);
+          scar_instruction->set_src1(std::move(scar_val_src));
           if (if_else_count > 0) {
             MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
             scar_instruction2->set_type(scar::instruction_type::JUMP);
             MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
             scar_val_src2->set_type(scar::val_type::UNKNOWN);
             scar_val_src2->set_value(get_fr_label_name());
-            scar_instruction2->set_src1(scar_val_src2);
-            scar_function->add_instruction(scar_instruction2);
-            if_else_count++;
+            scar_instruction2->set_src1(std::move(scar_val_src2));
+            scar_function->add_instruction(std::move(scar_instruction2));
+            if_else_count--;
           }
-          scar_function->add_instruction(scar_instruction);
+          scar_function->add_instruction(std::move(scar_instruction));
         } else if (inst->get_statement()->get_type() ==
                    ast::statementType::IFELSE) {
           // <instructions for condition>
@@ -371,12 +371,12 @@ void Codegen::gen_scar() {
           scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
           SETVARCONSTANTREG(scar_val_src);
-          scar_instruction->set_src1(scar_val_src);
+          scar_instruction->set_src1(std::move(scar_val_src));
           MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
           scar_val_dst->set_type(scar::val_type::UNKNOWN);
           scar_val_dst->set_value(get_fr_label_name());
-          scar_instruction->set_dst(scar_val_dst);
-          scar_function->add_instruction(scar_instruction);
+          scar_instruction->set_dst(std::move(scar_val_dst));
+          scar_function->add_instruction(std::move(scar_instruction));
         } else if (inst->get_statement()->get_type() ==
                    ast::statementType::_IFELSE_END) {
           MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
@@ -384,8 +384,8 @@ void Codegen::gen_scar() {
           MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
           scar_val_src->set_type(scar::val_type::UNKNOWN);
           scar_val_src->set_value(get_last_fr_label_name(true));
-          scar_instruction->set_src1(scar_val_src);
-          scar_function->add_instruction(scar_instruction);
+          scar_instruction->set_src1(std::move(scar_val_src));
+          scar_function->add_instruction(std::move(scar_instruction));
         }
       } else if (inst->get_type() == ast::BlockItemType::DECLARATION) {
         // if there is no definition, we ignore it
