@@ -22,6 +22,8 @@ std::string to_string(scar::instruction_type type) {
   case scar::instruction_type::LABEL:
     return "Label";
   }
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+            << __LINE__ << std::endl;
   __builtin_unreachable();
 }
 
@@ -34,6 +36,8 @@ std::string to_string(scar::val_type type) {
   case scar::val_type::UNKNOWN:
     return "";
   }
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+            << __LINE__ << std::endl;
   __builtin_unreachable();
 }
 

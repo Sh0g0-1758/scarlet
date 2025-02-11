@@ -6,6 +6,7 @@
 
 #include "binary_operations/binop.hh"
 #include "unary_operations/unop.hh"
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

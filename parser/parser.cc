@@ -450,8 +450,12 @@ std::string to_string(ast::BlockItemType type) {
   case ast::BlockItemType::DECLARATION:
     return "Declaration";
   case ast::BlockItemType::UNKNOWN:
+    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+              << __LINE__ << std::endl;
     __builtin_unreachable();
   }
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+            << __LINE__ << std::endl;
   __builtin_unreachable();
 }
 
@@ -466,8 +470,12 @@ std::string to_string(ast::StatementType type) {
   case ast::StatementType::ELSE:
     return "Else";
   case ast::StatementType::UNKNOWN:
+    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+              << __LINE__ << std::endl;
     __builtin_unreachable();
   }
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+            << __LINE__ << std::endl;
   __builtin_unreachable();
 }
 
@@ -507,6 +515,10 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       pretty_print_factor(exp->get_factor_node());
     } else {
       std::cerr << "Earlier, ";
+    }
+    if (exp->get_middle() != nullptr) {
+      pretty_print_exp(exp->get_middle());
+      std::cerr << ", ";
     }
     pretty_print_exp(exp->get_right());
     std::cerr << ")" << std::endl;

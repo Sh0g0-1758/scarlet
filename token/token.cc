@@ -411,6 +411,8 @@ int get_binop_prec(TOKEN token) {
              token == TOKEN::PERCENT_SIGN) {
     return 60;
   }
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+            << __LINE__ << std::endl;
   __builtin_unreachable();
 }
 } // namespace token

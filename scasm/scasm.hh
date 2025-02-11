@@ -5,6 +5,7 @@
 #pragma once
 
 #include <binary_operations/binop.hh>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unary_operations/unop.hh>
