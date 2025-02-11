@@ -281,7 +281,10 @@ void Codegen::gen_scar_exp(
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
       scar_val_dst->set_type(scar::val_type::VAR);
       if (isCompound(org_binop)) {
-        scar_val_dst->set_reg_name(scar_val_src1->get_reg_name());
+        scar_val_dst->set_reg_name(
+          exp->get_factor_node()->get_identifier_node()->get_value()
+        );
+        reg_name = scar_val_dst->get_reg();
       } else {
         scar_val_dst->set_reg_name(get_reg_name());
       }
