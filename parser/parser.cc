@@ -129,27 +129,42 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
   MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
   block_item->set_type(ast::BlockItemType::STATEMENT);
   MAKE_SHARED(ast::AST_Statement_Node, statement);
+
   if (tokens[0].get_token() == token::TOKEN::RETURN) {
     tokens.erase(tokens.begin());
     statement->set_type(ast::StatementType::RETURN);
+
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     statement->set_exp(std::move(exp));
+
     EXPECT(token::TOKEN::SEMICOLON);
+
     block_item->set_statement(std::move(statement));
     function->add_blockItem(std::move(block_item));
   } else if (tokens[0].get_token() == token::TOKEN::IF) {
+    // We first check for the if (exp) statement
     tokens.erase(tokens.begin());
+
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
+
+    // exp
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     statement->set_type(ast::StatementType::IF);
     statement->set_exp(std::move(exp));
+
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+
     block_item->set_statement(std::move(statement));
     function->add_blockItem(std::move(block_item));
+
+    // statement
     parse_statement(tokens, function);
+
+    // Then we optionally check for the else statement
     if (tokens[0].get_token() == token::TOKEN::ELSE) {
+      // else is being treated as a standalone statement
       tokens.erase(tokens.begin());
       MAKE_SHARED(ast::AST_Block_Item_Node, block_item2);
       block_item2->set_type(ast::BlockItemType::STATEMENT);
@@ -157,6 +172,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
       statement2->set_type(ast::StatementType::ELSE);
       block_item2->set_statement(std::move(statement2));
       function->add_blockItem(std::move(block_item2));
+      // the statement following parse is being treated as another block item
       parse_statement(tokens, function);
     }
   } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
