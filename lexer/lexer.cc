@@ -49,16 +49,44 @@ void lexer::tokenize() {
       tokens.emplace_back(token::TOKEN::TILDE);
       col_number++;
     } else if (ch == '+') {
-      tokens.emplace_back(token::TOKEN::PLUS);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_SUM);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::curr);
+        tokens.emplace_back(token::TOKEN::PLUS);
+      }
       col_number++;
     } else if (ch == '*') {
-      tokens.emplace_back(token::TOKEN::ASTERISK);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_PRODUCT);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::curr);
+        tokens.emplace_back(token::TOKEN::ASTERISK);
+      }
       col_number++;
     } else if (ch == '/') {
-      tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_DIVISION);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::curr);
+        tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
+      }
       col_number++;
     } else if (ch == '%') {
-      tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_REMAINDER);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::curr);
+        tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
+      }
       col_number++;
     } else if (ch == '&') {
       file.get(ch);
@@ -131,7 +159,10 @@ void lexer::tokenize() {
       }
     } else if (ch == '-') {
       file.get(ch);
-      if (ch == '-') {
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_DIFFERENCE);
+        col_number += 2;
+      } else if (ch == '-') {
         tokens.emplace_back(token::TOKEN::DECREMENT_OPERATOR);
         col_number += 2;
       } else if (ch == '>') {

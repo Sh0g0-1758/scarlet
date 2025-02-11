@@ -172,7 +172,14 @@ void print_token(TOKEN token) {
   case TOKEN::DOT:
     std::cerr << ".";
     break;
-  case TOKEN::UNKNOWN:
+  case TOKEN::COMPOUND_SUM:
+    std::cerr << "+=";
+    break;
+  case TOKEN::COMPOUND_PRODUCT; std::cerr << "*="; break;
+      case TOKEN::COMPOUND_DIFFERENCE; std::cerr << "-="; break;
+      case TOKEN::COMPOUND_DIVISION; std::cerr << "/="; break;
+      case TOKEN::COMPOUND_REMAINDER; std::cerr << "%="; break;
+      case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
   }
@@ -292,7 +299,11 @@ std::string to_string(TOKEN token) {
     return "->";
   case TOKEN::DOT:
     return ".";
-  case TOKEN::UNKNOWN:
+  case TOKEN::COMPOUND_SUM:
+    return "+=";
+  case TOKEN::COMPOUND_DIFFERENCE; return "-="; case TOKEN::COMPOUND_PRODUCT;
+      return "*="; case TOKEN::COMPOUND_DIVISION; return "/=";
+      case TOKEN::COMPOUND_REMAINDER; return "%="; case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
   return "INVALID";
@@ -312,7 +323,10 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
          token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
          token == TOKEN::GREATERTHANEQUAL or token == TOKEN::ASSIGNMENT or
-         token == TOKEN::COLON or token == TOKEN::QUESTION_MARK;
+         token == TOKEN::COLON or token == TOKEN::QUESTION_MARK or
+         token == TOKEN::COMPOUND_DIFFERENCE or
+         token == TOKEN::COMPOUND_DIVISION or token == TOKEN::COMPOUND_SUM or
+         token == TOKEN::COMPOUND_PRODUCT or token == TOKEN::COMPOUND_REMAINDER;
 }
 
 std::string char_to_esc(char c) {
@@ -376,7 +390,12 @@ std::string get_token_type(TOKEN token) {
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;
-  } else if (token == TOKEN::ASSIGNMENT) {
+  } else if (token == TOKEN::ASSIGNMENT or
+             token == TOKEN::COMPOUND_DIFFERENCE or
+             token == TOKEN::COMPOUND_DIVISION or
+             token == TOKEN::COMPOUND_PRODUCT or
+             token == TOKEN::COMPOUND_REMAINDER or
+             token == TOKEN::COMPOUND_SUM) {
     return 5;
   } else if (token == TOKEN::COLON or token == TOKEN::QUESTION_MARK) {
     return 10;

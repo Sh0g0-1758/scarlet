@@ -176,7 +176,13 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
     // Handle right associative operators by reducing the new precedence by 1
-    if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT)
+    token::TOKEN temp_token = tokens[0].get_token();
+    if (temp_token == token::TOKEN::ASSIGNMENT or
+        temp_token == token::TOKEN::COMPOUND_DIFFERENCE or
+        temp_token == token::TOKEN::COMPOUND_DIVISION or
+        temp_token == token::TOKEN::COMPOUND_PRODUCT or
+        temp_token == token::TOKEN::COMPOUND_REMAINDER or
+        temp_token == token::TOKEN::COMPOUND_SUM)
       new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
@@ -323,8 +329,14 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   }
   // now we check that if the exp is of type assignment, then factor is an
   // identifier
+  binop::BINOP temp_binop = exp->get_binop_node()->get_op();
   if (exp->get_binop_node() != nullptr and
-      exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
+      (temp_binop == binop::BINOP::ASSIGN or
+       temp_binop == binop::BINOP::COMPOUND_DIFFERENCE or
+       temp_binop == binop::BINOP::COMPOUND_DIVISION or
+       temp_binop == binop::BINOP::COMPOUND_PRODUCT or
+       temp_binop == binop::BINOP::COMPOUND_REMAINDER or
+       temp_binop == binop::BINOP::COMPOUND_SUM)) {
     // no factor node or factor node is a constant, not a variable
     // Here we exploit the benefit of short circuiting power of the logical
     // operator this means that as we proceed, we are ensured that the earlier
