@@ -81,8 +81,7 @@ private:
   instruction_type type; // Return, Unary, Binary
   unop::UNOP unop;       // When the instruction is a unary instruction
   binop::BINOP binop;    // When the instruction is a binary instruction
-  std::shared_ptr<scar_Val_Node>
-      src_ret; // This can act as both the source and return value
+  std::shared_ptr<scar_Val_Node> src1;
   std::shared_ptr<scar_Val_Node> src2;
   std::shared_ptr<scar_Val_Node> dst;
 
@@ -94,9 +93,9 @@ public:
   void set_unop(unop::UNOP unop) { this->unop = unop; }
   binop::BINOP get_binop() { return binop; }
   void set_binop(binop::BINOP binop) { this->binop = binop; }
-  std::shared_ptr<scar_Val_Node> get_src_ret() { return src_ret; }
-  void set_src_ret(std::shared_ptr<scar_Val_Node> src_ret) {
-    this->src_ret = std::move(src_ret);
+  std::shared_ptr<scar_Val_Node> get_src1() { return src1; }
+  void set_src1(std::shared_ptr<scar_Val_Node> src1) {
+    this->src1 = std::move(src1);
   }
   std::shared_ptr<scar_Val_Node> get_src2() { return src2; }
   void set_src2(std::shared_ptr<scar_Val_Node> src2) {
