@@ -117,6 +117,15 @@ void parser::parse_declaration(
 
 void parser::parse_statement(std::vector<token::Token> &tokens,
                              std::shared_ptr<ast::AST_Function_Node> function) {
+  // NOTE THESE CHECKS ARE NECESSARY BECAUSE THE FUNCTION CAN BE CALLED
+  // RECURSIVELY
+  if (!success)
+    return;
+  if (tokens.empty()) {
+    eof_error(token::TOKEN::SEMICOLON);
+    return;
+  }
+  // ===============================
   MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
   block_item->set_type(ast::BlockItemType::STATEMENT);
   MAKE_SHARED(ast::AST_Statement_Node, statement);
@@ -127,6 +136,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     parse_exp(tokens, exp);
     statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::SEMICOLON);
+    block_item->set_statement(std::move(statement));
     function->add_blockItem(std::move(block_item));
   } else if (tokens[0].get_token() == token::TOKEN::IF) {
     tokens.erase(tokens.begin());
@@ -136,14 +146,19 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     statement->set_type(ast::StatementType::IF);
     statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    block_item->set_statement(std::move(statement));
     function->add_blockItem(std::move(block_item));
     parse_statement(tokens, function);
-  } else if (tokens[0].get_token() == token::TOKEN::ELSE) {
-    tokens.erase(tokens.begin());
-    statement->set_type(ast::StatementType::ELSE);
-    function->add_blockItem(std::move(block_item));
-    parse_statement(tokens, function);
-    // We expect a statement now which will be handled recursively
+    if (tokens[0].get_token() == token::TOKEN::ELSE) {
+      tokens.erase(tokens.begin());
+      MAKE_SHARED(ast::AST_Block_Item_Node, block_item2);
+      block_item2->set_type(ast::BlockItemType::STATEMENT);
+      MAKE_SHARED(ast::AST_Statement_Node, statement2);
+      statement2->set_type(ast::StatementType::ELSE);
+      block_item2->set_statement(std::move(statement2));
+      function->add_blockItem(std::move(block_item2));
+      parse_statement(tokens, function);
+    }
   } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     // ignore the empty statement
     tokens.erase(tokens.begin());
@@ -154,6 +169,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     parse_exp(tokens, exp);
     statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::SEMICOLON);
+    block_item->set_statement(std::move(statement));
     function->add_blockItem(std::move(block_item));
   }
 }
@@ -191,9 +207,9 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
   } else {
     success = false;
-    error_messages.emplace_back(
-        "Expected constant, unary operator or open parantheses but got " +
-        to_string(tokens[0].get_token()));
+    error_messages.emplace_back("Expected constant, unary operator, semicolon "
+                                "or open parantheses but got " +
+                                to_string(tokens[0].get_token()));
   }
 }
 

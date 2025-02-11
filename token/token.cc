@@ -312,7 +312,7 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
          token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
          token == TOKEN::GREATERTHANEQUAL or token == TOKEN::ASSIGNMENT or
-         token == TOKEN::COLON or token == TOKEN::QUESTION_MARK;
+         token == TOKEN::QUESTION_MARK;
 }
 
 std::string char_to_esc(char c) {
