@@ -178,17 +178,27 @@ public:
 };
 
 // We don't include the empty statement (just having a semicolon) in the AST
-enum class StatementType { UNKNOWN, RETURN, EXP, IF, ELSE };
+// instead of an else statement, we have an ifelse statement type.
+// since each if statement can either exist on its own or have an else statement
+enum class statementType {
+  UNKNOWN,
+  RETURN,
+  EXP,
+  IF,
+  IFELSE,
+  _IF_END,
+  _IFELSE_END
+};
 
 class AST_Statement_Node {
 private:
   std::shared_ptr<AST_exp_Node> exps;
-  StatementType type;
+  statementType type;
 
 public:
   std::string get_AST_name() { return "Statement"; }
-  void set_type(StatementType type) { this->type = type; }
-  StatementType get_type() { return type; }
+  void set_type(statementType type) { this->type = type; }
+  statementType get_type() { return type; }
 
   std::shared_ptr<AST_exp_Node> get_exps() { return exps; }
   void set_exp(std::shared_ptr<AST_exp_Node> exp) {

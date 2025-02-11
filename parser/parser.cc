@@ -132,7 +132,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
 
   if (tokens[0].get_token() == token::TOKEN::RETURN) {
     tokens.erase(tokens.begin());
-    statement->set_type(ast::StatementType::RETURN);
+    statement->set_type(ast::statementType::RETURN);
 
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
@@ -151,36 +151,47 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     // exp
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
-    statement->set_type(ast::StatementType::IF);
+    statement->set_type(ast::statementType::IF);
     statement->set_exp(std::move(exp));
 
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
 
-    block_item->set_statement(std::move(statement));
+    // Don't move it as we modify it later in case it has an else statement
+    block_item->set_statement(statement);
     function->add_blockItem(std::move(block_item));
 
     // statement
     parse_statement(tokens, function);
 
+    // mark the end of this if statement
+    MAKE_SHARED(ast::AST_Block_Item_Node, block_item2);
+    block_item2->set_type(ast::BlockItemType::STATEMENT);
+    MAKE_SHARED(ast::AST_Statement_Node, statement2);
+    statement2->set_type(ast::statementType::_IF_END);
+    block_item2->set_statement(std::move(statement2));
+    function->add_blockItem(std::move(block_item2));
+
     // Then we optionally check for the else statement
     if (tokens[0].get_token() == token::TOKEN::ELSE) {
-      // else is being treated as a standalone statement
       tokens.erase(tokens.begin());
-      MAKE_SHARED(ast::AST_Block_Item_Node, block_item2);
-      block_item2->set_type(ast::BlockItemType::STATEMENT);
-      MAKE_SHARED(ast::AST_Statement_Node, statement2);
-      statement2->set_type(ast::StatementType::ELSE);
-      block_item2->set_statement(std::move(statement2));
-      function->add_blockItem(std::move(block_item2));
-      // the statement following parse is being treated as another block item
+      statement->set_type(ast::statementType::IFELSE);
+      // the statement following else is being treated as another block item
       parse_statement(tokens, function);
+
+      // mark the end of this else statement
+      MAKE_SHARED(ast::AST_Block_Item_Node, block_item3);
+      block_item3->set_type(ast::BlockItemType::STATEMENT);
+      MAKE_SHARED(ast::AST_Statement_Node, statement3);
+      statement3->set_type(ast::statementType::_IFELSE_END);
+      block_item3->set_statement(std::move(statement3));
+      function->add_blockItem(std::move(block_item3));
     }
   } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     // ignore the empty statement
     tokens.erase(tokens.begin());
     return;
   } else {
-    statement->set_type(ast::StatementType::EXP);
+    statement->set_type(ast::statementType::EXP);
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     statement->set_exp(std::move(exp));
@@ -476,17 +487,21 @@ std::string to_string(ast::BlockItemType type) {
   __builtin_unreachable();
 }
 
-std::string to_string(ast::StatementType type) {
+std::string to_string(ast::statementType type) {
   switch (type) {
-  case ast::StatementType::RETURN:
+  case ast::statementType::RETURN:
     return "Return";
-  case ast::StatementType::EXP:
+  case ast::statementType::EXP:
     return "Exp";
-  case ast::StatementType::IF:
+  case ast::statementType::IF:
     return "If";
-  case ast::StatementType::ELSE:
-    return "Else";
-  case ast::StatementType::UNKNOWN:
+  case ast::statementType::IFELSE:
+    return "IfElse";
+  case ast::statementType::_IF_END:
+    return "_If_End";
+  case ast::statementType::_IFELSE_END:
+    return "_IfElse_End";
+  case ast::statementType::UNKNOWN:
     std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
               << __LINE__ << std::endl;
     __builtin_unreachable();
