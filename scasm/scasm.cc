@@ -53,9 +53,14 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
     return Binop::GREATERTHANEQUAL;
   case binop::BINOP::ASSIGN:
     return Binop::ASSIGN;
-  case binop::BINOP::UNKNOWN:
+  case binop::BINOP::COMPOUND_DIFFERENCE:
+  case binop::BINOP::COMPOUND_DIVISION:
+  case binop::BINOP::COMPOUND_PRODUCT:
+  case binop::BINOP::COMPOUND_REMAINDER:
+  case binop::BINOP::COMPOUND_SUM:
   case binop::BINOP::DIV:
   case binop::BINOP::MOD:
+  case binop::BINOP::UNKNOWN:
     __builtin_unreachable();
   }
   __builtin_unreachable();

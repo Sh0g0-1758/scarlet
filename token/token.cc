@@ -175,11 +175,19 @@ void print_token(TOKEN token) {
   case TOKEN::COMPOUND_SUM:
     std::cerr << "+=";
     break;
-  case TOKEN::COMPOUND_PRODUCT; std::cerr << "*="; break;
-      case TOKEN::COMPOUND_DIFFERENCE; std::cerr << "-="; break;
-      case TOKEN::COMPOUND_DIVISION; std::cerr << "/="; break;
-      case TOKEN::COMPOUND_REMAINDER; std::cerr << "%="; break;
-      case TOKEN::UNKNOWN:
+  case TOKEN::COMPOUND_PRODUCT:
+    std::cerr << "*=";
+    break;
+  case TOKEN::COMPOUND_DIFFERENCE:
+    std::cerr << "-=";
+    break;
+  case TOKEN::COMPOUND_DIVISION:
+    std::cerr << "/=";
+    break;
+  case TOKEN::COMPOUND_REMAINDER:
+    std::cerr << "%=";
+    break;
+  case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
   }
@@ -301,9 +309,15 @@ std::string to_string(TOKEN token) {
     return ".";
   case TOKEN::COMPOUND_SUM:
     return "+=";
-  case TOKEN::COMPOUND_DIFFERENCE; return "-="; case TOKEN::COMPOUND_PRODUCT;
-      return "*="; case TOKEN::COMPOUND_DIVISION; return "/=";
-      case TOKEN::COMPOUND_REMAINDER; return "%="; case TOKEN::UNKNOWN:
+  case TOKEN::COMPOUND_DIFFERENCE:
+    return "-=";
+  case TOKEN::COMPOUND_PRODUCT:
+    return "*=";
+  case TOKEN::COMPOUND_DIVISION:
+    return "/=";
+  case TOKEN::COMPOUND_REMAINDER:
+    return "%=";
+  case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
   return "INVALID";

@@ -54,7 +54,7 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::COMPOUND_SUM);
         col_number++;
       } else {
-        file.seekg(-1, std::ios::curr);
+        file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::PLUS);
       }
       col_number++;
@@ -64,7 +64,7 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::COMPOUND_PRODUCT);
         col_number++;
       } else {
-        file.seekg(-1, std::ios::curr);
+        file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::ASTERISK);
       }
       col_number++;
@@ -74,7 +74,7 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::COMPOUND_DIVISION);
         col_number++;
       } else {
-        file.seekg(-1, std::ios::curr);
+        file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
       }
       col_number++;
@@ -84,7 +84,7 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::COMPOUND_REMAINDER);
         col_number++;
       } else {
-        file.seekg(-1, std::ios::curr);
+        file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
       }
       col_number++;

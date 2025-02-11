@@ -110,6 +110,22 @@ public:
     res_label_stack.pop();
     return tmp;
   }
+  std::map<binop::BINOP, binop::BINOP> compound_to_base = {
+      {binop::BINOP::COMPOUND_DIFFERENCE, binop::BINOP::SUB},
+      {binop::BINOP::COMPOUND_DIVISION, binop::BINOP::DIV},
+      {binop::BINOP::COMPOUND_PRODUCT, binop::BINOP::MUL},
+      {binop::BINOP::COMPOUND_REMAINDER, binop::BINOP::MOD},
+      {binop::BINOP::COMPOUND_SUM, binop::BINOP::ADD}};
+  bool isCompound(binop::BINOP bin_op) {
+    if (bin_op == binop::BINOP::COMPOUND_DIFFERENCE or
+        bin_op == binop::BINOP::COMPOUND_DIVISION or
+        bin_op == binop::BINOP::COMPOUND_PRODUCT or
+        bin_op == binop::BINOP::COMPOUND_REMAINDER or
+        bin_op == binop::BINOP::COMPOUND_SUM) {
+      return true;
+    }
+    return false;
+  }
 };
 
 } // namespace codegen

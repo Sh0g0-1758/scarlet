@@ -74,6 +74,7 @@ public:
   void set_reg_name(std::string identifier) {
     this->reg_name = std::move(identifier);
   }
+  std::string get_reg_name() { return this->reg_name; }
 };
 
 class scar_Instruction_Node {
