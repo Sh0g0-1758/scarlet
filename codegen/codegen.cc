@@ -54,11 +54,11 @@ void Codegen::gen_scar_factor(
           scar_val_src->set_type(scar::val_type::VAR);
           scar_val_src->set_reg_name(get_prev_reg_name());
         }
-        scar_instruction->set_src_ret(scar_val_src);
+        scar_instruction->set_src1(scar_val_src);
       } else {
         scar_val_src->set_type(scar::val_type::VAR);
         scar_val_src->set_reg_name(get_prev_reg_name());
-        scar_instruction->set_src_ret(scar_val_src);
+        scar_instruction->set_src1(scar_val_src);
       }
 
       // deal with the destination
@@ -120,7 +120,7 @@ void Codegen::gen_scar_factor(
     scar_val_src##num->set_reg_name(get_prev_reg_name());                      \
   }                                                                            \
                                                                                \
-  scar_instruction##num->set_src_ret(std::move(scar_val_src##num));            \
+  scar_instruction##num->set_src1(std::move(scar_val_src##num));               \
   scar_val_dst##num->set_type(scar::val_type::UNKNOWN);
 
 void Codegen::gen_scar_exp(
@@ -147,7 +147,7 @@ void Codegen::gen_scar_exp(
       // is an expression
       gen_scar_exp(exp->get_right(), scar_function);
       SETVARCONSTANTREG(scar_val_src);
-      scar_instruction->set_src_ret(std::move(scar_val_src));
+      scar_instruction->set_src1(std::move(scar_val_src));
 
       scar_val_dst->set_type(scar::val_type::VAR);
       scar_val_dst->set_reg_name(
@@ -186,7 +186,7 @@ void Codegen::gen_scar_exp(
       scar_val_src1->set_reg_name(get_prev_reg_name());
     }
 
-    scar_instruction->set_src_ret(std::move(scar_val_src1));
+    scar_instruction->set_src1(std::move(scar_val_src1));
 
     if (short_circuit) {
       // create a label to jump to
@@ -207,7 +207,7 @@ void Codegen::gen_scar_exp(
       } else {
         scar_instruction2->set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);
       }
-      scar_instruction2->set_src_ret(std::move(scar_val_src2));
+      scar_instruction2->set_src1(std::move(scar_val_src2));
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
       scar_val_dst2->set_type(scar::val_type::UNKNOWN);
       scar_val_dst2->set_value(get_last_fr_label_name());
@@ -227,7 +227,7 @@ void Codegen::gen_scar_exp(
       }
       scar_val_dst3->set_type(scar::val_type::VAR);
       scar_val_dst3->set_reg_name(get_reg_name());
-      scar_instruction3->set_src_ret(std::move(scar_val_src3));
+      scar_instruction3->set_src1(std::move(scar_val_src3));
       scar_instruction3->set_dst(std::move(scar_val_dst3));
       scar_function->add_instruction(std::move(scar_instruction3));
 
@@ -237,7 +237,7 @@ void Codegen::gen_scar_exp(
       scar_instruction4->set_type(scar::instruction_type::JUMP);
       scar_val_src4->set_type(scar::val_type::UNKNOWN);
       scar_val_src4->set_value(get_res_label_name());
-      scar_instruction4->set_src_ret(std::move(scar_val_src4));
+      scar_instruction4->set_src1(std::move(scar_val_src4));
       scar_function->add_instruction(std::move(scar_instruction4));
 
       // Now generate the intermediate label
@@ -246,7 +246,7 @@ void Codegen::gen_scar_exp(
       scar_instruction5->set_type(scar::instruction_type::LABEL);
       scar_val_src5->set_type(scar::val_type::UNKNOWN);
       scar_val_src5->set_value(get_last_fr_label_name(true));
-      scar_instruction5->set_src_ret(std::move(scar_val_src5));
+      scar_instruction5->set_src1(std::move(scar_val_src5));
       scar_function->add_instruction(std::move(scar_instruction5));
 
       // now copy 0(LAND) / 1(LOR) into a scar register
@@ -262,7 +262,7 @@ void Codegen::gen_scar_exp(
       }
       scar_val_dst6->set_type(scar::val_type::VAR);
       scar_val_dst6->set_reg_name(get_prev_reg_name());
-      scar_instruction6->set_src_ret(std::move(scar_val_src6));
+      scar_instruction6->set_src1(std::move(scar_val_src6));
       scar_instruction6->set_dst(std::move(scar_val_dst6));
       scar_function->add_instruction(std::move(scar_instruction6));
 
@@ -272,7 +272,7 @@ void Codegen::gen_scar_exp(
       scar_instruction7->set_type(scar::instruction_type::LABEL);
       scar_val_src7->set_type(scar::val_type::UNKNOWN);
       scar_val_src7->set_value(get_last_res_label_name());
-      scar_instruction7->set_src_ret(std::move(scar_val_src7));
+      scar_instruction7->set_src1(std::move(scar_val_src7));
       scar_function->add_instruction(std::move(scar_instruction7));
     } else {
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -307,7 +307,7 @@ void Codegen::gen_scar() {
           scar_instruction->set_type(scar::instruction_type::RETURN);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
           SETVARCONSTANTREG(scar_val_ret);
-          scar_instruction->set_src_ret(scar_val_ret);
+          scar_instruction->set_src1(scar_val_ret);
           scar_function->add_instruction(scar_instruction);
           have_return = true;
         } else if (inst->get_statement()->get_type() ==
@@ -322,7 +322,7 @@ void Codegen::gen_scar() {
           scar_instruction->set_type(scar::instruction_type::COPY);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
           SETVARCONSTANTREG(scar_val_src);
-          scar_instruction->set_src_ret(scar_val_src);
+          scar_instruction->set_src1(scar_val_src);
           MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
           scar_val_dst->set_type(scar::val_type::VAR);
           scar_val_dst->set_reg_name(
@@ -338,7 +338,7 @@ void Codegen::gen_scar() {
       MAKE_SHARED(scar::scar_Val_Node, scar_val_ret);
       scar_val_ret->set_type(scar::val_type::CONSTANT);
       scar_val_ret->set_value("0");
-      scar_instruction->set_src_ret(scar_val_ret);
+      scar_instruction->set_src1(scar_val_ret);
       scar_function->add_instruction(scar_instruction);
     }
     scar_program.add_function(scar_function);
@@ -357,22 +357,18 @@ void Codegen::pretty_print() {
     for (auto statement : function->get_instructions()) {
       std::cerr << "\t\t\t" << to_string(statement->get_type()) << "(";
       if (statement->get_type() == scar::instruction_type::RETURN) {
-        if (statement->get_src_ret()->get_type() == scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
-                    << ")";
-        } else if (statement->get_src_ret()->get_type() ==
-                   scar::val_type::VAR) {
-          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
+        if (statement->get_src1()->get_type() == scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_src1()->get_value() << ")";
+        } else if (statement->get_src1()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src1()->get_reg() << ")";
         }
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::UNARY) {
         std::cerr << unop::to_string(statement->get_unop()) << ", ";
-        if (statement->get_src_ret()->get_type() == scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
-                    << ")";
-        } else if (statement->get_src_ret()->get_type() ==
-                   scar::val_type::VAR) {
-          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
+        if (statement->get_src1()->get_type() == scar::val_type::CONSTANT) {
+          std::cerr << "Constant(" << statement->get_src1()->get_value() << ")";
+        } else if (statement->get_src1()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src1()->get_reg() << ")";
         }
         std::cerr << ", ";
         if (statement->get_dst()->get_type() == scar::val_type::VAR) {
@@ -384,12 +380,11 @@ void Codegen::pretty_print() {
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::BINARY) {
         std::cerr << binop::to_string(statement->get_binop()) << ", ";
-        if (statement->get_src_ret()->get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
-        } else if (statement->get_src_ret()->get_type() ==
+        if (statement->get_src1()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src1()->get_reg() << ")";
+        } else if (statement->get_src1()->get_type() ==
                    scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
-                    << ")";
+          std::cerr << "Constant(" << statement->get_src1()->get_value() << ")";
         }
         std::cerr << ", ";
         if (statement->get_src2()->get_type() == scar::val_type::VAR) {
@@ -407,12 +402,11 @@ void Codegen::pretty_print() {
         }
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::COPY) {
-        if (statement->get_src_ret()->get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
-        } else if (statement->get_src_ret()->get_type() ==
+        if (statement->get_src1()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src1()->get_reg() << ")";
+        } else if (statement->get_src1()->get_type() ==
                    scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
-                    << ")";
+          std::cerr << "Constant(" << statement->get_src1()->get_value() << ")";
         }
         std::cerr << " ,";
         if (statement->get_dst()->get_type() == scar::val_type::VAR) {
@@ -421,17 +415,16 @@ void Codegen::pretty_print() {
         std::cerr << ")" << std::endl;
       } else if (statement->get_type() == scar::instruction_type::JUMP or
                  statement->get_type() == scar::instruction_type::LABEL) {
-        std::cerr << statement->get_src_ret()->get_value() << ")" << std::endl;
+        std::cerr << statement->get_src1()->get_value() << ")" << std::endl;
       } else if (statement->get_type() ==
                      scar::instruction_type::JUMP_IF_ZERO or
                  statement->get_type() ==
                      scar::instruction_type::JUMP_IF_NOT_ZERO) {
-        if (statement->get_src_ret()->get_type() == scar::val_type::VAR) {
-          std::cerr << "Var(" << statement->get_src_ret()->get_reg() << ")";
-        } else if (statement->get_src_ret()->get_type() ==
+        if (statement->get_src1()->get_type() == scar::val_type::VAR) {
+          std::cerr << "Var(" << statement->get_src1()->get_reg() << ")";
+        } else if (statement->get_src1()->get_type() ==
                    scar::val_type::CONSTANT) {
-          std::cerr << "Constant(" << statement->get_src_ret()->get_value()
-                    << ")";
+          std::cerr << "Constant(" << statement->get_src1()->get_value() << ")";
         }
         std::cerr << ", ";
         std::cerr << statement->get_dst()->get_value() << ")" << std::endl;
@@ -444,14 +437,14 @@ void Codegen::pretty_print() {
 }
 
 #define SET_MOV_SOURCE()                                                       \
-  switch (inst->get_src_ret()->get_type()) {                                   \
+  switch (inst->get_src1()->get_type()) {                                      \
   case scar::val_type::VAR:                                                    \
     scasm_src->set_type(scasm::operand_type::PSEUDO);                          \
-    scasm_src->set_identifier_stack(inst->get_src_ret()->get_reg());           \
+    scasm_src->set_identifier_stack(inst->get_src1()->get_reg());              \
     break;                                                                     \
   case scar::val_type::CONSTANT:                                               \
     scasm_src->set_type(scasm::operand_type::IMM);                             \
-    scasm_src->set_imm(stoi(inst->get_src_ret()->get_value()));                \
+    scasm_src->set_imm(stoi(inst->get_src1()->get_value()));                   \
     break;                                                                     \
   default:                                                                     \
     break;                                                                     \
@@ -502,14 +495,14 @@ void Codegen::gen_scasm() {
           scasm_src->set_imm(0);
           scasm_inst->set_src(std::move(scasm_src));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-          switch (inst->get_src_ret()->get_type()) {
+          switch (inst->get_src1()->get_type()) {
           case scar::val_type::VAR:
             scasm_dst->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
+            scasm_dst->set_identifier_stack(inst->get_src1()->get_reg());
             break;
           case scar::val_type::CONSTANT:
             scasm_dst->set_type(scasm::operand_type::IMM);
-            scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
+            scasm_dst->set_imm(stoi(inst->get_src1()->get_value()));
             break;
           default:
             break;
@@ -595,14 +588,14 @@ void Codegen::gen_scasm() {
           }
           scasm_inst->set_src(std::move(scasm_src));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-          switch (inst->get_src_ret()->get_type()) {
+          switch (inst->get_src1()->get_type()) {
           case scar::val_type::VAR:
             scasm_dst->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
+            scasm_dst->set_identifier_stack(inst->get_src1()->get_reg());
             break;
           case scar::val_type::CONSTANT:
             scasm_dst->set_type(scasm::operand_type::IMM);
-            scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
+            scasm_dst->set_imm(stoi(inst->get_src1()->get_value()));
             break;
           default:
             break;
@@ -803,7 +796,7 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::LABEL);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::LABEL);
-        scasm_src->set_identifier_stack(inst->get_src_ret()->get_value());
+        scasm_src->set_identifier_stack(inst->get_src1()->get_value());
         scasm_inst->set_src(std::move(scasm_src));
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::JUMP) {
@@ -811,7 +804,7 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::JMP);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::LABEL);
-        scasm_src->set_identifier_stack(inst->get_src_ret()->get_value());
+        scasm_src->set_identifier_stack(inst->get_src1()->get_value());
         scasm_inst->set_src(std::move(scasm_src));
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO or
@@ -825,14 +818,14 @@ void Codegen::gen_scasm() {
         scasm_src->set_imm(0);
         scasm_inst->set_src(std::move(scasm_src));
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        switch (inst->get_src_ret()->get_type()) {
+        switch (inst->get_src1()->get_type()) {
         case scar::val_type::VAR:
           scasm_dst->set_type(scasm::operand_type::PSEUDO);
-          scasm_dst->set_identifier_stack(inst->get_src_ret()->get_reg());
+          scasm_dst->set_identifier_stack(inst->get_src1()->get_reg());
           break;
         case scar::val_type::CONSTANT:
           scasm_dst->set_type(scasm::operand_type::IMM);
-          scasm_dst->set_imm(stoi(inst->get_src_ret()->get_value()));
+          scasm_dst->set_imm(stoi(inst->get_src1()->get_value()));
           break;
         default:
           break;
