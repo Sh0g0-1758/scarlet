@@ -17,8 +17,8 @@ Grammar:
 <function> ::= "int" <identifier> "(" "void" ")" "{" { <block_item> } "}"
 <block_item> ::= <statement> | <declaration>
 <declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";"
-<exp> ::= <factor> | <exp> <binop> <exp>
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
+<exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-" | "!"
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
@@ -145,6 +145,8 @@ private:
   std::shared_ptr<AST_factor_Node> factor;
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
+  // NOTE : This is only used for the ternary operator
+  std::shared_ptr<AST_exp_Node> middle;
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -168,10 +170,15 @@ public:
   void set_left(std::shared_ptr<AST_exp_Node> left) {
     this->left = std::move(left);
   }
+
+  std::shared_ptr<AST_exp_Node> get_middle() { return middle; }
+  void set_middle(std::shared_ptr<AST_exp_Node> middle) {
+    this->middle = std::move(middle);
+  }
 };
 
 // We don't include the empty statement (just having a semicolon) in the AST
-enum class StatementType { UNKNOWN, RETURN, EXP };
+enum class StatementType { UNKNOWN, RETURN, EXP, IF, ELSE };
 
 class AST_Statement_Node {
 private:

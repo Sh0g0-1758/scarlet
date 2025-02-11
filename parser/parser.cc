@@ -91,54 +91,84 @@ parser::parse_function(std::vector<token::Token> &tokens) {
   return function;
 }
 
+void parser::parse_declaration(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_Function_Node> function) {
+  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
+  block_item->set_type(ast::BlockItemType::DECLARATION);
+  MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+  EXPECT(token::TOKEN::INT);
+  EXPECT_IDENTIFIER();
+  declaration->set_identifier(std::move(identifier));
+  if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
+    // the variable just have a declaration
+    tokens.erase(tokens.begin());
+  } else {
+    // the variable has a definition as well
+    EXPECT(token::TOKEN::ASSIGNMENT);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    declaration->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::SEMICOLON);
+  }
+  block_item->set_declaration(std::move(declaration));
+  function->add_blockItem(std::move(block_item));
+}
+
+void parser::parse_statement(std::vector<token::Token> &tokens,
+                             std::shared_ptr<ast::AST_Function_Node> function) {
+  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
+  block_item->set_type(ast::BlockItemType::STATEMENT);
+  MAKE_SHARED(ast::AST_Statement_Node, statement);
+  if (tokens[0].get_token() == token::TOKEN::RETURN) {
+    tokens.erase(tokens.begin());
+    statement->set_type(ast::StatementType::RETURN);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::SEMICOLON);
+    function->add_blockItem(std::move(block_item));
+  } else if (tokens[0].get_token() == token::TOKEN::IF) {
+    tokens.erase(tokens.begin());
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    statement->set_type(ast::StatementType::IF);
+    statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    function->add_blockItem(std::move(block_item));
+    parse_statement(tokens, function);
+  } else if (tokens[0].get_token() == token::TOKEN::ELSE) {
+    tokens.erase(tokens.begin());
+    statement->set_type(ast::StatementType::ELSE);
+    function->add_blockItem(std::move(block_item));
+    parse_statement(tokens, function);
+    // We expect a statement now which will be handled recursively
+  } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
+    // ignore the empty statement
+    tokens.erase(tokens.begin());
+    return;
+  } else {
+    statement->set_type(ast::StatementType::EXP);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::SEMICOLON);
+    function->add_blockItem(std::move(block_item));
+  }
+}
+
 void parser::parse_block_item(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Function_Node> function) {
   // We have a variable declaration / defintion
-  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
   if (tokens[0].get_token() == token::TOKEN::INT) {
-    block_item->set_type(ast::BlockItemType::DECLARATION);
-    MAKE_SHARED(ast::AST_Declaration_Node, declaration);
-    EXPECT(token::TOKEN::INT);
-    EXPECT_IDENTIFIER();
-    declaration->set_identifier(std::move(identifier));
-    if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
-      // the variable just have a declaration
-      tokens.erase(tokens.begin());
-    } else {
-      // the variable has a definition as well
-      EXPECT(token::TOKEN::ASSIGNMENT);
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      declaration->set_exp(std::move(exp));
-      EXPECT(token::TOKEN::SEMICOLON);
-    }
-    block_item->set_declaration(std::move(declaration));
+    parse_declaration(tokens, function);
   } else {
-    // we have a return statement, a null statement, or an expression
-    block_item->set_type(ast::BlockItemType::STATEMENT);
-    MAKE_SHARED(ast::AST_Statement_Node, statement);
-    if (tokens[0].get_token() == token::TOKEN::RETURN) {
-      tokens.erase(tokens.begin());
-      statement->set_type(ast::StatementType::RETURN);
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      statement->set_exp(std::move(exp));
-      EXPECT(token::TOKEN::SEMICOLON);
-    } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
-      // ignore the empty statement
-      tokens.erase(tokens.begin());
-      return;
-    } else {
-      statement->set_type(ast::StatementType::EXP);
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      statement->set_exp(std::move(exp));
-      EXPECT(token::TOKEN::SEMICOLON);
-    }
-    block_item->set_statement(std::move(statement));
+    // we have a return statement, an expression, an if-else block or a null
+    // statement
+    parse_statement(tokens, function);
   }
-  function->add_blockItem(std::move(block_item));
 }
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
@@ -176,10 +206,18 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
     // Handle right associative operators by reducing the new precedence by 1
-    if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT)
+    if (is_right_associative(tokens[0].get_token()))
       new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
+    // Handle ternary operator
+    if (binop->get_op() == binop::BINOP::TERNARY) {
+      MAKE_SHARED(ast::AST_exp_Node, middle_exp);
+      // reset the precedence
+      parse_exp(tokens, middle_exp, 0);
+      root_exp->set_middle(std::move(middle_exp));
+      EXPECT(token::TOKEN::COLON);
+    }
     root_exp->set_binop_node(std::move(binop));
     MAKE_SHARED(ast::AST_exp_Node, rexp);
     parse_exp(tokens, rexp, new_prec);
@@ -251,6 +289,9 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT) {
     binop->set_op(binop::BINOP::ASSIGN);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::QUESTION_MARK) {
+    binop->set_op(binop::BINOP::TERNARY);
     tokens.erase(tokens.begin());
   } else {
     success = false;
@@ -404,6 +445,10 @@ std::string to_string(ast::StatementType type) {
     return "Return";
   case ast::StatementType::EXP:
     return "Exp";
+  case ast::StatementType::IF:
+    return "If";
+  case ast::StatementType::ELSE:
+    return "Else";
   case ast::StatementType::UNKNOWN:
     __builtin_unreachable();
   }

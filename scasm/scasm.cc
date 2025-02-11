@@ -54,6 +54,7 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::ASSIGN:
     return Binop::ASSIGN;
   case binop::BINOP::UNKNOWN:
+  case binop::BINOP::TERNARY:
   case binop::BINOP::DIV:
   case binop::BINOP::MOD:
     __builtin_unreachable();
