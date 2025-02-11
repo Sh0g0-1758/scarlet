@@ -43,6 +43,8 @@ std::string to_string(BINOP binop) {
     return "GREATERTHANEQUAL";
   case ASSIGN:
     return "ASSIGN";
+  case TERNARY:
+    return "TERNARY";
   default:
     return "UNKNOWN";
   }
