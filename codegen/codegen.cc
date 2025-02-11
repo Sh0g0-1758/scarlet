@@ -357,6 +357,14 @@ void Codegen::gen_scar() {
           scar_function->add_instruction(scar_instruction);
         } else if (inst->get_statement()->get_type() ==
                    ast::statementType::IFELSE) {
+          // <instructions for condition>
+          // c = <result of condition>
+          // JumpIfZero(c, else_label)
+          // <instructions for statement1>
+          // Jump(end)
+          // Label(else_label)
+          // <instructions for statement2>
+          // Label(end)
           if_else_count++;
           gen_scar_exp(inst->get_statement()->get_exps(), scar_function);
           MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
