@@ -34,9 +34,7 @@ Scarlet currently supports the following architectures:
 - [x] Implement a compiler driver with a custom lexer, parser, assembly generation pass, and code emission pass. (Note: We rely on GCC implementations for linking and preprocessing at this stage.)
 - [x] Integrate Boost Program Options to replace manual handling of `argc` and `argv` functions.
 - [x] (Lexer.cc) Find an alternative to erasing the `file_contents` text repeatedly.
-- [x] (Lexer.cc) Refactor to read characters directly from the file stream.
-- [x] (Parser.cc) Refactor `unop set_op` (Line:125) to use enums.
-- [x] Generate a `.txt` file for the Scarlet output. {Not needed as it will incur a lot of overhead and serves no purpose}
+- [x] (Parser.cc) Refactor every string to use enums.
 - [x] Create a static library for the lexer, parser, and code generation components.
 - [x] Add support for Unary Operations (Neg, Not)
 - [x] Add support for Binary Operations (Add, Sub, Mul, Div, Rem)
