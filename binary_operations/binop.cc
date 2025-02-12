@@ -43,12 +43,16 @@ std::string to_string(BINOP binop) {
     return "GREATERTHANEQUAL";
   case ASSIGN:
     return "ASSIGN";
+  case TERNARY:
+    return "TERNARY";
   default:
     return "UNKNOWN";
   }
 }
 
-bool short_circuit(BINOP binop) { return binop == LAND or binop == LOR; }
+bool short_circuit(BINOP binop) {
+  return binop == LAND or binop == LOR or binop == TERNARY;
+}
 
 bool is_relational(BINOP binop) {
   return binop == EQUAL or binop == NOTEQUAL or binop == LESSTHAN or

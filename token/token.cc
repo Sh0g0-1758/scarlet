@@ -312,7 +312,7 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
          token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
          token == TOKEN::GREATERTHANEQUAL or token == TOKEN::ASSIGNMENT or
-         token == TOKEN::COLON or token == TOKEN::QUESTION_MARK;
+         token == TOKEN::QUESTION_MARK;
 }
 
 std::string char_to_esc(char c) {
@@ -373,12 +373,19 @@ std::string get_token_type(TOKEN token) {
   return "UNKNOWN";
 }
 
+bool is_right_associative(TOKEN token) {
+  return token == TOKEN::ASSIGNMENT or token == TOKEN::QUESTION_MARK;
+}
+
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;
   } else if (token == TOKEN::ASSIGNMENT) {
     return 5;
-  } else if (token == TOKEN::COLON or token == TOKEN::QUESTION_MARK) {
+  } else if (token == TOKEN::QUESTION_MARK) {
+    // Ternary operator
+    // only precendence of ? is required
+    // precedence of : is not required
     return 10;
   } else if (token == TOKEN::LOR) {
     return 15;
@@ -404,6 +411,8 @@ int get_binop_prec(TOKEN token) {
              token == TOKEN::PERCENT_SIGN) {
     return 60;
   }
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
+            << __LINE__ << std::endl;
   __builtin_unreachable();
 }
 } // namespace token
