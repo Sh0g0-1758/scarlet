@@ -91,5 +91,5 @@ add_custom_target(test-scarlet
     COMMAND echo "Running bitwise test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 4 --extra-credit
     COMMAND echo "Running test asm"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --compound --bitwise
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 
 )

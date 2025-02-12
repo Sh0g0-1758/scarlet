@@ -53,6 +53,9 @@ void lexer::tokenize() {
       if (ch == '=') {
         tokens.emplace_back(token::TOKEN::COMPOUND_SUM);
         col_number++;
+      } else if (ch == '+') {
+        tokens.emplace_back(token::TOKEN::INCREMENT_OPERATOR);
+        col_number++;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::PLUS);

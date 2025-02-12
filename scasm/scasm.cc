@@ -12,6 +12,8 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   case unop::UNOP::NOT:
     return Unop::LNOT;
   case unop::UNOP::UNKNOWN:
+  case unop::UNOP::INCREMENT:
+  case unop::UNOP::DECREMENT:
     __builtin_unreachable();
   }
   __builtin_unreachable();

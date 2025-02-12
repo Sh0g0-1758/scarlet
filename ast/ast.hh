@@ -19,7 +19,8 @@ Grammar:
 <declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
 <statement> ::= "return" <exp> ";" | <exp> ";" | ";"
 <exp> ::= <factor> | <exp> <binop> <exp>
-<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
+<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")" | <restricted_factor> <post_op>
+<restricted_factor> ::= <identifier> | "(" <identifier> ")"
 <unop> ::= "~" | "-" | "!"
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 <identifier> ::= ? An identifier
@@ -85,11 +86,15 @@ private:
   // factor b then factor b can never point to exp a. It can only point to
   // another object of exp, say c. exp -> factor -> exp
   //  a  ->    b   ->  c
+  std::shared_ptr<AST_unop_Node> post_op;
   std::shared_ptr<AST_exp_Node> exp_node;
 
 public:
   std::string get_AST_name() { return "Factor"; }
-
+  std::shared_ptr<AST_unop_Node> get_post_op() { return this->post_op; }
+  void set_post_op(std::shared_ptr<AST_unop_Node> post_op) {
+    this->post_op = std::move(post_op);
+  }
   std::shared_ptr<AST_int_Node> get_int_node() { return int_node; }
   void set_int_node(std::shared_ptr<AST_int_Node> int_node) {
     this->int_node = std::move(int_node);
@@ -104,6 +109,7 @@ public:
   std::vector<std::shared_ptr<AST_unop_Node>> get_unop_nodes() {
     return unop_nodes;
   }
+
   void set_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
     unop_nodes.emplace_back(std::move(unop_node));
   }

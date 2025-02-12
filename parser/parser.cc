@@ -151,7 +151,9 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     factor->set_identifier_node(std::move(identifier));
   } else if (tokens[0].get_token() == token::TOKEN::TILDE or
              tokens[0].get_token() == token::TOKEN::HYPHEN or
-             tokens[0].get_token() == token::TOKEN::NOT) {
+             tokens[0].get_token() == token::TOKEN::NOT or
+             tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR or
+             tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
@@ -318,6 +320,16 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
     unop->set_op(unop::UNOP::NOT);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR) {
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    unop->set_op(unop::UNOP::INCREMENT);
+    factor->set_unop_node(std::move(unop));
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    unop->set_op(unop::UNOP::DECREMENT);
+    factor->set_unop_node(std::move(unop));
+    tokens.erase(tokens.begin());
   } else {
     success = false;
     error_messages.emplace_back("Expected unary operator but got " +
@@ -351,16 +363,29 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   analyze_exp(exp->get_left());
   // here we check that the factor of the expresssion is not an undeclared
   // variable
-  if (exp->get_factor_node() != nullptr and
-      exp->get_factor_node()->get_identifier_node() != nullptr) {
-    std::string var_name =
-        exp->get_factor_node()->get_identifier_node()->get_value();
-    if (symbol_table.find(var_name) == symbol_table.end()) {
-      success = false;
-      error_messages.emplace_back("Variable " + var_name + " not declared");
-    } else {
-      exp->get_factor_node()->get_identifier_node()->set_identifier(
-          symbol_table[var_name]);
+  if (exp->get_factor_node() != nullptr) {
+
+    if (exp->get_factor_node()->get_int_node() != nullptr) {
+      for (auto unops : exp->get_factor_node()->get_unop_nodes()) {
+        if (unops->get_op() == unop::UNOP::INCREMENT or
+            unops->get_op() == unop::UNOP::DECREMENT) {
+          success = false;
+          error_messages.emplace_back(
+              "Expected a modifiable lvalue on the right "
+              "side of the prefix operator");
+        }
+      }
+    }
+    if (exp->get_factor_node()->get_identifier_node() != nullptr) {
+      std::string var_name =
+          exp->get_factor_node()->get_identifier_node()->get_value();
+      if (symbol_table.find(var_name) == symbol_table.end()) {
+        success = false;
+        error_messages.emplace_back("Variable " + var_name + " not declared");
+      } else {
+        exp->get_factor_node()->get_identifier_node()->set_identifier(
+            symbol_table[var_name]);
+      }
     }
   }
   // now we check that if the exp is of type assignment, then factor is an
