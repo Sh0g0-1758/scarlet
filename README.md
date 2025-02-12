@@ -43,6 +43,20 @@ Scarlet currently supports the following architectures:
 - [x] Add support for Bitwise Binary Operations (And, Or, Xor, LeftShift, RightShift)
 - [x] Add support for logical and relational operators (! && || == !=  < > <= >=)
 - [x] Add support for user defined local variables
+- [x] Add support for if-else construct
+- [x] Add support for ternary operator
+- [ ] Add support for compound statements
+- [ ] Add support for Loops
+- [ ] Add support for Functions
+- [ ] Add support for static keyword and global scope
+- [ ] Add support for Long Integers
+- [ ] Add support for Unsigned Integers
+- [ ] Add support for Floating-Point Numbers
+- [ ] Add support for Pointers
+- [ ] Add support for Arrays
+- [ ] Add support for characters and strings
+- [ ] Add support for dynamic memory allocation
+- [ ] Add support for user defined structures
 
 ## Contributing Guidelines
 
