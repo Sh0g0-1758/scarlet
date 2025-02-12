@@ -107,6 +107,7 @@ void parser::parse_block_item(
       tokens.erase(tokens.begin());
     } else {
       // the variable has a definition as well
+      // TODO? : add compound assignments
       EXPECT(token::TOKEN::ASSIGNMENT);
       MAKE_SHARED(ast::AST_exp_Node, exp);
       parse_exp(tokens, exp);
@@ -258,7 +259,23 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT) {
     binop->set_op(binop::BINOP::ASSIGN);
     tokens.erase(tokens.begin());
-  } else {
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIFFERENCE) {
+    binop->set_op(binop::BINOP::COMPOUND_DIFFERENCE);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIVISION) {
+    binop->set_op(binop::BINOP::COMPOUND_DIVISION);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_PRODUCT) {
+    binop->set_op(binop::BINOP::COMPOUND_PRODUCT);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_REMAINDER) {
+    binop->set_op(binop::BINOP::COMPOUND_REMAINDER);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_SUM) {
+    binop->set_op(binop::BINOP::COMPOUND_SUM);
+    tokens.erase(tokens.begin());
+  }
+  else {
     success = false;
     error_messages.emplace_back("Expected binary operator but got " +
                                 to_string(tokens[0].get_token()));
@@ -329,14 +346,14 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   }
   // now we check that if the exp is of type assignment, then factor is an
   // identifier
-  binop::BINOP temp_binop = exp->get_binop_node()->get_op();
   if (exp->get_binop_node() != nullptr and
-      (temp_binop == binop::BINOP::ASSIGN or
-       temp_binop == binop::BINOP::COMPOUND_DIFFERENCE or
-       temp_binop == binop::BINOP::COMPOUND_DIVISION or
-       temp_binop == binop::BINOP::COMPOUND_PRODUCT or
-       temp_binop == binop::BINOP::COMPOUND_REMAINDER or
-       temp_binop == binop::BINOP::COMPOUND_SUM)) {
+      (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_DIFFERENCE or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_DIVISION or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_PRODUCT or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_REMAINDER or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_SUM)) {
+    // binop::BINOP temp_binop = exp->get_binop_node()->get_op();
     // no factor node or factor node is a constant, not a variable
     // Here we exploit the benefit of short circuiting power of the logical
     // operator this means that as we proceed, we are ensured that the earlier

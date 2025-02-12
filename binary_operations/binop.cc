@@ -43,6 +43,16 @@ std::string to_string(BINOP binop) {
     return "GREATERTHANEQUAL";
   case ASSIGN:
     return "ASSIGN";
+  case COMPOUND_DIFFERENCE:
+    return "COMPOUND_DIFFERENCE";
+  case COMPOUND_SUM:
+    return "COMPOUND_SUM";
+  case COMPOUND_DIVISION:
+    return "COMPOUND_DIVISION";
+  case COMPOUND_PRODUCT:
+    return "COMPOUND_PRODUCT";
+  case COMPOUND_REMAINDER:
+    return "COMPOUND_REMAINDER";
   default:
     return "UNKNOWN";
   }
