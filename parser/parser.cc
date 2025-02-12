@@ -183,7 +183,12 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
         temp_token == token::TOKEN::COMPOUND_DIVISION or
         temp_token == token::TOKEN::COMPOUND_PRODUCT or
         temp_token == token::TOKEN::COMPOUND_REMAINDER or
-        temp_token == token::TOKEN::COMPOUND_SUM)
+        temp_token == token::TOKEN::COMPOUND_SUM or
+        temp_token == token::TOKEN::COMPOUND_AND or
+        temp_token == token::TOKEN::COMPOUND_OR or
+        temp_token == token::TOKEN::COMPOUND_XOR or
+        temp_token == token::TOKEN::COMPOUND_LEFTSHIFT or
+        temp_token == token::TOKEN::COMPOUND_RIGHTSHIFT)
       new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
@@ -274,8 +279,22 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_SUM) {
     binop->set_op(binop::BINOP::COMPOUND_SUM);
     tokens.erase(tokens.begin());
-  }
-  else {
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_AND) {
+    binop->set_op(binop::BINOP::COMPOUND_AND);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_OR) {
+    binop->set_op(binop::BINOP::COMPOUND_OR);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_XOR) {
+    binop->set_op(binop::BINOP::COMPOUND_XOR);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_LEFTSHIFT) {
+    binop->set_op(binop::BINOP::COMPOUND_LEFTSHIFT);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_RIGHTSHIFT) {
+    binop->set_op(binop::BINOP::COMPOUND_RIGHTSHIFT);
+    tokens.erase(tokens.begin());
+  } else {
     success = false;
     error_messages.emplace_back("Expected binary operator but got " +
                                 to_string(tokens[0].get_token()));
@@ -352,7 +371,12 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
        exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_DIVISION or
        exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_PRODUCT or
        exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_REMAINDER or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_SUM)) {
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_SUM or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_AND or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_XOR or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_OR or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_LEFTSHIFT or
+       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_RIGHTSHIFT)) {
     // binop::BINOP temp_binop = exp->get_binop_node()->get_op();
     // no factor node or factor node is a constant, not a variable
     // Here we exploit the benefit of short circuiting power of the logical

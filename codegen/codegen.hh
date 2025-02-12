@@ -115,17 +115,12 @@ public:
       {binop::BINOP::COMPOUND_DIVISION, binop::BINOP::DIV},
       {binop::BINOP::COMPOUND_PRODUCT, binop::BINOP::MUL},
       {binop::BINOP::COMPOUND_REMAINDER, binop::BINOP::MOD},
-      {binop::BINOP::COMPOUND_SUM, binop::BINOP::ADD}};
-  bool isCompound(binop::BINOP bin_op) {
-    if (bin_op == binop::BINOP::COMPOUND_DIFFERENCE or
-        bin_op == binop::BINOP::COMPOUND_DIVISION or
-        bin_op == binop::BINOP::COMPOUND_PRODUCT or
-        bin_op == binop::BINOP::COMPOUND_REMAINDER or
-        bin_op == binop::BINOP::COMPOUND_SUM) {
-      return true;
-    }
-    return false;
-  }
+      {binop::BINOP::COMPOUND_SUM, binop::BINOP::ADD},
+      {binop::BINOP::COMPOUND_AND, binop::BINOP::AAND},
+      {binop::BINOP::COMPOUND_OR, binop::BINOP::AOR},
+      {binop::BINOP::COMPOUND_XOR, binop::BINOP::XOR},
+      {binop::BINOP::COMPOUND_LEFTSHIFT, binop::BINOP::LEFT_SHIFT},
+      {binop::BINOP::COMPOUND_RIGHTSHIFT, binop::BINOP::RIGHT_SHIFT}};
 };
 
 } // namespace codegen

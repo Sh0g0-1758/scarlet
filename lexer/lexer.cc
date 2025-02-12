@@ -90,7 +90,10 @@ void lexer::tokenize() {
       col_number++;
     } else if (ch == '&') {
       file.get(ch);
-      if (ch == '&') {
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_AND);
+        col_number += 2;
+      } else if (ch == '&') {
         tokens.emplace_back(token::TOKEN::LAND);
         col_number += 2;
       } else {
@@ -100,7 +103,10 @@ void lexer::tokenize() {
       }
     } else if (ch == '|') {
       file.get(ch);
-      if (ch == '|') {
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_OR);
+        col_number += 2;
+      } else if (ch == '|') {
         tokens.emplace_back(token::TOKEN::LOR);
         col_number += 2;
       } else {
@@ -109,7 +115,14 @@ void lexer::tokenize() {
         col_number++;
       }
     } else if (ch == '^') {
-      tokens.emplace_back(token::TOKEN::XOR);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_XOR);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::XOR);
+      }
       col_number++;
     } else if (ch == '!') {
       file.get(ch);
@@ -134,7 +147,14 @@ void lexer::tokenize() {
     } else if (ch == '>') {
       file.get(ch);
       if (ch == '>') {
-        tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
+        file.get(ch);
+        if (ch == '=') {
+          tokens.emplace_back(token::TOKEN::COMPOUND_RIGHTSHIFT);
+          col_number++;
+        } else {
+          file.seekg(-1, std::ios::cur);
+          tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
+        }
         col_number += 2;
       } else if (ch == '=') {
         tokens.emplace_back(token::TOKEN::GREATERTHANEQUAL);
@@ -147,7 +167,14 @@ void lexer::tokenize() {
     } else if (ch == '<') {
       file.get(ch);
       if (ch == '<') {
-        tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+        file.get(ch);
+        if (ch == '=') {
+          tokens.emplace_back(token::TOKEN::COMPOUND_LEFTSHIFT);
+          col_number++;
+        } else {
+          file.seekg(-1, std::ios::cur);
+          tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+        }
         col_number += 2;
       } else if (ch == '=') {
         tokens.emplace_back(token::TOKEN::LESSTHANEQUAL);

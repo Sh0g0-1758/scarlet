@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 
 namespace scarlet {
@@ -29,11 +30,17 @@ enum BINOP {
   COMPOUND_DIVISION,
   COMPOUND_PRODUCT,
   COMPOUND_REMAINDER,
+  COMPOUND_AND,
+  COMPOUND_OR,
+  COMPOUND_XOR,
+  COMPOUND_LEFTSHIFT,
+  COMPOUND_RIGHTSHIFT,
   ASSIGN
 };
 
 std::string to_string(BINOP binop);
 bool short_circuit(BINOP binop);
 bool is_relational(BINOP binop);
+bool is_compound(BINOP binop);
 } // namespace binop
 } // namespace scarlet

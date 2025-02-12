@@ -58,6 +58,11 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::COMPOUND_PRODUCT:
   case binop::BINOP::COMPOUND_REMAINDER:
   case binop::BINOP::COMPOUND_SUM:
+  case binop::BINOP::COMPOUND_AND:
+  case binop::BINOP::COMPOUND_OR:
+  case binop::BINOP::COMPOUND_XOR:
+  case binop::BINOP::COMPOUND_LEFTSHIFT:
+  case binop::BINOP::COMPOUND_RIGHTSHIFT:
   case binop::BINOP::DIV:
   case binop::BINOP::MOD:
   case binop::BINOP::UNKNOWN:

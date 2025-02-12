@@ -53,6 +53,16 @@ std::string to_string(BINOP binop) {
     return "COMPOUND_PRODUCT";
   case COMPOUND_REMAINDER:
     return "COMPOUND_REMAINDER";
+  case COMPOUND_AND:
+    return "COMPOUND_AND";
+  case COMPOUND_OR:
+    return "COMPOUND_OR";
+  case COMPOUND_XOR:
+    return "COMPOUND_XOR";
+  case COMPOUND_LEFTSHIFT:
+    return "COMPOUND_LEFTSHIFT";
+  case COMPOUND_RIGHTSHIFT:
+    return "COMPOUND_RIGHTSHIFT";
   default:
     return "UNKNOWN";
   }
@@ -65,6 +75,16 @@ bool is_relational(BINOP binop) {
          binop == GREATERTHAN or binop == LESSTHANEQUAL or
          binop == GREATERTHANEQUAL;
 }
-
+bool is_compound(BINOP bin_op) {
+  if (bin_op == BINOP::COMPOUND_DIFFERENCE or
+      bin_op == BINOP::COMPOUND_DIVISION or bin_op == BINOP::COMPOUND_PRODUCT or
+      bin_op == BINOP::COMPOUND_REMAINDER or bin_op == BINOP::COMPOUND_SUM or
+      bin_op == BINOP::COMPOUND_AND or bin_op == BINOP::COMPOUND_OR or
+      bin_op == BINOP::COMPOUND_LEFTSHIFT or
+      bin_op == BINOP::COMPOUND_RIGHTSHIFT or bin_op == BINOP::COMPOUND_XOR) {
+    return true;
+  }
+  return false;
+}
 } // namespace binop
 } // namespace scarlet
