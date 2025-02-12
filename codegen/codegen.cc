@@ -137,6 +137,12 @@ void Codegen::gen_scar_exp(
     //
     // There will be a separate case for the assignment operator as that
     // will be represented by a simple copy operation
+    //
+    // There will be a separate case for the ternary operator as well
+    // So first we need to check whether it is the first expression
+    // or the second expression that will be returned using jmpifzero
+    // and copy the result to a new register. Ternary is actually a special
+    // case of short circuiting
     if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       scar_instruction->set_type(scar::instruction_type::COPY);
@@ -168,8 +174,10 @@ void Codegen::gen_scar_exp(
     if (short_circuit) {
       if (sc_binop == binop::BINOP::LAND) {
         scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
-      } else {
+      } else if (sc_binop == binop::BINOP::LOR) {
         scar_instruction->set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);
+      } else if (sc_binop == binop::BINOP::TERNARY) {
+        scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
       }
     } else {
       scar_instruction->set_type(scar::instruction_type::BINARY);
@@ -197,6 +205,74 @@ void Codegen::gen_scar_exp(
       scar_function->add_instruction(std::move(scar_instruction));
     }
 
+    // TERNARY SPECIAL CASE
+    if (sc_binop == binop::BINOP::TERNARY) {
+      // generate the first expression
+      gen_scar_exp(exp->get_middle(), scar_function);
+
+      // copy this result in a new register
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+      scar_instruction2->set_type(scar::instruction_type::COPY);
+      SETVARCONSTANTREG(scar_val_src2);
+      scar_instruction2->set_src1(std::move(scar_val_src2));
+      scar_val_dst2->set_type(scar::val_type::VAR);
+      // Doing this so that we can use the same scar register to
+      // store the result of the second expression as well.
+      // We cannot simply use get_prev_reg_name() since we need to
+      // parse the second expression first and that will change the
+      // register counter
+      std::string result = get_reg_name();
+      scar_val_dst2->set_reg_name(result);
+      scar_instruction2->set_dst(std::move(scar_val_dst2));
+      scar_function->add_instruction(std::move(scar_instruction2));
+
+      // jump to the end
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
+      scar_instruction3->set_type(scar::instruction_type::JUMP);
+      scar_val_src3->set_type(scar::val_type::UNKNOWN);
+      scar_val_src3->set_value(get_res_label_name());
+      scar_instruction3->set_src1(std::move(scar_val_src3));
+      scar_function->add_instruction(std::move(scar_instruction3));
+
+      // generate the intermediate label
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction4);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
+      scar_instruction4->set_type(scar::instruction_type::LABEL);
+      scar_val_src4->set_type(scar::val_type::UNKNOWN);
+      scar_val_src4->set_value(get_last_fr_label_name(true));
+      scar_instruction4->set_src1(std::move(scar_val_src4));
+      scar_function->add_instruction(std::move(scar_instruction4));
+
+      // generate the second expression
+      gen_scar_exp(exp->get_right(), scar_function);
+
+      // copy this result in a new register
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction5);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src5);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst5);
+      scar_instruction5->set_type(scar::instruction_type::COPY);
+      SETVARCONSTANTREG(scar_val_src5);
+      scar_instruction5->set_src1(std::move(scar_val_src5));
+      scar_val_dst5->set_type(scar::val_type::VAR);
+      scar_val_dst5->set_reg_name(result);
+      scar_instruction5->set_dst(std::move(scar_val_dst5));
+      scar_function->add_instruction(std::move(scar_instruction5));
+
+      // generate the final label
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction6);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src6);
+      scar_instruction6->set_type(scar::instruction_type::LABEL);
+      scar_val_src6->set_type(scar::val_type::UNKNOWN);
+      scar_val_src6->set_value(get_last_res_label_name());
+      scar_instruction6->set_src1(std::move(scar_val_src6));
+      scar_function->add_instruction(std::move(scar_instruction6));
+
+      // early return
+      return;
+    }
     gen_scar_exp(exp->get_right(), scar_function);
     SETVARCONSTANTREG(scar_val_src2);
 

@@ -40,6 +40,9 @@ enum class instruction_type {
   JUMP_IF_NOT_ZERO,
   LABEL
 };
+// CONSTANT is a constant value (1, 2 , 42 etc.)
+// VAR is a scar register
+// UNKNOWN is everything else (labels, etc.)
 enum class val_type { UNKNOWN, CONSTANT, VAR };
 
 std::string to_string(instruction_type type);

@@ -50,7 +50,9 @@ std::string to_string(BINOP binop) {
   }
 }
 
-bool short_circuit(BINOP binop) { return binop == LAND or binop == LOR; }
+bool short_circuit(BINOP binop) {
+  return binop == LAND or binop == LOR or binop == TERNARY;
+}
 
 bool is_relational(BINOP binop) {
   return binop == EQUAL or binop == NOTEQUAL or binop == LESSTHAN or
