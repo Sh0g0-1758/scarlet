@@ -373,8 +373,6 @@ void Codegen::gen_scar() {
     MAKE_SHARED(scar::scar_Identifier_Node, identifier);
     identifier->set_value(it->get_identifier()->get_value());
     scar_function->set_identifier(identifier);
-    // If the function has no return statement, we add one at the end
-    bool have_return = false;
     // The trick is that since each else will bind to the nearest if only
     // It is okay to maintain a count of the number of if-else blocks
     // and use the path of the if-else if this counter is greater than 0
@@ -389,7 +387,6 @@ void Codegen::gen_scar() {
           SETVARCONSTANTREG(scar_val_src);
           scar_instruction->set_src1(scar_val_src);
           scar_function->add_instruction(scar_instruction);
-          have_return = true;
         } else if (inst->get_statement()->get_type() ==
                    ast::statementType::EXP) {
           gen_scar_exp(inst->get_statement()->get_exps(), scar_function);
@@ -481,15 +478,15 @@ void Codegen::gen_scar() {
         }
       }
     }
-    if (scar_function->get_instructions().size() == 0 or !have_return) {
-      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-      scar_instruction->set_type(scar::instruction_type::RETURN);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-      scar_val_src->set_type(scar::val_type::CONSTANT);
-      scar_val_src->set_value("0");
-      scar_instruction->set_src1(scar_val_src);
-      scar_function->add_instruction(scar_instruction);
-    }
+    // Add a complementary return 0 at the end of the function
+    // in case there is no return statement
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+    scar_instruction->set_type(scar::instruction_type::RETURN);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+    scar_val_src->set_type(scar::val_type::CONSTANT);
+    scar_val_src->set_value("0");
+    scar_instruction->set_src1(scar_val_src);
+    scar_function->add_instruction(scar_instruction);
     scar_program.add_function(scar_function);
   }
 
@@ -934,10 +931,7 @@ void Codegen::gen_scasm() {
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         SET_MOV_SOURCE();
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        if (inst->get_dst()->get_type() == scar::val_type::VAR) {
-          scasm_dst->set_type(scasm::operand_type::PSEUDO);
-          scasm_dst->set_identifier_stack(inst->get_dst()->get_reg());
-        }
+        SET_DST(scasm_dst);
         scasm_inst->set_dst(std::move(scasm_dst));
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::LABEL) {

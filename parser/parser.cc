@@ -428,6 +428,9 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     analyze_exp(exp->get_factor_node()->get_exp_node());
   // now we recursively check the right side of the expression
   analyze_exp(exp->get_right());
+  // and a recursive check for the middle expression -> special case(ternary
+  // operator)
+  analyze_exp(exp->get_middle());
 }
 
 void parser::semantic_analysis() {
