@@ -43,6 +43,8 @@ Scarlet currently supports the following architectures:
 - [x] Add support for user defined local variables
 - [x] Add support for if-else construct
 - [x] Add support for ternary operator
+- [x] Add support for increment/decrement operator
+- [x] Add support for compound operators (+=,-=,*=,/=,<<=,>>=,%=)
 - [ ] Add support for compound statements
 - [ ] Add support for Loops
 - [ ] Add support for Functions
