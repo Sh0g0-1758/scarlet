@@ -34,6 +34,7 @@ void Codegen::gen_scar_factor(
           scar_instruction->set_binop(binop::BINOP::SUB);
         }
         MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
         MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
         scar_val_src->set_type(scar::val_type::CONSTANT);
         scar_val_src->set_value("1");
@@ -49,6 +50,9 @@ void Codegen::gen_scar_factor(
         }
         reg_name = scar_val_dst->get_reg();
         scar_instruction->set_dst(std::move(scar_val_dst));
+        scar_val_src2->set_type(scar::val_type::VAR);
+        scar_val_src2->set_reg_name(reg_name);
+        scar_instruction->set_src2(std::move(scar_val_src2));
         scar_function->add_instruction(std::move(scar_instruction));
         continue;
       }
