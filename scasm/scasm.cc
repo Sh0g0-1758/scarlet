@@ -19,6 +19,8 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
     // INCREMENT AND DECREMENT ARE HANDLED IN SCAR AS A BINOP
   case unop::UNOP::INCREMENT:
   case unop::UNOP::DECREMENT:
+  case unop::UNOP::PINCREMENT:
+  case unop::UNOP::PDECREMENT:
   case unop::UNOP::UNKNOWN:
     UNREACHABLE()
   }

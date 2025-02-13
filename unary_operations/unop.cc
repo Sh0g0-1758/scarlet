@@ -8,6 +8,10 @@ std::string to_string(UNOP unop) {
     return "Increment";
   case UNOP::DECREMENT:
     return "Decrement";
+  case UNOP::PINCREMENT:
+    return "Post Increment";
+  case UNOP::PDECREMENT:
+    return "Post Decrement";
   case UNOP::COMPLEMENT:
     return "Complement";
   case UNOP::NEGATE:

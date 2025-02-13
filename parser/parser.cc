@@ -240,6 +240,20 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
                                 "or open parantheses but got " +
                                 to_string(tokens[0].get_token()));
   }
+  // NOTE THIS IS A SPECIAL CASE WHERE WE HAVE A POST INCREMENT OR DECREMENT
+  // IF THIS BRANCH IS CALLED THEN WE CAN BE SURE THAT WE ARE DEALING WITH A
+  // POST INCREMENT OR DECREMENT
+  if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR or
+      tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR) {
+      unop->set_op(unop::UNOP::PINCREMENT);
+    } else {
+      unop->set_op(unop::UNOP::PDECREMENT);
+    }
+    tokens.erase(tokens.begin());
+    factor->add_unop_node(std::move(unop));
+  }
 }
 
 void parser::parse_exp(std::vector<token::Token> &tokens,
@@ -434,7 +448,9 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     // CHECK WHETHER INCREMENT OR DECREMENT OPERATOR IS PRESENT
     for (auto it : check_factor->get_unop_nodes()) {
       if (it->get_op() == unop::UNOP::INCREMENT or
-          it->get_op() == unop::UNOP::DECREMENT) {
+          it->get_op() == unop::UNOP::DECREMENT or
+          it->get_op() == unop::UNOP::PINCREMENT or
+          it->get_op() == unop::UNOP::PDECREMENT) {
         has_i_d = true;
         break;
       }
@@ -445,7 +461,11 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       if (check_factor->get_unop_nodes().back()->get_op() !=
               unop::UNOP::INCREMENT and
           check_factor->get_unop_nodes().back()->get_op() !=
-              unop::UNOP::DECREMENT) {
+              unop::UNOP::DECREMENT and
+          check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::PINCREMENT and
+          check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::PDECREMENT) {
         success = false;
         error_messages.emplace_back(
             "Expected an lvalue for the increment / decrement operator");
@@ -454,6 +474,7 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         // CASE 1: FACTOR HAS AN IDENTIFIER
         // CASE 2: FACTOR HAS A DEEPLY NESTED EXPRESSION WHICH THEN
         //         CONTAINS THE IDENTIFIER (eg. ++(((((((a))))))) )
+        //         or ( (((((((a)))))))++ )
         if (check_factor->get_identifier_node() != nullptr) {
           // EARLIER CHECKS ENSURE THAT THE IDENTIFIER IS ALREADY DECLARED
         } else if (check_factor->get_exp_node() != nullptr) {
