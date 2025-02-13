@@ -77,7 +77,7 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::MOD:
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::TERNARY:
-      UNREACHABLE()
+    UNREACHABLE()
   }
   UNREACHABLE()
 }
