@@ -445,15 +445,7 @@ bool is_right_associative(TOKEN token) {
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;
-  } else if (token == TOKEN::ASSIGNMENT or
-             token == TOKEN::COMPOUND_DIFFERENCE or
-             token == TOKEN::COMPOUND_DIVISION or
-             token == TOKEN::COMPOUND_PRODUCT or
-             token == TOKEN::COMPOUND_REMAINDER or
-             token == TOKEN::COMPOUND_SUM or token == TOKEN::COMPOUND_AND or
-             token == TOKEN::COMPOUND_OR or token == TOKEN::COMPOUND_XOR or
-             token == TOKEN::COMPOUND_LEFTSHIFT or
-             token == TOKEN::COMPOUND_RIGHTSHIFT) {
+  } else if (is_right_associative(token)) {
     return 5;
   } else if (token == TOKEN::QUESTION_MARK) {
     // Ternary operator
