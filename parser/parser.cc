@@ -367,7 +367,7 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
   default:
     UNREACHABLE()
   }
-  factor->set_unop_node(std::move(unop));
+  factor->add_unop_node(std::move(unop));
   tokens.erase(tokens.begin());
 }
 
@@ -425,6 +425,83 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       success = false;
       error_messages.emplace_back("Expected a modifiable lvalue on the left "
                                   "side of the assignment operator");
+    }
+  }
+  // SEMANTIC ANALYSIS FOR INCREMENT AND DECREMENT OPERATOR
+  if (exp->get_factor_node() != nullptr) {
+    auto check_factor = exp->get_factor_node();
+    bool has_i_d = false;
+    // CHECK WHETHER INCREMENT OR DECREMENT OPERATOR IS PRESENT
+    for (auto it : check_factor->get_unop_nodes()) {
+      if (it->get_op() == unop::UNOP::INCREMENT or
+          it->get_op() == unop::UNOP::DECREMENT) {
+        has_i_d = true;
+        break;
+      }
+    }
+    if (has_i_d) {
+      // THE INCREMENT AND DECREMENT OPERATOR MUST BE APPLIED TO AN LVALUE
+      // THAT MEANS IT SHOULD BE THE LAST UNOP IN THE UNOPS VECTOR
+      if (check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::INCREMENT and
+          check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::DECREMENT) {
+        success = false;
+        error_messages.emplace_back(
+            "Expected an lvalue for the increment / decrement operator");
+      } else {
+        // NOW THERE ARE ONLY TWO VALID CASES
+        // CASE 1: FACTOR HAS AN IDENTIFIER
+        // CASE 2: FACTOR HAS A DEEPLY NESTED EXPRESSION WHICH THEN
+        //         CONTAINS THE IDENTIFIER (eg. ++(((((((a))))))) )
+        if (check_factor->get_identifier_node() != nullptr) {
+          // EARLIER CHECKS ENSURE THAT THE IDENTIFIER IS ALREADY DECLARED
+        } else if (check_factor->get_exp_node() != nullptr) {
+          // NOW WE RECURSIVELY CHECK THAT THE EXPRESSION IS A SIMPLE IDENTIFIER
+          // AND NOT A COMPLEX EXPRESSION
+          auto check_exp = check_factor->get_exp_node();
+          while (check_exp != nullptr) {
+            // ENSURE THAT BINOP FOR CHECK_EXP IS NULL
+            // ENSURE THAT LEFT FOR CHECK_EXP IS NULL
+            if (check_exp->get_binop_node() != nullptr or
+                check_exp->get_left() != nullptr) {
+              success = false;
+              error_messages.emplace_back(
+                  "Expected an lvalue for the increment / decrement operator");
+              break;
+            }
+            // ENSURE THAT THERE ARE NO UNOPS AS WELL
+            // WE ARE BASICALLY GUARANTEED THAT FACTOR IS NOT NULL
+            if (check_exp->get_factor_node()->get_unop_nodes().size() > 0) {
+              success = false;
+              error_messages.emplace_back(
+                  "Expected an lvalue for the increment / decrement operator");
+              break;
+            }
+            // NOW WE CHECK THAT THE FACTOR IS AN IDENTIFIER
+            if (exp->get_factor_node()->get_exp_node() == nullptr) {
+              if (exp->get_factor_node()->get_identifier_node() == nullptr) {
+                success = false;
+                error_messages.emplace_back("Expected an lvalue for the "
+                                            "increment / decrement operator");
+                break;
+              }
+            }
+            // AN ADDITIONAL CHECK TO ENSURE THAT INT NODE IS ALWAYS NULL
+            if (exp->get_factor_node()->get_int_node() != nullptr) {
+              success = false;
+              error_messages.emplace_back(
+                  "Expected an lvalue for the increment / decrement operator");
+              break;
+            }
+            check_exp = check_exp->get_factor_node()->get_exp_node();
+          }
+        } else {
+          success = false;
+          error_messages.emplace_back(
+              "Expected an lvalue for the increment / decrement operator");
+        }
+      }
     }
   }
   // since the factor can have its own exp as well, we recursively check that

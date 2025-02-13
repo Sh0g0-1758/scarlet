@@ -23,10 +23,39 @@ void Codegen::gen_scar_factor(
   if (!unop_buffer[curr_buff].empty()) {
     int num_unpos = unop_buffer[curr_buff].size();
     for (int i = num_unpos - 1; i >= 0; i--) {
+      // SPECIAL CASE WHEN WE HAVE INCREMENT OR DECREMENT OPERATOR
+      unop::UNOP op = unop_buffer[curr_buff][i];
+      if (op == unop::UNOP::INCREMENT or op == unop::UNOP::DECREMENT) {
+        MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+        scar_instruction->set_type(scar::instruction_type::BINARY);
+        if (op == unop::UNOP::INCREMENT) {
+          scar_instruction->set_binop(binop::BINOP::ADD);
+        } else {
+          scar_instruction->set_binop(binop::BINOP::SUB);
+        }
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+        scar_val_src->set_type(scar::val_type::CONSTANT);
+        scar_val_src->set_value("1");
+        scar_instruction->set_src1(std::move(scar_val_src));
+        scar_val_dst->set_type(scar::val_type::VAR);
+        // The destination will always be a variable
+        if (!variable_buffer.empty()) {
+          scar_val_dst->set_reg_name(variable_buffer);
+          variable_buffer.clear();
+        } else {
+          scar_val_dst->set_reg_name(
+              factor->get_identifier_node()->get_value());
+        }
+        reg_name = scar_val_dst->get_reg();
+        scar_instruction->set_dst(std::move(scar_val_dst));
+        scar_function->add_instruction(std::move(scar_instruction));
+        continue;
+      }
       // scar::scar_Instruction_Node scar_instruction;
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       scar_instruction->set_type(scar::instruction_type::UNARY);
-      scar_instruction->set_unop(unop_buffer[curr_buff][i]);
+      scar_instruction->set_unop(op);
 
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -54,19 +83,18 @@ void Codegen::gen_scar_factor(
           scar_val_src->set_type(scar::val_type::VAR);
           scar_val_src->set_reg_name(get_prev_reg_name());
         }
-        scar_instruction->set_src1(scar_val_src);
       } else {
         scar_val_src->set_type(scar::val_type::VAR);
         scar_val_src->set_reg_name(get_prev_reg_name());
-        scar_instruction->set_src1(scar_val_src);
       }
+      scar_instruction->set_src1(std::move(scar_val_src));
 
       // deal with the destination
       scar_val_dst->set_type(scar::val_type::VAR);
       scar_val_dst->set_reg_name(get_reg_name());
-      scar_instruction->set_dst(scar_val_dst);
+      scar_instruction->set_dst(std::move(scar_val_dst));
 
-      scar_function->add_instruction(scar_instruction);
+      scar_function->add_instruction(std::move(scar_instruction));
     }
     // empty the unop buffer
     unop_buffer[curr_buff].clear();
