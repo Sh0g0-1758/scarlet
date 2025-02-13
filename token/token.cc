@@ -367,8 +367,7 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
          token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
          token == TOKEN::GREATERTHANEQUAL or token == TOKEN::ASSIGNMENT or
-         token == TOKEN::QUESTION_MARK or
-         token == TOKEN::COMPOUND_DIFFERENCE or
+         token == TOKEN::QUESTION_MARK or token == TOKEN::COMPOUND_DIFFERENCE or
          token == TOKEN::COMPOUND_DIVISION or token == TOKEN::COMPOUND_SUM or
          token == TOKEN::COMPOUND_PRODUCT or
          token == TOKEN::COMPOUND_REMAINDER or token == TOKEN::COMPOUND_AND or
