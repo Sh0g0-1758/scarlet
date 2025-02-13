@@ -292,101 +292,104 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
 
 void parser::parse_binop(std::vector<token::Token> &tokens,
                          std::shared_ptr<ast::AST_binop_Node> binop) {
-  if (tokens[0].get_token() == token::TOKEN::PLUS) {
+  switch (tokens[0].get_token()) {
+  case token::TOKEN::PLUS:
     binop->set_op(binop::BINOP::ADD);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::PERCENT_SIGN) {
+    break;
+  case token::TOKEN::PERCENT_SIGN:
     binop->set_op(binop::BINOP::MOD);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::FORWARD_SLASH) {
+    break;
+  case token::TOKEN::FORWARD_SLASH:
     binop->set_op(binop::BINOP::DIV);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
+    break;
+  case token::TOKEN::ASTERISK:
     binop->set_op(binop::BINOP::MUL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::HYPHEN) {
+    break;
+  case token::TOKEN::HYPHEN:
     binop->set_op(binop::BINOP::SUB);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::AAND) {
+    break;
+  case token::TOKEN::AAND:
     binop->set_op(binop::BINOP::AAND);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::AOR) {
+    break;
+  case token::TOKEN::AOR:
     binop->set_op(binop::BINOP::AOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::XOR) {
+    break;
+  case token::TOKEN::XOR:
     binop->set_op(binop::BINOP::XOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LEFT_SHIFT) {
+    break;
+  case token::TOKEN::LEFT_SHIFT:
     binop->set_op(binop::BINOP::LEFT_SHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::RIGHT_SHIFT) {
+    break;
+  case token::TOKEN::RIGHT_SHIFT:
     binop->set_op(binop::BINOP::RIGHT_SHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LAND) {
+    break;
+  case token::TOKEN::LAND:
     binop->set_op(binop::BINOP::LAND);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LOR) {
+    break;
+  case token::TOKEN::LOR:
     binop->set_op(binop::BINOP::LOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::EQUAL) {
+    break;
+  case token::TOKEN::EQUAL:
     binop->set_op(binop::BINOP::EQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::NOTEQUAL) {
+    break;
+  case token::TOKEN::NOTEQUAL:
     binop->set_op(binop::BINOP::NOTEQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LESSTHAN) {
+    break;
+  case token::TOKEN::LESSTHAN:
     binop->set_op(binop::BINOP::LESSTHAN);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::GREATERTHAN) {
+    break;
+  case token::TOKEN::GREATERTHAN:
     binop->set_op(binop::BINOP::GREATERTHAN);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LESSTHANEQUAL) {
+    break;
+  case token::TOKEN::LESSTHANEQUAL:
     binop->set_op(binop::BINOP::LESSTHANEQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::GREATERTHANEQUAL) {
+    break;
+  case token::TOKEN::GREATERTHANEQUAL:
     binop->set_op(binop::BINOP::GREATERTHANEQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT) {
+    break;
+  case token::TOKEN::ASSIGNMENT:
     binop->set_op(binop::BINOP::ASSIGN);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIFFERENCE) {
+    break;
+  case token::TOKEN::COMPOUND_DIFFERENCE:
     binop->set_op(binop::BINOP::COMPOUND_DIFFERENCE);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIVISION) {
+    break;
+  case token::TOKEN::COMPOUND_DIVISION:
     binop->set_op(binop::BINOP::COMPOUND_DIVISION);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_PRODUCT) {
+    break;
+  case token::TOKEN::COMPOUND_PRODUCT:
     binop->set_op(binop::BINOP::COMPOUND_PRODUCT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_REMAINDER) {
+    break;
+  case token::TOKEN::COMPOUND_REMAINDER:
     binop->set_op(binop::BINOP::COMPOUND_REMAINDER);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_SUM) {
+    break;
+  case token::TOKEN::COMPOUND_SUM:
     binop->set_op(binop::BINOP::COMPOUND_SUM);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_AND) {
+    break;
+  case token::TOKEN::COMPOUND_AND:
     binop->set_op(binop::BINOP::COMPOUND_AND);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_OR) {
+    break;
+  case token::TOKEN::COMPOUND_OR:
     binop->set_op(binop::BINOP::COMPOUND_OR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_XOR) {
+    break;
+  case token::TOKEN::COMPOUND_XOR:
     binop->set_op(binop::BINOP::COMPOUND_XOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_LEFTSHIFT) {
+    break;
+  case token::TOKEN::COMPOUND_LEFTSHIFT:
     binop->set_op(binop::BINOP::COMPOUND_LEFTSHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_RIGHTSHIFT) {
+    break;
+  case token::TOKEN::COMPOUND_RIGHTSHIFT:
     binop->set_op(binop::BINOP::COMPOUND_RIGHTSHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::QUESTION_MARK) {
+    break;
+  case token::TOKEN::QUESTION_MARK:
     binop->set_op(binop::BINOP::TERNARY);
-    tokens.erase(tokens.begin());
-  } else {
+    break;
+  default:
     success = false;
     error_messages.emplace_back("Expected binary operator but got " +
                                 to_string(tokens[0].get_token()));
+    break;
   }
+  tokens.erase(tokens.begin());
 }
 
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
