@@ -2,6 +2,12 @@
 
 namespace scarlet {
 namespace token {
+
+#define UNREACHABLE()                                                          \
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
+            << __LINE__ << std::endl;                                          \
+  __builtin_unreachable();
+
 void print_token(TOKEN token) {
   switch (token) {
   case TOKEN::IDENTIFIER:
@@ -120,6 +126,9 @@ void print_token(TOKEN token) {
     break;
   case TOKEN::DECREMENT_OPERATOR:
     std::cerr << "--";
+    break;
+  case TOKEN::INCREMENT_OPERATOR:
+    std::cerr << "++";
     break;
   case TOKEN::AAND:
     std::cerr << "&";
@@ -258,6 +267,8 @@ std::string to_string(TOKEN token) {
     return "=";
   case TOKEN::DECREMENT_OPERATOR:
     return "--";
+  case TOKEN::INCREMENT_OPERATOR:
+    return "++";
   case TOKEN::AAND:
     return "&";
   case TOKEN::AOR:
@@ -299,7 +310,9 @@ std::string to_string(TOKEN token) {
 }
 
 bool is_unary_op(TOKEN token) {
-  return token == TOKEN::TILDE or token == TOKEN::HYPHEN or token == TOKEN::NOT;
+  return token == TOKEN::TILDE or token == TOKEN::HYPHEN or
+         token == TOKEN::NOT or token == TOKEN::DECREMENT_OPERATOR or
+         token == TOKEN::INCREMENT_OPERATOR;
 }
 
 bool is_binary_op(TOKEN token) {
@@ -411,9 +424,7 @@ int get_binop_prec(TOKEN token) {
              token == TOKEN::PERCENT_SIGN) {
     return 60;
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 } // namespace token
 } // namespace scarlet

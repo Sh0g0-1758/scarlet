@@ -3,6 +3,11 @@
 namespace scarlet {
 namespace scasm {
 
+#define UNREACHABLE()                                                          \
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
+            << __LINE__ << std::endl;                                          \
+  __builtin_unreachable();
+
 Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   switch (unop) {
   case unop::UNOP::NEGATE:
@@ -12,13 +17,9 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   case unop::UNOP::NOT:
     return Unop::LNOT;
   case unop::UNOP::UNKNOWN:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
@@ -61,13 +62,9 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::TERNARY:
   case binop::BINOP::DIV:
   case binop::BINOP::MOD:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 // If small is set, return the 8-bit version of the register
@@ -97,13 +94,9 @@ std::string to_string(register_type reg, bool small) {
       return "%r11b";
     return "%r11d";
   case register_type::UNKNOWN:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 std::string to_string(cond_code code) {
@@ -121,13 +114,9 @@ std::string to_string(cond_code code) {
   case cond_code::LE:
     return "le";
   case cond_code::UNKNOWN:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 std::string to_string(Unop unop) {
@@ -138,13 +127,9 @@ std::string to_string(Unop unop) {
     return "notl";
   case Unop::UNKNOWN:
   case Unop::LNOT:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 std::string to_string(Binop binop) {
@@ -179,13 +164,9 @@ std::string to_string(Binop binop) {
   case Binop::GREATERTHAN:
   case Binop::LESSTHANEQUAL:
   case Binop::GREATERTHANEQUAL:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 } // namespace scasm

@@ -3,6 +3,10 @@ namespace scarlet {
 namespace parser {
 
 #define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
+#define UNREACHABLE()                                                          \
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
+            << __LINE__ << std::endl;                                          \
+  __builtin_unreachable();
 
 #define EXPECT(tok)                                                            \
   if (!success) {                                                              \
@@ -221,9 +225,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();
     factor->set_identifier_node(std::move(identifier));
-  } else if (tokens[0].get_token() == token::TOKEN::TILDE or
-             tokens[0].get_token() == token::TOKEN::HYPHEN or
-             tokens[0].get_token() == token::TOKEN::NOT) {
+  } else if (token::is_unary_op(tokens[0].get_token())) {
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
@@ -345,26 +347,28 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
 
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
                             std::shared_ptr<ast::AST_factor_Node> factor) {
-  if (tokens[0].get_token() == token::TOKEN::TILDE) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
+  MAKE_SHARED(ast::AST_unop_Node, unop);
+  switch (tokens[0].get_token()) {
+  case token::TOKEN::TILDE:
     unop->set_op(unop::UNOP::COMPLEMENT);
-    factor->set_unop_node(std::move(unop));
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::HYPHEN) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
+    break;
+  case token::TOKEN::HYPHEN:
     unop->set_op(unop::UNOP::NEGATE);
-    factor->set_unop_node(std::move(unop));
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::NOT) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
+    break;
+  case token::TOKEN::NOT:
     unop->set_op(unop::UNOP::NOT);
-    factor->set_unop_node(std::move(unop));
-    tokens.erase(tokens.begin());
-  } else {
-    success = false;
-    error_messages.emplace_back("Expected unary operator but got " +
-                                to_string(tokens[0].get_token()));
+    break;
+  case token::TOKEN::INCREMENT_OPERATOR:
+    unop->set_op(unop::UNOP::INCREMENT);
+    break;
+  case token::TOKEN::DECREMENT_OPERATOR:
+    unop->set_op(unop::UNOP::DECREMENT);
+    break;
+  default:
+    UNREACHABLE()
   }
+  factor->set_unop_node(std::move(unop));
+  tokens.erase(tokens.begin());
 }
 
 void parser::parse_identifier(
@@ -481,13 +485,9 @@ std::string to_string(ast::BlockItemType type) {
   case ast::BlockItemType::DECLARATION:
     return "Declaration";
   case ast::BlockItemType::UNKNOWN:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 std::string to_string(ast::statementType type) {
@@ -505,13 +505,9 @@ std::string to_string(ast::statementType type) {
   case ast::statementType::_IFELSE_END:
     return "_IfElse_End";
   case ast::statementType::UNKNOWN:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {

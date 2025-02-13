@@ -49,8 +49,15 @@ void lexer::tokenize() {
       tokens.emplace_back(token::TOKEN::TILDE);
       col_number++;
     } else if (ch == '+') {
-      tokens.emplace_back(token::TOKEN::PLUS);
-      col_number++;
+      file.get(ch);
+      if (ch == '+') {
+        tokens.emplace_back(token::TOKEN::INCREMENT_OPERATOR);
+        col_number += 2;
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::PLUS);
+        col_number++;
+      }
     } else if (ch == '*') {
       tokens.emplace_back(token::TOKEN::ASTERISK);
       col_number++;
