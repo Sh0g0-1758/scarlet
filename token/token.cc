@@ -118,9 +118,6 @@ void print_token(TOKEN token) {
   case TOKEN::ASSIGNMENT:
     std::cerr << "=";
     break;
-  case TOKEN::INCREMENT_OPERATOR:
-    std::cerr << "++";
-    break;
   case TOKEN::DECREMENT_OPERATOR:
     std::cerr << "--";
     break;
@@ -345,8 +342,6 @@ std::string to_string(TOKEN token) {
     return "<<=";
   case TOKEN::COMPOUND_RIGHTSHIFT:
     return ">>=";
-  case TOKEN::INCREMENT_OPERATOR:
-    return "++";
   case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
