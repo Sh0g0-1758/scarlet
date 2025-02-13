@@ -429,7 +429,17 @@ std::string get_token_type(TOKEN token) {
 }
 
 bool is_right_associative(TOKEN token) {
-  return token == TOKEN::ASSIGNMENT or token == TOKEN::QUESTION_MARK;
+  return token == token::TOKEN::ASSIGNMENT or
+         token == token::TOKEN::COMPOUND_DIFFERENCE or
+         token == token::TOKEN::COMPOUND_DIVISION or
+         token == token::TOKEN::COMPOUND_PRODUCT or
+         token == token::TOKEN::COMPOUND_REMAINDER or
+         token == token::TOKEN::COMPOUND_SUM or
+         token == token::TOKEN::COMPOUND_AND or
+         token == token::TOKEN::COMPOUND_OR or
+         token == token::TOKEN::COMPOUND_XOR or
+         token == token::TOKEN::COMPOUND_LEFTSHIFT or
+         token == token::TOKEN::COMPOUND_RIGHTSHIFT;
 }
 
 int get_binop_prec(TOKEN token) {

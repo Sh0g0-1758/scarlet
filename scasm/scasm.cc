@@ -12,7 +12,6 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   case unop::UNOP::NOT:
     return Unop::LNOT;
   case unop::UNOP::UNKNOWN:
-  case unop::UNOP::DECREMENT:
     std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
               << __LINE__ << std::endl;
     __builtin_unreachable();

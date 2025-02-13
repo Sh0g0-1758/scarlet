@@ -250,18 +250,7 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
     // Handle right associative operators by reducing the new precedence by 1
-    token::TOKEN temp_token = tokens[0].get_token();
-    if (temp_token == token::TOKEN::ASSIGNMENT or
-        temp_token == token::TOKEN::COMPOUND_DIFFERENCE or
-        temp_token == token::TOKEN::COMPOUND_DIVISION or
-        temp_token == token::TOKEN::COMPOUND_PRODUCT or
-        temp_token == token::TOKEN::COMPOUND_REMAINDER or
-        temp_token == token::TOKEN::COMPOUND_SUM or
-        temp_token == token::TOKEN::COMPOUND_AND or
-        temp_token == token::TOKEN::COMPOUND_OR or
-        temp_token == token::TOKEN::COMPOUND_XOR or
-        temp_token == token::TOKEN::COMPOUND_LEFTSHIFT or
-        temp_token == token::TOKEN::COMPOUND_RIGHTSHIFT)
+    if (token::is_right_associative(tokens[0].get_token()))
       new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
@@ -402,11 +391,6 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
     unop->set_op(unop::UNOP::NOT);
     factor->set_unop_node(std::move(unop));
     tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
-    unop->set_op(unop::UNOP::DECREMENT);
-    factor->set_unop_node(std::move(unop));
-    tokens.erase(tokens.begin());
   } else {
     success = false;
     error_messages.emplace_back("Expected unary operator but got " +
@@ -440,33 +424,24 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   analyze_exp(exp->get_left());
   // here we check that the factor of the expresssion is not an undeclared
   // variable
-  if (exp->get_factor_node() != nullptr) {
-    if (exp->get_factor_node()->get_identifier_node() != nullptr) {
-      std::string var_name =
-          exp->get_factor_node()->get_identifier_node()->get_value();
-      if (symbol_table.find(var_name) == symbol_table.end()) {
-        success = false;
-        error_messages.emplace_back("Variable " + var_name + " not declared");
-      } else {
-        exp->get_factor_node()->get_identifier_node()->set_identifier(
-            symbol_table[var_name]);
-      }
+  if (exp->get_factor_node() != nullptr and
+      exp->get_factor_node()->get_identifier_node() != nullptr) {
+    std::string var_name =
+        exp->get_factor_node()->get_identifier_node()->get_value();
+    if (symbol_table.find(var_name) == symbol_table.end()) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name + " not declared");
+    } else {
+      exp->get_factor_node()->get_identifier_node()->set_identifier(
+          symbol_table[var_name]);
     }
   }
+
   // now we check that if the exp is of type assignment, then factor is an
   // identifier
   if (exp->get_binop_node() != nullptr and
       (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_DIFFERENCE or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_DIVISION or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_PRODUCT or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_REMAINDER or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_SUM or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_AND or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_XOR or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_OR or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_LEFTSHIFT or
-       exp->get_binop_node()->get_op() == binop::BINOP::COMPOUND_RIGHTSHIFT)) {
+       binop::is_compound(exp->get_binop_node()->get_op()))) {
     // ERROR CONDITION: (no factor node) or (factor node is a constant, not a
     // variable) or (factor node is a variable but has unary operators) Here we
     // exploit the benefit of short circuiting power of the logical operator
