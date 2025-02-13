@@ -35,7 +35,8 @@ enum BINOP {
   COMPOUND_XOR,
   COMPOUND_LEFTSHIFT,
   COMPOUND_RIGHTSHIFT,
-  ASSIGN
+  ASSIGN,
+  TERNARY
 };
 
 std::string to_string(BINOP binop);

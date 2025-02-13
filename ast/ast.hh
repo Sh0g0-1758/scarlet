@@ -17,10 +17,9 @@ Grammar:
 <function> ::= "int" <identifier> "(" "void" ")" "{" { <block_item> } "}"
 <block_item> ::= <statement> | <declaration>
 <declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";"
-<exp> ::= <factor> | <exp> <binop> <exp>
-<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")" | <restricted_factor> <post_op>
-<restricted_factor> ::= <identifier> | "(" <identifier> ")"
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
+<exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
+<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-" | "!"
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 <identifier> ::= ? An identifier
@@ -151,6 +150,8 @@ private:
   std::shared_ptr<AST_factor_Node> factor;
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
+  // NOTE : This is only used for the ternary operator
+  std::shared_ptr<AST_exp_Node> middle;
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -174,20 +175,35 @@ public:
   void set_left(std::shared_ptr<AST_exp_Node> left) {
     this->left = std::move(left);
   }
+
+  std::shared_ptr<AST_exp_Node> get_middle() { return middle; }
+  void set_middle(std::shared_ptr<AST_exp_Node> middle) {
+    this->middle = std::move(middle);
+  }
 };
 
 // We don't include the empty statement (just having a semicolon) in the AST
-enum class StatementType { UNKNOWN, RETURN, EXP };
+// instead of an else statement, we have an ifelse statement type.
+// since each if statement can either exist on its own or have an else statement
+enum class statementType {
+  UNKNOWN,
+  RETURN,
+  EXP,
+  IF,
+  IFELSE,
+  _IF_END,
+  _IFELSE_END
+};
 
 class AST_Statement_Node {
 private:
   std::shared_ptr<AST_exp_Node> exps;
-  StatementType type;
+  statementType type;
 
 public:
   std::string get_AST_name() { return "Statement"; }
-  void set_type(StatementType type) { this->type = type; }
-  StatementType get_type() { return type; }
+  void set_type(statementType type) { this->type = type; }
+  statementType get_type() { return type; }
 
   std::shared_ptr<AST_exp_Node> get_exps() { return exps; }
   void set_exp(std::shared_ptr<AST_exp_Node> exp) {
