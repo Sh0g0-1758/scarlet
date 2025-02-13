@@ -169,9 +169,9 @@ void Codegen::gen_scar_exp(
     }
     bool short_circuit = binop::short_circuit(exp->get_binop_node()->get_op());
     binop::BINOP sc_binop = exp->get_binop_node()->get_op();
-    const binop::BINOP org_binop = sc_binop;
-    if (binop::is_compound(org_binop)) {
-      sc_binop = compound_to_base[org_binop];
+    const binop::BINOP compound_binop = sc_binop;
+    if (binop::is_compound(compound_binop)) {
+      sc_binop = compound_to_base[compound_binop];
     }
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     if (short_circuit) {
@@ -356,7 +356,7 @@ void Codegen::gen_scar_exp(
     } else {
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
       scar_val_dst->set_type(scar::val_type::VAR);
-      if (binop::is_compound(org_binop)) {
+      if (binop::is_compound(compound_binop)) {
         scar_val_dst->set_reg_name(
             exp->get_factor_node()->get_identifier_node()->get_value());
         reg_name = scar_val_dst->get_reg();

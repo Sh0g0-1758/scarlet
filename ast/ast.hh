@@ -85,7 +85,6 @@ private:
   // factor b then factor b can never point to exp a. It can only point to
   // another object of exp, say c. exp -> factor -> exp
   //  a  ->    b   ->  c
-  std::shared_ptr<AST_unop_Node> post_op;
   std::shared_ptr<AST_exp_Node> exp_node;
 
 public:
