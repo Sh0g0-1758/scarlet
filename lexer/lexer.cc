@@ -52,24 +52,51 @@ void lexer::tokenize() {
       file.get(ch);
       if (ch == '+') {
         tokens.emplace_back(token::TOKEN::INCREMENT_OPERATOR);
-        col_number += 2;
+        col_number++;
+      } else if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_SUM);
+        col_number++;
       } else {
         file.seekg(-1, std::ios::cur);
         tokens.emplace_back(token::TOKEN::PLUS);
-        col_number++;
       }
+      col_number++;
     } else if (ch == '*') {
-      tokens.emplace_back(token::TOKEN::ASTERISK);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_PRODUCT);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::ASTERISK);
+      }
       col_number++;
     } else if (ch == '/') {
-      tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_DIVISION);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::FORWARD_SLASH);
+      }
       col_number++;
     } else if (ch == '%') {
-      tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_REMAINDER);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::PERCENT_SIGN);
+      }
       col_number++;
     } else if (ch == '&') {
       file.get(ch);
-      if (ch == '&') {
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_AND);
+        col_number += 2;
+      } else if (ch == '&') {
         tokens.emplace_back(token::TOKEN::LAND);
         col_number += 2;
       } else {
@@ -79,7 +106,10 @@ void lexer::tokenize() {
       }
     } else if (ch == '|') {
       file.get(ch);
-      if (ch == '|') {
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_OR);
+        col_number += 2;
+      } else if (ch == '|') {
         tokens.emplace_back(token::TOKEN::LOR);
         col_number += 2;
       } else {
@@ -88,7 +118,14 @@ void lexer::tokenize() {
         col_number++;
       }
     } else if (ch == '^') {
-      tokens.emplace_back(token::TOKEN::XOR);
+      file.get(ch);
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_XOR);
+        col_number++;
+      } else {
+        file.seekg(-1, std::ios::cur);
+        tokens.emplace_back(token::TOKEN::XOR);
+      }
       col_number++;
     } else if (ch == '!') {
       file.get(ch);
@@ -113,7 +150,14 @@ void lexer::tokenize() {
     } else if (ch == '>') {
       file.get(ch);
       if (ch == '>') {
-        tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
+        file.get(ch);
+        if (ch == '=') {
+          tokens.emplace_back(token::TOKEN::COMPOUND_RIGHTSHIFT);
+          col_number++;
+        } else {
+          file.seekg(-1, std::ios::cur);
+          tokens.emplace_back(token::TOKEN::RIGHT_SHIFT);
+        }
         col_number += 2;
       } else if (ch == '=') {
         tokens.emplace_back(token::TOKEN::GREATERTHANEQUAL);
@@ -126,7 +170,14 @@ void lexer::tokenize() {
     } else if (ch == '<') {
       file.get(ch);
       if (ch == '<') {
-        tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+        file.get(ch);
+        if (ch == '=') {
+          tokens.emplace_back(token::TOKEN::COMPOUND_LEFTSHIFT);
+          col_number++;
+        } else {
+          file.seekg(-1, std::ios::cur);
+          tokens.emplace_back(token::TOKEN::LEFT_SHIFT);
+        }
         col_number += 2;
       } else if (ch == '=') {
         tokens.emplace_back(token::TOKEN::LESSTHANEQUAL);
@@ -138,7 +189,10 @@ void lexer::tokenize() {
       }
     } else if (ch == '-') {
       file.get(ch);
-      if (ch == '-') {
+      if (ch == '=') {
+        tokens.emplace_back(token::TOKEN::COMPOUND_DIFFERENCE);
+        col_number += 2;
+      } else if (ch == '-') {
         tokens.emplace_back(token::TOKEN::DECREMENT_OPERATOR);
         col_number += 2;
       } else if (ch == '>') {

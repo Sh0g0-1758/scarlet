@@ -89,7 +89,6 @@ private:
 
 public:
   std::string get_AST_name() { return "Factor"; }
-
   std::shared_ptr<AST_int_Node> get_int_node() { return int_node; }
   void set_int_node(std::shared_ptr<AST_int_Node> int_node) {
     this->int_node = std::move(int_node);

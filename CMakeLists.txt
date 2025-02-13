@@ -88,8 +88,8 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 6 --stage tacky
     COMMAND echo "Running Codegen test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 6 --stage codegen
-    COMMAND echo "Running bitwise test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --increment
+    COMMAND echo "Running bitwise, compound and increment test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 5 --extra-credit
     COMMAND echo "Running test asm"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 6
 )
