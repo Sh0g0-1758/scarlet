@@ -172,6 +172,36 @@ void print_token(TOKEN token) {
   case TOKEN::DOT:
     std::cerr << ".";
     break;
+  case TOKEN::COMPOUND_SUM:
+    std::cerr << "+=";
+    break;
+  case TOKEN::COMPOUND_PRODUCT:
+    std::cerr << "*=";
+    break;
+  case TOKEN::COMPOUND_DIFFERENCE:
+    std::cerr << "-=";
+    break;
+  case TOKEN::COMPOUND_DIVISION:
+    std::cerr << "/=";
+    break;
+  case TOKEN::COMPOUND_REMAINDER:
+    std::cerr << "%=";
+    break;
+  case TOKEN::COMPOUND_LEFTSHIFT:
+    std::cerr << "<<=";
+    break;
+  case TOKEN::COMPOUND_RIGHTSHIFT:
+    std::cerr << ">>=";
+    break;
+  case TOKEN::COMPOUND_AND:
+    std::cerr << "&=";
+    break;
+  case TOKEN::COMPOUND_OR:
+    std::cerr << "|=";
+    break;
+  case TOKEN::COMPOUND_XOR:
+    std::cerr << "^=";
+    break;
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
@@ -292,6 +322,26 @@ std::string to_string(TOKEN token) {
     return "->";
   case TOKEN::DOT:
     return ".";
+  case TOKEN::COMPOUND_SUM:
+    return "+=";
+  case TOKEN::COMPOUND_DIFFERENCE:
+    return "-=";
+  case TOKEN::COMPOUND_PRODUCT:
+    return "*=";
+  case TOKEN::COMPOUND_DIVISION:
+    return "/=";
+  case TOKEN::COMPOUND_REMAINDER:
+    return "%=";
+  case TOKEN::COMPOUND_AND:
+    return "&=";
+  case TOKEN::COMPOUND_OR:
+    return "|=";
+  case TOKEN::COMPOUND_XOR:
+    return "^=";
+  case TOKEN::COMPOUND_LEFTSHIFT:
+    return "<<=";
+  case TOKEN::COMPOUND_RIGHTSHIFT:
+    return ">>=";
   case TOKEN::UNKNOWN:
     return "UNKNOWN";
   }
@@ -312,7 +362,12 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::NOTEQUAL or token == TOKEN::LESSTHAN or
          token == TOKEN::GREATERTHAN or token == TOKEN::LESSTHANEQUAL or
          token == TOKEN::GREATERTHANEQUAL or token == TOKEN::ASSIGNMENT or
-         token == TOKEN::QUESTION_MARK;
+         token == TOKEN::QUESTION_MARK or token == TOKEN::COMPOUND_DIFFERENCE or
+         token == TOKEN::COMPOUND_DIVISION or token == TOKEN::COMPOUND_SUM or
+         token == TOKEN::COMPOUND_PRODUCT or
+         token == TOKEN::COMPOUND_REMAINDER or token == TOKEN::COMPOUND_AND or
+         token == TOKEN::COMPOUND_OR or token == TOKEN::COMPOUND_LEFTSHIFT or
+         token == TOKEN::COMPOUND_RIGHTSHIFT or token == TOKEN::COMPOUND_XOR;
 }
 
 std::string char_to_esc(char c) {
@@ -374,13 +429,23 @@ std::string get_token_type(TOKEN token) {
 }
 
 bool is_right_associative(TOKEN token) {
-  return token == TOKEN::ASSIGNMENT or token == TOKEN::QUESTION_MARK;
+  return token == token::TOKEN::ASSIGNMENT or
+         token == token::TOKEN::COMPOUND_DIFFERENCE or
+         token == token::TOKEN::COMPOUND_DIVISION or
+         token == token::TOKEN::COMPOUND_PRODUCT or
+         token == token::TOKEN::COMPOUND_REMAINDER or
+         token == token::TOKEN::COMPOUND_SUM or
+         token == token::TOKEN::COMPOUND_AND or
+         token == token::TOKEN::COMPOUND_OR or
+         token == token::TOKEN::COMPOUND_XOR or
+         token == token::TOKEN::COMPOUND_LEFTSHIFT or
+         token == token::TOKEN::COMPOUND_RIGHTSHIFT;
 }
 
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;
-  } else if (token == TOKEN::ASSIGNMENT) {
+  } else if (is_right_associative(token)) {
     return 5;
   } else if (token == TOKEN::QUESTION_MARK) {
     // Ternary operator

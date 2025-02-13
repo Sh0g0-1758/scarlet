@@ -223,7 +223,8 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     factor->set_identifier_node(std::move(identifier));
   } else if (tokens[0].get_token() == token::TOKEN::TILDE or
              tokens[0].get_token() == token::TOKEN::HYPHEN or
-             tokens[0].get_token() == token::TOKEN::NOT) {
+             tokens[0].get_token() == token::TOKEN::NOT or
+             tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
@@ -249,7 +250,7 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
     // Handle right associative operators by reducing the new precedence by 1
-    if (is_right_associative(tokens[0].get_token()))
+    if (token::is_right_associative(tokens[0].get_token()))
       new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
@@ -333,6 +334,36 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT) {
     binop->set_op(binop::BINOP::ASSIGN);
     tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIFFERENCE) {
+    binop->set_op(binop::BINOP::COMPOUND_DIFFERENCE);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIVISION) {
+    binop->set_op(binop::BINOP::COMPOUND_DIVISION);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_PRODUCT) {
+    binop->set_op(binop::BINOP::COMPOUND_PRODUCT);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_REMAINDER) {
+    binop->set_op(binop::BINOP::COMPOUND_REMAINDER);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_SUM) {
+    binop->set_op(binop::BINOP::COMPOUND_SUM);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_AND) {
+    binop->set_op(binop::BINOP::COMPOUND_AND);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_OR) {
+    binop->set_op(binop::BINOP::COMPOUND_OR);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_XOR) {
+    binop->set_op(binop::BINOP::COMPOUND_XOR);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_LEFTSHIFT) {
+    binop->set_op(binop::BINOP::COMPOUND_LEFTSHIFT);
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_RIGHTSHIFT) {
+    binop->set_op(binop::BINOP::COMPOUND_RIGHTSHIFT);
+    tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::QUESTION_MARK) {
     binop->set_op(binop::BINOP::TERNARY);
     tokens.erase(tokens.begin());
@@ -405,10 +436,12 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
           symbol_table[var_name]);
     }
   }
+
   // now we check that if the exp is of type assignment, then factor is an
   // identifier
   if (exp->get_binop_node() != nullptr and
-      exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
+      (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
+       binop::is_compound(exp->get_binop_node()->get_op()))) {
     // ERROR CONDITION: (no factor node) or (factor node is a constant, not a
     // variable) or (factor node is a variable but has unary operators) Here we
     // exploit the benefit of short circuiting power of the logical operator
