@@ -480,17 +480,25 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   if (exp->get_factor_node() != nullptr) {
     auto check_factor = exp->get_factor_node();
     bool has_i_d = false;
+    bool has_multiple_i_d = false;
     // CHECK WHETHER INCREMENT OR DECREMENT OPERATOR IS PRESENT
     for (auto it : check_factor->get_unop_nodes()) {
       if (it->get_op() == unop::UNOP::INCREMENT or
           it->get_op() == unop::UNOP::DECREMENT or
           it->get_op() == unop::UNOP::PINCREMENT or
           it->get_op() == unop::UNOP::PDECREMENT) {
+        if (has_i_d) {
+          has_multiple_i_d = true;
+          break;
+        }
         has_i_d = true;
-        break;
       }
     }
-    if (has_i_d) {
+    if (has_multiple_i_d) {
+      success = false;
+      error_messages.emplace_back(
+          "Expected an lvalue for the increment / decrement operator");
+    } else if (has_i_d) {
       // THE INCREMENT AND DECREMENT OPERATOR MUST BE APPLIED TO AN LVALUE
       // THAT MEANS IT SHOULD BE THE LAST UNOP IN THE UNOPS VECTOR
       if (check_factor->get_unop_nodes().back()->get_op() !=
