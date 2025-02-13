@@ -551,13 +551,6 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                 break;
               }
             }
-            // AN ADDITIONAL CHECK TO ENSURE THAT INT NODE IS ALWAYS NULL
-            if (exp->get_factor_node()->get_int_node() != nullptr) {
-              success = false;
-              error_messages.emplace_back(
-                  "Expected an lvalue for the increment / decrement operator");
-              break;
-            }
             check_exp = check_exp->get_factor_node()->get_exp_node();
           }
         } else {
