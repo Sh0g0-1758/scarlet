@@ -178,13 +178,13 @@
         "chapter_6/invalid_lex/extra_credit/bad_label.c": [
             "goto"
         ],
-        "chapter_6/invalid_parse/extra_credit/label_declaration.c": [
+        "chapter_6/valid/extra_credit/label_declaration.c": [
             "goto"
         ],
         "chapter_6/invalid_parse/extra_credit/label_expression_clause.c": [
             "goto"
         ],
-        "chapter_6/invalid_parse/extra_credit/label_without_statement.c": [
+        "chapter_6/valid/extra_credit/label_without_statement.c": [
             "goto"
         ],
         "chapter_6/invalid_parse/extra_credit/parenthesized_label.c": [

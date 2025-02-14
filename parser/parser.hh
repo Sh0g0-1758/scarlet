@@ -16,6 +16,7 @@ private:
   std::vector<std::string> error_messages;
   int symbol_counter = 0;
   std::map<std::string, std::string> symbol_table;
+  std::map<std::string, bool> goto_labels;
   ast::AST_Program_Node program;
   std::shared_ptr<ast::AST_Function_Node>
   parse_function(std::vector<token::Token> &tokens);

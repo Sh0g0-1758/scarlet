@@ -557,6 +557,32 @@ void Codegen::gen_scar() {
           scar_val_src->set_value(get_last_fr_label_name(true));
           scar_instruction->set_src1(std::move(scar_val_src));
           scar_function->add_instruction(std::move(scar_instruction));
+        } else if (inst->get_statement()->get_type() ==
+                   ast::statementType::GOTO) {
+          MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+          scar_instruction->set_type(scar::instruction_type::JUMP);
+          MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+          scar_val_src->set_type(scar::val_type::UNKNOWN);
+          scar_val_src->set_value(inst->get_statement()
+                                      ->get_exps()
+                                      ->get_factor_node()
+                                      ->get_identifier_node()
+                                      ->get_value());
+          scar_instruction->set_src1(std::move(scar_val_src));
+          scar_function->add_instruction(scar_instruction);
+        } else if (inst->get_statement()->get_type() ==
+                   ast::statementType::LABEL) {
+          MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+          scar_instruction->set_type(scar::instruction_type::LABEL);
+          MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+          scar_val_src->set_type(scar::val_type::UNKNOWN);
+          scar_val_src->set_value(inst->get_statement()
+                                      ->get_exps()
+                                      ->get_factor_node()
+                                      ->get_identifier_node()
+                                      ->get_value());
+          scar_instruction->set_src1(std::move(scar_val_src));
+          scar_function->add_instruction(scar_instruction);
         }
       } else if (inst->get_type() == ast::BlockItemType::DECLARATION) {
         // if there is no definition, we ignore it

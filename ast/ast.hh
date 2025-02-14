@@ -17,7 +17,7 @@ Grammar:
 <function> ::= "int" <identifier> "(" "void" ")" "{" { <block_item> } "}"
 <block_item> ::= <statement> | <declaration>
 <declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":"
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-" | "!" | "--" | "++"
@@ -186,7 +186,9 @@ enum class statementType {
   IF,
   IFELSE,
   _IF_END,
-  _IFELSE_END
+  _IFELSE_END,
+  GOTO,
+  LABEL
 };
 
 class AST_Statement_Node {

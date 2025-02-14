@@ -76,6 +76,9 @@ void print_token(TOKEN token) {
   case TOKEN::STRUCT:
     std::cerr << "struct ";
     break;
+  case TOKEN::GOTO:
+    std::cerr << "goto ";
+    break;
   case TOKEN::OPEN_PARANTHESES:
     std::cerr << "( ";
     break;
@@ -214,6 +217,21 @@ void print_token(TOKEN token) {
   case TOKEN::UNKNOWN:
     std::cerr << "UNKNOWN ";
     break;
+  case TOKEN::BINARYSTART:
+  case TOKEN::BINARYEND:
+  case TOKEN::BITWISESTART:
+  case TOKEN::BITWISEEND:
+  case TOKEN::LOGICALSTART:
+  case TOKEN::LOGICALEND:
+  case TOKEN::UNARYSTART:
+  case TOKEN::UNARYEND:
+  case TOKEN::KEYWORDSTART:
+  case TOKEN::KEYWORDEND:
+  case TOKEN::GRAMMARSTART:
+  case TOKEN::GRAMMAREND:
+  case TOKEN::CONSTANTSTART:
+  case TOKEN::CONSTANTEND:
+    UNREACHABLE()
   }
 }
 
@@ -263,6 +281,8 @@ std::string to_string(TOKEN token) {
     return "sizeof";
   case TOKEN::STRUCT:
     return "struct";
+  case TOKEN::GOTO:
+    return "goto";
   case TOKEN::OPEN_PARANTHESES:
     return "(";
   case TOKEN::CLOSE_PARANTHESES:
@@ -355,6 +375,21 @@ std::string to_string(TOKEN token) {
     return ">>=";
   case TOKEN::UNKNOWN:
     return "UNKNOWN";
+  case TOKEN::BINARYSTART:
+  case TOKEN::BINARYEND:
+  case TOKEN::BITWISESTART:
+  case TOKEN::BITWISEEND:
+  case TOKEN::LOGICALSTART:
+  case TOKEN::LOGICALEND:
+  case TOKEN::UNARYSTART:
+  case TOKEN::UNARYEND:
+  case TOKEN::KEYWORDSTART:
+  case TOKEN::KEYWORDEND:
+  case TOKEN::GRAMMARSTART:
+  case TOKEN::GRAMMAREND:
+  case TOKEN::CONSTANTSTART:
+  case TOKEN::CONSTANTEND:
+    UNREACHABLE()
   }
   return "INVALID";
 }
@@ -429,14 +464,22 @@ std::string char_to_esc(char c) {
 std::string get_token_type(TOKEN token) {
   if (token == TOKEN::IDENTIFIER) {
     return "IDENTIFIER";
-  } else if (token >= TOKEN::CONSTANT && token <= TOKEN::CHAR_ARR) {
+  } else if (token > TOKEN::CONSTANTSTART && token < TOKEN::CONSTANTEND) {
     return "CONSTANT";
-  } else if (token >= TOKEN::INT && token <= TOKEN::STRUCT) {
+  } else if (token > TOKEN::KEYWORDSTART && token < TOKEN::KEYWORDEND) {
     return "KEYWORD";
-  } else if (token >= TOKEN::OPEN_PARANTHESES && token <= TOKEN::SEMICOLON) {
+  } else if (token > TOKEN::GRAMMARSTART && token < TOKEN::GRAMMAREND) {
     return "SPECIAL SYMBOL";
-  } else if (token >= TOKEN::TILDE) {
-    return "OPERATORS";
+  } else {
+    if (token > TOKEN::UNARYSTART && token < TOKEN::UNARYEND) {
+      return "OPERATOR (UNARY)";
+    } else if (token > TOKEN::BINARYSTART && token < TOKEN::BINARYEND) {
+      return "OPERATOR (BINARY)";
+    } else if (token > TOKEN::BITWISESTART && token < TOKEN::BITWISEEND) {
+      return "OPERATOR (BITWISE)";
+    } else if (token > TOKEN::LOGICALSTART && token < TOKEN::LOGICALEND) {
+      return "OPERATOR (LOGICAL)";
+    }
   }
   return "UNKNOWN";
 }

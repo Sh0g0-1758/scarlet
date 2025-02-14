@@ -38,4 +38,4 @@ play
 playground
 build
 test_framework
-tests
+__pycache__
