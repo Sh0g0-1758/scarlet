@@ -4,7 +4,7 @@ namespace parser {
 
 #define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
 #define UNREACHABLE()                                                          \
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
+  std::cout << "Unreachable code reached in " << __FILE__ << " at line "       \
             << __LINE__ << std::endl;                                          \
   __builtin_unreachable();
 
@@ -474,22 +474,33 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
   }
 }
 
-void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
+void parser::analyze_exp(
+    std::shared_ptr<ast::AST_exp_Node> exp,
+    std::map<std::pair<std::string, int>, std::string> &symbol_table,
+    int indx) {
   if (exp == nullptr)
     return;
-  analyze_exp(exp->get_left());
+  analyze_exp(exp->get_left(), symbol_table, indx);
   // here we check that the factor of the expresssion is not an undeclared
   // variable
   if (exp->get_factor_node() != nullptr and
       exp->get_factor_node()->get_identifier_node() != nullptr) {
     std::string var_name =
         exp->get_factor_node()->get_identifier_node()->get_value();
-    if (symbol_table.find(var_name) == symbol_table.end()) {
+    int level = indx;
+    bool found = false;
+    while (level >= 0) {
+      if (symbol_table.find({var_name, level}) != symbol_table.end()) {
+        exp->get_factor_node()->get_identifier_node()->set_identifier(
+            symbol_table[{var_name, level}]);
+        found = true;
+        break;
+      }
+      level--;
+    }
+    if (!found) {
       success = false;
       error_messages.emplace_back("Variable " + var_name + " not declared");
-    } else {
-      exp->get_factor_node()->get_identifier_node()->set_identifier(
-          symbol_table[var_name]);
     }
   }
 
@@ -599,85 +610,103 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   }
   // since the factor can have its own exp as well, we recursively check that
   if (exp->get_factor_node() != nullptr)
-    analyze_exp(exp->get_factor_node()->get_exp_node());
+    analyze_exp(exp->get_factor_node()->get_exp_node(), symbol_table, indx);
   // now we recursively check the right side of the expression
-  analyze_exp(exp->get_right());
+  if (exp->get_right() != nullptr)
+    analyze_exp(exp->get_right(), symbol_table, indx);
   // and a recursive check for the middle expression -> special case(ternary
   // operator)
-  analyze_exp(exp->get_middle());
+  if (exp->get_middle() != nullptr)
+    analyze_exp(exp->get_middle(), symbol_table, indx);
+}
+
+// NOTE: symbol table here is a map from {variable_name, block_indx} ->
+// temporary_variable_name(used as scar registers later)
+void parser::analyze_block(
+    std::shared_ptr<ast::AST_Block_Node> block,
+    std::map<std::pair<std::string, int>, std::string> &symbol_table,
+    int indx) {
+  if (block == nullptr)
+    return;
+  for (auto blockItem : block->get_blockItems()) {
+    if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
+      std::string var_name =
+          blockItem->get_declaration()->get_identifier()->get_value();
+      if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
+        // the symbol has been declared twice which is illegal
+        success = false;
+        error_messages.emplace_back("Variable " + var_name +
+                                    " already declared");
+      } else {
+        symbol_table[{var_name, indx}] = get_temp_name(var_name);
+        blockItem->get_declaration()->get_identifier()->set_identifier(
+            symbol_table[{var_name, indx}]);
+        if (blockItem->get_declaration()->get_exp() != nullptr)
+          analyze_exp(blockItem->get_declaration()->get_exp(), symbol_table,
+                      indx);
+      }
+    } else if (blockItem->get_type() == ast::BlockItemType::STATEMENT) {
+      // every variable that is used in any of the statement should already
+      // have been declared.
+
+      // We need to check that the labels used in goto statements are
+      // actually declared and we also need to make sure that there are no
+      // duplicate labels
+      if (blockItem->get_statement()->get_type() == ast::statementType::GOTO) {
+        std::string label = blockItem->get_statement()
+                                ->get_exps()
+                                ->get_factor_node()
+                                ->get_identifier_node()
+                                ->get_value();
+        if (goto_labels.find(label) == goto_labels.end()) {
+          goto_labels[label] = false;
+        }
+        continue;
+      }
+
+      if (blockItem->get_statement()->get_type() == ast::statementType::LABEL) {
+        std::string label = blockItem->get_statement()
+                                ->get_exps()
+                                ->get_factor_node()
+                                ->get_identifier_node()
+                                ->get_value();
+        if (goto_labels.find(label) != goto_labels.end()) {
+          if (goto_labels[label] == false) {
+            goto_labels[label] = true;
+          } else {
+            success = false;
+            error_messages.emplace_back("Label " + label + " already declared");
+          }
+        } else {
+          goto_labels[label] = true;
+        }
+        continue;
+      }
+      if (blockItem->get_statement()->get_exps() != nullptr) {
+        analyze_exp(blockItem->get_statement()->get_exps(), symbol_table, indx);
+      }
+      if (blockItem->get_statement()->get_block() != nullptr) {
+        std::map<std::pair<std::string, int>, std::string> proxy_symbol_table(
+            symbol_table);
+        analyze_block(blockItem->get_statement()->get_block(),
+                      proxy_symbol_table, indx + 1);
+      }
+    }
+  }
 }
 
 void parser::semantic_analysis() {
   // variable resolution
   for (auto funcs : program.get_functions()) {
-    for (auto blockItem : funcs->get_block()->get_blockItems()) {
-      if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
-        std::string var_name =
-            blockItem->get_declaration()->get_identifier()->get_value();
-        if (symbol_table.find(var_name) != symbol_table.end()) {
-          // the symbol has been declared twice which is illegal
-          success = false;
-          error_messages.emplace_back("Variable " + var_name +
-                                      " already declared");
-        } else {
-          symbol_table[var_name] = get_temp_name(var_name);
-          blockItem->get_declaration()->get_identifier()->set_identifier(
-              symbol_table[var_name]);
-          if (blockItem->get_declaration()->get_exp() != nullptr) {
-            analyze_exp(blockItem->get_declaration()->get_exp());
-          }
-        }
-      } else if (blockItem->get_type() == ast::BlockItemType::STATEMENT) {
-        // every variable that is used in any of the statement should already
-        // have been declared.
-
-        // We need to check that the variables used in goto statements are
-        // actually declared and we also need to make sure that there are no
-        // duplicate labels
-        if (blockItem->get_statement()->get_type() ==
-            ast::statementType::GOTO) {
-          std::string label = blockItem->get_statement()
-                                  ->get_exps()
-                                  ->get_factor_node()
-                                  ->get_identifier_node()
-                                  ->get_value();
-          if (goto_labels.find(label) == goto_labels.end()) {
-            goto_labels[label] = false;
-          }
-          continue;
-        }
-
-        if (blockItem->get_statement()->get_type() ==
-            ast::statementType::LABEL) {
-          std::string label = blockItem->get_statement()
-                                  ->get_exps()
-                                  ->get_factor_node()
-                                  ->get_identifier_node()
-                                  ->get_value();
-          if (goto_labels.find(label) != goto_labels.end()) {
-            if (goto_labels[label] == false) {
-              goto_labels[label] = true;
-            } else {
-              success = false;
-              error_messages.emplace_back("Label " + label +
-                                          " already declared");
-            }
-          } else {
-            goto_labels[label] = true;
-          }
-          continue;
-        }
-        analyze_exp(blockItem->get_statement()->get_exps());
-      }
-    }
-
-    // Check that all varaibles are declared
-    for (auto label : goto_labels) {
-      if (label.second == false) {
-        success = false;
-        error_messages.emplace_back("Label " + label.first +
-                                    " used but not declared");
-      }
+    std::map<std::pair<std::string, int>, std::string> symbol_table;
+    analyze_block(funcs->get_block(), symbol_table, 0);
+  }
+  // Check that all varaibles are declared
+  for (auto label : goto_labels) {
+    if (label.second == false) {
+      success = false;
+      error_messages.emplace_back("Label " + label.first +
+                                  " used but not declared");
     }
   }
 }
@@ -734,24 +763,24 @@ std::string to_string(ast::statementType type) {
 
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!factor->get_unop_nodes().empty()) {
-    std::cerr << "Unop( ";
+    std::cout << "Unop( ";
     for (auto unop : factor->get_unop_nodes()) {
-      std::cerr << unop::to_string(unop->get_op()) << ", ";
+      std::cout << unop::to_string(unop->get_op()) << ", ";
     }
   }
   if (factor->get_exp_node() != nullptr) {
     pretty_print_exp(factor->get_exp_node());
   } else if (factor->get_int_node() != nullptr) {
-    std::cerr << factor->get_int_node()->get_AST_name() << "("
+    std::cout << factor->get_int_node()->get_AST_name() << "("
               << factor->get_int_node()->get_value() << ")";
     if (!factor->get_unop_nodes().empty()) {
-      std::cerr << ")";
+      std::cout << ")";
     }
   } else {
-    std::cerr << factor->get_identifier_node()->get_AST_name() << "("
+    std::cout << factor->get_identifier_node()->get_AST_name() << "("
               << factor->get_identifier_node()->get_value() << ")";
     if (!factor->get_unop_nodes().empty()) {
-      std::cerr << ")";
+      std::cout << ")";
     }
   }
 }
@@ -762,71 +791,71 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   pretty_print_exp(exp->get_left());
   if (exp->get_binop_node() != nullptr and
       exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
-    std::cerr << "\t\t\t\t\tBinop("
+    std::cout << "\t\t\t\t\tBinop("
               << binop::to_string(exp->get_binop_node()->get_op()) << " ,";
     if (exp->get_left() == nullptr) {
       pretty_print_factor(exp->get_factor_node());
     } else {
-      std::cerr << "Earlier, ";
+      std::cout << "Earlier, ";
     }
     if (exp->get_middle() != nullptr) {
       pretty_print_exp(exp->get_middle());
-      std::cerr << ", ";
+      std::cout << ", ";
     }
     pretty_print_exp(exp->get_right());
-    std::cerr << ")" << std::endl;
+    std::cout << ")" << std::endl;
   } else {
-    std::cerr << "\t\t\t\t\t";
+    std::cout << "\t\t\t\t\t";
     pretty_print_factor(exp->get_factor_node());
-    std::cerr << std::endl;
+    std::cout << std::endl;
   }
 }
 
 void parser::pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block) {
   if (block == nullptr)
     return;
-  std::cerr << "\t\t\t" << "Block=(" << std::endl;
+  std::cout << "\t\t\t" << "Block=(" << std::endl;
   for (auto blockItem : block->get_blockItems()) {
-    std::cerr << "\t\t\t\t" << to_string(blockItem->get_type()) << "("
+    std::cout << "\t\t\t\t" << to_string(blockItem->get_type()) << "("
               << std::endl;
     if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
-      std::cerr << "\t\t\t\t\tidentifier=\""
+      std::cout << "\t\t\t\t\tidentifier=\""
                 << blockItem->get_declaration()->get_identifier()->get_value()
                 << "\"," << std::endl;
       if (blockItem->get_declaration()->get_exp() != nullptr) {
-        std::cerr << "\t\t\t\t\texp=(" << std::endl;
+        std::cout << "\t\t\t\t\texp=(" << std::endl;
         pretty_print_exp(blockItem->get_declaration()->get_exp());
-        std::cerr << "\t\t\t\t\t)," << std::endl;
+        std::cout << "\t\t\t\t\t)," << std::endl;
       }
     } else {
-      std::cerr << "\t\t\t\t\ttype="
+      std::cout << "\t\t\t\t\ttype="
                 << to_string(blockItem->get_statement()->get_type()) << ","
                 << std::endl;
       if (blockItem->get_statement()->get_block() != nullptr)
         pretty_print_block(blockItem->get_statement()->get_block());
       else {
-        std::cerr << "\t\t\t\t\texp=(" << std::endl;
+        std::cout << "\t\t\t\t\texp=(" << std::endl;
         pretty_print_exp(blockItem->get_statement()->get_exps());
-        std::cerr << "\t\t\t\t\t)," << std::endl;
+        std::cout << "\t\t\t\t\t)," << std::endl;
       }
     }
-    std::cerr << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\t)," << std::endl;
   }
-  std::cerr << "\t\t\t)" << std::endl;
+  std::cout << "\t\t\t)" << std::endl;
 }
 
 void parser::pretty_print() {
-  std::cerr << "Program(" << std::endl;
+  std::cout << "Program(" << std::endl;
   for (auto function : program.get_functions()) {
-    std::cerr << "\tFunction(" << std::endl;
-    std::cerr << "\t\tname=\"" << function->get_identifier()->get_value()
+    std::cout << "\tFunction(" << std::endl;
+    std::cout << "\t\tname=\"" << function->get_identifier()->get_value()
               << "\"," << std::endl;
-    std::cerr << "\t\tbody=[" << std::endl;
+    std::cout << "\t\tbody=[" << std::endl;
     pretty_print_block(function->get_block());
-    std::cerr << "\t\t]" << std::endl;
-    std::cerr << "\t)," << std::endl;
+    std::cout << "\t\t]" << std::endl;
+    std::cout << "\t)," << std::endl;
   }
-  std::cerr << ")" << std::endl;
+  std::cout << ")" << std::endl;
 }
 
 } // namespace parser

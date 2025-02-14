@@ -15,7 +15,6 @@ private:
   bool success = true;
   std::vector<std::string> error_messages;
   int symbol_counter = 0;
-  std::map<std::string, std::string> symbol_table;
   std::map<std::string, bool> goto_labels;
   ast::AST_Program_Node program;
   std::shared_ptr<ast::AST_Function_Node>
@@ -50,7 +49,14 @@ private:
     symbol_counter++;
     return tmp;
   }
-  void analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp);
+  void
+  analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+              std::map<std::pair<std::string, int>, std::string> &symbol_table,
+              int indx);
+  void analyze_block(
+      std::shared_ptr<ast::AST_Block_Node> block,
+      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      int indx);
 
 public:
   void parse_program(std::vector<token::Token> tokens);
