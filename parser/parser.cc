@@ -85,16 +85,32 @@ parser::parse_function(std::vector<token::Token> &tokens) {
   EXPECT_FUNC(token::TOKEN::OPEN_PARANTHESES);
   EXPECT_FUNC(token::TOKEN::VOID);
   EXPECT_FUNC(token::TOKEN::CLOSE_PARANTHESES);
-  EXPECT_FUNC(token::TOKEN::OPEN_BRACE);
-  // parse all the block items in the current scope
   MAKE_SHARED(ast::AST_Block_Node, block);
+  parse_block(tokens, block);
+  function->set_block(block);
+  return function;
+}
+
+void parser::parse_block(std::vector<token::Token> &tokens,
+                         std::shared_ptr<ast::AST_Block_Node> block) {
+  EXPECT(token::TOKEN::OPEN_BRACE);
   while (!tokens.empty() and success and
          tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
     parse_block_item(tokens, block);
   }
-  EXPECT_FUNC(token::TOKEN::CLOSE_BRACE);
-  function->set_block(block);
-  return function;
+  EXPECT(token::TOKEN::CLOSE_BRACE);
+}
+
+void parser::parse_block_item(std::vector<token::Token> &tokens,
+                              std::shared_ptr<ast::AST_Block_Node> block) {
+  // We have a variable declaration / defintion
+  if (tokens[0].get_token() == token::TOKEN::INT) {
+    parse_declaration(tokens, block);
+  } else {
+    // we have a return statement, an expression, an if-else block or a null
+    // statement
+    parse_statement(tokens, block);
+  }
 }
 
 void parser::parse_declaration(std::vector<token::Token> &tokens,
@@ -220,6 +236,13 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     EXPECT(token::TOKEN::COLON);
     block_item->set_statement(std::move(statement));
     block->add_blockItem(std::move(block_item));
+  } else if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
+    MAKE_SHARED(ast::AST_Block_Node, block_node);
+    parse_block(tokens, block_node);
+    statement->set_type(ast::statementType::BLOCK);
+    statement->set_block(std::move(block_node));
+    block_item->set_statement(std::move(statement));
+    block->add_blockItem(std::move(block_item));
   } else {
     statement->set_type(ast::statementType::EXP);
     MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -228,18 +251,6 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     EXPECT(token::TOKEN::SEMICOLON);
     block_item->set_statement(std::move(statement));
     block->add_blockItem(std::move(block_item));
-  }
-}
-
-void parser::parse_block_item(std::vector<token::Token> &tokens,
-                              std::shared_ptr<ast::AST_Block_Node> block) {
-  // We have a variable declaration / defintion
-  if (tokens[0].get_token() == token::TOKEN::INT) {
-    parse_declaration(tokens, block);
-  } else {
-    // we have a return statement, an expression, an if-else block or a null
-    // statement
-    parse_statement(tokens, block);
   }
 }
 

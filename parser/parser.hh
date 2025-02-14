@@ -20,6 +20,8 @@ private:
   ast::AST_Program_Node program;
   std::shared_ptr<ast::AST_Function_Node>
   parse_function(std::vector<token::Token> &tokens);
+  void parse_block(std::vector<token::Token> &tokens,
+                   std::shared_ptr<ast::AST_Block_Node> block);
   void parse_block_item(std::vector<token::Token> &tokens,
                         std::shared_ptr<ast::AST_Block_Node> function);
   void parse_declaration(std::vector<token::Token> &tokens,
