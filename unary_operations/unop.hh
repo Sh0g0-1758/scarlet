@@ -3,8 +3,6 @@
 #include <string>
 namespace scarlet {
 namespace unop {
-// NOTE: INCREMENT and DECREMENT are pre operations while PINCREMENT and
-// PDECREMENT are post operations
 enum class UNOP {
   UNKNOWN,
   COMPLEMENT,
