@@ -10,10 +10,10 @@ enum class UNOP {
   COMPLEMENT,
   NEGATE,
   NOT,
-  INCREMENT,
-  DECREMENT,
-  PINCREMENT,
-  PDECREMENT
+  PREINCREMENT,
+  PREDECREMENT,
+  POSTINCREMENT,
+  POSTDECREMENT
 };
 std::string to_string(UNOP unop);
 } // namespace unop

@@ -4,14 +4,14 @@ namespace unop {
 
 std::string to_string(UNOP unop) {
   switch (unop) {
-  case UNOP::INCREMENT:
-    return "Increment";
-  case UNOP::DECREMENT:
-    return "Decrement";
-  case UNOP::PINCREMENT:
-    return "Post Increment";
-  case UNOP::PDECREMENT:
-    return "Post Decrement";
+  case UNOP::PREINCREMENT:
+    return "PreIncrement";
+  case UNOP::PREDECREMENT:
+    return "PreDecrement";
+  case UNOP::POSTINCREMENT:
+    return "PostIncrement";
+  case UNOP::POSTDECREMENT:
+    return "PostDecrement";
   case UNOP::COMPLEMENT:
     return "Complement";
   case UNOP::NEGATE:

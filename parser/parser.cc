@@ -247,9 +247,9 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
     MAKE_SHARED(ast::AST_unop_Node, unop);
     if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR) {
-      unop->set_op(unop::UNOP::PINCREMENT);
+      unop->set_op(unop::UNOP::POSTINCREMENT);
     } else {
-      unop->set_op(unop::UNOP::PDECREMENT);
+      unop->set_op(unop::UNOP::POSTDECREMENT);
     }
     tokens.erase(tokens.begin());
     factor->add_unop_node(std::move(unop));
@@ -406,10 +406,10 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
     unop->set_op(unop::UNOP::NOT);
     break;
   case token::TOKEN::INCREMENT_OPERATOR:
-    unop->set_op(unop::UNOP::INCREMENT);
+    unop->set_op(unop::UNOP::PREINCREMENT);
     break;
   case token::TOKEN::DECREMENT_OPERATOR:
-    unop->set_op(unop::UNOP::DECREMENT);
+    unop->set_op(unop::UNOP::PREDECREMENT);
     break;
   default:
     UNREACHABLE()
@@ -483,10 +483,10 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     bool has_multiple_i_d = false;
     // CHECK WHETHER INCREMENT OR DECREMENT OPERATOR IS PRESENT
     for (auto it : check_factor->get_unop_nodes()) {
-      if (it->get_op() == unop::UNOP::INCREMENT or
-          it->get_op() == unop::UNOP::DECREMENT or
-          it->get_op() == unop::UNOP::PINCREMENT or
-          it->get_op() == unop::UNOP::PDECREMENT) {
+      if (it->get_op() == unop::UNOP::PREINCREMENT or
+          it->get_op() == unop::UNOP::PREDECREMENT or
+          it->get_op() == unop::UNOP::POSTINCREMENT or
+          it->get_op() == unop::UNOP::POSTDECREMENT) {
         if (has_i_d) {
           has_multiple_i_d = true;
           break;
@@ -502,13 +502,13 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       // THE INCREMENT AND DECREMENT OPERATOR MUST BE APPLIED TO AN LVALUE
       // THAT MEANS IT SHOULD BE THE LAST UNOP IN THE UNOPS VECTOR
       if (check_factor->get_unop_nodes().back()->get_op() !=
-              unop::UNOP::INCREMENT and
+              unop::UNOP::PREINCREMENT and
           check_factor->get_unop_nodes().back()->get_op() !=
-              unop::UNOP::DECREMENT and
+              unop::UNOP::PREDECREMENT and
           check_factor->get_unop_nodes().back()->get_op() !=
-              unop::UNOP::PINCREMENT and
+              unop::UNOP::POSTINCREMENT and
           check_factor->get_unop_nodes().back()->get_op() !=
-              unop::UNOP::PDECREMENT) {
+              unop::UNOP::POSTDECREMENT) {
         success = false;
         error_messages.emplace_back(
             "Expected an lvalue for the increment / decrement operator");

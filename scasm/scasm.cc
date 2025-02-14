@@ -17,10 +17,10 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   case unop::UNOP::NOT:
     return Unop::LNOT;
     // INCREMENT AND DECREMENT ARE HANDLED IN SCAR AS A BINOP
-  case unop::UNOP::INCREMENT:
-  case unop::UNOP::DECREMENT:
-  case unop::UNOP::PINCREMENT:
-  case unop::UNOP::PDECREMENT:
+  case unop::UNOP::PREINCREMENT:
+  case unop::UNOP::PREDECREMENT:
+  case unop::UNOP::POSTINCREMENT:
+  case unop::UNOP::POSTDECREMENT:
   case unop::UNOP::UNKNOWN:
     UNREACHABLE()
   }

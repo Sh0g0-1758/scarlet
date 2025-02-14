@@ -25,10 +25,10 @@ void Codegen::gen_scar_factor(
     for (int i = num_unpos - 1; i >= 0; i--) {
       // SPECIAL CASE WHEN WE HAVE INCREMENT OR DECREMENT OPERATOR
       unop::UNOP op = unop_buffer[curr_buff][i];
-      if (op == unop::UNOP::INCREMENT or op == unop::UNOP::DECREMENT) {
+      if (op == unop::UNOP::PREINCREMENT or op == unop::UNOP::PREDECREMENT) {
         MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
         scar_instruction->set_type(scar::instruction_type::BINARY);
-        if (op == unop::UNOP::INCREMENT) {
+        if (op == unop::UNOP::PREINCREMENT) {
           scar_instruction->set_binop(binop::BINOP::ADD);
         } else {
           scar_instruction->set_binop(binop::BINOP::SUB);
@@ -60,7 +60,8 @@ void Codegen::gen_scar_factor(
 
         scar_function->add_instruction(std::move(scar_instruction));
         continue;
-      } else if (op == unop::UNOP::PINCREMENT or op == unop::UNOP::PDECREMENT) {
+      } else if (op == unop::UNOP::POSTINCREMENT or
+                 op == unop::UNOP::POSTDECREMENT) {
         // SPECIAL CASE WHEN WE HAVE POST INCREMENT OR DECREMENT
         // Since these return the original value and then increment or decrement
         // We first make a copy of the original value and then increment or
@@ -89,7 +90,7 @@ void Codegen::gen_scar_factor(
         // NOW DO THE BINARY OPERATION
         MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
         scar_instruction2->set_type(scar::instruction_type::BINARY);
-        if (op == unop::UNOP::PINCREMENT) {
+        if (op == unop::UNOP::POSTINCREMENT) {
           scar_instruction2->set_binop(binop::BINOP::ADD);
         } else {
           scar_instruction2->set_binop(binop::BINOP::SUB);
