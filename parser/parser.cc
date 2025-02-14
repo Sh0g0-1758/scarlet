@@ -194,6 +194,31 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     // ignore the empty statement
     tokens.erase(tokens.begin());
     return;
+  } else if (tokens[0].get_token() == token::TOKEN::GOTO) {
+    tokens.erase(tokens.begin());
+    statement->set_type(ast::statementType::GOTO);
+    EXPECT_IDENTIFIER();
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    MAKE_SHARED(ast::AST_factor_Node, factor);
+    factor->set_identifier_node(std::move(identifier));
+    exp->set_factor_node(std::move(factor));
+    statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::SEMICOLON);
+    block_item->set_statement(std::move(statement));
+    function->add_blockItem(std::move(block_item));
+  } else if (tokens.size() >= 2 &&
+             tokens[0].get_token() == token::TOKEN::IDENTIFIER &&
+             tokens[1].get_token() == token::TOKEN::COLON) {
+    statement->set_type(ast::statementType::LABEL);
+    EXPECT_IDENTIFIER();
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    MAKE_SHARED(ast::AST_factor_Node, factor);
+    factor->set_identifier_node(std::move(identifier));
+    exp->set_factor_node(std::move(factor));
+    statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::COLON);
+    block_item->set_statement(std::move(statement));
+    function->add_blockItem(std::move(block_item));
   } else {
     statement->set_type(ast::statementType::EXP);
     MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -594,7 +619,53 @@ void parser::semantic_analysis() {
       } else if (blockItem->get_type() == ast::BlockItemType::STATEMENT) {
         // every variable that is used in any of the statement should already
         // have been declared.
+
+        // We need to check that the variables used in goto statements are
+        // actually declared and we also need to make sure that there are no
+        // duplicate labels
+        if (blockItem->get_statement()->get_type() ==
+            ast::statementType::GOTO) {
+          std::string label = blockItem->get_statement()
+                                  ->get_exps()
+                                  ->get_factor_node()
+                                  ->get_identifier_node()
+                                  ->get_value();
+          if (goto_labels.find(label) == goto_labels.end()) {
+            goto_labels[label] = false;
+          }
+          continue;
+        }
+
+        if (blockItem->get_statement()->get_type() ==
+            ast::statementType::LABEL) {
+          std::string label = blockItem->get_statement()
+                                  ->get_exps()
+                                  ->get_factor_node()
+                                  ->get_identifier_node()
+                                  ->get_value();
+          if (goto_labels.find(label) != goto_labels.end()) {
+            if (goto_labels[label] == false) {
+              goto_labels[label] = true;
+            } else {
+              success = false;
+              error_messages.emplace_back("Label " + label +
+                                          " already declared");
+            }
+          } else {
+            goto_labels[label] = true;
+          }
+          continue;
+        }
         analyze_exp(blockItem->get_statement()->get_exps());
+      }
+    }
+
+    // Check that all varaibles are declared
+    for (auto label : goto_labels) {
+      if (label.second == false) {
+        success = false;
+        error_messages.emplace_back("Label " + label.first +
+                                    " used but not declared");
       }
     }
   }
@@ -638,6 +709,10 @@ std::string to_string(ast::statementType type) {
     return "_If_End";
   case ast::statementType::_IFELSE_END:
     return "_IfElse_End";
+  case ast::statementType::GOTO:
+    return "Goto";
+  case ast::statementType::LABEL:
+    return "Label";
   case ast::statementType::UNKNOWN:
     UNREACHABLE()
   }

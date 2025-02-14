@@ -45,6 +45,7 @@ Scarlet currently supports the following architectures:
 - [x] Add support for ternary operator
 - [x] Add support for increment/decrement operator
 - [x] Add support for compound operators (+=,-=,*=,/=,<<=,>>=,%=)
+- [x] Add support for goto statement
 - [ ] Add support for compound statements
 - [ ] Add support for Loops
 - [ ] Add support for Functions

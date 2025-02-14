@@ -339,6 +339,8 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::SIZEOF);
       } else if (identifier == "struct") {
         tokens.emplace_back(token::TOKEN::STRUCT);
+      } else if (identifier == "goto") {
+        tokens.emplace_back(token::TOKEN::GOTO);
       } else {
         tokens.emplace_back(token::Token(token::TOKEN::IDENTIFIER, identifier));
       }
