@@ -782,6 +782,39 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   }
 }
 
+void parser::pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block) {
+  if (block == nullptr)
+    return;
+  std::cerr << "\t\t\t" << "Block=(" << std::endl;
+  for (auto blockItem : block->get_blockItems()) {
+    std::cerr << "\t\t\t\t" << to_string(blockItem->get_type()) << "("
+              << std::endl;
+    if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
+      std::cerr << "\t\t\t\t\tidentifier=\""
+                << blockItem->get_declaration()->get_identifier()->get_value()
+                << "\"," << std::endl;
+      if (blockItem->get_declaration()->get_exp() != nullptr) {
+        std::cerr << "\t\t\t\t\texp=(" << std::endl;
+        pretty_print_exp(blockItem->get_declaration()->get_exp());
+        std::cerr << "\t\t\t\t\t)," << std::endl;
+      }
+    } else {
+      std::cerr << "\t\t\t\t\ttype="
+                << to_string(blockItem->get_statement()->get_type()) << ","
+                << std::endl;
+      if (blockItem->get_statement()->get_block() != nullptr)
+        pretty_print_block(blockItem->get_statement()->get_block());
+      else {
+        std::cerr << "\t\t\t\t\texp=(" << std::endl;
+        pretty_print_exp(blockItem->get_statement()->get_exps());
+        std::cerr << "\t\t\t\t\t)," << std::endl;
+      }
+    }
+    std::cerr << "\t\t\t\t)," << std::endl;
+  }
+  std::cerr << "\t\t\t)" << std::endl;
+}
+
 void parser::pretty_print() {
   std::cerr << "Program(" << std::endl;
   for (auto function : program.get_functions()) {
@@ -789,28 +822,7 @@ void parser::pretty_print() {
     std::cerr << "\t\tname=\"" << function->get_identifier()->get_value()
               << "\"," << std::endl;
     std::cerr << "\t\tbody=[" << std::endl;
-    for (auto blockItem : function->get_block()->get_blockItems()) {
-      std::cerr << "\t\t\t" << to_string(blockItem->get_type()) << "("
-                << std::endl;
-      if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
-        std::cerr << "\t\t\t\tidentifier=\""
-                  << blockItem->get_declaration()->get_identifier()->get_value()
-                  << "\"," << std::endl;
-        if (blockItem->get_declaration()->get_exp() != nullptr) {
-          std::cerr << "\t\t\t\texp=(" << std::endl;
-          pretty_print_exp(blockItem->get_declaration()->get_exp());
-          std::cerr << "\t\t\t\t)," << std::endl;
-        }
-      } else {
-        std::cerr << "\t\t\t\ttype="
-                  << to_string(blockItem->get_statement()->get_type()) << ","
-                  << std::endl;
-        std::cerr << "\t\t\t\texp=(" << std::endl;
-        pretty_print_exp(blockItem->get_statement()->get_exps());
-        std::cerr << "\t\t\t\t)," << std::endl;
-      }
-      std::cerr << "\t\t\t)," << std::endl;
-    }
+    pretty_print_block(function->get_block());
     std::cerr << "\t\t]" << std::endl;
     std::cerr << "\t)," << std::endl;
   }

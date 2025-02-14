@@ -44,6 +44,7 @@ private:
   void eof_error(token::Token token);
   void pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor);
+  void pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block);
   std::string get_temp_name(std::string &name) {
     std::string tmp = name + "." + std::to_string(symbol_counter);
     symbol_counter++;
