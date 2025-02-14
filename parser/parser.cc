@@ -87,17 +87,18 @@ parser::parse_function(std::vector<token::Token> &tokens) {
   EXPECT_FUNC(token::TOKEN::CLOSE_PARANTHESES);
   EXPECT_FUNC(token::TOKEN::OPEN_BRACE);
   // parse all the block items in the current scope
+  MAKE_SHARED(ast::AST_Block_Node, block);
   while (!tokens.empty() and success and
          tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
-    parse_block_item(tokens, function);
+    parse_block_item(tokens, block);
   }
   EXPECT_FUNC(token::TOKEN::CLOSE_BRACE);
+  function->set_block(block);
   return function;
 }
 
-void parser::parse_declaration(
-    std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_Function_Node> function) {
+void parser::parse_declaration(std::vector<token::Token> &tokens,
+                               std::shared_ptr<ast::AST_Block_Node> block) {
   MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
   block_item->set_type(ast::BlockItemType::DECLARATION);
   MAKE_SHARED(ast::AST_Declaration_Node, declaration);
@@ -116,11 +117,11 @@ void parser::parse_declaration(
     EXPECT(token::TOKEN::SEMICOLON);
   }
   block_item->set_declaration(std::move(declaration));
-  function->add_blockItem(std::move(block_item));
+  block->add_blockItem(std::move(block_item));
 }
 
 void parser::parse_statement(std::vector<token::Token> &tokens,
-                             std::shared_ptr<ast::AST_Function_Node> function) {
+                             std::shared_ptr<ast::AST_Block_Node> block) {
   // NOTE THESE CHECKS ARE NECESSARY BECAUSE THE FUNCTION CAN BE CALLED
   // RECURSIVELY
   if (!success)
@@ -145,7 +146,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     EXPECT(token::TOKEN::SEMICOLON);
 
     block_item->set_statement(std::move(statement));
-    function->add_blockItem(std::move(block_item));
+    block->add_blockItem(std::move(block_item));
   } else if (tokens[0].get_token() == token::TOKEN::IF) {
     // We first check for the if (exp) statement
     tokens.erase(tokens.begin());
@@ -162,10 +163,10 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
 
     // Don't move it as we modify it later in case it has an else statement
     block_item->set_statement(statement);
-    function->add_blockItem(std::move(block_item));
+    block->add_blockItem(std::move(block_item));
 
     // statement
-    parse_statement(tokens, function);
+    parse_statement(tokens, block);
 
     // mark the end of this if statement
     MAKE_SHARED(ast::AST_Block_Item_Node, block_item2);
@@ -173,14 +174,14 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     MAKE_SHARED(ast::AST_Statement_Node, statement2);
     statement2->set_type(ast::statementType::_IF_END);
     block_item2->set_statement(std::move(statement2));
-    function->add_blockItem(std::move(block_item2));
+    block->add_blockItem(std::move(block_item2));
 
     // Then we optionally check for the else statement
     if (tokens[0].get_token() == token::TOKEN::ELSE) {
       tokens.erase(tokens.begin());
       statement->set_type(ast::statementType::IFELSE);
       // the statement following else is being treated as another block item
-      parse_statement(tokens, function);
+      parse_statement(tokens, block);
 
       // mark the end of this else statement
       MAKE_SHARED(ast::AST_Block_Item_Node, block_item3);
@@ -188,7 +189,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
       MAKE_SHARED(ast::AST_Statement_Node, statement3);
       statement3->set_type(ast::statementType::_IFELSE_END);
       block_item3->set_statement(std::move(statement3));
-      function->add_blockItem(std::move(block_item3));
+      block->add_blockItem(std::move(block_item3));
     }
   } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     // ignore the empty statement
@@ -205,7 +206,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::SEMICOLON);
     block_item->set_statement(std::move(statement));
-    function->add_blockItem(std::move(block_item));
+    block->add_blockItem(std::move(block_item));
   } else if (tokens.size() >= 2 &&
              tokens[0].get_token() == token::TOKEN::IDENTIFIER &&
              tokens[1].get_token() == token::TOKEN::COLON) {
@@ -218,7 +219,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::COLON);
     block_item->set_statement(std::move(statement));
-    function->add_blockItem(std::move(block_item));
+    block->add_blockItem(std::move(block_item));
   } else {
     statement->set_type(ast::statementType::EXP);
     MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -226,20 +227,19 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::SEMICOLON);
     block_item->set_statement(std::move(statement));
-    function->add_blockItem(std::move(block_item));
+    block->add_blockItem(std::move(block_item));
   }
 }
 
-void parser::parse_block_item(
-    std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_Function_Node> function) {
+void parser::parse_block_item(std::vector<token::Token> &tokens,
+                              std::shared_ptr<ast::AST_Block_Node> block) {
   // We have a variable declaration / defintion
   if (tokens[0].get_token() == token::TOKEN::INT) {
-    parse_declaration(tokens, function);
+    parse_declaration(tokens, block);
   } else {
     // we have a return statement, an expression, an if-else block or a null
     // statement
-    parse_statement(tokens, function);
+    parse_statement(tokens, block);
   }
 }
 
@@ -599,7 +599,7 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
 void parser::semantic_analysis() {
   // variable resolution
   for (auto funcs : program.get_functions()) {
-    for (auto blockItem : funcs->get_blockItems()) {
+    for (auto blockItem : funcs->get_block()->get_blockItems()) {
       if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
         std::string var_name =
             blockItem->get_declaration()->get_identifier()->get_value();
@@ -713,6 +713,8 @@ std::string to_string(ast::statementType type) {
     return "Goto";
   case ast::statementType::LABEL:
     return "Label";
+  case ast::statementType::BLOCK:
+    return "Block";
   case ast::statementType::UNKNOWN:
     UNREACHABLE()
   }
@@ -776,7 +778,7 @@ void parser::pretty_print() {
     std::cerr << "\t\tname=\"" << function->get_identifier()->get_value()
               << "\"," << std::endl;
     std::cerr << "\t\tbody=[" << std::endl;
-    for (auto blockItem : function->get_blockItems()) {
+    for (auto blockItem : function->get_block()->get_blockItems()) {
       std::cerr << "\t\t\t" << to_string(blockItem->get_type()) << "("
                 << std::endl;
       if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {

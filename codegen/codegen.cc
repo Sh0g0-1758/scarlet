@@ -475,7 +475,7 @@ void Codegen::gen_scar() {
     // It is okay to maintain a count of the number of if-else blocks
     // and use the path of the if-else if this counter is greater than 0
     int if_else_count = 0;
-    for (auto inst : it->get_blockItems()) {
+    for (auto inst : it->get_block()->get_blockItems()) {
       if (inst->get_type() == ast::BlockItemType::STATEMENT) {
         if (inst->get_statement()->get_type() == ast::statementType::RETURN) {
           gen_scar_exp(inst->get_statement()->get_exps(), scar_function);

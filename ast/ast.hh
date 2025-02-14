@@ -14,10 +14,11 @@
 Grammar:
 
 <program> ::= <function>
-<function> ::= "int" <identifier> "(" "void" ")" "{" { <block_item> } "}"
+<function> ::= "int" <identifier> "(" "void" ")" <block>
 <block_item> ::= <statement> | <declaration>
+<block> ::= "{" { <block_item> } "}"
 <declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":"
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block>
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-" | "!" | "--" | "++"
@@ -176,6 +177,8 @@ public:
   }
 };
 
+class AST_Block_Node;
+
 // We don't include the empty statement (just having a semicolon) in the AST
 // instead of an else statement, we have an ifelse statement type.
 // since each if statement can either exist on its own or have an else statement
@@ -188,13 +191,15 @@ enum class statementType {
   _IF_END,
   _IFELSE_END,
   GOTO,
-  LABEL
+  LABEL,
+  BLOCK
 };
 
 class AST_Statement_Node {
 private:
   std::shared_ptr<AST_exp_Node> exps;
   statementType type;
+  std::shared_ptr<AST_Block_Node> block;
 
 public:
   std::string get_AST_name() { return "Statement"; }
@@ -204,6 +209,11 @@ public:
   std::shared_ptr<AST_exp_Node> get_exps() { return exps; }
   void set_exp(std::shared_ptr<AST_exp_Node> exp) {
     this->exps = std::move(exp);
+  }
+
+  std::shared_ptr<AST_Block_Node> get_block() { return block; }
+  void set_block(std::shared_ptr<AST_Block_Node> block) {
+    this->block = std::move(block);
   }
 };
 
@@ -261,9 +271,23 @@ public:
   void set_type(BlockItemType type) { this->type = type; }
 };
 
-class AST_Function_Node {
+class AST_Block_Node {
 private:
   std::vector<std::shared_ptr<AST_Block_Item_Node>> blockItems;
+
+public:
+  std::string get_AST_name() { return "Block"; }
+  std::vector<std::shared_ptr<AST_Block_Item_Node>> get_blockItems() {
+    return blockItems;
+  }
+  void add_blockItem(std::shared_ptr<AST_Block_Item_Node> statement) {
+    blockItems.emplace_back(std::move(statement));
+  }
+};
+
+class AST_Function_Node {
+private:
+  std::shared_ptr<AST_Block_Node> block;
   std::shared_ptr<AST_identifier_Node> identifier;
 
 public:
@@ -272,11 +296,9 @@ public:
   void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
-  std::vector<std::shared_ptr<AST_Block_Item_Node>> get_blockItems() {
-    return blockItems;
-  }
-  void add_blockItem(std::shared_ptr<AST_Block_Item_Node> statement) {
-    blockItems.emplace_back(std::move(statement));
+  std::shared_ptr<AST_Block_Node> get_block() { return block; }
+  void set_block(std::shared_ptr<AST_Block_Node> block) {
+    this->block = std::move(block);
   }
 };
 
