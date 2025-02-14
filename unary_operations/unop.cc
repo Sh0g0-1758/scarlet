@@ -3,14 +3,23 @@ namespace scarlet {
 namespace unop {
 
 std::string to_string(UNOP unop) {
-  if (unop == UNOP::COMPLEMENT) {
+  switch (unop) {
+  case UNOP::PREINCREMENT:
+    return "PreIncrement";
+  case UNOP::PREDECREMENT:
+    return "PreDecrement";
+  case UNOP::POSTINCREMENT:
+    return "PostIncrement";
+  case UNOP::POSTDECREMENT:
+    return "PostDecrement";
+  case UNOP::COMPLEMENT:
     return "Complement";
-  }
-  if (unop == UNOP::NEGATE) {
+  case UNOP::NEGATE:
     return "Negate";
-  }
-  if (unop == UNOP::NOT) {
+  case UNOP::NOT:
     return "Not";
+  case UNOP::UNKNOWN:
+    return "";
   }
   return "";
 }

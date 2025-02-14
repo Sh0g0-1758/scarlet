@@ -20,7 +20,7 @@ Grammar:
 <statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
-<unop> ::= "~" | "-" | "!"
+<unop> ::= "~" | "-" | "!" | "--" | "++"
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 <identifier> ::= ? An identifier
 token ? <int> ::= ? A constant token ?
@@ -103,8 +103,7 @@ public:
   std::vector<std::shared_ptr<AST_unop_Node>> get_unop_nodes() {
     return unop_nodes;
   }
-
-  void set_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
+  void add_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
     unop_nodes.emplace_back(std::move(unop_node));
   }
   void set_exp_node(std::shared_ptr<AST_exp_Node> exp_node) {

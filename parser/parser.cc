@@ -3,6 +3,10 @@ namespace scarlet {
 namespace parser {
 
 #define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
+#define UNREACHABLE()                                                          \
+  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
+            << __LINE__ << std::endl;                                          \
+  __builtin_unreachable();
 
 #define EXPECT(tok)                                                            \
   if (!success) {                                                              \
@@ -221,10 +225,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();
     factor->set_identifier_node(std::move(identifier));
-  } else if (tokens[0].get_token() == token::TOKEN::TILDE or
-             tokens[0].get_token() == token::TOKEN::HYPHEN or
-             tokens[0].get_token() == token::TOKEN::NOT or
-             tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
+  } else if (token::is_unary_op(tokens[0].get_token())) {
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
@@ -238,6 +239,20 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     error_messages.emplace_back("Expected constant, unary operator, semicolon "
                                 "or open parantheses but got " +
                                 to_string(tokens[0].get_token()));
+  }
+  // NOTE THIS IS A SPECIAL CASE WHERE WE HAVE A POST INCREMENT OR DECREMENT
+  // IF THIS BRANCH IS CALLED THEN WE CAN BE SURE THAT WE ARE DEALING WITH A
+  // POST INCREMENT OR DECREMENT
+  if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR or
+      tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR) {
+      unop->set_op(unop::UNOP::POSTINCREMENT);
+    } else {
+      unop->set_op(unop::UNOP::POSTDECREMENT);
+    }
+    tokens.erase(tokens.begin());
+    factor->add_unop_node(std::move(unop));
   }
 }
 
@@ -277,125 +292,130 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
 
 void parser::parse_binop(std::vector<token::Token> &tokens,
                          std::shared_ptr<ast::AST_binop_Node> binop) {
-  if (tokens[0].get_token() == token::TOKEN::PLUS) {
+  switch (tokens[0].get_token()) {
+  case token::TOKEN::PLUS:
     binop->set_op(binop::BINOP::ADD);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::PERCENT_SIGN) {
+    break;
+  case token::TOKEN::PERCENT_SIGN:
     binop->set_op(binop::BINOP::MOD);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::FORWARD_SLASH) {
+    break;
+  case token::TOKEN::FORWARD_SLASH:
     binop->set_op(binop::BINOP::DIV);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
+    break;
+  case token::TOKEN::ASTERISK:
     binop->set_op(binop::BINOP::MUL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::HYPHEN) {
+    break;
+  case token::TOKEN::HYPHEN:
     binop->set_op(binop::BINOP::SUB);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::AAND) {
+    break;
+  case token::TOKEN::AAND:
     binop->set_op(binop::BINOP::AAND);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::AOR) {
+    break;
+  case token::TOKEN::AOR:
     binop->set_op(binop::BINOP::AOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::XOR) {
+    break;
+  case token::TOKEN::XOR:
     binop->set_op(binop::BINOP::XOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LEFT_SHIFT) {
+    break;
+  case token::TOKEN::LEFT_SHIFT:
     binop->set_op(binop::BINOP::LEFT_SHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::RIGHT_SHIFT) {
+    break;
+  case token::TOKEN::RIGHT_SHIFT:
     binop->set_op(binop::BINOP::RIGHT_SHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LAND) {
+    break;
+  case token::TOKEN::LAND:
     binop->set_op(binop::BINOP::LAND);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LOR) {
+    break;
+  case token::TOKEN::LOR:
     binop->set_op(binop::BINOP::LOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::EQUAL) {
+    break;
+  case token::TOKEN::EQUAL:
     binop->set_op(binop::BINOP::EQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::NOTEQUAL) {
+    break;
+  case token::TOKEN::NOTEQUAL:
     binop->set_op(binop::BINOP::NOTEQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LESSTHAN) {
+    break;
+  case token::TOKEN::LESSTHAN:
     binop->set_op(binop::BINOP::LESSTHAN);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::GREATERTHAN) {
+    break;
+  case token::TOKEN::GREATERTHAN:
     binop->set_op(binop::BINOP::GREATERTHAN);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::LESSTHANEQUAL) {
+    break;
+  case token::TOKEN::LESSTHANEQUAL:
     binop->set_op(binop::BINOP::LESSTHANEQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::GREATERTHANEQUAL) {
+    break;
+  case token::TOKEN::GREATERTHANEQUAL:
     binop->set_op(binop::BINOP::GREATERTHANEQUAL);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::ASSIGNMENT) {
+    break;
+  case token::TOKEN::ASSIGNMENT:
     binop->set_op(binop::BINOP::ASSIGN);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIFFERENCE) {
+    break;
+  case token::TOKEN::COMPOUND_DIFFERENCE:
     binop->set_op(binop::BINOP::COMPOUND_DIFFERENCE);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_DIVISION) {
+    break;
+  case token::TOKEN::COMPOUND_DIVISION:
     binop->set_op(binop::BINOP::COMPOUND_DIVISION);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_PRODUCT) {
+    break;
+  case token::TOKEN::COMPOUND_PRODUCT:
     binop->set_op(binop::BINOP::COMPOUND_PRODUCT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_REMAINDER) {
+    break;
+  case token::TOKEN::COMPOUND_REMAINDER:
     binop->set_op(binop::BINOP::COMPOUND_REMAINDER);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_SUM) {
+    break;
+  case token::TOKEN::COMPOUND_SUM:
     binop->set_op(binop::BINOP::COMPOUND_SUM);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_AND) {
+    break;
+  case token::TOKEN::COMPOUND_AND:
     binop->set_op(binop::BINOP::COMPOUND_AND);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_OR) {
+    break;
+  case token::TOKEN::COMPOUND_OR:
     binop->set_op(binop::BINOP::COMPOUND_OR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_XOR) {
+    break;
+  case token::TOKEN::COMPOUND_XOR:
     binop->set_op(binop::BINOP::COMPOUND_XOR);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_LEFTSHIFT) {
+    break;
+  case token::TOKEN::COMPOUND_LEFTSHIFT:
     binop->set_op(binop::BINOP::COMPOUND_LEFTSHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::COMPOUND_RIGHTSHIFT) {
+    break;
+  case token::TOKEN::COMPOUND_RIGHTSHIFT:
     binop->set_op(binop::BINOP::COMPOUND_RIGHTSHIFT);
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::QUESTION_MARK) {
+    break;
+  case token::TOKEN::QUESTION_MARK:
     binop->set_op(binop::BINOP::TERNARY);
-    tokens.erase(tokens.begin());
-  } else {
+    break;
+  default:
     success = false;
     error_messages.emplace_back("Expected binary operator but got " +
                                 to_string(tokens[0].get_token()));
+    break;
   }
+  tokens.erase(tokens.begin());
 }
 
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
                             std::shared_ptr<ast::AST_factor_Node> factor) {
-  if (tokens[0].get_token() == token::TOKEN::TILDE) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
+  MAKE_SHARED(ast::AST_unop_Node, unop);
+  switch (tokens[0].get_token()) {
+  case token::TOKEN::TILDE:
     unop->set_op(unop::UNOP::COMPLEMENT);
-    factor->set_unop_node(std::move(unop));
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::HYPHEN) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
+    break;
+  case token::TOKEN::HYPHEN:
     unop->set_op(unop::UNOP::NEGATE);
-    factor->set_unop_node(std::move(unop));
-    tokens.erase(tokens.begin());
-  } else if (tokens[0].get_token() == token::TOKEN::NOT) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
+    break;
+  case token::TOKEN::NOT:
     unop->set_op(unop::UNOP::NOT);
-    factor->set_unop_node(std::move(unop));
-    tokens.erase(tokens.begin());
-  } else {
-    success = false;
-    error_messages.emplace_back("Expected unary operator but got " +
-                                to_string(tokens[0].get_token()));
+    break;
+  case token::TOKEN::INCREMENT_OPERATOR:
+    unop->set_op(unop::UNOP::PREINCREMENT);
+    break;
+  case token::TOKEN::DECREMENT_OPERATOR:
+    unop->set_op(unop::UNOP::PREDECREMENT);
+    break;
+  default:
+    UNREACHABLE()
   }
+  factor->add_unop_node(std::move(unop));
+  tokens.erase(tokens.begin());
 }
 
 void parser::parse_identifier(
@@ -456,6 +476,91 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                   "side of the assignment operator");
     }
   }
+  // SEMANTIC ANALYSIS FOR INCREMENT AND DECREMENT OPERATOR
+  if (exp->get_factor_node() != nullptr) {
+    auto check_factor = exp->get_factor_node();
+    bool has_i_d = false;
+    bool has_multiple_i_d = false;
+    // CHECK WHETHER INCREMENT OR DECREMENT OPERATOR IS PRESENT
+    for (auto it : check_factor->get_unop_nodes()) {
+      if (it->get_op() == unop::UNOP::PREINCREMENT or
+          it->get_op() == unop::UNOP::PREDECREMENT or
+          it->get_op() == unop::UNOP::POSTINCREMENT or
+          it->get_op() == unop::UNOP::POSTDECREMENT) {
+        if (has_i_d) {
+          has_multiple_i_d = true;
+          break;
+        }
+        has_i_d = true;
+      }
+    }
+    if (has_multiple_i_d) {
+      success = false;
+      error_messages.emplace_back(
+          "Expected an lvalue for the increment / decrement operator");
+    } else if (has_i_d) {
+      // THE INCREMENT AND DECREMENT OPERATOR MUST BE APPLIED TO AN LVALUE
+      // THAT MEANS IT SHOULD BE THE LAST UNOP IN THE UNOPS VECTOR
+      if (check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::PREINCREMENT and
+          check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::PREDECREMENT and
+          check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::POSTINCREMENT and
+          check_factor->get_unop_nodes().back()->get_op() !=
+              unop::UNOP::POSTDECREMENT) {
+        success = false;
+        error_messages.emplace_back(
+            "Expected an lvalue for the increment / decrement operator");
+      } else {
+        // NOW THERE ARE ONLY TWO VALID CASES
+        // CASE 1: FACTOR HAS AN IDENTIFIER
+        // CASE 2: FACTOR HAS A DEEPLY NESTED EXPRESSION WHICH THEN
+        //         CONTAINS THE IDENTIFIER (eg. ++(((((((a))))))) )
+        //         or ( (((((((a)))))))++ )
+        if (check_factor->get_identifier_node() != nullptr) {
+          // EARLIER CHECKS ENSURE THAT THE IDENTIFIER IS ALREADY DECLARED
+        } else if (check_factor->get_exp_node() != nullptr) {
+          // NOW WE RECURSIVELY CHECK THAT THE EXPRESSION IS A SIMPLE IDENTIFIER
+          // AND NOT A COMPLEX EXPRESSION
+          auto check_exp = check_factor->get_exp_node();
+          while (check_exp != nullptr) {
+            // ENSURE THAT BINOP FOR CHECK_EXP IS NULL
+            // ENSURE THAT LEFT FOR CHECK_EXP IS NULL
+            if (check_exp->get_binop_node() != nullptr or
+                check_exp->get_left() != nullptr) {
+              success = false;
+              error_messages.emplace_back(
+                  "Expected an lvalue for the increment / decrement operator");
+              break;
+            }
+            // ENSURE THAT THERE ARE NO UNOPS AS WELL
+            // WE ARE BASICALLY GUARANTEED THAT FACTOR IS NOT NULL
+            if (check_exp->get_factor_node()->get_unop_nodes().size() > 0) {
+              success = false;
+              error_messages.emplace_back(
+                  "Expected an lvalue for the increment / decrement operator");
+              break;
+            }
+            // NOW WE CHECK THAT THE FACTOR IS AN IDENTIFIER
+            if (exp->get_factor_node()->get_exp_node() == nullptr) {
+              if (exp->get_factor_node()->get_identifier_node() == nullptr) {
+                success = false;
+                error_messages.emplace_back("Expected an lvalue for the "
+                                            "increment / decrement operator");
+                break;
+              }
+            }
+            check_exp = check_exp->get_factor_node()->get_exp_node();
+          }
+        } else {
+          success = false;
+          error_messages.emplace_back(
+              "Expected an lvalue for the increment / decrement operator");
+        }
+      }
+    }
+  }
   // since the factor can have its own exp as well, we recursively check that
   if (exp->get_factor_node() != nullptr)
     analyze_exp(exp->get_factor_node()->get_exp_node());
@@ -514,13 +619,9 @@ std::string to_string(ast::BlockItemType type) {
   case ast::BlockItemType::DECLARATION:
     return "Declaration";
   case ast::BlockItemType::UNKNOWN:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 std::string to_string(ast::statementType type) {
@@ -538,13 +639,9 @@ std::string to_string(ast::statementType type) {
   case ast::statementType::_IFELSE_END:
     return "_IfElse_End";
   case ast::statementType::UNKNOWN:
-    std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-              << __LINE__ << std::endl;
-    __builtin_unreachable();
+    UNREACHABLE()
   }
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "
-            << __LINE__ << std::endl;
-  __builtin_unreachable();
+  UNREACHABLE()
 }
 
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {

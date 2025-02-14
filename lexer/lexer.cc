@@ -50,7 +50,10 @@ void lexer::tokenize() {
       col_number++;
     } else if (ch == '+') {
       file.get(ch);
-      if (ch == '=') {
+      if (ch == '+') {
+        tokens.emplace_back(token::TOKEN::INCREMENT_OPERATOR);
+        col_number++;
+      } else if (ch == '=') {
         tokens.emplace_back(token::TOKEN::COMPOUND_SUM);
         col_number++;
       } else {
