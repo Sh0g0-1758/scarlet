@@ -493,9 +493,8 @@ void Codegen::gen_scar() {
           // <instructions for condition> (stored in exps)
           // c = <result of condition>
           // JumpIfZero(c, end)
-          // <instructions for statement> (These are handled in the next
-          // iteration) Label(end) (This label is added during the end of if
-          // statement)
+          // <instructions for statement> (handled in the next iteration)
+          // Label(end)            (Added during the end of if statement)
           gen_scar_exp(inst->get_statement()->get_exps(), scar_function);
           MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
           scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
