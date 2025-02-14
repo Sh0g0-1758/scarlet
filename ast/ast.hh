@@ -20,7 +20,7 @@ Grammar:
 <statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
-<unop> ::= "~" | "-" | "!"
+<unop> ::= "~" | "-" | "!" | "--" | "++"
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 <identifier> ::= ? An identifier
 token ? <int> ::= ? A constant token ?
