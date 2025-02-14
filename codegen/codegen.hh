@@ -56,6 +56,8 @@ private:
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void gen_scar_block(std::shared_ptr<ast::AST_Block_Node> block,
+                      std::shared_ptr<scar::scar_Function_Node> scar_function);
   int fr_label_counter = 1;
   int res_label_counter = 1;
   std::stack<std::string> fr_label_stack;
