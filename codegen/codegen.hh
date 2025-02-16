@@ -90,7 +90,7 @@ public:
   std::string get_prev_reg_name() { return reg_name; }
   void pretty_print();
   std::string get_fr_label_name() {
-    std::string label_name = "label" + std::to_string(fr_label_counter);
+    std::string label_name = "label." + std::to_string(fr_label_counter);
     fr_label_counter++;
     fr_label_stack.push(label_name);
     return label_name;
@@ -102,7 +102,7 @@ public:
     return tmp;
   }
   std::string get_res_label_name() {
-    std::string label_name = "labelRes" + std::to_string(res_label_counter);
+    std::string label_name = "labelRes." + std::to_string(res_label_counter);
     res_label_counter++;
     res_label_stack.push(label_name);
     return label_name;
