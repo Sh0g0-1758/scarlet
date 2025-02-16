@@ -97,28 +97,24 @@ error_handler:
   return -1;
 
 final:
-return --buffer_space + ((((((((((((((((((packet_size * fragment_size) / 
-                                        (header_length + 1)) % 
-                                        (payload_size - checksum)) * 
-                                        ((error_bits << 4) >> 2)) + 
-                                        ((packet_id * 7) % 13)) / 
-                                        (queue_length ? queue_length : 1)) << 
-                                        (timeout % 6)) ^ 
-                                        (retry_count * max_retries)) % 
-                                        ((delay + 3) * fragment_size)) * 
-                                        (total_fragments >> 3)) + 
-                                        ((processed_count % 17) * 
-                                        (dropped_count + 5))) * 
-                                        ((bandwidth - latency) / 
-                                        (packet_size + 1))) * 
-                                        ((error_bits <= 5) != 
-                                        (checksum >= payload_size))) * 
-                                        ((packet_id < total_fragments) == 
-                                        (buffer_space > queue_length))) * 
-                                        (((timeout << 5) | (delay >> 3)) ^ 
-                                        (latency + -bandwidth))) * 
-                                        ((packet_size * header_length / payload_size % 
-                                        fragment_size) + dropped_count)) * 
-                                        ((retry_count <= max_retries) != 
-                                        (processed_count >= total_fragments))));
+  return --buffer_space +
+         ((((((((((((((((((packet_size * fragment_size) / (header_length + 1)) %
+                         (payload_size - checksum)) *
+                        ((error_bits << 4) >> 2)) +
+                       ((packet_id * 7) % 13)) /
+                      (queue_length ? queue_length : 1))
+                     << (timeout % 6)) ^
+                    (retry_count * max_retries)) %
+                   ((delay + 3) * fragment_size)) *
+                  (total_fragments >> 3)) +
+                 ((processed_count % 17) * (dropped_count + 5))) *
+                ((bandwidth - latency) / (packet_size + 1))) *
+               ((error_bits <= 5) != (checksum >= payload_size))) *
+              ((packet_id < total_fragments) ==
+               (buffer_space > queue_length))) *
+             (((timeout << 5) | (delay >> 3)) ^ (latency + -bandwidth))) *
+            ((packet_size * header_length / payload_size % fragment_size) +
+             dropped_count)) *
+           ((retry_count <= max_retries) !=
+            (processed_count >= total_fragments))));
 }

@@ -97,21 +97,17 @@ game_over:
   return -1;
 
 final:
-  return --player_health + ((((((((((((((((enemy_health + damage) * weapon_power) /
-                                           armor_value) %
-                                          shield) *
-                                         inventory_size) *
-                                        combo_multiplier) <=
-                                       critical_chance) !=
-                                      (score >= high_score)) *
-                                     ((position_x < position_y) ==
-                                      (score > high_score))) *
-                                    (player_health & 5)) *
-                                   (((experience << 7) | (level >> 17)) ^
-                                    (position_x + -damage))) *
-                                  (weapon_power * armor_value / shield %
-                                   inventory_size)) *
-                                 (combo_multiplier <= critical_chance) !=
-                                (score >= high_score)) *
-                               ((position_x < position_y) == (score > high_score)))));
+  return --player_health +
+         ((((((((((((((((enemy_health + damage) * weapon_power) / armor_value) %
+                      shield) *
+                     inventory_size) *
+                    combo_multiplier) <= critical_chance) !=
+                  (score >= high_score)) *
+                 ((position_x < position_y) == (score > high_score))) *
+                (player_health & 5)) *
+               (((experience << 7) | (level >> 17)) ^ (position_x + -damage))) *
+              (weapon_power * armor_value / shield % inventory_size)) *
+                 (combo_multiplier <= critical_chance) !=
+             (score >= high_score)) *
+            ((position_x < position_y) == (score > high_score)))));
 }
