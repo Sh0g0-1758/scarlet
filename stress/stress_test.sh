@@ -27,7 +27,7 @@ run_test() {
     local test_file=$1
     local test_name=$(basename "$test_file" .c)
 
-    echo -n "Testing $test_name... "
+    echo "Testing $test_name... "
 
     # Compile and execute the test using CC (gcc/clang)
     $CC -o "$test_name" "$test_file"
@@ -41,6 +41,9 @@ run_test() {
     local SCARLET_return_code=$?
     rm "$test_name"
 
+    echo "$CC return code: $CC_return_code"
+    echo "SCARLET return code: $SCARLET_return_code"
+
     if [ "$CC_return_code" != "$SCARLET_return_code" ]; then
         echo -e "${RED}ERROR: Return codes do not match${NC}"
         echo "CC return code: $CC_return_code"
@@ -53,6 +56,6 @@ run_test() {
     fi
 }
 
-for test in $TEST_DIR/test{1..5}.c; do
+for test in $TEST_DIR/test{1..6}.c; do
     run_test "$test"
 done

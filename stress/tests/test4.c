@@ -1,108 +1,81 @@
 int main(void) {
-  int balance;
-  int transaction_amount;
-  int fee;
-  int daily_limit;
-  int remaining_limit;
-  int transaction_count;
-  int max_transactions;
-  int approval_code;
-  int verification_id;
-  int risk_score;
-  int threshold;
-  int processed_amount;
-  int pending_amount;
-  int account_age;
-  int credit_score;
-  int reward_points;
-  int bonus_multiplier;
-  int final_amount;
-  int total_fees;
+  int packet_size;
+  int header_length;
+  int payload_size;
+  int checksum;
+  int error_bits;
+  int packet_id;
+  int buffer_space;
+  int queue_length;
+  int timeout;
+  int retry_count;
+  int max_retries;
+  int delay;
+  int fragment_size;
+  int total_fragments;
+  int processed_count;
+  int dropped_count;
+  int bandwidth;
+  int latency;
 
-start:
-  if ((balance = 10000) > 0) {
-    if ((transaction_amount = balance / 10) < 2000) {
-      fee = 25;
-      goto check_limit;
-    } else {
-      fee = 50;
-      goto compute_risk;
-    }
+  singularity_start:
+  if(((packet_size = 987654321) >> 3) + ((header_length = 123456789) << 4) > ((payload_size = 999999999) ^ (checksum = 888888888))) {
+      if((((error_bits = packet_size * 31) % 61) + ((packet_id = header_length >> 5) * 23)) < ((buffer_space = payload_size ^ checksum) + 777777777)) {
+          queue_length = ((timeout = 666666666) & (retry_count = 555555555)) | ((max_retries = 444444444) ^ (delay = 333333333));
+          goto quantum_path;
+      } else {
+          if((((fragment_size = error_bits + 29) % 59) * ((total_fragments = packet_id * 23) % 53)) > ((processed_count = buffer_space * 19) % 47)) {
+              goto entropy_path;
+          }
+          goto chaos_path;
+      }
   } else {
-    transaction_amount = 0;
-    goto reject;
+      if((((dropped_count = fragment_size - 89) << 6) * ((bandwidth = total_fragments + 67) >> 4)) != ((latency = processed_count * 43) % 41)) {
+          goto quantum_path;
+      }
+      goto void_path;
   }
 
-check_limit:
-  if ((daily_limit = transaction_amount * 5) != 0) {
-    remaining_limit = daily_limit - fee;
-    if (remaining_limit > 5000)
-      goto compute_risk;
-    else
-      goto process_transaction;
+quantum_path:
+  if((((packet_size = header_length ^ payload_size) & (checksum = error_bits | packet_id)) + ((buffer_space = queue_length - timeout) % 37)) > ((retry_count = max_retries << 5) + (delay = fragment_size >> 3))) {
+      if((((total_fragments = processed_count * 31) % 67) * ((dropped_count = bandwidth + 71) << 4)) < ((latency = packet_size ^ 13) + 111111111)) {
+          goto entropy_path;
+      }
+      goto chaos_path;
   }
-  goto reject;
+  goto void_path;
 
-compute_risk:
-  risk_score = remaining_limit * 2;
-  if (risk_score < 8000)
-    goto process_transaction;
-  else {
-    risk_score = risk_score / 2;
-    goto process_transaction;
+entropy_path:
+  if((((error_bits = packet_id * 41) >> 7) + ((buffer_space = queue_length + 97) << 3)) > ((timeout = retry_count ^ max_retries) - 222222222)) {
+      if((((delay = fragment_size * 43) % 71) * ((total_fragments = processed_count + 83) >> 5)) != ((dropped_count = bandwidth & latency) + 333333333)) {
+          goto chaos_path;
+      }
+      goto final_collapse;
   }
+  goto quantum_path;
 
-process_transaction:
-  transaction_count = (fee + remaining_limit) * 2;
-  if (transaction_count > 1000) {
-    max_transactions = transaction_count / 2;
-    goto verify;
-  } else {
-    max_transactions = transaction_count * 2;
-    if (max_transactions < 500)
-      goto reject;
-    goto verify;
+chaos_path:
+  if((((packet_size = header_length * 47) % 73) + ((payload_size = checksum + 89) << 6)) < ((error_bits = packet_id ^ buffer_space) - 444444444)) {
+      if((((queue_length = timeout * 53) >> 4) * ((retry_count = max_retries + 79) % 67)) > ((delay = fragment_size & total_fragments) + 555555555)) {
+          goto void_path;
+      }
+      goto final_collapse;
   }
+  goto entropy_path;
 
-verify:
-  approval_code = transaction_count + max_transactions;
-  if (approval_code > 2000) {
-    verification_id = approval_code / 2;
-    threshold = verification_id - 500;
-    goto compute_rewards;
-  } else {
-    verification_id = approval_code * 2;
-    threshold = verification_id + 250;
-    if (threshold > 3000)
-      goto reject;
-    goto compute_rewards;
+void_path:
+  if((((processed_count = dropped_count * 59) % 79) + ((bandwidth = latency + 101) << 5)) != ((packet_size = header_length ^ payload_size) - 666666666)) {
+      if((((checksum = error_bits * 61) >> 6) * ((packet_id = buffer_space + 103) % 83)) < ((queue_length = timeout & retry_count) + 777777777)) {
+          goto final_collapse;
+      }
+      goto singularity_start;
   }
+  goto chaos_path;
 
-compute_rewards:
-  processed_amount = verification_id + threshold;
-  pending_amount = processed_amount - 1000;
-  if (processed_amount > pending_amount) {
-    reward_points = processed_amount / 2;
-    bonus_multiplier = pending_amount * 2;
-    goto finalize;
-  } else {
-    goto reject;
-  }
-
-finalize:
-  final_amount = reward_points + bonus_multiplier;
-  total_fees = final_amount - 500;
-  goto final;
-
-reject:
-  return -1;
-
-final:
-  return (!(~balance & 255) &&
-              (((transaction_count << 2) | (max_transactions >> 1)) ^
-               (approval_code + -fee)) > (risk_score * threshold /
-                                          processed_amount % pending_amount) ||
-          (reward_points <= bonus_multiplier) !=
-              (final_amount >= total_fees)) &&
-         ((processed_amount < pending_amount) == (final_amount > total_fees));
+final_collapse:
+  return ((((packet_size * header_length) << 11) + ((payload_size ^ checksum) >> 7)) * 
+          ((error_bits & packet_id) | ((buffer_space + queue_length) % 97)) + 
+          ((timeout * retry_count) - ((max_retries ^ delay) << 5)) * 
+          ((fragment_size & total_fragments) | ((processed_count + dropped_count) % 89)) + 
+          ((bandwidth * latency) ^ ((packet_size - header_length) << 3)));
 }
