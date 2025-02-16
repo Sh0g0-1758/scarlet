@@ -25,4 +25,4 @@ jobs:
 
     - name: Test scarlet
       run: |
-        cd stress && ./stress_test.sh
+        cd stress && ./stress_test.sh clang

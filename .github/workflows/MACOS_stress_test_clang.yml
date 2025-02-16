@@ -28,4 +28,4 @@ jobs:
     
     - name: Test scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'cd stress && ./stress_test.sh'
+        arch -x86_64 /bin/zsh -c 'cd stress && ./stress_test.sh clang'
