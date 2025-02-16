@@ -1,12 +1,12 @@
 # Scarlet
 
-[![ubuntu](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_test_gcc.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_test_gcc.yml) [![macos](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_test_clang.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_test_clang.yml) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10029/badge)](https://www.bestpractices.dev/projects/10029)
-
 Scarlet is a custom compiler developed in C++, designed with the primary goal of enhancing our understanding of compiler construction. The overarching objective is to implement an exceptionally fast machine learning framework built atop this compiler.
 
 ## Building Scarlet
 
-To build Scarlet, invoke `cmake` with the `DCMAKE_CXX_COMPILER` flag within the build directory and then run make.
+[![ubuntu](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_test_gcc.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_test_gcc.yml) [![macos](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_test_clang.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_test_clang.yml)
+
+To build Scarlet, invoke `cmake` with the `DCMAKE_CXX_COMPILER` flag within the build directory and then run `make`.
 
 ```sh
 cmake -DCMAKE_CXX_COMPILER=<compiler> ..
@@ -15,10 +15,24 @@ make
 
 ## Testing Scarlet
 
+[![stress](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_stress_test_gcc.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_stress_test_gcc.yml) [![stress](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_stress_test_clang.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_stress_test_clang.yml)
+
 To test Scarlet, execute the following command within the build directory:
 
 ```sh
 make test-scarlet
+```
+
+To execute our custom stress tests, execute the following command within the `stress` directory:
+
+```sh
+./stress_test.sh
+```
+
+To check memory leaks in scarlet, run the following command within the  build directory:
+
+```sh
+./check_memory_leaks.sh
 ```
 
 ## Supported Architectures
