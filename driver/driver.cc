@@ -75,44 +75,32 @@ int main(int argc, char *argv[]) {
   }
 
   if (cmd.has_option("lex")) {
+    std::cout << "[LOG]: Lexing done successfully" << std::endl;
     lex.print_symbol_table();
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
     return 0;
+  }
+
+  // delete the intermediate preprocessed file
+  result = system(std::format("rm {}.scp", file_name).c_str());
+
+  if (result != 0) {
+    std::cerr
+        << "[ERROR]: Unable to delete the intermediate preprocessed file"
+        << std::endl;
+    return 1;
   }
 
   // PARSER
   scarlet::parser::parser gnu;
   gnu.parse_program(lex.get_tokens());
   if (!gnu.is_success()) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
     gnu.display_errors();
     std::cerr << "[ERROR]: Parsing failed" << std::endl;
     return 1;
   }
 
   if (cmd.has_option("parse")) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
+    std::cout << "[LOG]: Parsing done successfully" << std::endl;
     gnu.pretty_print();
     return 0;
   }
@@ -120,28 +108,13 @@ int main(int argc, char *argv[]) {
   // SEMANTIC ANALYSIS
   gnu.semantic_analysis();
   if (!gnu.is_success()) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
     gnu.display_errors();
     std::cerr << "[ERROR]: Semantic analysis failed" << std::endl;
     return 1;
   }
 
   if (cmd.has_option("validate")) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
+    std::cout << "[LOG]: Semantic analysis done successfully" << std::endl;
     gnu.pretty_print();
     return 0;
   }
@@ -153,14 +126,7 @@ int main(int argc, char *argv[]) {
   codegen.gen_scar();
 
   if (cmd.has_option("tacky") or cmd.has_option("scar")) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
+    std::cout << "[LOG]: Successfully generated scar" << std::endl;
     codegen.pretty_print();
     return 0;
   }
@@ -168,44 +134,13 @@ int main(int argc, char *argv[]) {
   codegen.codegen();
 
   if (!codegen.is_success()) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
     std::cerr << "[ERROR]: Code generation failed" << std::endl;
     return 1;
   }
 
-  if (cmd.has_option("codegen")) {
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
-
-    result = system(std::format("rm {}.s", file_name).c_str());
-    if (result != 0) {
-      std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
-                << std::endl;
-      return 1;
-    }
+  if (cmd.has_option("asm") or cmd.has_option("codegen")) {
+    std::cout << "[LOG]: Successfully generated asm" << std::endl;
     return 0;
-  }
-
-  // delete the intermediate preprocessed file
-  result = system(std::format("rm {}.scp", file_name).c_str());
-
-  if (result != 0) {
-    std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file"
-              << std::endl;
-    return 1;
   }
 
   // convert the assembly file to object file
@@ -221,14 +156,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // only generate the assembly file
-  if (cmd.has_option("asm")) {
-    std::cout << "[LOG]: Assembly file generated successfully" << std::endl;
-    return 0;
-  }
   // delete the intermediate assembly file
   result = system(std::format("rm {}.s", file_name).c_str());
-
   if (result != 0) {
     std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
               << std::endl;
