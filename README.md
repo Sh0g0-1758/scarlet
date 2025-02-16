@@ -1,5 +1,7 @@
 # Scarlet
 
+[![build](https://img.shields.io/github/actions/workflow/status/Sh0g0-1758/scarlet/UBUNTU_test_gcc.yml?label=build)](https://github.com/Sh0g0-1758/scarlet/actions)
+
 Scarlet is a custom compiler developed in C++, designed with the primary goal of enhancing our understanding of compiler construction. The overarching objective is to implement an exceptionally fast machine learning framework built atop this compiler.
 
 ## Building Scarlet
