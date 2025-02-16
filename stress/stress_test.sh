@@ -8,6 +8,7 @@ fi
 
 
 CC=$1
+CC_FLAGS="-Wno-unsequenced -Werror -fwrapv"
 
 # We only build and test scarlet against gcc and clang
 if ! [[ "$CC" =~ ^(gcc|clang)$ ]]; then
@@ -27,10 +28,10 @@ run_test() {
     local test_file=$1
     local test_name=$(basename "$test_file" .c)
 
-    echo "Testing $test_name... "
+    echo -n "Testing $test_name... "
 
     # Compile and execute the test using CC (gcc/clang)
-    $CC -o "$test_name" "$test_file"
+    $CC $CC_FLAGS -o "$test_name" "$test_file"
     ./"$test_name"
     local CC_return_code=$?
     rm "$test_name"
@@ -41,12 +42,9 @@ run_test() {
     local SCARLET_return_code=$?
     rm "$test_name"
 
-    echo "$CC return code: $CC_return_code"
-    echo "SCARLET return code: $SCARLET_return_code"
-
     if [ "$CC_return_code" != "$SCARLET_return_code" ]; then
         echo -e "${RED}ERROR: Return codes do not match${NC}"
-        echo "CC return code: $CC_return_code"
+        echo "$CC return code: $CC_return_code"
         echo "SCARLET return code: $SCARLET_return_code"
         echo "Test file: $test_file"
         return 1
@@ -56,6 +54,6 @@ run_test() {
     fi
 }
 
-for test in $TEST_DIR/test{1..6}.c; do
+for test in $TEST_DIR/test{1..7}.c; do
     run_test "$test"
 done
