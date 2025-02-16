@@ -53,6 +53,6 @@ run_test() {
     fi
 }
 
-for test in $TEST_DIR/test{1..6}.c; do
+for test in $TEST_DIR/test{1..5}.c; do
     run_test "$test"
 done

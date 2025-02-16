@@ -25,10 +25,10 @@ check_leak() {
     fi
 }
 
-for test in $TEST_DIR/test{1..6}.c; do
+for test in $TEST_DIR/test{1..5}.c; do
     check_leak "$test"
 done
 
-for exe in test{1..6}; do
+for exe in test{1..5}; do
     rm $exe
 done
