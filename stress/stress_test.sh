@@ -1,7 +1,21 @@
 #!/bin/bash
 
 # Usage: ./stress_test.sh <compiler>
+if [ $# -ne 1 ]; then
+   echo "Usage: $0 <compiler>"
+   exit 1
+fi
+
+
 CC=$1
+
+# We only build and test scarlet against gcc and clang
+if ! [[ "$CC" =~ ^(gcc|clang)$ ]]; then
+   echo "Error: Compiler must be either 'gcc' or 'clang'"
+   echo "Usage: $0 <compiler>"
+   exit 1
+fi
+
 SCARLET="../build/scarlet"
 TEST_DIR="tests"
 

@@ -10,7 +10,7 @@ NC='\033[0m'
 
 check_leak() {
     local test_file=$1
-    local test_name=$(basename "$test_file")
+    local test_name=$(basename "$test_file" .c)
 
     echo -n "Testing $test_name... "
 
