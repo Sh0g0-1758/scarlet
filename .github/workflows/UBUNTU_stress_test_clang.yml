@@ -1,4 +1,4 @@
-name: VALGRIND => test memory leaks (ubuntu, clang)
+name: UBUNTU => Stress Test (clang)
 
 on:
   push:
@@ -17,12 +17,12 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt update
-        sudo apt install clang libboost-all-dev valgrind
-
+        sudo apt install clang libboost-all-dev
+        
     - name: Build scarlet
       run: |
         mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make
 
-    - name: Test memory leaks
+    - name: Test scarlet
       run: |
-        cd stress && ./check_memory_leaks.sh
+        cd stress && ./stress_test.sh

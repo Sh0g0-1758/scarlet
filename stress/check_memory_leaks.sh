@@ -8,12 +8,12 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-run_test() {
+check_leak() {
     local test_file=$1
     local test_name=$(basename "$test_file")
 
     echo -n "Testing $test_name... "
-    
+
     if $VALGRIND_CMD $PROGRAM "$test_file" 1>/dev/null 2>/dev/null; then
         echo -e "${GREEN}OK${NC}"
         return 0
@@ -25,10 +25,10 @@ run_test() {
     fi
 }
 
-for test in $TEST_DIR/test{1..4}.sc; do
-    run_test "$test"
+for test in $TEST_DIR/test{1..5}.c; do
+    check_leak "$test"
 done
 
-for exe in test{1..4}; do
+for exe in test{1..5}; do
     rm $exe
 done
