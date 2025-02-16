@@ -84,9 +84,8 @@ int main(int argc, char *argv[]) {
   result = system(std::format("rm {}.scp", file_name).c_str());
 
   if (result != 0) {
-    std::cerr
-        << "[ERROR]: Unable to delete the intermediate preprocessed file"
-        << std::endl;
+    std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file"
+              << std::endl;
     return 1;
   }
 
