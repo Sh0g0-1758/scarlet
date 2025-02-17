@@ -254,6 +254,36 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
   }
 }
 
+std::pair<bool, int>
+parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
+  int i = 0;
+  int NUM_TOKENS = tokens.size();
+  while (i < NUM_TOKENS) {
+    if (tokens[i].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      i++;
+    } else {
+      break;
+    }
+  }
+  if (tokens[i].get_token() == token::TOKEN::IDENTIFIER) {
+    int num_open_parentheses = i;
+    int tmp = i;
+    i++;
+    while (i < NUM_TOKENS) {
+      if (tokens[i].get_token() == token::TOKEN::CLOSE_PARANTHESES) {
+        tmp--;
+        i++;
+      } else {
+        break;
+      }
+    }
+    if (tmp == 0) {
+      return {true, num_open_parentheses};
+    }
+  }
+  return {false, 0};
+}
+
 void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> factor) {
   if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
@@ -265,11 +295,36 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
-    tokens.erase(tokens.begin());
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    parse_exp(tokens, exp);
-    factor->set_exp_node(std::move(exp));
-    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    /**
+     * Simplification for Single-Identifier Parentheses
+     *
+     * When encountering an expression with a single identifier wrapped in
+     * parentheses, e.g., (identifier), we treat it as a simple identifier
+     * rather than a complex expression. This optimization significantly reduces
+     * complexity during semantic analysis by avoiding unnecessary nested
+     * expression handling.
+     *
+     * Example:
+     *   Input: (((((((((((((((((a)))))))))))))))))
+     *   Treats as: a
+     */
+    std::pair<bool, int> res = is_single_identifier_parentheses(tokens);
+    if (res.first) {
+      for (int i = 0; i < res.second; i++) {
+        tokens.erase(tokens.begin());
+      }
+      EXPECT_IDENTIFIER();
+      factor->set_identifier_node(std::move(identifier));
+      for (int i = 0; i < res.second; i++) {
+        tokens.erase(tokens.begin());
+      }
+    } else {
+      tokens.erase(tokens.begin());
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      factor->set_exp_node(std::move(exp));
+      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    }
   } else {
     success = false;
     error_messages.emplace_back("Expected constant, unary operator, semicolon "
