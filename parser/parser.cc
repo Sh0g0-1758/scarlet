@@ -265,10 +265,20 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+    // SPECIAL CASE: When we have a single identifier inside a paratheses
+    // ie. (a) we can simply treat as an identifier. This helps simplify the
+    // semantic analysis stage a lot
     tokens.erase(tokens.begin());
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    parse_exp(tokens, exp);
-    factor->set_exp_node(std::move(exp));
+    if (tokens.size() >= 2 and
+        tokens[0].get_token() == token::TOKEN::IDENTIFIER and
+        tokens[1].get_token() == token::TOKEN::CLOSE_PARANTHESES) {
+      EXPECT_IDENTIFIER();
+      factor->set_identifier_node(std::move(identifier));
+    } else {
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      factor->set_exp_node(std::move(exp));
+    }
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
   } else {
     success = false;
