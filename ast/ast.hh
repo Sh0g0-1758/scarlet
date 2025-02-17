@@ -18,7 +18,8 @@ Grammar:
 <block_item> ::= <statement> | <declaration>
 <block> ::= "{" { <block_item> } "}"
 <declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block>
+<for-init> ::= <declaration> | [ <exp> ]
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";"
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-" | "!" | "--" | "++"
@@ -192,7 +193,12 @@ enum class statementType {
   _IFELSE_END,
   GOTO,
   LABEL,
-  BLOCK
+  BLOCK,
+  BREAK,
+  CONTINUE,
+  WHILE,
+  FOR,
+  DO_WHILE
 };
 
 class AST_Statement_Node {
@@ -200,6 +206,7 @@ private:
   std::shared_ptr<AST_exp_Node> exps;
   statementType type;
   std::shared_ptr<AST_Block_Node> block;
+  std::shared_ptr<AST_identifier_Node> label;
 
 public:
   std::string get_AST_name() { return "Statement"; }
@@ -214,6 +221,11 @@ public:
   std::shared_ptr<AST_Block_Node> get_block() { return block; }
   void set_block(std::shared_ptr<AST_Block_Node> block) {
     this->block = std::move(block);
+  }
+
+  std::shared_ptr<AST_identifier_Node> get_label() { return label; }
+  void set_label(std::shared_ptr<AST_identifier_Node> label) {
+    this->label = std::move(label);
   }
 };
 

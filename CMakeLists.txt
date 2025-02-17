@@ -79,7 +79,7 @@ target_compile_options(scarlet PRIVATE -O3)
 add_custom_target(test-scarlet
     DEPENDS scarlet
     COMMAND echo "Running lexer test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 7 --stage lex
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 8 --stage lex
     COMMAND echo "Running parser test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 7 --stage parse
     COMMAND echo "Running semantic analysis test"

@@ -4,6 +4,7 @@
 #include <binary_operations/binop.hh>
 #include <iostream>
 #include <map>
+#include <stack>
 #include <string>
 #include <token/token.hh>
 #include <unary_operations/unop.hh>
@@ -17,6 +18,10 @@ private:
   int symbol_counter = 0;
   std::map<std::string, bool> goto_labels;
   ast::AST_Program_Node program;
+  int loop_start_counter = 0;
+  int loop_end_counter = 0;
+  std::stack<std::string> loop_start_labels;
+  std::stack<std::string> loop_end_labels;
   std::shared_ptr<ast::AST_Function_Node>
   parse_function(std::vector<token::Token> &tokens);
   void parse_block(std::vector<token::Token> &tokens,
@@ -44,11 +49,6 @@ private:
   void pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor);
   void pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block);
-  std::string get_temp_name(std::string &name) {
-    std::string tmp = name + "." + std::to_string(symbol_counter);
-    symbol_counter++;
-    return tmp;
-  }
   void
   analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
               std::map<std::pair<std::string, int>, std::string> &symbol_table,
@@ -57,6 +57,33 @@ private:
       std::shared_ptr<ast::AST_Block_Node> block,
       std::map<std::pair<std::string, int>, std::string> &symbol_table,
       int indx);
+
+  std::string get_temp_name(std::string &name) {
+    std::string tmp = name + "." + std::to_string(symbol_counter);
+    symbol_counter++;
+    return tmp;
+  }
+
+  std::string get_loop_start_label() {
+    std::string label = "loopStart." + std::to_string(loop_start_counter);
+    loop_start_counter++;
+    loop_start_labels.push(label);
+    return label;
+  }
+
+  std::string get_loop_end_label() {
+    std::string label = "loopEnd." + std::to_string(loop_end_counter);
+    loop_end_counter++;
+    loop_end_labels.push(label);
+    return label;
+  }
+
+  std::string get_prev_loop_start_label() { return loop_start_labels.top(); }
+
+  std::string get_prev_loop_end_label() { return loop_end_labels.top(); }
+
+  void remove_loop_start_label() { loop_start_labels.pop(); }
+  void remove_loop_end_label() { loop_end_labels.pop(); }
 
 public:
   void parse_program(std::vector<token::Token> tokens);

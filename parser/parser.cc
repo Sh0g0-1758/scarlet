@@ -215,11 +215,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     tokens.erase(tokens.begin());
     statement->set_type(ast::statementType::GOTO);
     EXPECT_IDENTIFIER();
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    MAKE_SHARED(ast::AST_factor_Node, factor);
-    factor->set_identifier_node(std::move(identifier));
-    exp->set_factor_node(std::move(factor));
-    statement->set_exp(std::move(exp));
+    statement->set_label(std::move(identifier));
     EXPECT(token::TOKEN::SEMICOLON);
     block_item->set_statement(std::move(statement));
     block->add_blockItem(std::move(block_item));
@@ -228,11 +224,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
              tokens[1].get_token() == token::TOKEN::COLON) {
     statement->set_type(ast::statementType::LABEL);
     EXPECT_IDENTIFIER();
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    MAKE_SHARED(ast::AST_factor_Node, factor);
-    factor->set_identifier_node(std::move(identifier));
-    exp->set_factor_node(std::move(factor));
-    statement->set_exp(std::move(exp));
+    statement->set_label(std::move(identifier));
     EXPECT(token::TOKEN::COLON);
     block_item->set_statement(std::move(statement));
     block->add_blockItem(std::move(block_item));
@@ -243,6 +235,81 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     statement->set_block(std::move(block_node));
     block_item->set_statement(std::move(statement));
     block->add_blockItem(std::move(block_item));
+  } else if (tokens[0].get_token() == token::TOKEN::WHILE) {
+    statement->set_type(ast::statementType::WHILE);
+    MAKE_SHARED(ast::AST_identifier_Node, start_label);
+    MAKE_SHARED(ast::AST_identifier_Node, end_label);
+    start_label->set_identifier(get_loop_start_label());
+    end_label->set_identifier(get_loop_end_label());
+    statement->set_label(std::move(start_label));
+    tokens.erase(tokens.begin());
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    block_item->set_statement(std::move(statement));
+    block->add_blockItem(std::move(block_item));
+    parse_statement(tokens, block);
+
+    // add the end label
+    MAKE_SHARED(ast::AST_Block_Item_Node, block_item2);
+    block_item2->set_type(ast::BlockItemType::STATEMENT);
+    MAKE_SHARED(ast::AST_Statement_Node, statement2);
+    statement2->set_type(ast::statementType::LABEL);
+    statement2->set_label(std::move(end_label));
+    block_item2->set_statement(std::move(statement2));
+    block->add_blockItem(std::move(block_item2));
+
+    remove_loop_start_label();
+    remove_loop_end_label();
+  } else if (tokens[0].get_token() == token::TOKEN::CONTINUE) {
+    statement->set_type(ast::statementType::CONTINUE);
+    MAKE_SHARED(ast::AST_identifier_Node, label);
+    label->set_identifier(get_prev_loop_start_label());
+    statement->set_label(std::move(label));
+    tokens.erase(tokens.begin());
+    EXPECT(token::TOKEN::SEMICOLON);
+    block_item->set_statement(std::move(statement));
+    block->add_blockItem(std::move(block_item));
+  } else if (tokens[0].get_token() == token::TOKEN::BREAK) {
+    // set label
+    statement->set_type(ast::statementType::BREAK);
+    MAKE_SHARED(ast::AST_identifier_Node, label);
+    label->set_identifier(get_prev_loop_end_label());
+    statement->set_label(std::move(label));
+    tokens.erase(tokens.begin());
+    EXPECT(token::TOKEN::SEMICOLON);
+    block_item->set_statement(std::move(statement));
+    block->add_blockItem(std::move(block_item));
+  } else if (tokens[0].get_token() == token::TOKEN::DO) {
+    tokens.erase(tokens.begin());
+    statement->set_type(ast::statementType::DO_WHILE);
+    MAKE_SHARED(ast::AST_identifier_Node, start_label);
+    MAKE_SHARED(ast::AST_identifier_Node, end_label);
+    start_label->set_identifier(get_loop_start_label());
+    end_label->set_identifier(get_loop_end_label());
+    statement->set_label(std::move(start_label));
+    EXPECT(token::TOKEN::OPEN_BRACE);
+    parse_statement(tokens, block);
+    EXPECT(token::TOKEN::CLOSE_BRACE);
+    EXPECT(token::TOKEN::WHILE);
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    EXPECT(token::TOKEN::SEMICOLON);
+    block_item->set_statement(std::move(statement));
+    block->add_blockItem(std::move(block_item));
+  } else if (tokens[0].get_token() == token::TOKEN::FOR) {
+    tokens.erase(tokens.begin());
+    statement->set_type(ast::statementType::FOR);
+    MAKE_SHARED(ast::AST_identifier_Node, start_label);
+    MAKE_SHARED(ast::AST_identifier_Node, end_label);
+    start_label->set_identifier(get_loop_start_label());
+    end_label->set_identifier(get_loop_end_label());
+    statement->set_label(std::move(start_label));
   } else {
     statement->set_type(ast::statementType::EXP);
     MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -653,11 +720,8 @@ void parser::analyze_block(
       // actually declared and we also need to make sure that there are no
       // duplicate labels
       if (blockItem->get_statement()->get_type() == ast::statementType::GOTO) {
-        std::string label = blockItem->get_statement()
-                                ->get_exps()
-                                ->get_factor_node()
-                                ->get_identifier_node()
-                                ->get_value();
+        std::string label =
+            blockItem->get_statement()->get_label()->get_value();
         if (goto_labels.find(label) == goto_labels.end()) {
           goto_labels[label] = false;
         }
@@ -665,11 +729,8 @@ void parser::analyze_block(
       }
 
       if (blockItem->get_statement()->get_type() == ast::statementType::LABEL) {
-        std::string label = blockItem->get_statement()
-                                ->get_exps()
-                                ->get_factor_node()
-                                ->get_identifier_node()
-                                ->get_value();
+        std::string label =
+            blockItem->get_statement()->get_label()->get_value();
         if (goto_labels.find(label) != goto_labels.end()) {
           if (goto_labels[label] == false) {
             goto_labels[label] = true;
@@ -755,6 +816,16 @@ std::string to_string(ast::statementType type) {
     return "Label";
   case ast::statementType::BLOCK:
     return "Block";
+  case ast::statementType::CONTINUE:
+    return "Continue";
+  case ast::statementType::BREAK:
+    return "Break";
+  case ast::statementType::WHILE:
+    return "While";
+  case ast::statementType::DO_WHILE:
+    return "DoWhile";
+  case ast::statementType::FOR:
+    return "For";
   case ast::statementType::UNKNOWN:
     UNREACHABLE()
   }
