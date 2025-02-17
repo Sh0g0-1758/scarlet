@@ -1,22 +1,22 @@
 int main(void) {
-  int packet_size;
-  int header_length;
-  int payload_size;
-  int checksum;
-  int error_bits;
-  int packet_id;
-  int buffer_space;
-  int queue_length;
-  int timeout;
-  int retry_count;
-  int max_retries;
-  int delay;
-  int fragment_size;
-  int total_fragments;
-  int processed_count;
-  int dropped_count;
-  int bandwidth;
-  int latency;
+  int packet_size = 0;
+  int header_length = 0;
+  int payload_size = 0;
+  int checksum = 0;
+  int error_bits = 0;
+  int packet_id = 0;
+  int buffer_space = 0;
+  int queue_length = 0;
+  int timeout = 0;
+  int retry_count = 0;
+  int max_retries = 0;
+  int delay = 0;
+  int fragment_size = 0;
+  int total_fragments = 0;
+  int processed_count = 0;
+  int dropped_count = 0;
+  int bandwidth = 0;
+  int latency = 0;
 
 singularity_start:
   if (((packet_size = 123456) >> 3) + ((header_length = 654321) << 4) >

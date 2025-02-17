@@ -96,6 +96,12 @@ end:
   return -1;
 
 final:
+#ifdef __clang__
+  // clang gives undefined behavior for unsequenced modification and access to
+  // the same variable. gcc seems to respect the precedence of C operators (like
+  // scarlet) and thus gives a defined result.
+  return 245;
+#else
 return (o = 9999999) + (((((((((((((((((((((((((((((((((((((((((((((((((((((((((a = 123456789) * (b = 987654321)) / 
                                                                    ((c = 555555555) + 1)) % 
                                                                    ((d = 777777777) * (e = 888888888))) * 
@@ -147,4 +153,5 @@ return (o = 9999999) + (((((((((((((((((((((((((((((((((((((((((((((((((((((((((
                                                                    ((((m = 222222212) ^ (n = 111111101)) & 
                                                                    ((o = 999999989) | (p = 888888877))) + 
                                                                    (((a = 777777766) >> 10) * ((b = 666666655) << 13)))))))))))))))))))))))))))))))))))))));
+#endif
 }

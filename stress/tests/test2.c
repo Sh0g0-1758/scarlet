@@ -1,25 +1,25 @@
 int main(void) {
-  int current_temp;
-  int target_temp;
-  int heat_power;
-  int fan_speed;
-  int humidity;
-  int pressure;
-  int safety_threshold;
-  int emergency_limit;
-  int system_status;
-  int error_code;
-  int valve_position;
-  int flow_rate;
-  int sensor1;
-  int sensor2;
-  int sensor3;
-  int alert_level;
-  int warning_code;
-  int backup_power;
-  int efficiency;
-  int delta_t;
-  int time_remaining;
+  int current_temp = 0;
+  int target_temp = 0;
+  int heat_power = 0;
+  int fan_speed = 0;
+  int humidity = 0;
+  int pressure = 0;
+  int safety_threshold = 0;
+  int emergency_limit = 0;
+  int system_status = 0;
+  int error_code = 0;
+  int valve_position = 0;
+  int flow_rate = 0;
+  int sensor1 = 0;
+  int sensor2 = 0;
+  int sensor3 = 0;
+  int alert_level = 0;
+  int warning_code = 0;
+  int backup_power = 0;
+  int efficiency = 0;
+  int delta_t = 0;
+  int time_remaining = 0;
 
 start:
   if ((current_temp = 72) < 100) {
@@ -100,6 +100,12 @@ emergency:
   return -1;
 
 final:
+#ifdef __clang__
+  // clang gives undefined behavior for unsequenced modification and access to
+  // the same variable. gcc seems to respect the precedence of C operators (like
+  // scarlet) and thus gives a defined result.
+  return 104;
+#else
   return (pressure = 243) +
          ((((((((((((((((((((current_temp = 180) * (heat_power = 450)) /
                            ((target_temp = 200) + 1)) %
@@ -137,4 +143,5 @@ final:
                ((valve_position = 85) ^ (flow_rate = 170))) +
               (((sensor3 = 295) - (sensor2 = 275)) *
                ((sensor1 = 350) + (sensor2 = 278))));
+#endif
 }

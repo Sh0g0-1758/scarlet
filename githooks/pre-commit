@@ -4,7 +4,6 @@ echo "Running pre-commit formatting hook"
 
 files=$(git diff --cached --name-only --diff-filter=ACM | \
     grep -E "\.(c|cpp|h|hpp|cc|hh)$" | \
-    grep -v "^tests/" | \
     grep -v "^test_framework/")
 
 for file in $files; do
