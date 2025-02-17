@@ -40,6 +40,8 @@ private:
   void parse_binop(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_binop_Node> binop);
   void expect(token::TOKEN actual_token, token::TOKEN expected_token);
+  std::pair<bool, int>
+  is_single_identifier_parentheses(std::vector<token::Token> &tokens);
   void eof_error(token::Token token);
   void pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor);
