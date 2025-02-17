@@ -310,7 +310,6 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
      */
     std::pair<bool, int> res = is_single_identifier_parentheses(tokens);
     if (res.first) {
-      std::cout << "BROOSKO" << std::endl;
       for (int i = 0; i < res.second; i++) {
         tokens.erase(tokens.begin());
       }
