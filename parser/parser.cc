@@ -266,21 +266,37 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
   } else if (tokens[0].get_token() == token::TOKEN::CONTINUE) {
     statement->set_type(ast::statementType::CONTINUE);
     MAKE_SHARED(ast::AST_identifier_Node, label);
-    label->set_identifier(get_prev_loop_start_label());
-    statement->set_labels({std::move(label), nullptr});
-    tokens.erase(tokens.begin());
-    EXPECT(token::TOKEN::SEMICOLON);
-    block_item->set_statement(std::move(statement));
-    block->add_blockItem(std::move(block_item));
+    auto [lbl, res] = get_prev_loop_start_label();
+    if (!res) {
+      tokens.erase(tokens.begin());
+      error_messages.emplace_back(
+          "Continue statement found outside of a loop construct");
+      success = false;
+    } else {
+      label->set_identifier(lbl);
+      statement->set_labels({std::move(label), nullptr});
+      tokens.erase(tokens.begin());
+      EXPECT(token::TOKEN::SEMICOLON);
+      block_item->set_statement(std::move(statement));
+      block->add_blockItem(std::move(block_item));
+    }
   } else if (tokens[0].get_token() == token::TOKEN::BREAK) {
     statement->set_type(ast::statementType::BREAK);
     MAKE_SHARED(ast::AST_identifier_Node, label);
-    label->set_identifier(get_prev_loop_end_label());
-    statement->set_labels({std::move(label), nullptr});
-    tokens.erase(tokens.begin());
-    EXPECT(token::TOKEN::SEMICOLON);
-    block_item->set_statement(std::move(statement));
-    block->add_blockItem(std::move(block_item));
+    auto [lbl, res] = get_prev_loop_end_label();
+    if (!res) {
+      tokens.erase(tokens.begin());
+      error_messages.emplace_back(
+          "Break statement found outside of a loop construct");
+      success = false;
+    } else {
+      label->set_identifier(lbl);
+      statement->set_labels({std::move(label), nullptr});
+      tokens.erase(tokens.begin());
+      EXPECT(token::TOKEN::SEMICOLON);
+      block_item->set_statement(std::move(statement));
+      block->add_blockItem(std::move(block_item));
+    }
   } else if (tokens[0].get_token() == token::TOKEN::DO) {
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_identifier_Node, start_label);
@@ -323,19 +339,29 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
 
     MAKE_SHARED(ast::AST_For_Statement_Node, for_statement);
-    parse_for_init(tokens, for_statement);
+    for_statement->set_type(ast::statementType::FOR);
+    if (tokens[0].get_token() != token::TOKEN::SEMICOLON)
+      parse_for_init(tokens, for_statement);
 
     EXPECT(token::TOKEN::SEMICOLON);
 
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    parse_exp(tokens, exp);
-    for_statement->set_exp(std::move(exp));
+    if (tokens[0].get_token() != token::TOKEN::SEMICOLON) {
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      for_statement->set_exp(std::move(exp));
+    } else {
+      for_statement->set_exp(nullptr);
+    }
 
     EXPECT(token::TOKEN::SEMICOLON);
 
-    MAKE_SHARED(ast::AST_exp_Node, exp2);
-    parse_exp(tokens, exp2);
-    for_statement->set_exp2(std::move(exp2));
+    if (tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
+      MAKE_SHARED(ast::AST_exp_Node, exp2);
+      parse_exp(tokens, exp2);
+      for_statement->set_exp2(std::move(exp2));
+    } else {
+      for_statement->set_exp2(nullptr);
+    }
 
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
 
@@ -347,7 +373,7 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     for_statement->set_labels({std::move(start_label), end_label});
 
     statement =
-        std::dynamic_pointer_cast<ast::AST_Statement_Node>(for_statement);
+        std::static_pointer_cast<ast::AST_Statement_Node>(for_statement);
     block_item->set_statement(std::move(statement));
     block->add_blockItem(std::move(block_item));
 
@@ -393,7 +419,6 @@ void parser::parse_for_init(
       MAKE_SHARED(ast::AST_exp_Node, exp);
       parse_exp(tokens, exp);
       declaration->set_exp(std::move(exp));
-      EXPECT(token::TOKEN::SEMICOLON);
     }
     for_init->set_declaration(std::move(declaration));
   } else {
@@ -881,6 +906,24 @@ void parser::analyze_block(
         }
         continue;
       }
+      // downcast for loop statement
+      if (blockItem->get_statement()->get_type() == ast::statementType::FOR) {
+        auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
+            blockItem->get_statement());
+        std::map<std::pair<std::string, int>, std::string> proxy_symbol_table(
+            symbol_table);
+        if (forstmt->get_for_init()->get_declaration() != nullptr) {
+          analyze_exp(forstmt->get_for_init()->get_declaration()->get_exp(),
+                      proxy_symbol_table, indx);
+        }
+        if (forstmt->get_exps() != nullptr) {
+          analyze_exp(forstmt->get_exps(), proxy_symbol_table, indx);
+        }
+        if (forstmt->get_exp2() != nullptr) {
+          analyze_exp(forstmt->get_exp2(), proxy_symbol_table, indx);
+        }
+        continue;
+      }
       if (blockItem->get_statement()->get_exps() != nullptr) {
         analyze_exp(blockItem->get_statement()->get_exps(), symbol_table, indx);
       }
@@ -1040,12 +1083,73 @@ void parser::pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block) {
       std::cout << "\t\t\t\t\ttype="
                 << to_string(blockItem->get_statement()->get_type()) << ","
                 << std::endl;
+      if (blockItem->get_statement()->get_type() == ast::statementType::FOR) {
+        std::shared_ptr<ast::AST_For_Statement_Node> forstmt =
+            std::static_pointer_cast<ast::AST_For_Statement_Node>(
+                blockItem->get_statement());
+        std::cout << "\t\t\t\t\tlabels=("
+                  << forstmt->get_labels().first->get_value() << ","
+                  << forstmt->get_labels().second->get_value() << "),"
+                  << std::endl;
+        std::cout << "\t\t\t\t\tfor_init=(" << std::endl;
+        if (forstmt->get_for_init() != nullptr) {
+          if (forstmt->get_for_init()->get_declaration() != nullptr) {
+            std::cout << "\t\t\t\t\t\tDeclaration=(" << std::endl;
+            std::cout << "\t\t\t\t\t\t\tidentifier=\""
+                      << forstmt->get_for_init()
+                             ->get_declaration()
+                             ->get_identifier()
+                             ->get_value()
+                      << "\"," << std::endl;
+            if (forstmt->get_for_init()->get_declaration()->get_exp() !=
+                nullptr) {
+              std::cout << "\t\t\t\t\t\t\texp=(" << std::endl;
+              pretty_print_exp(
+                  forstmt->get_for_init()->get_declaration()->get_exp());
+              std::cout << "\t\t\t\t\t\t\t)," << std::endl;
+            }
+            std::cout << "\t\t\t\t\t\t)," << std::endl;
+          } else {
+            std::cout << "\t\t\t\t\t\texp=(" << std::endl;
+            pretty_print_exp(forstmt->get_for_init()->get_exp());
+            std::cout << "\t\t\t\t\t\t)," << std::endl;
+          }
+        }
+        std::cout << "\t\t\t\t\t)," << std::endl;
+
+        std::cout << "\t\t\t\t\tcondition=(" << std::endl;
+        if (forstmt->get_exps() != nullptr)
+          pretty_print_exp(forstmt->get_exps());
+        std::cout << "\t\t\t\t\t)," << std::endl;
+
+        std::cout << "\t\t\t\t\tpost=(" << std::endl;
+        if (forstmt->get_exp2() != nullptr)
+          pretty_print_exp(forstmt->get_exp2());
+        std::cout << "\t\t\t\t\t)," << std::endl;
+
+        continue;
+      }
       if (blockItem->get_statement()->get_block() != nullptr)
         pretty_print_block(blockItem->get_statement()->get_block());
       else {
-        std::cout << "\t\t\t\t\texp=(" << std::endl;
-        pretty_print_exp(blockItem->get_statement()->get_exps());
-        std::cout << "\t\t\t\t\t)," << std::endl;
+        if (blockItem->get_statement()->get_exps() != nullptr) {
+          std::cout << "\t\t\t\t\texp=(" << std::endl;
+          pretty_print_exp(blockItem->get_statement()->get_exps());
+          std::cout << "\t\t\t\t\t)," << std::endl;
+        }
+        if (blockItem->get_statement()->get_labels().first != nullptr) {
+          std::cout
+              << "\t\t\t\t\tlabels=("
+              << blockItem->get_statement()->get_labels().first->get_value();
+          if (blockItem->get_statement()->get_labels().second != nullptr) {
+            std::cout << ",";
+            std::cout
+                << blockItem->get_statement()->get_labels().second->get_value()
+                << ")" << std::endl;
+          } else {
+            std::cout << ")" << std::endl;
+          }
+        }
       }
     }
     std::cout << "\t\t\t\t)," << std::endl;

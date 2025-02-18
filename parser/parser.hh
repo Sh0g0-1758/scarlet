@@ -82,9 +82,19 @@ private:
     return label;
   }
 
-  std::string get_prev_loop_start_label() { return loop_start_labels.top(); }
+  std::pair<std::string, bool> get_prev_loop_start_label() {
+    if (loop_start_labels.empty()) {
+      return {"", false};
+    }
+    return {loop_start_labels.top(), true};
+  }
 
-  std::string get_prev_loop_end_label() { return loop_end_labels.top(); }
+  std::pair<std::string, bool> get_prev_loop_end_label() {
+    if (loop_end_labels.empty()) {
+      return {"", false};
+    }
+    return {loop_end_labels.top(), true};
+  }
 
   void remove_loop_start_label() { loop_start_labels.pop(); }
   void remove_loop_end_label() { loop_end_labels.pop(); }
