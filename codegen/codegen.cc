@@ -557,7 +557,7 @@ void Codegen::gen_scar_block(
         MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
         scar_val_src->set_type(scar::val_type::UNKNOWN);
         scar_val_src->set_value(
-            inst->get_statement()->get_label()->get_value());
+            inst->get_statement()->get_labels().first->get_value());
         scar_instruction->set_src1(std::move(scar_val_src));
         scar_function->add_instruction(scar_instruction);
       } else if (inst->get_statement()->get_type() ==
@@ -567,7 +567,7 @@ void Codegen::gen_scar_block(
         MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
         scar_val_src->set_type(scar::val_type::UNKNOWN);
         scar_val_src->set_value(
-            inst->get_statement()->get_label()->get_value());
+            inst->get_statement()->get_labels().first->get_value());
         scar_instruction->set_src1(std::move(scar_val_src));
         scar_function->add_instruction(scar_instruction);
       } else if (inst->get_statement()->get_type() ==

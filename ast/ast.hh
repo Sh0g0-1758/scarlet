@@ -206,7 +206,9 @@ private:
   std::shared_ptr<AST_exp_Node> exps;
   statementType type;
   std::shared_ptr<AST_Block_Node> block;
-  std::shared_ptr<AST_identifier_Node> label;
+  std::pair<std::shared_ptr<AST_identifier_Node>,
+            std::shared_ptr<AST_identifier_Node>>
+      labels;
 
 public:
   std::string get_AST_name() { return "Statement"; }
@@ -223,9 +225,15 @@ public:
     this->block = std::move(block);
   }
 
-  std::shared_ptr<AST_identifier_Node> get_label() { return label; }
-  void set_label(std::shared_ptr<AST_identifier_Node> label) {
-    this->label = std::move(label);
+  std::pair<std::shared_ptr<AST_identifier_Node>,
+            std::shared_ptr<AST_identifier_Node>>
+  get_labels() {
+    return labels;
+  }
+  void set_labels(std::pair<std::shared_ptr<AST_identifier_Node>,
+                            std::shared_ptr<AST_identifier_Node>>
+                      labels) {
+    this->labels = std::move(labels);
   }
 };
 
@@ -253,6 +261,42 @@ public:
   }
   void set_exp(std::shared_ptr<AST_exp_Node> exp) {
     this->exp = std::move(exp);
+  }
+};
+
+class AST_For_Init_Node {
+private:
+  std::shared_ptr<AST_Declaration_Node> declaration;
+  std::shared_ptr<AST_exp_Node> exp;
+
+public:
+  std::string get_AST_name() { return "ForInit"; }
+  std::shared_ptr<AST_Declaration_Node> get_declaration() {
+    return declaration;
+  }
+  void set_declaration(std::shared_ptr<AST_Declaration_Node> declaration) {
+    this->declaration = std::move(declaration);
+  }
+  std::shared_ptr<AST_exp_Node> get_exp() { return exp; }
+  void set_exp(std::shared_ptr<AST_exp_Node> exp) {
+    this->exp = std::move(exp);
+  }
+};
+
+class AST_For_Statement_Node : public AST_Statement_Node {
+private:
+  std::shared_ptr<AST_For_Init_Node> for_init;
+  std::shared_ptr<AST_exp_Node> exp2;
+
+public:
+  std::string get_AST_name() { return "ForStatement"; }
+  std::shared_ptr<AST_For_Init_Node> get_for_init() { return for_init; }
+  void set_for_init(std::shared_ptr<AST_For_Init_Node> for_init) {
+    this->for_init = std::move(for_init);
+  }
+  std::shared_ptr<AST_exp_Node> get_exp2() { return exp2; }
+  void set_exp2(std::shared_ptr<AST_exp_Node> exp2) {
+    this->exp2 = std::move(exp2);
   }
 };
 

@@ -32,6 +32,8 @@ private:
                          std::shared_ptr<ast::AST_Block_Node> function);
   void parse_statement(std::vector<token::Token> &tokens,
                        std::shared_ptr<ast::AST_Block_Node> function);
+  void parse_for_init(std::vector<token::Token> &tokens,
+                      std::shared_ptr<ast::AST_For_Statement_Node> forstmt);
   void parse_factor(std::vector<token::Token> &tokens,
                     std::shared_ptr<ast::AST_factor_Node> factor);
   void parse_exp(std::vector<token::Token> &tokens,
