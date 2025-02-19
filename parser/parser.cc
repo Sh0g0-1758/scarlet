@@ -159,7 +159,6 @@ void parser::parse_statement(
 
     EXPECT(token::TOKEN::SEMICOLON);
   } else if (tokens[0].get_token() == token::TOKEN::IF) {
-    std::cout << "Parsing if statement" << std::endl;
     // We first check for the if (exp) statement
     MAKE_SHARED(ast::AST_if_else_statement_Node, if_else_statement);
     tokens.erase(tokens.begin());
@@ -182,7 +181,6 @@ void parser::parse_statement(
 
     // Then we optionally check for the else statement
     if (tokens[0].get_token() == token::TOKEN::ELSE) {
-      std::cout << "Parsing else statement" << std::endl;
       tokens.erase(tokens.begin());
       if_else_statement->set_type(ast::statementType::IFELSE);
 
@@ -249,8 +247,8 @@ void parser::parse_statement(
       success = false;
     } else {
       statement->set_labels({std::move(lbl), nullptr});
-      EXPECT(token::TOKEN::SEMICOLON);
     }
+    EXPECT(token::TOKEN::SEMICOLON);
   } else if (tokens[0].get_token() == token::TOKEN::BREAK) {
     tokens.erase(tokens.begin());
     statement->set_type(ast::statementType::BREAK);
@@ -261,9 +259,8 @@ void parser::parse_statement(
       success = false;
     } else {
       statement->set_labels({std::move(lbl), nullptr});
-      tokens.erase(tokens.begin());
-      EXPECT(token::TOKEN::SEMICOLON);
     }
+    EXPECT(token::TOKEN::SEMICOLON);
   } else if (tokens[0].get_token() == token::TOKEN::DO) {
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_while_statement_Node, while_statement);
@@ -290,23 +287,21 @@ void parser::parse_statement(
     // child class AST_For_Statement_Node to represent it.
     // We will use the power of down and upcasting to handle this.
     // for ( <for-init> ; <exp> ; <exp> ) <statement>
-    std::cout << "Parsing for statement" << std::endl;
     tokens.erase(tokens.begin());
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
 
     MAKE_SHARED(ast::AST_For_Statement_Node, for_statement);
     for_statement->set_type(ast::statementType::FOR);
-    if (tokens[0].get_token() != token::TOKEN::SEMICOLON)
+    if (tokens[0].get_token() != token::TOKEN::SEMICOLON) {
       parse_for_init(tokens, for_statement);
-
-    EXPECT(token::TOKEN::SEMICOLON);
+    } else {
+      EXPECT(token::TOKEN::SEMICOLON);
+    }
 
     if (tokens[0].get_token() != token::TOKEN::SEMICOLON) {
       MAKE_SHARED(ast::AST_exp_Node, exp);
       parse_exp(tokens, exp);
       for_statement->set_exp(std::move(exp));
-    } else {
-      for_statement->set_exp(nullptr);
     }
 
     EXPECT(token::TOKEN::SEMICOLON);
@@ -315,8 +310,6 @@ void parser::parse_statement(
       MAKE_SHARED(ast::AST_exp_Node, exp);
       parse_exp(tokens, exp);
       for_statement->set_exp2(std::move(exp));
-    } else {
-      for_statement->set_exp2(nullptr);
     }
 
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
@@ -351,6 +344,7 @@ void parser::parse_for_init(
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     for_init->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::SEMICOLON);
   }
   forstmt->set_for_init(std::move(for_init));
 }
@@ -840,7 +834,7 @@ void parser::analyze_statement(
         std::static_pointer_cast<ast::AST_block_statement_node>(statement);
     std::map<std::pair<std::string, int>, std::string> proxy_symbol_table(
         symbol_table);
-    analyze_block(block_statement->get_block(), proxy_symbol_table, indx);
+    analyze_block(block_statement->get_block(), proxy_symbol_table, indx + 1);
   } break;
   case ast::statementType::GOTO: {
     std::string label = statement->get_labels().first->get_value();

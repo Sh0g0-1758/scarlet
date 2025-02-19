@@ -119,8 +119,9 @@ public:
     res_label_stack.pop();
     return tmp;
   }
-  std::string get_for_label_name() {
-    std::string label_name = "labelFor." + std::to_string(for_label_counter);
+  std::string get_loop_start_label_name() {
+    std::string label_name =
+        "labelLoopStart." + std::to_string(for_label_counter);
     for_label_counter++;
     return label_name;
   }

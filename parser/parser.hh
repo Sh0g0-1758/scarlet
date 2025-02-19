@@ -110,6 +110,8 @@ private:
     std::string end_label = "loop_end." + std::to_string(loop_end_counter);
     loop_start_counter++;
     loop_end_counter++;
+    loop_start_labels.push(start_label);
+    loop_end_labels.push(end_label);
     MAKE_SHARED(ast::AST_identifier_Node, start_label_node);
     MAKE_SHARED(ast::AST_identifier_Node, end_label_node);
     start_label_node->set_identifier(start_label);

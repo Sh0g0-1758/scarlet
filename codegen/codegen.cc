@@ -668,21 +668,32 @@ void Codegen::gen_scar_statement(
 
     // Label(start)
     // <instructions for statement>
+    // Label(continue)
     // <instructions for condition>
     // c = <result of condition>
     // JumpIfNotZero(c, start)
     // Label(end)
 
+    std::string DO_START = get_loop_start_label_name();
+
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::LABEL);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
     scar_val_src->set_type(scar::val_type::UNKNOWN);
-    scar_val_src->set_value(
-        do_while_statement->get_labels().first->get_value());
+    scar_val_src->set_value(DO_START);
     scar_instruction->set_src1(std::move(scar_val_src));
     scar_function->add_instruction(scar_instruction);
 
     gen_scar_statement(do_while_statement->get_stmt(), scar_function);
+
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction1);
+    scar_instruction1->set_type(scar::instruction_type::LABEL);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+    scar_val_src1->set_type(scar::val_type::UNKNOWN);
+    scar_val_src1->set_value(
+        do_while_statement->get_labels().first->get_value());
+    scar_instruction1->set_src1(std::move(scar_val_src1));
+    scar_function->add_instruction(scar_instruction1);
 
     gen_scar_exp(do_while_statement->get_exps(), scar_function);
 
@@ -693,8 +704,7 @@ void Codegen::gen_scar_statement(
     scar_instruction2->set_src1(std::move(scar_val_src2));
     MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
     scar_val_dst2->set_type(scar::val_type::UNKNOWN);
-    scar_val_dst2->set_value(
-        do_while_statement->get_labels().first->get_value());
+    scar_val_dst2->set_value(DO_START);
     scar_instruction2->set_dst(std::move(scar_val_dst2));
     scar_function->add_instruction(scar_instruction2);
 
@@ -732,7 +742,7 @@ void Codegen::gen_scar_statement(
       }
     }
 
-    std::string FOR_START = get_for_label_name();
+    std::string FOR_START = get_loop_start_label_name();
 
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::LABEL);
