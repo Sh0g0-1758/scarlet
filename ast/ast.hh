@@ -204,6 +204,7 @@ class AST_Statement_Node {
 private:
   std::shared_ptr<AST_exp_Node> exps;
   statementType type;
+  // Labels serve different purpose for different statements
   std::pair<std::shared_ptr<AST_identifier_Node>,
             std::shared_ptr<AST_identifier_Node>>
       labels;
@@ -268,12 +269,17 @@ public:
 class AST_while_statement_Node : public AST_Statement_Node {
 private:
   std::shared_ptr<AST_Statement_Node> stmt;
+  std::string start_label;
 
 public:
   std::string get_AST_name() { return "WhileStatement"; }
   std::shared_ptr<AST_Statement_Node> get_stmt() { return stmt; }
   void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
     this->stmt = std::move(stmt);
+  }
+  std::string get_start_label() { return start_label; }
+  void set_start_label(std::string &&start_label) {
+    this->start_label = std::move(start_label);
   }
 };
 
@@ -328,6 +334,7 @@ private:
   std::shared_ptr<AST_For_Init_Node> for_init;
   std::shared_ptr<AST_exp_Node> exp2;
   std::shared_ptr<AST_Statement_Node> stmt;
+  std::string start_label;
 
 public:
   std::string get_AST_name() { return "ForStatement"; }
@@ -343,6 +350,11 @@ public:
   std::shared_ptr<AST_Statement_Node> get_stmt() { return stmt; }
   void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
     this->stmt = std::move(stmt);
+  }
+
+  std::string get_start_label() { return start_label; }
+  void set_start_label(std::string &&start_label) {
+    this->start_label = std::move(start_label);
   }
 };
 

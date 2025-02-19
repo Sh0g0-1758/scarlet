@@ -266,6 +266,7 @@ void parser::parse_statement(
     MAKE_SHARED(ast::AST_while_statement_Node, while_statement);
     while_statement->set_type(ast::statementType::DO_WHILE);
     while_statement->set_labels(get_loop_labels());
+    while_statement->set_start_label(get_loop_start_label());
 
     MAKE_SHARED(ast::AST_Statement_Node, stmt);
     parse_statement(tokens, stmt);
@@ -315,6 +316,7 @@ void parser::parse_statement(
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
 
     for_statement->set_labels(get_loop_labels());
+    for_statement->set_start_label(get_loop_start_label());
 
     MAKE_SHARED(ast::AST_Statement_Node, stmt);
     parse_statement(tokens, stmt);

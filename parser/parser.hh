@@ -22,6 +22,7 @@ private:
   std::map<std::string, bool> goto_labels;
   ast::AST_Program_Node program;
   int loop_start_counter = 0;
+  int loop_continue_counter = 0;
   int loop_end_counter = 0;
   int ifelse_counter = 0;
   std::stack<std::string> loop_start_labels;
@@ -106,9 +107,9 @@ private:
             std::shared_ptr<ast::AST_identifier_Node>>
   get_loop_labels() {
     std::string start_label =
-        "loop_start." + std::to_string(loop_start_counter);
+        "loop_continue." + std::to_string(loop_continue_counter);
     std::string end_label = "loop_end." + std::to_string(loop_end_counter);
-    loop_start_counter++;
+    loop_continue_counter++;
     loop_end_counter++;
     loop_start_labels.push(start_label);
     loop_end_labels.push(end_label);
@@ -117,6 +118,12 @@ private:
     start_label_node->set_identifier(start_label);
     end_label_node->set_identifier(end_label);
     return {start_label_node, end_label_node};
+  }
+
+  std::string get_loop_start_label() {
+    std::string label = "loop_start." + std::to_string(loop_start_counter);
+    loop_start_counter++;
+    return label;
   }
 
   std::shared_ptr<ast::AST_identifier_Node> get_prev_loop_start_label() {

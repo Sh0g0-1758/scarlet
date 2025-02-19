@@ -674,13 +674,11 @@ void Codegen::gen_scar_statement(
     // JumpIfNotZero(c, start)
     // Label(end)
 
-    std::string DO_START = get_loop_start_label_name();
-
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::LABEL);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
     scar_val_src->set_type(scar::val_type::UNKNOWN);
-    scar_val_src->set_value(DO_START);
+    scar_val_src->set_value(do_while_statement->get_start_label());
     scar_instruction->set_src1(std::move(scar_val_src));
     scar_function->add_instruction(scar_instruction);
 
@@ -704,7 +702,7 @@ void Codegen::gen_scar_statement(
     scar_instruction2->set_src1(std::move(scar_val_src2));
     MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
     scar_val_dst2->set_type(scar::val_type::UNKNOWN);
-    scar_val_dst2->set_value(DO_START);
+    scar_val_dst2->set_value(do_while_statement->get_start_label());
     scar_instruction2->set_dst(std::move(scar_val_dst2));
     scar_function->add_instruction(scar_instruction2);
 
@@ -742,13 +740,11 @@ void Codegen::gen_scar_statement(
       }
     }
 
-    std::string FOR_START = get_loop_start_label_name();
-
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::LABEL);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
     scar_val_src->set_type(scar::val_type::UNKNOWN);
-    scar_val_src->set_value(FOR_START);
+    scar_val_src->set_value(for_statement->get_start_label());
     scar_instruction->set_src1(std::move(scar_val_src));
     scar_function->add_instruction(scar_instruction);
 
@@ -781,7 +777,7 @@ void Codegen::gen_scar_statement(
     scar_instruction4->set_type(scar::instruction_type::JUMP);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
     scar_val_src4->set_type(scar::val_type::UNKNOWN);
-    scar_val_src4->set_value(FOR_START);
+    scar_val_src4->set_value(for_statement->get_start_label());
     scar_instruction4->set_src1(std::move(scar_val_src4));
     scar_function->add_instruction(scar_instruction4);
 
