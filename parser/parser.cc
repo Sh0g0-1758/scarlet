@@ -101,25 +101,25 @@ void parser::parse_block(std::vector<token::Token> &tokens,
 }
 
 void parser::parse_block_item(std::vector<token::Token> &tokens,
-                              std::shared_ptr<ast::AST_Block_Node> block) {
-  // We have a variable declaration / defintion
+                              std::shared_ptr<ast::AST_Block_Node> &block) {
+  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
   if (tokens[0].get_token() == token::TOKEN::INT) {
-    parse_declaration(tokens, block);
+    block_item->set_type(ast::BlockItemType::DECLARATION);
+    MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+    parse_declaration(tokens, declaration);
+    block_item->set_declaration(std::move(declaration));
   } else {
-    // we have a return statement, an expression, an if-else block or a null
-    // statement
-    MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
     block_item->set_type(ast::BlockItemType::STATEMENT);
     MAKE_SHARED(ast::AST_Statement_Node, statement);
     parse_statement(tokens, statement);
+    block_item->set_statement(std::move(statement));
   }
+  block->add_blockItem(std::move(block_item));
 }
 
-void parser::parse_declaration(std::vector<token::Token> &tokens,
-                               std::shared_ptr<ast::AST_Block_Node> block) {
-  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-  block_item->set_type(ast::BlockItemType::DECLARATION);
-  MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+void parser::parse_declaration(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_Declaration_Node> &declaration) {
   EXPECT(token::TOKEN::INT);
   EXPECT_IDENTIFIER();
   declaration->set_identifier(std::move(identifier));
@@ -134,13 +134,11 @@ void parser::parse_declaration(std::vector<token::Token> &tokens,
     declaration->set_exp(std::move(exp));
     EXPECT(token::TOKEN::SEMICOLON);
   }
-  block_item->set_declaration(std::move(declaration));
-  block->add_blockItem(std::move(block_item));
 }
 
 void parser::parse_statement(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_Statement_Node> statement) {
+    std::shared_ptr<ast::AST_Statement_Node> &statement) {
   // NOTE THESE CHECKS ARE NECESSARY BECAUSE THE FUNCTION CAN BE CALLED
   // RECURSIVELY
   if (!success)
@@ -161,6 +159,7 @@ void parser::parse_statement(
 
     EXPECT(token::TOKEN::SEMICOLON);
   } else if (tokens[0].get_token() == token::TOKEN::IF) {
+    std::cout << "Parsing if statement" << std::endl;
     // We first check for the if (exp) statement
     MAKE_SHARED(ast::AST_if_else_statement_Node, if_else_statement);
     tokens.erase(tokens.begin());
@@ -183,6 +182,7 @@ void parser::parse_statement(
 
     // Then we optionally check for the else statement
     if (tokens[0].get_token() == token::TOKEN::ELSE) {
+      std::cout << "Parsing else statement" << std::endl;
       tokens.erase(tokens.begin());
       if_else_statement->set_type(ast::statementType::IFELSE);
 
@@ -290,6 +290,7 @@ void parser::parse_statement(
     // child class AST_For_Statement_Node to represent it.
     // We will use the power of down and upcasting to handle this.
     // for ( <for-init> ; <exp> ; <exp> ) <statement>
+    std::cout << "Parsing for statement" << std::endl;
     tokens.erase(tokens.begin());
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
 
@@ -340,23 +341,11 @@ void parser::parse_statement(
 
 void parser::parse_for_init(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_For_Statement_Node> forstmt) {
+    std::shared_ptr<ast::AST_For_Statement_Node> &forstmt) {
   MAKE_SHARED(ast::AST_For_Init_Node, for_init);
   if (tokens[0].get_token() == token::TOKEN::INT) {
-    tokens.erase(tokens.begin());
-    EXPECT_IDENTIFIER();
     MAKE_SHARED(ast::AST_Declaration_Node, declaration);
-    declaration->set_identifier(std::move(identifier));
-    if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
-      // the variable just have a declaration
-      tokens.erase(tokens.begin());
-    } else {
-      // the variable has a definition as well
-      EXPECT(token::TOKEN::ASSIGNMENT);
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      declaration->set_exp(std::move(exp));
-    }
+    parse_declaration(tokens, declaration);
     for_init->set_declaration(std::move(declaration));
   } else {
     MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -397,7 +386,7 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 }
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
-                          std::shared_ptr<ast::AST_factor_Node> factor) {
+                          std::shared_ptr<ast::AST_factor_Node> &factor) {
   if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
     parse_int(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
@@ -494,7 +483,7 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
 }
 
 void parser::parse_binop(std::vector<token::Token> &tokens,
-                         std::shared_ptr<ast::AST_binop_Node> binop) {
+                         std::shared_ptr<ast::AST_binop_Node> &binop) {
   switch (tokens[0].get_token()) {
   case token::TOKEN::PLUS:
     binop->set_op(binop::BINOP::ADD);
@@ -596,7 +585,7 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
 }
 
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
-                            std::shared_ptr<ast::AST_factor_Node> factor) {
+                            std::shared_ptr<ast::AST_factor_Node> &factor) {
   MAKE_SHARED(ast::AST_unop_Node, unop);
   switch (tokens[0].get_token()) {
   case token::TOKEN::TILDE:
@@ -623,13 +612,13 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
 
 void parser::parse_identifier(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_Function_Node> function) {
+    std::shared_ptr<ast::AST_Function_Node> &function) {
   EXPECT_IDENTIFIER();
   function->set_identifier(std::move(identifier));
 }
 
 void parser::parse_int(std::vector<token::Token> &tokens,
-                       std::shared_ptr<ast::AST_factor_Node> factor) {
+                       std::shared_ptr<ast::AST_factor_Node> &factor) {
   EXPECT_INT(token::TOKEN::CONSTANT);
 }
 

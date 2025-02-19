@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.14)
 project(Scarlet LANGUAGES CXX)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type: Debug Release" FORCE)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Building in debug mode")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "Building in release mode")
+else()
+    message(FATAL_ERROR "Invalid build type: ${CMAKE_BUILD_TYPE}\nValid build types are: Debug, Release")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -26,7 +38,8 @@ function(set_basic_compile_options target)
     -fno-strict-aliasing
     -fwrapv
     -fpie
-    -O3
+    $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
+    $<$<CONFIG:Release>:-O3>
   )
 endfunction()
 
@@ -51,10 +64,11 @@ endif()
 
 add_executable(scarlet ${SOURCES})
 target_compile_options(scarlet PRIVATE 
-    -O3
     -Wall
     -Wextra
     -Werror
+    $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
+    $<$<CONFIG:Release>:-O3>
 )
 
 add_dependencies(

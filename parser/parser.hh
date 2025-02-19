@@ -31,25 +31,26 @@ private:
   void parse_block(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_Block_Node> block);
   void parse_block_item(std::vector<token::Token> &tokens,
-                        std::shared_ptr<ast::AST_Block_Node> function);
-  void parse_declaration(std::vector<token::Token> &tokens,
-                         std::shared_ptr<ast::AST_Block_Node> function);
+                        std::shared_ptr<ast::AST_Block_Node> &block);
+  void
+  parse_declaration(std::vector<token::Token> &tokens,
+                    std::shared_ptr<ast::AST_Declaration_Node> &declaration);
   void parse_statement(std::vector<token::Token> &tokens,
-                       std::shared_ptr<ast::AST_Statement_Node> stmt);
+                       std::shared_ptr<ast::AST_Statement_Node> &stmt);
   void parse_for_init(std::vector<token::Token> &tokens,
-                      std::shared_ptr<ast::AST_For_Statement_Node> forstmt);
+                      std::shared_ptr<ast::AST_For_Statement_Node> &forstmt);
   void parse_factor(std::vector<token::Token> &tokens,
-                    std::shared_ptr<ast::AST_factor_Node> factor);
+                    std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_exp(std::vector<token::Token> &tokens,
                  std::shared_ptr<ast::AST_exp_Node> &exp, int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,
-                      std::shared_ptr<ast::AST_factor_Node> factor);
+                      std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_identifier(std::vector<token::Token> &tokens,
-                        std::shared_ptr<ast::AST_Function_Node> function);
+                        std::shared_ptr<ast::AST_Function_Node> &function);
   void parse_int(std::vector<token::Token> &tokens,
-                 std::shared_ptr<ast::AST_factor_Node> factor);
+                 std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_binop(std::vector<token::Token> &tokens,
-                   std::shared_ptr<ast::AST_binop_Node> binop);
+                   std::shared_ptr<ast::AST_binop_Node> &binop);
   void expect(token::TOKEN actual_token, token::TOKEN expected_token);
   std::pair<bool, int>
   is_single_identifier_parentheses(std::vector<token::Token> &tokens);
