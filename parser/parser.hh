@@ -9,6 +9,9 @@
 #include <token/token.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
+
+#define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
+
 namespace scarlet {
 namespace parser {
 class parser {
@@ -20,6 +23,7 @@ private:
   ast::AST_Program_Node program;
   int loop_start_counter = 0;
   int loop_end_counter = 0;
+  int ifelse_counter = 0;
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
   std::shared_ptr<ast::AST_Function_Node>
@@ -31,7 +35,7 @@ private:
   void parse_declaration(std::vector<token::Token> &tokens,
                          std::shared_ptr<ast::AST_Block_Node> function);
   void parse_statement(std::vector<token::Token> &tokens,
-                       std::shared_ptr<ast::AST_Block_Node> function);
+                       std::shared_ptr<ast::AST_Statement_Node> stmt);
   void parse_for_init(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_For_Statement_Node> forstmt);
   void parse_factor(std::vector<token::Token> &tokens,
@@ -53,12 +57,28 @@ private:
   void pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor);
   void pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block);
+  void pretty_print_declaration(
+      std::shared_ptr<ast::AST_Declaration_Node> declaration);
+  void
+  pretty_print_statement(std::shared_ptr<ast::AST_Statement_Node> statement);
   void
   analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
               std::map<std::pair<std::string, int>, std::string> &symbol_table,
               int indx);
   void analyze_block(
       std::shared_ptr<ast::AST_Block_Node> block,
+      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      int indx);
+  void analyze_declaration(
+      std::shared_ptr<ast::AST_Declaration_Node> declaration,
+      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      int indx);
+  void analyze_statement(
+      std::shared_ptr<ast::AST_Statement_Node> statement,
+      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      int indx);
+  void analyze_for_statement(
+      std::shared_ptr<ast::AST_For_Statement_Node> for_statement,
       std::map<std::pair<std::string, int>, std::string> &symbol_table,
       int indx);
 
@@ -68,36 +88,56 @@ private:
     return tmp;
   }
 
-  std::string get_loop_start_label() {
-    std::string label = "loopStart." + std::to_string(loop_start_counter);
+  std::pair<std::shared_ptr<ast::AST_identifier_Node>,
+            std::shared_ptr<ast::AST_identifier_Node>>
+  get_ifelse_labels() {
+    std::string if_label = "if_end." + std::to_string(ifelse_counter);
+    std::string else_label = "else_end." + std::to_string(ifelse_counter);
+    ifelse_counter++;
+    MAKE_SHARED(ast::AST_identifier_Node, if_label_node);
+    MAKE_SHARED(ast::AST_identifier_Node, else_label_node);
+    if_label_node->set_identifier(if_label);
+    else_label_node->set_identifier(else_label);
+    return {if_label_node, else_label_node};
+  }
+
+  std::pair<std::shared_ptr<ast::AST_identifier_Node>,
+            std::shared_ptr<ast::AST_identifier_Node>>
+  get_loop_labels() {
+    std::string start_label =
+        "loop_start." + std::to_string(loop_start_counter);
+    std::string end_label = "loop_end." + std::to_string(loop_end_counter);
     loop_start_counter++;
-    loop_start_labels.push(label);
-    return label;
-  }
-
-  std::string get_loop_end_label() {
-    std::string label = "loopEnd." + std::to_string(loop_end_counter);
     loop_end_counter++;
-    loop_end_labels.push(label);
+    MAKE_SHARED(ast::AST_identifier_Node, start_label_node);
+    MAKE_SHARED(ast::AST_identifier_Node, end_label_node);
+    start_label_node->set_identifier(start_label);
+    end_label_node->set_identifier(end_label);
+    return {start_label_node, end_label_node};
+  }
+
+  std::shared_ptr<ast::AST_identifier_Node> get_prev_loop_start_label() {
+    if (loop_start_labels.empty()) {
+      return nullptr;
+    }
+    MAKE_SHARED(ast::AST_identifier_Node, label);
+    label->set_identifier(loop_start_labels.top());
     return label;
   }
 
-  std::pair<std::string, bool> get_prev_loop_start_label() {
-    if (loop_start_labels.empty()) {
-      return {"", false};
-    }
-    return {loop_start_labels.top(), true};
-  }
-
-  std::pair<std::string, bool> get_prev_loop_end_label() {
+  std::shared_ptr<ast::AST_identifier_Node> get_prev_loop_end_label() {
     if (loop_end_labels.empty()) {
-      return {"", false};
+      return nullptr;
     }
-    return {loop_end_labels.top(), true};
+    MAKE_SHARED(ast::AST_identifier_Node, label);
+    label->set_identifier(loop_end_labels.top());
+    return label;
   }
 
-  void remove_loop_start_label() { loop_start_labels.pop(); }
-  void remove_loop_end_label() { loop_end_labels.pop(); }
+  void remove_loop_labels() {
+    loop_start_labels.pop();
+    loop_end_labels.pop();
+  }
 
 public:
   void parse_program(std::vector<token::Token> tokens);

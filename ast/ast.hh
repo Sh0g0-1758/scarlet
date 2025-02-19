@@ -185,12 +185,11 @@ class AST_Block_Node;
 // since each if statement can either exist on its own or have an else statement
 enum class statementType {
   UNKNOWN,
+  NULLSTMT,
   RETURN,
   EXP,
   IF,
   IFELSE,
-  _IF_END,
-  _IFELSE_END,
   GOTO,
   LABEL,
   BLOCK,
@@ -205,7 +204,6 @@ class AST_Statement_Node {
 private:
   std::shared_ptr<AST_exp_Node> exps;
   statementType type;
-  std::shared_ptr<AST_Block_Node> block;
   std::pair<std::shared_ptr<AST_identifier_Node>,
             std::shared_ptr<AST_identifier_Node>>
       labels;
@@ -220,11 +218,6 @@ public:
     this->exps = std::move(exp);
   }
 
-  std::shared_ptr<AST_Block_Node> get_block() { return block; }
-  void set_block(std::shared_ptr<AST_Block_Node> block) {
-    this->block = std::move(block);
-  }
-
   std::pair<std::shared_ptr<AST_identifier_Node>,
             std::shared_ptr<AST_identifier_Node>>
   get_labels() {
@@ -234,6 +227,53 @@ public:
                             std::shared_ptr<AST_identifier_Node>>
                       labels) {
     this->labels = std::move(labels);
+  }
+};
+
+class AST_block_statement_node : public AST_Statement_Node {
+private:
+  std::shared_ptr<AST_Block_Node> block;
+
+public:
+  std::string get_AST_name() { return "BlockStatement"; }
+  std::shared_ptr<AST_Block_Node> get_block() { return block; }
+  void set_block(std::shared_ptr<AST_Block_Node> block) {
+    this->block = std::move(block);
+  }
+};
+
+class AST_if_else_statement_Node : public AST_Statement_Node {
+private:
+  std::shared_ptr<AST_Statement_Node> stmt1;
+  std::shared_ptr<AST_Statement_Node> stmt2;
+
+public:
+  std::string get_AST_name() {
+    if (this->get_type() == statementType::IF) {
+      return "IfStatement";
+    } else {
+      return "IfElseStatement";
+    }
+  }
+  std::shared_ptr<AST_Statement_Node> get_stmt1() { return stmt1; }
+  void set_stmt1(std::shared_ptr<AST_Statement_Node> stmt1) {
+    this->stmt1 = std::move(stmt1);
+  }
+  std::shared_ptr<AST_Statement_Node> get_stmt2() { return stmt2; }
+  void set_stmt2(std::shared_ptr<AST_Statement_Node> stmt2) {
+    this->stmt2 = std::move(stmt2);
+  }
+};
+
+class AST_while_statement_Node : public AST_Statement_Node {
+private:
+  std::shared_ptr<AST_Statement_Node> stmt;
+
+public:
+  std::string get_AST_name() { return "WhileStatement"; }
+  std::shared_ptr<AST_Statement_Node> get_stmt() { return stmt; }
+  void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
+    this->stmt = std::move(stmt);
   }
 };
 
@@ -287,6 +327,7 @@ class AST_For_Statement_Node : public AST_Statement_Node {
 private:
   std::shared_ptr<AST_For_Init_Node> for_init;
   std::shared_ptr<AST_exp_Node> exp2;
+  std::shared_ptr<AST_Statement_Node> stmt;
 
 public:
   std::string get_AST_name() { return "ForStatement"; }
@@ -297,6 +338,11 @@ public:
   std::shared_ptr<AST_exp_Node> get_exp2() { return exp2; }
   void set_exp2(std::shared_ptr<AST_exp_Node> exp2) {
     this->exp2 = std::move(exp2);
+  }
+
+  std::shared_ptr<AST_Statement_Node> get_stmt() { return stmt; }
+  void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
+    this->stmt = std::move(stmt);
   }
 };
 
@@ -333,7 +379,7 @@ private:
 
 public:
   std::string get_AST_name() { return "Block"; }
-  std::vector<std::shared_ptr<AST_Block_Item_Node>> get_blockItems() {
+  std::vector<std::shared_ptr<AST_Block_Item_Node>> &get_blockItems() {
     return blockItems;
   }
   void add_blockItem(std::shared_ptr<AST_Block_Item_Node> statement) {
