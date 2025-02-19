@@ -61,24 +61,6 @@ int main(int argc, char *argv[]) {
   scarlet::lexer::lexer lex;
   lex.set_file_path(std::format("{}.scp", file_name));
   lex.tokenize();
-  if (!lex.is_success()) {
-    lex.print_error_recovery();
-    result = system(std::format("rm {}.scp", file_name).c_str());
-
-    if (result != 0) {
-      std::cerr
-          << "[ERROR]: Unable to delete the intermediate preprocessed file"
-          << std::endl;
-      return 1;
-    }
-    return 1;
-  }
-
-  if (cmd.has_option("lex")) {
-    std::cout << "[LOG]: Lexing done successfully" << std::endl;
-    lex.print_symbol_table();
-    return 0;
-  }
 
   // delete the intermediate preprocessed file
   result = system(std::format("rm {}.scp", file_name).c_str());
@@ -87,6 +69,17 @@ int main(int argc, char *argv[]) {
     std::cerr << "[ERROR]: Unable to delete the intermediate preprocessed file"
               << std::endl;
     return 1;
+  }
+
+  if (!lex.is_success()) {
+    lex.print_error_recovery();
+    return 1;
+  }
+
+  if (cmd.has_option("lex")) {
+    std::cout << "[LOG]: Lexing done successfully" << std::endl;
+    lex.print_symbol_table();
+    return 0;
   }
 
   // PARSER

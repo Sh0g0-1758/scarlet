@@ -2,7 +2,6 @@
 namespace scarlet {
 namespace parser {
 
-#define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
 #define UNREACHABLE()                                                          \
   std::cout << "Unreachable code reached in " << __FILE__ << " at line "       \
             << __LINE__ << std::endl;                                          \
@@ -102,22 +101,25 @@ void parser::parse_block(std::vector<token::Token> &tokens,
 }
 
 void parser::parse_block_item(std::vector<token::Token> &tokens,
-                              std::shared_ptr<ast::AST_Block_Node> block) {
-  // We have a variable declaration / defintion
+                              std::shared_ptr<ast::AST_Block_Node> &block) {
+  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
   if (tokens[0].get_token() == token::TOKEN::INT) {
-    parse_declaration(tokens, block);
+    block_item->set_type(ast::BlockItemType::DECLARATION);
+    MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+    parse_declaration(tokens, declaration);
+    block_item->set_declaration(std::move(declaration));
   } else {
-    // we have a return statement, an expression, an if-else block or a null
-    // statement
-    parse_statement(tokens, block);
+    block_item->set_type(ast::BlockItemType::STATEMENT);
+    MAKE_SHARED(ast::AST_Statement_Node, statement);
+    parse_statement(tokens, statement);
+    block_item->set_statement(std::move(statement));
   }
+  block->add_blockItem(std::move(block_item));
 }
 
-void parser::parse_declaration(std::vector<token::Token> &tokens,
-                               std::shared_ptr<ast::AST_Block_Node> block) {
-  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-  block_item->set_type(ast::BlockItemType::DECLARATION);
-  MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+void parser::parse_declaration(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_Declaration_Node> &declaration) {
   EXPECT(token::TOKEN::INT);
   EXPECT_IDENTIFIER();
   declaration->set_identifier(std::move(identifier));
@@ -132,12 +134,11 @@ void parser::parse_declaration(std::vector<token::Token> &tokens,
     declaration->set_exp(std::move(exp));
     EXPECT(token::TOKEN::SEMICOLON);
   }
-  block_item->set_declaration(std::move(declaration));
-  block->add_blockItem(std::move(block_item));
 }
 
-void parser::parse_statement(std::vector<token::Token> &tokens,
-                             std::shared_ptr<ast::AST_Block_Node> block) {
+void parser::parse_statement(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_Statement_Node> &statement) {
   // NOTE THESE CHECKS ARE NECESSARY BECAUSE THE FUNCTION CAN BE CALLED
   // RECURSIVELY
   if (!success)
@@ -147,9 +148,6 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     return;
   }
   // ===============================
-  MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-  block_item->set_type(ast::BlockItemType::STATEMENT);
-  MAKE_SHARED(ast::AST_Statement_Node, statement);
 
   if (tokens[0].get_token() == token::TOKEN::RETURN) {
     tokens.erase(tokens.begin());
@@ -160,11 +158,9 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     statement->set_exp(std::move(exp));
 
     EXPECT(token::TOKEN::SEMICOLON);
-
-    block_item->set_statement(std::move(statement));
-    block->add_blockItem(std::move(block_item));
   } else if (tokens[0].get_token() == token::TOKEN::IF) {
     // We first check for the if (exp) statement
+    MAKE_SHARED(ast::AST_if_else_statement_Node, if_else_statement);
     tokens.erase(tokens.begin());
 
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
@@ -172,86 +168,187 @@ void parser::parse_statement(std::vector<token::Token> &tokens,
     // exp
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
-    statement->set_type(ast::statementType::IF);
-    statement->set_exp(std::move(exp));
+    if_else_statement->set_exp(std::move(exp));
 
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
 
-    // Don't move it as we modify it later in case it has an else statement
-    block_item->set_statement(statement);
-    block->add_blockItem(std::move(block_item));
-
     // statement
-    parse_statement(tokens, block);
+    MAKE_SHARED(ast::AST_Statement_Node, stmt);
+    parse_statement(tokens, stmt);
+    if_else_statement->set_stmt1(std::move(stmt));
 
-    // mark the end of this if statement
-    MAKE_SHARED(ast::AST_Block_Item_Node, block_item2);
-    block_item2->set_type(ast::BlockItemType::STATEMENT);
-    MAKE_SHARED(ast::AST_Statement_Node, statement2);
-    statement2->set_type(ast::statementType::_IF_END);
-    block_item2->set_statement(std::move(statement2));
-    block->add_blockItem(std::move(block_item2));
+    if_else_statement->set_labels(get_ifelse_labels());
 
     // Then we optionally check for the else statement
     if (tokens[0].get_token() == token::TOKEN::ELSE) {
       tokens.erase(tokens.begin());
-      statement->set_type(ast::statementType::IFELSE);
-      // the statement following else is being treated as another block item
-      parse_statement(tokens, block);
+      if_else_statement->set_type(ast::statementType::IFELSE);
 
-      // mark the end of this else statement
-      MAKE_SHARED(ast::AST_Block_Item_Node, block_item3);
-      block_item3->set_type(ast::BlockItemType::STATEMENT);
-      MAKE_SHARED(ast::AST_Statement_Node, statement3);
-      statement3->set_type(ast::statementType::_IFELSE_END);
-      block_item3->set_statement(std::move(statement3));
-      block->add_blockItem(std::move(block_item3));
+      MAKE_SHARED(ast::AST_Statement_Node, stmt2);
+      parse_statement(tokens, stmt2);
+
+      if_else_statement->set_stmt2(std::move(stmt2));
+    } else {
+      if_else_statement->set_type(ast::statementType::IF);
     }
+    statement =
+        std::static_pointer_cast<ast::AST_Statement_Node>(if_else_statement);
   } else if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     // ignore the empty statement
     tokens.erase(tokens.begin());
-    return;
+    statement->set_type(ast::statementType::NULLSTMT);
   } else if (tokens[0].get_token() == token::TOKEN::GOTO) {
     tokens.erase(tokens.begin());
     statement->set_type(ast::statementType::GOTO);
     EXPECT_IDENTIFIER();
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    MAKE_SHARED(ast::AST_factor_Node, factor);
-    factor->set_identifier_node(std::move(identifier));
-    exp->set_factor_node(std::move(factor));
-    statement->set_exp(std::move(exp));
+    statement->set_labels({std::move(identifier), nullptr});
     EXPECT(token::TOKEN::SEMICOLON);
-    block_item->set_statement(std::move(statement));
-    block->add_blockItem(std::move(block_item));
   } else if (tokens.size() >= 2 &&
              tokens[0].get_token() == token::TOKEN::IDENTIFIER &&
              tokens[1].get_token() == token::TOKEN::COLON) {
     statement->set_type(ast::statementType::LABEL);
     EXPECT_IDENTIFIER();
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    MAKE_SHARED(ast::AST_factor_Node, factor);
-    factor->set_identifier_node(std::move(identifier));
-    exp->set_factor_node(std::move(factor));
-    statement->set_exp(std::move(exp));
+    statement->set_labels({std::move(identifier), nullptr});
     EXPECT(token::TOKEN::COLON);
-    block_item->set_statement(std::move(statement));
-    block->add_blockItem(std::move(block_item));
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
+    MAKE_SHARED(ast::AST_block_statement_node, block_stmt);
     MAKE_SHARED(ast::AST_Block_Node, block_node);
     parse_block(tokens, block_node);
-    statement->set_type(ast::statementType::BLOCK);
-    statement->set_block(std::move(block_node));
-    block_item->set_statement(std::move(statement));
-    block->add_blockItem(std::move(block_item));
+    block_stmt->set_type(ast::statementType::BLOCK);
+    block_stmt->set_block(std::move(block_node));
+    statement = std::static_pointer_cast<ast::AST_Statement_Node>(block_stmt);
+  } else if (tokens[0].get_token() == token::TOKEN::WHILE) {
+    MAKE_SHARED(ast::AST_while_statement_Node, while_statement);
+    while_statement->set_type(ast::statementType::WHILE);
+    tokens.erase(tokens.begin());
+    while_statement->set_labels(get_loop_labels());
+
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    while_statement->set_exp(std::move(exp));
+
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+
+    MAKE_SHARED(ast::AST_Statement_Node, stmt);
+    parse_statement(tokens, stmt);
+    while_statement->set_stmt(std::move(stmt));
+
+    remove_loop_labels();
+    statement =
+        std::static_pointer_cast<ast::AST_Statement_Node>(while_statement);
+  } else if (tokens[0].get_token() == token::TOKEN::CONTINUE) {
+    tokens.erase(tokens.begin());
+    statement->set_type(ast::statementType::CONTINUE);
+    auto lbl = get_prev_loop_start_label();
+    if (lbl == nullptr) {
+      error_messages.emplace_back(
+          "Continue statement found outside of a loop construct");
+      success = false;
+    } else {
+      statement->set_labels({std::move(lbl), nullptr});
+    }
+    EXPECT(token::TOKEN::SEMICOLON);
+  } else if (tokens[0].get_token() == token::TOKEN::BREAK) {
+    tokens.erase(tokens.begin());
+    statement->set_type(ast::statementType::BREAK);
+    auto lbl = get_prev_loop_end_label();
+    if (lbl == nullptr) {
+      error_messages.emplace_back(
+          "Break statement found outside of a loop construct");
+      success = false;
+    } else {
+      statement->set_labels({std::move(lbl), nullptr});
+    }
+    EXPECT(token::TOKEN::SEMICOLON);
+  } else if (tokens[0].get_token() == token::TOKEN::DO) {
+    tokens.erase(tokens.begin());
+    MAKE_SHARED(ast::AST_while_statement_Node, while_statement);
+    while_statement->set_type(ast::statementType::DO_WHILE);
+    while_statement->set_labels(get_loop_labels());
+    while_statement->set_start_label(get_loop_start_label());
+
+    MAKE_SHARED(ast::AST_Statement_Node, stmt);
+    parse_statement(tokens, stmt);
+    while_statement->set_stmt(std::move(stmt));
+
+    EXPECT(token::TOKEN::WHILE);
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    while_statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    EXPECT(token::TOKEN::SEMICOLON);
+
+    remove_loop_labels();
+    statement =
+        std::static_pointer_cast<ast::AST_Statement_Node>(while_statement);
+  } else if (tokens[0].get_token() == token::TOKEN::FOR) {
+    // For statement has additional constructs, so we use a
+    // child class AST_For_Statement_Node to represent it.
+    // We will use the power of down and upcasting to handle this.
+    // for ( <for-init> ; <exp> ; <exp> ) <statement>
+    tokens.erase(tokens.begin());
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+
+    MAKE_SHARED(ast::AST_For_Statement_Node, for_statement);
+    for_statement->set_type(ast::statementType::FOR);
+    if (tokens[0].get_token() != token::TOKEN::SEMICOLON) {
+      parse_for_init(tokens, for_statement);
+    } else {
+      EXPECT(token::TOKEN::SEMICOLON);
+    }
+
+    if (tokens[0].get_token() != token::TOKEN::SEMICOLON) {
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      for_statement->set_exp(std::move(exp));
+    }
+
+    EXPECT(token::TOKEN::SEMICOLON);
+
+    if (tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      for_statement->set_exp2(std::move(exp));
+    }
+
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+
+    for_statement->set_labels(get_loop_labels());
+    for_statement->set_start_label(get_loop_start_label());
+
+    MAKE_SHARED(ast::AST_Statement_Node, stmt);
+    parse_statement(tokens, stmt);
+    for_statement->set_stmt(std::move(stmt));
+
+    remove_loop_labels();
+    statement =
+        std::static_pointer_cast<ast::AST_Statement_Node>(for_statement);
   } else {
     statement->set_type(ast::statementType::EXP);
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::SEMICOLON);
-    block_item->set_statement(std::move(statement));
-    block->add_blockItem(std::move(block_item));
   }
+}
+
+void parser::parse_for_init(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_For_Statement_Node> &forstmt) {
+  MAKE_SHARED(ast::AST_For_Init_Node, for_init);
+  if (tokens[0].get_token() == token::TOKEN::INT) {
+    MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+    parse_declaration(tokens, declaration);
+    for_init->set_declaration(std::move(declaration));
+  } else {
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    for_init->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::SEMICOLON);
+  }
+  forstmt->set_for_init(std::move(for_init));
 }
 
 std::pair<bool, int>
@@ -285,7 +382,7 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 }
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
-                          std::shared_ptr<ast::AST_factor_Node> factor) {
+                          std::shared_ptr<ast::AST_factor_Node> &factor) {
   if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
     parse_int(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
@@ -382,7 +479,7 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
 }
 
 void parser::parse_binop(std::vector<token::Token> &tokens,
-                         std::shared_ptr<ast::AST_binop_Node> binop) {
+                         std::shared_ptr<ast::AST_binop_Node> &binop) {
   switch (tokens[0].get_token()) {
   case token::TOKEN::PLUS:
     binop->set_op(binop::BINOP::ADD);
@@ -484,7 +581,7 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
 }
 
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
-                            std::shared_ptr<ast::AST_factor_Node> factor) {
+                            std::shared_ptr<ast::AST_factor_Node> &factor) {
   MAKE_SHARED(ast::AST_unop_Node, unop);
   switch (tokens[0].get_token()) {
   case token::TOKEN::TILDE:
@@ -511,13 +608,13 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
 
 void parser::parse_identifier(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_Function_Node> function) {
+    std::shared_ptr<ast::AST_Function_Node> &function) {
   EXPECT_IDENTIFIER();
   function->set_identifier(std::move(identifier));
 }
 
 void parser::parse_int(std::vector<token::Token> &tokens,
-                       std::shared_ptr<ast::AST_factor_Node> factor) {
+                       std::shared_ptr<ast::AST_factor_Node> &factor) {
   EXPECT_INT(token::TOKEN::CONSTANT);
 }
 
@@ -675,6 +772,149 @@ void parser::analyze_exp(
     analyze_exp(exp->get_middle(), symbol_table, indx);
 }
 
+void parser::analyze_declaration(
+    std::shared_ptr<ast::AST_Declaration_Node> declaration,
+    std::map<std::pair<std::string, int>, std::string> &symbol_table,
+    int indx) {
+  std::string var_name = declaration->get_identifier()->get_value();
+  if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
+    // the symbol has been declared twice which is illegal
+    success = false;
+    error_messages.emplace_back("Variable " + var_name + " already declared");
+  } else {
+    symbol_table[{var_name, indx}] = get_temp_name(var_name);
+    declaration->get_identifier()->set_identifier(
+        symbol_table[{var_name, indx}]);
+    if (declaration->get_exp() != nullptr)
+      analyze_exp(declaration->get_exp(), symbol_table, indx);
+  }
+}
+
+void parser::analyze_statement(
+    std::shared_ptr<ast::AST_Statement_Node> statement,
+    std::map<std::pair<std::string, int>, std::string> &symbol_table,
+    int indx) {
+
+  // every variable that is used in any of the statement should already
+  // have been declared.
+
+  // We need to check that the labels used in goto statements are
+  // actually declared and we also need to make sure that there are no
+  // duplicate labels
+
+  switch (statement->get_type()) {
+  case ast::statementType::RETURN:
+    analyze_exp(statement->get_exps(), symbol_table, indx);
+    break;
+  case ast::statementType::IF: {
+    auto if_statement =
+        std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
+    analyze_exp(if_statement->get_exps(), symbol_table, indx);
+    analyze_statement(if_statement->get_stmt1(), symbol_table, indx);
+  } break;
+  case ast::statementType::IFELSE: {
+    auto if_else_statement =
+        std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
+    analyze_exp(if_else_statement->get_exps(), symbol_table, indx);
+    analyze_statement(if_else_statement->get_stmt1(), symbol_table, indx);
+    analyze_statement(if_else_statement->get_stmt2(), symbol_table, indx);
+  } break;
+  case ast::statementType::WHILE:
+  case ast::statementType::DO_WHILE: {
+    auto while_statement =
+        std::static_pointer_cast<ast::AST_while_statement_Node>(statement);
+    analyze_exp(while_statement->get_exps(), symbol_table, indx);
+    analyze_statement(while_statement->get_stmt(), symbol_table, indx);
+  } break;
+  case ast::statementType::FOR:
+    analyze_for_statement(
+        std::static_pointer_cast<ast::AST_For_Statement_Node>(statement),
+        symbol_table, indx);
+    break;
+  case ast::statementType::BLOCK: {
+    auto block_statement =
+        std::static_pointer_cast<ast::AST_block_statement_node>(statement);
+    std::map<std::pair<std::string, int>, std::string> proxy_symbol_table(
+        symbol_table);
+    analyze_block(block_statement->get_block(), proxy_symbol_table, indx + 1);
+  } break;
+  case ast::statementType::GOTO: {
+    std::string label = statement->get_labels().first->get_value();
+    if (goto_labels.find(label) == goto_labels.end()) {
+      goto_labels[label] = false;
+    }
+  } break;
+  case ast::statementType::LABEL: {
+    std::string label = statement->get_labels().first->get_value();
+    if (goto_labels.find(label) != goto_labels.end()) {
+      if (goto_labels[label] == false) {
+        goto_labels[label] = true;
+      } else {
+        success = false;
+        error_messages.emplace_back("Label " + label + " already declared");
+      }
+    } else {
+      goto_labels[label] = true;
+    }
+  } break;
+  case ast::statementType::EXP:
+    analyze_exp(statement->get_exps(), symbol_table, indx);
+    break;
+  case ast::statementType::NULLSTMT:
+  case ast::statementType::CONTINUE:
+  case ast::statementType::BREAK:
+    break;
+  case ast::statementType::UNKNOWN:
+    UNREACHABLE()
+  }
+}
+
+void parser::analyze_for_statement(
+    std::shared_ptr<ast::AST_For_Statement_Node> for_statement,
+    std::map<std::pair<std::string, int>, std::string> &symbol_table,
+    int indx) {
+  // When init is null or init is a simple expression, then
+  // we don't need to add another level to the symbol table
+  if (for_statement->get_for_init() == nullptr) {
+    analyze_exp(for_statement->get_exps(), symbol_table, indx);
+    analyze_exp(for_statement->get_exp2(), symbol_table, indx);
+    if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
+      auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
+          for_statement->get_stmt());
+      analyze_for_statement(forstmt, symbol_table, indx);
+    } else {
+      analyze_statement(for_statement->get_stmt(), symbol_table, indx);
+    }
+  } else if (for_statement->get_for_init()->get_declaration() == nullptr) {
+    analyze_exp(for_statement->get_for_init()->get_exp(), symbol_table, indx);
+    analyze_exp(for_statement->get_exps(), symbol_table, indx);
+    analyze_exp(for_statement->get_exp2(), symbol_table, indx);
+    if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
+      auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
+          for_statement->get_stmt());
+      analyze_for_statement(forstmt, symbol_table, indx);
+    } else {
+      analyze_statement(for_statement->get_stmt(), symbol_table, indx);
+    }
+  } else {
+    // Add another level to the symbol table
+    std::map<std::pair<std::string, int>, std::string> proxy_symbol_table(
+        symbol_table);
+    analyze_declaration(for_statement->get_for_init()->get_declaration(),
+                        proxy_symbol_table, indx + 1);
+    analyze_exp(for_statement->get_exps(), proxy_symbol_table, indx + 1);
+    analyze_exp(for_statement->get_exp2(), proxy_symbol_table, indx + 1);
+    if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
+      auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
+          for_statement->get_stmt());
+      analyze_for_statement(forstmt, proxy_symbol_table, indx + 1);
+    } else {
+      analyze_statement(for_statement->get_stmt(), proxy_symbol_table,
+                        indx + 1);
+    }
+  }
+}
+
 // NOTE: symbol table here is a map from {variable_name, block_indx} ->
 // temporary_variable_name(used as scar registers later)
 void parser::analyze_block(
@@ -683,70 +923,15 @@ void parser::analyze_block(
     int indx) {
   if (block == nullptr)
     return;
-  for (auto blockItem : block->get_blockItems()) {
-    if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
-      std::string var_name =
-          blockItem->get_declaration()->get_identifier()->get_value();
-      if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
-        // the symbol has been declared twice which is illegal
-        success = false;
-        error_messages.emplace_back("Variable " + var_name +
-                                    " already declared");
-      } else {
-        symbol_table[{var_name, indx}] = get_temp_name(var_name);
-        blockItem->get_declaration()->get_identifier()->set_identifier(
-            symbol_table[{var_name, indx}]);
-        if (blockItem->get_declaration()->get_exp() != nullptr)
-          analyze_exp(blockItem->get_declaration()->get_exp(), symbol_table,
-                      indx);
-      }
-    } else if (blockItem->get_type() == ast::BlockItemType::STATEMENT) {
-      // every variable that is used in any of the statement should already
-      // have been declared.
-
-      // We need to check that the labels used in goto statements are
-      // actually declared and we also need to make sure that there are no
-      // duplicate labels
-      if (blockItem->get_statement()->get_type() == ast::statementType::GOTO) {
-        std::string label = blockItem->get_statement()
-                                ->get_exps()
-                                ->get_factor_node()
-                                ->get_identifier_node()
-                                ->get_value();
-        if (goto_labels.find(label) == goto_labels.end()) {
-          goto_labels[label] = false;
-        }
-        continue;
-      }
-
-      if (blockItem->get_statement()->get_type() == ast::statementType::LABEL) {
-        std::string label = blockItem->get_statement()
-                                ->get_exps()
-                                ->get_factor_node()
-                                ->get_identifier_node()
-                                ->get_value();
-        if (goto_labels.find(label) != goto_labels.end()) {
-          if (goto_labels[label] == false) {
-            goto_labels[label] = true;
-          } else {
-            success = false;
-            error_messages.emplace_back("Label " + label + " already declared");
-          }
-        } else {
-          goto_labels[label] = true;
-        }
-        continue;
-      }
-      if (blockItem->get_statement()->get_exps() != nullptr) {
-        analyze_exp(blockItem->get_statement()->get_exps(), symbol_table, indx);
-      }
-      if (blockItem->get_statement()->get_block() != nullptr) {
-        std::map<std::pair<std::string, int>, std::string> proxy_symbol_table(
-            symbol_table);
-        analyze_block(blockItem->get_statement()->get_block(),
-                      proxy_symbol_table, indx + 1);
-      }
+  auto block_item = block->get_blockItems().begin();
+  auto block_end = block->get_blockItems().end();
+  while (block_item != block_end) {
+    if (((*block_item)->get_type()) == ast::BlockItemType::DECLARATION) {
+      analyze_declaration((*block_item)->get_declaration(), symbol_table, indx);
+    } else if ((*block_item)->get_type() == ast::BlockItemType::STATEMENT) {
+      analyze_statement((*block_item)->get_statement(), symbol_table, indx);
     }
+    block_item++;
   }
 }
 
@@ -792,6 +977,8 @@ std::string to_string(ast::BlockItemType type) {
 
 std::string to_string(ast::statementType type) {
   switch (type) {
+  case ast::statementType::NULLSTMT:
+    return "NullStmt";
   case ast::statementType::RETURN:
     return "Return";
   case ast::statementType::EXP:
@@ -800,20 +987,26 @@ std::string to_string(ast::statementType type) {
     return "If";
   case ast::statementType::IFELSE:
     return "IfElse";
-  case ast::statementType::_IF_END:
-    return "_If_End";
-  case ast::statementType::_IFELSE_END:
-    return "_IfElse_End";
   case ast::statementType::GOTO:
     return "Goto";
   case ast::statementType::LABEL:
     return "Label";
   case ast::statementType::BLOCK:
     return "Block";
+  case ast::statementType::CONTINUE:
+    return "Continue";
+  case ast::statementType::BREAK:
+    return "Break";
+  case ast::statementType::WHILE:
+    return "While";
+  case ast::statementType::DO_WHILE:
+    return "DoWhile";
+  case ast::statementType::FOR:
+    return "For";
   case ast::statementType::UNKNOWN:
     UNREACHABLE()
   }
-  UNREACHABLE()
+  return "";
 }
 
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
@@ -866,35 +1059,137 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   }
 }
 
+void parser::pretty_print_declaration(
+    std::shared_ptr<ast::AST_Declaration_Node> declaration) {
+  if (declaration == nullptr)
+    return;
+  std::cout << "\t\t\tDeclaration=(" << std::endl;
+  std::cout << "\t\t\t\tidentifier=\""
+            << declaration->get_identifier()->get_value() << "\"," << std::endl;
+  if (declaration->get_exp() != nullptr) {
+    std::cout << "\t\t\t\texp=(" << std::endl;
+    pretty_print_exp(declaration->get_exp());
+    std::cout << "\t\t\t\t)," << std::endl;
+  }
+  std::cout << "\t\t\t)" << std::endl;
+}
+
+void parser::pretty_print_statement(
+    std::shared_ptr<ast::AST_Statement_Node> statement) {
+  if (statement == nullptr)
+    return;
+  std::cout << "\t\t\tStatement=(" << std::endl;
+  std::cout << "\t\t\t\ttype=" << to_string(statement->get_type()) << ","
+            << std::endl;
+  switch (statement->get_type()) {
+  case ast::statementType::RETURN:
+    pretty_print_exp(statement->get_exps());
+    break;
+  case ast::statementType::IF: {
+    auto if_statement =
+        std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
+    std::cout << "\t\t\t\tlabels=("
+              << if_statement->get_labels().first->get_value() << ","
+              << if_statement->get_labels().second->get_value() << "),"
+              << std::endl;
+    std::cout << "\t\t\t\texps=(" << std::endl;
+    pretty_print_exp(if_statement->get_exps());
+    std::cout << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\tstmt1=(" << std::endl;
+    pretty_print_statement(if_statement->get_stmt1());
+    std::cout << "\t\t\t\t)" << std::endl;
+  } break;
+  case ast::statementType::IFELSE: {
+    auto if_else_statement =
+        std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
+    std::cout << "\t\t\t\tlabels=("
+              << if_else_statement->get_labels().first->get_value() << ","
+              << if_else_statement->get_labels().second->get_value() << "),"
+              << std::endl;
+    std::cout << "\t\t\t\texps=(" << std::endl;
+    pretty_print_exp(if_else_statement->get_exps());
+    std::cout << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\tstmt1=(" << std::endl;
+    pretty_print_statement(if_else_statement->get_stmt1());
+    std::cout << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\tstmt2=(" << std::endl;
+    pretty_print_statement(if_else_statement->get_stmt2());
+    std::cout << "\t\t\t\t)" << std::endl;
+  } break;
+  case ast::statementType::WHILE:
+  case ast::statementType::DO_WHILE: {
+    auto while_statement =
+        std::static_pointer_cast<ast::AST_while_statement_Node>(statement);
+    std::cout << "\t\t\t\tlabels=("
+              << while_statement->get_labels().first->get_value() << ","
+              << while_statement->get_labels().second->get_value() << "),"
+              << std::endl;
+    std::cout << "\t\t\t\texps=(" << std::endl;
+    pretty_print_exp(while_statement->get_exps());
+    std::cout << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\tstmt=(" << std::endl;
+    pretty_print_statement(while_statement->get_stmt());
+    std::cout << "\t\t\t\t)" << std::endl;
+  } break;
+  case ast::statementType::FOR: {
+    auto for_statement =
+        std::static_pointer_cast<ast::AST_For_Statement_Node>(statement);
+    std::cout << "\t\t\t\tlabels=("
+              << for_statement->get_labels().first->get_value() << ","
+              << for_statement->get_labels().second->get_value() << "),"
+              << std::endl;
+    if (for_statement->get_for_init() != nullptr) {
+      std::cout << "\t\t\t\tfor_init=(" << std::endl;
+      if (for_statement->get_for_init()->get_declaration() != nullptr) {
+        pretty_print_declaration(
+            for_statement->get_for_init()->get_declaration());
+      } else {
+        pretty_print_exp(for_statement->get_for_init()->get_exp());
+      }
+      std::cout << "\t\t\t\t)," << std::endl;
+    }
+    std::cout << "\t\t\t\tcondition=(" << std::endl;
+    pretty_print_exp(for_statement->get_exps());
+    std::cout << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\tpost=(" << std::endl;
+    pretty_print_exp(for_statement->get_exp2());
+    std::cout << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\tstmt=(" << std::endl;
+    pretty_print_statement(for_statement->get_stmt());
+    std::cout << "\t\t\t\t)" << std::endl;
+  } break;
+  case ast::statementType::BLOCK: {
+    auto block_statement =
+        std::static_pointer_cast<ast::AST_block_statement_node>(statement);
+    pretty_print_block(block_statement->get_block());
+  } break;
+  case ast::statementType::GOTO:
+  case ast::statementType::LABEL:
+  case ast::statementType::CONTINUE:
+  case ast::statementType::BREAK:
+    std::cout << "\t\t\t\tlabel=(" << statement->get_labels().first->get_value()
+              << ")" << std::endl;
+    break;
+  case ast::statementType::EXP:
+    pretty_print_exp(statement->get_exps());
+    break;
+  case ast::statementType::NULLSTMT:
+    break;
+  case ast::statementType::UNKNOWN:
+    UNREACHABLE()
+  }
+}
+
 void parser::pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block) {
   if (block == nullptr)
     return;
   std::cout << "\t\t\t" << "Block=(" << std::endl;
   for (auto blockItem : block->get_blockItems()) {
-    std::cout << "\t\t\t\t" << to_string(blockItem->get_type()) << "("
-              << std::endl;
     if (blockItem->get_type() == ast::BlockItemType::DECLARATION) {
-      std::cout << "\t\t\t\t\tidentifier=\""
-                << blockItem->get_declaration()->get_identifier()->get_value()
-                << "\"," << std::endl;
-      if (blockItem->get_declaration()->get_exp() != nullptr) {
-        std::cout << "\t\t\t\t\texp=(" << std::endl;
-        pretty_print_exp(blockItem->get_declaration()->get_exp());
-        std::cout << "\t\t\t\t\t)," << std::endl;
-      }
+      pretty_print_declaration(blockItem->get_declaration());
     } else {
-      std::cout << "\t\t\t\t\ttype="
-                << to_string(blockItem->get_statement()->get_type()) << ","
-                << std::endl;
-      if (blockItem->get_statement()->get_block() != nullptr)
-        pretty_print_block(blockItem->get_statement()->get_block());
-      else {
-        std::cout << "\t\t\t\t\texp=(" << std::endl;
-        pretty_print_exp(blockItem->get_statement()->get_exps());
-        std::cout << "\t\t\t\t\t)," << std::endl;
-      }
+      pretty_print_statement(blockItem->get_statement());
     }
-    std::cout << "\t\t\t\t)," << std::endl;
   }
   std::cout << "\t\t\t)" << std::endl;
 }
