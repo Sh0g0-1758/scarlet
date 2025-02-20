@@ -1,7 +1,6 @@
 #include "common.hh"
 
 namespace scarlet {
-
 namespace parser {
 
 std::pair<bool, int>

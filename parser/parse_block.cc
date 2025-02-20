@@ -1,7 +1,6 @@
 #include "common.hh"
 
 namespace scarlet {
-
 namespace parser {
 
 void parser::parse_block(std::vector<token::Token> &tokens,
@@ -32,5 +31,4 @@ void parser::parse_block_item(std::vector<token::Token> &tokens,
 }
 
 } // namespace parser
-
 } // namespace scarlet

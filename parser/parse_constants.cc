@@ -1,7 +1,6 @@
 #include "common.hh"
 
 namespace scarlet {
-
 namespace parser {
 
 void parser::parse_identifier(
@@ -17,5 +16,4 @@ void parser::parse_int(std::vector<token::Token> &tokens,
 }
 
 } // namespace parser
-
 } // namespace scarlet

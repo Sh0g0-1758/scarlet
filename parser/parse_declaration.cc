@@ -1,7 +1,6 @@
 #include "common.hh"
 
 namespace scarlet {
-
 namespace parser {
 
 void parser::parse_declaration(
@@ -24,5 +23,4 @@ void parser::parse_declaration(
 }
 
 } // namespace parser
-
 } // namespace scarlet

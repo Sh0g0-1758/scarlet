@@ -1,7 +1,6 @@
 #include "common.hh"
 
 namespace scarlet {
-
 namespace parser {
 
 std::shared_ptr<ast::AST_Function_Node>
@@ -19,5 +18,4 @@ parser::parse_function(std::vector<token::Token> &tokens) {
 }
 
 } // namespace parser
-
 } // namespace scarlet

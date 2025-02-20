@@ -1,7 +1,6 @@
 #include "common.hh"
 
 namespace scarlet {
-
 namespace parser {
 
 void parser::parse_unary_op(std::vector<token::Token> &tokens,
@@ -31,5 +30,4 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
 }
 
 } // namespace parser
-
 } // namespace scarlet

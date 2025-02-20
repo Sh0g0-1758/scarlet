@@ -1,7 +1,6 @@
 #include "common.hh"
 
 namespace scarlet {
-
 namespace parser {
 
 void parser::parse_binop(std::vector<token::Token> &tokens,
@@ -107,5 +106,4 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
 }
 
 } // namespace parser
-
 } // namespace scarlet
