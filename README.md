@@ -29,7 +29,7 @@ To execute our custom stress tests, execute the following command within the `st
 ./stress_test.sh
 ```
 
-To check memory leaks in scarlet, run the following command within the  build directory:
+To check memory leaks in scarlet, run the following command within the `stress` directory:
 
 ```sh
 ./check_memory_leaks.sh
