@@ -1,6 +1,19 @@
 add_library(scarCodegen STATIC
     codegen.cc
     codegen.hh
+    common.hh
+
+    scargen/scar.cc
+    scargen/scar_statement.cc
+    scargen/scar_factor.cc
+    scargen/scar_expression.cc
+    scargen/scar_declaration.cc
+    scargen/scar_block.cc
+    scargen/pretty_print.cc
+
+    scasmgen/scasm_generation.cc
+    scasmgen/fix_pseudo_registers.cc
+    scasmgen/fix_instructions.cc
 )
 
 set_basic_compile_options(scarCodegen)
