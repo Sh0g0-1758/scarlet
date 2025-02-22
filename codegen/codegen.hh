@@ -59,6 +59,15 @@ private:
   int stack_offset{};
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void
+  gen_scar_assign_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                      std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void gen_scar_short_circuit_exp(
+      std::shared_ptr<ast::AST_exp_Node> exp,
+      std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void
+  gen_scar_ternary_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                       std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
