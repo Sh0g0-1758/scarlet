@@ -146,8 +146,6 @@ private:
   std::shared_ptr<AST_factor_Node> factor;
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
-  // NOTE : This is only used for the ternary operator
-  std::shared_ptr<AST_exp_Node> middle;
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -171,7 +169,20 @@ public:
   void set_left(std::shared_ptr<AST_exp_Node> left) {
     this->left = std::move(left);
   }
+};
 
+class AST_ternary_exp_Node : public AST_exp_Node {
+private:
+  std::shared_ptr<AST_exp_Node> middle;
+
+public:
+  AST_ternary_exp_Node(std::shared_ptr<AST_exp_Node> parent) {
+    this->set_binop_node(parent->get_binop_node());
+    this->set_factor_node(parent->get_factor_node());
+    this->set_left(parent->get_left());
+    this->set_right(parent->get_right());
+  }
+  std::string get_AST_name() { return "TernaryExp"; }
   std::shared_ptr<AST_exp_Node> get_middle() { return middle; }
   void set_middle(std::shared_ptr<AST_exp_Node> middle) {
     this->middle = std::move(middle);

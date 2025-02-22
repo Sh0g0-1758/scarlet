@@ -114,7 +114,11 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
       MAKE_SHARED(ast::AST_exp_Node, middle_exp);
       // reset the precedence
       parse_exp(tokens, middle_exp, 0);
-      root_exp->set_middle(std::move(middle_exp));
+
+      std::shared_ptr<ast::AST_ternary_exp_Node> root_exp_ternary =
+          std::make_shared<ast::AST_ternary_exp_Node>(root_exp);
+      root_exp_ternary->set_middle(std::move(middle_exp));
+      root_exp = std::static_pointer_cast<ast::AST_exp_Node>(root_exp_ternary);
       EXPECT(token::TOKEN::COLON);
     }
     root_exp->set_binop_node(std::move(binop));

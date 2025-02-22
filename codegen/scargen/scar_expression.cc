@@ -162,12 +162,14 @@ void Codegen::gen_scar_ternary_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
 
+  auto texp = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
+
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
   scar_instruction->set_type(scar::instruction_type::JUMP_IF_ZERO);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
 
-  if (exp->get_left() == nullptr) {
-    gen_scar_factor(exp->get_factor_node(), scar_function);
+  if (texp->get_left() == nullptr) {
+    gen_scar_factor(texp->get_factor_node(), scar_function);
     SETVARCONSTANTREG(scar_val_src1);
   } else {
     scar_val_src1->set_type(scar::val_type::VAR);
@@ -184,7 +186,7 @@ void Codegen::gen_scar_ternary_exp(
   scar_function->add_instruction(std::move(scar_instruction));
 
   // generate the first expression
-  gen_scar_exp(exp->get_middle(), scar_function);
+  gen_scar_exp(texp->get_middle(), scar_function);
 
   // copy this result in a new register
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
@@ -223,7 +225,7 @@ void Codegen::gen_scar_ternary_exp(
   scar_function->add_instruction(std::move(scar_instruction4));
 
   // generate the second expression
-  gen_scar_exp(exp->get_right(), scar_function);
+  gen_scar_exp(texp->get_right(), scar_function);
 
   // copy this result in the register we used for the first expression
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction5);
