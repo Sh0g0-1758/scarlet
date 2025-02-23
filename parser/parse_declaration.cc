@@ -14,6 +14,7 @@ void parser::parse_declaration(
   if (tokens[2].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
     parse_function_declaration(tokens, decl);
+    EXPECT(token::TOKEN::SEMICOLON);
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     declaration->set_type(ast::DeclarationType::FUNCTION);
   } else {
