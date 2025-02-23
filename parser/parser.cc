@@ -23,9 +23,24 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
 
 void parser::semantic_analysis() {
   // variable resolution
+  std::map<std::pair<std::string, int>, symbolInfo> global_symbol_table;
   for (auto funcs : program.get_functions()) {
-    std::map<std::pair<std::string, int>, std::string> symbol_table;
-    analyze_block(funcs->get_block(), symbol_table, 0);
+    std::string func_name =
+        funcs->get_declaration()->get_identifier()->get_value();
+    if (global_symbol_table.find({func_name, 0}) != global_symbol_table.end()) {
+      success = false;
+      error_messages.emplace_back("Function " + func_name +
+                                  " has already been defined");
+    } else {
+      symbolInfo si;
+      si.name = func_name;
+      si.link = linkage::EXTERNAL;
+      si.type = symbolType::FUNCTION;
+
+      std::map<std::pair<std::string, int>, symbolInfo> symbol_table(
+          global_symbol_table);
+      analyze_block(funcs->get_block(), symbol_table, 0);
+    }
   }
   // Check that all labels are declared
   for (auto label : goto_labels) {

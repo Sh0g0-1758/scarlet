@@ -29,7 +29,7 @@ void parser::parse_variable_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_variable_declaration_Node> decl) {
   EXPECT(token::TOKEN::INT);
-  decl->set_type(ast::Type::INT);
+  decl->set_type(ast::ElemType::INT);
   EXPECT_IDENTIFIER();
   decl->set_identifier(std::move(identifier));
   if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
@@ -47,7 +47,7 @@ void parser::parse_function_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_function_declaration_Node> decl) {
   EXPECT(token::TOKEN::INT);
-  decl->set_return_type(ast::Type::INT);
+  decl->set_return_type(ast::ElemType::INT);
   EXPECT_IDENTIFIER();
   decl->set_identifier(std::move(identifier));
   EXPECT(token::TOKEN::OPEN_PARANTHESES);
@@ -67,7 +67,7 @@ void parser::parse_param_list(
 
   EXPECT_IDENTIFIER();
   MAKE_SHARED(ast::Param, param);
-  param->type = ast::Type::INT;
+  param->type = ast::ElemType::INT;
   param->identifier = std::move(identifier);
   decl->add_param(std::move(param));
 
@@ -76,7 +76,7 @@ void parser::parse_param_list(
     EXPECT(token::TOKEN::INT);
     EXPECT_IDENTIFIER();
     MAKE_SHARED(ast::Param, param);
-    param->type = ast::Type::INT;
+    param->type = ast::ElemType::INT;
     param->identifier = std::move(identifier);
     decl->add_param(std::move(param));
   }

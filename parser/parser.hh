@@ -13,6 +13,17 @@
 
 namespace scarlet {
 namespace parser {
+
+enum class linkage { INTERNAL, EXTERNAL };
+enum class symbolType { VARIABLE, FUNCTION };
+
+struct symbolInfo {
+  std::string name;
+  linkage link;
+  symbolType type;
+  std::vector<ast::ElemType> typeDef;
+};
+
 class parser {
 private:
   bool success = true;
@@ -159,9 +170,9 @@ private:
     loop_end_labels.pop();
   }
 
-  std::string type_to_string(ast::Type type) {
+  std::string type_to_string(ast::ElemType type) {
     switch (type) {
-    case ast::Type::INT:
+    case ast::ElemType::INT:
       return "int";
     }
     UNREACHABLE()

@@ -335,12 +335,12 @@ public:
   void set_type(DeclarationType type) { this->type = type; }
 };
 
-enum class Type { INT };
+enum class ElemType { INT };
 
 class AST_variable_declaration_Node : public AST_Declaration_Node {
 private:
   std::shared_ptr<AST_exp_Node> exp;
-  Type type;
+  ElemType type;
 
 public:
   std::string get_AST_name() { return "VariableDeclaration"; }
@@ -348,19 +348,19 @@ public:
     this->exp = std::move(exp);
   }
   std::shared_ptr<AST_exp_Node> get_exp() { return exp; }
-  void set_type(Type type) { this->type = type; }
-  Type get_type() { return type; }
+  void set_type(ElemType type) { this->type = type; }
+  ElemType get_type() { return type; }
 };
 
 struct Param {
-  Type type;
+  ElemType type;
   std::shared_ptr<AST_identifier_Node> identifier;
 };
 
 class AST_function_declaration_Node : public AST_Declaration_Node {
 private:
   std::vector<std::shared_ptr<Param>> params;
-  Type return_type;
+  ElemType return_type;
 
 public:
   std::string get_AST_name() { return "FunctionDeclaration"; }
@@ -368,8 +368,10 @@ public:
   void add_param(std::shared_ptr<Param> param) {
     params.emplace_back(std::move(param));
   }
-  void set_return_type(Type return_type) { this->return_type = return_type; }
-  Type get_return_type() { return return_type; }
+  void set_return_type(ElemType return_type) {
+    this->return_type = return_type;
+  }
+  ElemType get_return_type() { return return_type; }
 };
 
 class AST_For_Init_Node {
