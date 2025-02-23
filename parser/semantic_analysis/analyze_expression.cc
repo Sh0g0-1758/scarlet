@@ -143,10 +143,13 @@ void parser::analyze_exp(
   // now we recursively check the right side of the expression
   if (exp->get_right() != nullptr)
     analyze_exp(exp->get_right(), symbol_table, indx);
-  // and a recursive check for the middle expression -> special case(ternary
-  // operator)
-  if (exp->get_middle() != nullptr)
-    analyze_exp(exp->get_middle(), symbol_table, indx);
+  // if exp is a binary exp of ternary op, add a recursive check for the middle
+  // expression
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
+    auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
+    analyze_exp(ternary->get_middle(), symbol_table, indx);
+  }
 }
 
 } // namespace parser

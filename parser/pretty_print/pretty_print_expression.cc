@@ -40,8 +40,9 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     } else {
       std::cout << "Earlier, ";
     }
-    if (exp->get_middle() != nullptr) {
-      pretty_print_exp(exp->get_middle());
+    if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
+      auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
+      pretty_print_exp(ternary->get_middle());
       std::cout << ", ";
     }
     pretty_print_exp(exp->get_right());

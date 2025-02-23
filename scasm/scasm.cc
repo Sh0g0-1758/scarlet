@@ -3,11 +3,6 @@
 namespace scarlet {
 namespace scasm {
 
-#define UNREACHABLE()                                                          \
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
-            << __LINE__ << std::endl;                                          \
-  __builtin_unreachable();
-
 Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   switch (unop) {
   case unop::UNOP::NEGATE:

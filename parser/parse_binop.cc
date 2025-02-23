@@ -99,7 +99,7 @@ void parser::parse_binop(std::vector<token::Token> &tokens,
   default:
     success = false;
     error_messages.emplace_back("Expected binary operator but got " +
-                                to_string(tokens[0].get_token()));
+                                token::to_string(tokens[0].get_token()));
     break;
   }
   tokens.erase(tokens.begin());

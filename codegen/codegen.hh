@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <tools/macros/macros.hh>
 #include <vector>
 
 // clang-format off
@@ -34,13 +35,6 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 // clang-format on
 namespace scarlet {
 namespace codegen {
-
-#define NOTNULL(x) x != nullptr
-#define UNREACHABLE()                                                          \
-  std::cout << "Unreachable code reached in " << __FILE__ << " at line "       \
-            << __LINE__ << std::endl;                                          \
-  __builtin_unreachable();
-#define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
 
 class Codegen {
 private:

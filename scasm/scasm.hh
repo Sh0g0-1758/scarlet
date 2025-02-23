@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tools/macros/macros.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
 

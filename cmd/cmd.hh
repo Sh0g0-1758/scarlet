@@ -27,6 +27,7 @@ public:
       ("validate", "run semantic analysis and print the AST")
       ("scar", "print scar(IR for scarlet)")
       ("asm,S", "generate .s file containing X86-64 assembly")
+      (",c", "Complie and assemble, but do not link")
       ("output-file,o", po::value<std::string>(), "output file");
 
     hidden.add_options()
@@ -63,6 +64,16 @@ public:
   }
 
   void help() const { std::cout << desc; }
+
+  void ver() const {
+    std::cout << "\033[38;5;207m" // Neon pink color
+              << R"(
+┌─────────────────────────────────────┐
+│       ░▒▓█ S C A R L E T █▓▒░       │
+└─────────────────────────────────────┘
+)" << "\033[38;5;159m"
+              << "                  Compiler v0.1_  \033[0m\n\n";
+  }
 
   const std::string get_input_file() const { return input_file; }
 

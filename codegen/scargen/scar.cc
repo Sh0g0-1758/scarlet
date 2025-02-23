@@ -8,7 +8,7 @@ void Codegen::gen_scar() {
   for (auto it : program.get_functions()) {
     MAKE_SHARED(scar::scar_Function_Node, scar_function);
     MAKE_SHARED(scar::scar_Identifier_Node, identifier);
-    identifier->set_value(it->get_identifier()->get_value());
+    identifier->set_value(it->get_declaration()->get_identifier()->get_value());
     scar_function->set_identifier(identifier);
 
     gen_scar_block(it->get_block(), scar_function);

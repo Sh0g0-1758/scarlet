@@ -38,3 +38,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+### Example Usage:
+# python numloc.py .github/ ast/ binary_operations/ cmd/ codegen/ driver/ githooks/ lexer/ parser/ regex/ scar/ scasm/ stress/ token/ tools/ unary_operations/ CMakeLists.txt format.sh numloc.py README.md setup_hooks.sh
+###
