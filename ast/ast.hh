@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <token/token.hh>
+#include <tools/macros/macros.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
 
@@ -13,15 +14,19 @@
 
 Grammar:
 
-<program> ::= <function>
+<program> ::= { <function-declaration> }
+<declaration> ::= <variable-declaration> | <function-declaration>
+<variable-declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
+<function-declaration> ::= "int" <identifier> "(" <param-list> ")" ( <block> | ";" )
+<param-list> ::= "void" | "int" <identifier> { "," "int" <identifier> }
 <function> ::= "int" <identifier> "(" "void" ")" <block>
 <block_item> ::= <statement> | <declaration>
 <block> ::= "{" { <block_item> } "}"
-<declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<for-init> ::= <declaration> | [ <exp> ]
+<for-init> ::= <variable-declaration> | [ <exp> ]
 <statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";"
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
-<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
+<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+<argument-list> ::= <exp> { "," <exp> }
 <unop> ::= "~" | "-" | "!" | "--" | "++"
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 <identifier> ::= ? An identifier
@@ -78,6 +83,8 @@ public:
 
 class AST_exp_Node;
 
+enum class FactorType { BASIC, FUNCTION_CALL };
+
 class AST_factor_Node {
 private:
   std::shared_ptr<AST_int_Node> int_node;
@@ -88,6 +95,7 @@ private:
   // another object of exp, say c. exp -> factor -> exp
   //  a  ->    b   ->  c
   std::shared_ptr<AST_exp_Node> exp_node;
+  FactorType type = FactorType::BASIC;
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -112,6 +120,22 @@ public:
     this->exp_node = std::move(exp_node);
   }
   std::shared_ptr<AST_exp_Node> get_exp_node() { return exp_node; }
+  FactorType get_type() { return type; }
+  void set_type(FactorType type) { this->type = type; }
+};
+
+class AST_factor_function_call_Node : public AST_factor_Node {
+private:
+  std::vector<std::shared_ptr<AST_exp_Node>> arguments;
+
+public:
+  std::string get_AST_name() { return "FunctionCall"; }
+  std::vector<std::shared_ptr<AST_exp_Node>> get_arguments() {
+    return arguments;
+  }
+  void add_argument(std::shared_ptr<AST_exp_Node> argument) {
+    arguments.emplace_back(argument);
+  }
 };
 
 /*
@@ -294,31 +318,58 @@ public:
   }
 };
 
-enum class DeclarationType { INT };
+enum class DeclarationType { VARIABLE, FUNCTION };
 
 class AST_Declaration_Node {
 private:
   std::shared_ptr<AST_identifier_Node> identifier;
-  std::optional<std::shared_ptr<AST_exp_Node>> exp;
   DeclarationType type;
 
 public:
-  // need to update this when we support more types
-  AST_Declaration_Node() { type = DeclarationType::INT; }
   std::string get_AST_name() { return "Declaration"; }
   std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
   void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
-  std::shared_ptr<AST_exp_Node> get_exp() {
-    if (exp.has_value()) {
-      return exp.value();
-    }
-    return nullptr;
-  }
+  DeclarationType get_type() { return type; }
+  void set_type(DeclarationType type) { this->type = type; }
+};
+
+enum class Type { INT };
+
+class AST_variable_declaration_Node : public AST_Declaration_Node {
+private:
+  std::shared_ptr<AST_exp_Node> exp;
+  Type type;
+
+public:
+  std::string get_AST_name() { return "VariableDeclaration"; }
   void set_exp(std::shared_ptr<AST_exp_Node> exp) {
     this->exp = std::move(exp);
   }
+  std::shared_ptr<AST_exp_Node> get_exp() { return exp; }
+  void set_type(Type type) { this->type = type; }
+  Type get_type() { return type; }
+};
+
+struct Param {
+  Type type;
+  std::shared_ptr<AST_identifier_Node> identifier;
+};
+
+class AST_function_declaration_Node : public AST_Declaration_Node {
+private:
+  std::vector<std::shared_ptr<Param>> params;
+  Type return_type;
+
+public:
+  std::string get_AST_name() { return "FunctionDeclaration"; }
+  std::vector<std::shared_ptr<Param>> get_params() { return params; }
+  void add_param(std::shared_ptr<Param> param) {
+    params.emplace_back(std::move(param));
+  }
+  void set_return_type(Type return_type) { this->return_type = return_type; }
+  Type get_return_type() { return return_type; }
 };
 
 class AST_For_Init_Node {
@@ -413,13 +464,16 @@ public:
 class AST_Function_Node {
 private:
   std::shared_ptr<AST_Block_Node> block;
-  std::shared_ptr<AST_identifier_Node> identifier;
+  std::shared_ptr<AST_function_declaration_Node> declaration;
 
 public:
   std::string get_AST_name() { return "Function"; }
-  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
-    this->identifier = std::move(identifier);
+  std::shared_ptr<AST_function_declaration_Node> get_declaration() {
+    return declaration;
+  }
+  void
+  set_declaration(std::shared_ptr<AST_function_declaration_Node> declaration) {
+    this->declaration = std::move(declaration);
   }
   std::shared_ptr<AST_Block_Node> get_block() { return block; }
   void set_block(std::shared_ptr<AST_Block_Node> block) {

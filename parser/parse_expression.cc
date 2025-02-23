@@ -39,7 +39,27 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     parse_int(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();
-    factor->set_identifier_node(std::move(identifier));
+    if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      // TREAT IT AS A FUNCTION CALL
+      MAKE_SHARED(ast::AST_factor_function_call_Node, function_call);
+      function_call->set_identifier_node(std::move(identifier));
+      EXPECT(token::TOKEN::OPEN_PARANTHESES);
+      if (tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
+        MAKE_SHARED(ast::AST_exp_Node, exp);
+        parse_exp(tokens, exp);
+        function_call->add_argument(std::move(exp));
+        while (tokens[0].get_token() == token::TOKEN::COMMA) {
+          tokens.erase(tokens.begin());
+          MAKE_SHARED(ast::AST_exp_Node, exp);
+          parse_exp(tokens, exp);
+          function_call->add_argument(std::move(exp));
+        }
+      }
+      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      factor = std::static_pointer_cast<ast::AST_factor_Node>(function_call);
+    } else {
+      factor->set_identifier_node(std::move(identifier));
+    }
   } else if (token::is_unary_op(tokens[0].get_token())) {
     parse_unary_op(tokens, factor);
     parse_factor(tokens, factor);
@@ -78,7 +98,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     success = false;
     error_messages.emplace_back("Expected constant, unary operator, semicolon "
                                 "or open parantheses but got " +
-                                to_string(tokens[0].get_token()));
+                                token::to_string(tokens[0].get_token()));
   }
   // NOTE THIS IS A SPECIAL CASE WHERE WE HAVE A POST INCREMENT OR DECREMENT
   // IF THIS BRANCH IS CALLED THEN WE CAN BE SURE THAT WE ARE DEALING WITH A

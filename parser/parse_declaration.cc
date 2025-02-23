@@ -6,19 +6,78 @@ namespace parser {
 void parser::parse_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Declaration_Node> &declaration) {
-  EXPECT(token::TOKEN::INT);
-  EXPECT_IDENTIFIER();
-  declaration->set_identifier(std::move(identifier));
-  if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
-    // the variable just have a declaration
-    tokens.erase(tokens.begin());
+  if (tokens.size() < 3) {
+    success = false;
+    error_messages.emplace_back("Invalid Declaration");
+    return;
+  }
+  if (tokens[2].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+    MAKE_SHARED(ast::AST_function_declaration_Node, decl);
+    parse_function_declaration(tokens, decl);
+    declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
+    declaration->set_type(ast::DeclarationType::FUNCTION);
   } else {
-    // the variable has a definition as well
-    EXPECT(token::TOKEN::ASSIGNMENT);
-    MAKE_SHARED(ast::AST_exp_Node, exp);
-    parse_exp(tokens, exp);
-    declaration->set_exp(std::move(exp));
-    EXPECT(token::TOKEN::SEMICOLON);
+    MAKE_SHARED(ast::AST_variable_declaration_Node, decl);
+    parse_variable_declaration(tokens, decl);
+    declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
+    declaration->set_type(ast::DeclarationType::VARIABLE);
+  }
+}
+
+void parser::parse_variable_declaration(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_variable_declaration_Node> decl) {
+  EXPECT(token::TOKEN::INT);
+  decl->set_type(ast::Type::INT);
+  EXPECT_IDENTIFIER();
+  decl->set_identifier(std::move(identifier));
+  if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
+    tokens.erase(tokens.begin());
+    return;
+  }
+  EXPECT(token::TOKEN::ASSIGNMENT);
+  MAKE_SHARED(ast::AST_exp_Node, exp);
+  parse_exp(tokens, exp);
+  decl->set_exp(std::move(exp));
+  EXPECT(token::TOKEN::SEMICOLON);
+}
+
+void parser::parse_function_declaration(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_function_declaration_Node> decl) {
+  EXPECT(token::TOKEN::INT);
+  decl->set_return_type(ast::Type::INT);
+  EXPECT_IDENTIFIER();
+  decl->set_identifier(std::move(identifier));
+  EXPECT(token::TOKEN::OPEN_PARANTHESES);
+  parse_param_list(tokens, decl);
+  EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+}
+
+void parser::parse_param_list(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_function_declaration_Node> decl) {
+  if (tokens[0].get_token() == token::TOKEN::VOID) {
+    tokens.erase(tokens.begin());
+    return;
+  }
+
+  EXPECT(token::TOKEN::INT);
+
+  EXPECT_IDENTIFIER();
+  MAKE_SHARED(ast::Param, param);
+  param->type = ast::Type::INT;
+  param->identifier = std::move(identifier);
+  decl->add_param(std::move(param));
+
+  while (tokens[0].get_token() == token::TOKEN::COMMA) {
+    tokens.erase(tokens.begin());
+    EXPECT(token::TOKEN::INT);
+    EXPECT_IDENTIFIER();
+    MAKE_SHARED(ast::Param, param);
+    param->type = ast::Type::INT;
+    param->identifier = std::move(identifier);
+    decl->add_param(std::move(param));
   }
 }
 

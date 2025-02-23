@@ -208,7 +208,13 @@ void parser::parse_for_init(
   if (tokens[0].get_token() == token::TOKEN::INT) {
     MAKE_SHARED(ast::AST_Declaration_Node, declaration);
     parse_declaration(tokens, declaration);
-    for_init->set_declaration(std::move(declaration));
+    if (declaration->get_type() == ast::DeclarationType::FUNCTION) {
+      error_messages.emplace_back(
+          "For statement cannot be initialized with function declarations");
+      success = false;
+    } else {
+      for_init->set_declaration(std::move(declaration));
+    }
   } else {
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);

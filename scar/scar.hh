@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tools/macros/macros.hh>
 #include <vector>
 
 // clang-format off

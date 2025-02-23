@@ -95,7 +95,7 @@ add_custom_target(test-scarlet
     COMMAND echo "Running lexer test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 9 --stage lex
     COMMAND echo "Running parser test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 8 --stage parse
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 9 --stage parse
     COMMAND echo "Running semantic analysis test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 8 --stage validate
     COMMAND echo "Running scar test"

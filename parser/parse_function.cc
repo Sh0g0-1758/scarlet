@@ -3,18 +3,19 @@
 namespace scarlet {
 namespace parser {
 
-std::shared_ptr<ast::AST_Function_Node>
-parser::parse_function(std::vector<token::Token> &tokens) {
-  MAKE_SHARED(ast::AST_Function_Node, function);
-  EXPECT_FUNC(token::TOKEN::INT);
-  parse_identifier(tokens, function);
-  EXPECT_FUNC(token::TOKEN::OPEN_PARANTHESES);
-  EXPECT_FUNC(token::TOKEN::VOID);
-  EXPECT_FUNC(token::TOKEN::CLOSE_PARANTHESES);
-  MAKE_SHARED(ast::AST_Block_Node, block);
-  parse_block(tokens, block);
-  function->set_block(block);
-  return function;
+void parser::parse_function(std::vector<token::Token> &tokens,
+                            std::shared_ptr<ast::AST_Function_Node> function) {
+  MAKE_SHARED(ast::AST_function_declaration_Node, declaration);
+  parse_function_declaration(tokens, declaration);
+  function->set_declaration(std::move(declaration));
+  if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
+    tokens.erase(tokens.begin());
+    return;
+  } else {
+    MAKE_SHARED(ast::AST_Block_Node, block);
+    parse_block(tokens, block);
+    function->set_block(block);
+  }
 }
 
 } // namespace parser
