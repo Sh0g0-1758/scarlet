@@ -5,8 +5,7 @@ namespace parser {
 
 void parser::analyze_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
-    std::map<std::pair<std::string, int>, std::string> &symbol_table,
-    int indx) {
+    std::map<std::pair<std::string, int>, symbolInfo> &symbol_table, int indx) {
   if (exp == nullptr)
     return;
   analyze_exp(exp->get_left(), symbol_table, indx);
@@ -21,7 +20,7 @@ void parser::analyze_exp(
     while (level >= 0) {
       if (symbol_table.find({var_name, level}) != symbol_table.end()) {
         exp->get_factor_node()->get_identifier_node()->set_identifier(
-            symbol_table[{var_name, level}]);
+            symbol_table[{var_name, level}].name);
         found = true;
         break;
       }

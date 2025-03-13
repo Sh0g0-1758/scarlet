@@ -17,6 +17,13 @@ namespace parser {
 enum class linkage { INTERNAL, EXTERNAL };
 enum class symbolType { VARIABLE, FUNCTION };
 
+// This struct is used to store information about a symbol
+// - name: updated name of the symbol according to scope resolution
+// - link: linkage of the symbol
+// - type: type of the symbol
+// - typeDef: type definition of the symbol
+//            (used for variables and functions)
+//            (a vector because functions can have multiple args)
 struct symbolInfo {
   std::string name;
   linkage link;
@@ -86,23 +93,23 @@ private:
       std::shared_ptr<ast::AST_function_declaration_Node> declaration);
   void
   analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-              std::map<std::pair<std::string, int>, std::string> &symbol_table,
+              std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
               int indx);
-  void analyze_block(
-      std::shared_ptr<ast::AST_Block_Node> block,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
-      int indx);
+  void
+  analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
+                std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
+                int indx);
   void analyze_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
       int indx);
   void analyze_statement(
       std::shared_ptr<ast::AST_Statement_Node> statement,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
       int indx);
   void analyze_for_statement(
       std::shared_ptr<ast::AST_For_Statement_Node> for_statement,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
       int indx);
 
   std::string get_temp_name(std::string &name) {

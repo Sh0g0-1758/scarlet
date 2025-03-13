@@ -22,7 +22,6 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
 }
 
 void parser::semantic_analysis() {
-  // variable resolution
   std::map<std::pair<std::string, int>, symbolInfo> global_symbol_table;
   for (auto funcs : program.get_functions()) {
     std::string func_name =
