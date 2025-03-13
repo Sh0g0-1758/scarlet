@@ -10,7 +10,7 @@ void parser::analyze_exp(
     return;
   analyze_exp(exp->get_left(), symbol_table, indx);
   // here we check that the factor of the expresssion is not an undeclared
-  // identifier
+  // identifier and also do some type checking
   // In case of function call, we additionally check that the identifier being
   // called is a function declaration only.
   // We also check that when the factor is not a function call, it's not
@@ -176,6 +176,19 @@ void parser::analyze_exp(
     auto func_call =
         std::static_pointer_cast<ast::AST_factor_function_call_Node>(
             exp->get_factor_node());
+    // Check that the function is being called with the correct set
+    // (number and type) of arguments
+    // TODO: check for wrong type of arguments
+    if (func_call->get_arguments().size() !=
+        globalSymbolTable[func_call->get_identifier_node()->get_value()]
+                .typeDef.size() -
+            1) {
+      success = false;
+      error_messages.emplace_back(
+          "Function " + func_call->get_identifier_node()->get_value() +
+          " called with wrong number of arguments");
+    }
+
     for (auto it : func_call->get_arguments()) {
       analyze_exp(it, symbol_table, indx);
     }

@@ -30,6 +30,7 @@ struct symbolInfo {
   linkage link;
   symbolType type;
   std::vector<ast::ElemType> typeDef;
+  bool isDefined = false;
 };
 
 class parser {
@@ -45,6 +46,7 @@ private:
   int ifelse_counter = 0;
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
+  std::map<std::string, symbolInfo> globalSymbolTable;
   void parse_function(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_Function_Node>);
   void
@@ -200,6 +202,9 @@ public:
   ast::AST_Program_Node get_program() { return program; }
   void pretty_print();
   int get_symbol_counter() { return symbol_counter; }
+  std::map<std::string, symbolInfo> &getGlobalSymbolTable() {
+    return globalSymbolTable;
+  }
 };
 } // namespace parser
 } // namespace scarlet

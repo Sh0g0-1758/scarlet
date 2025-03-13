@@ -23,18 +23,19 @@ void parser::analyze_declaration(
                                         symbolType::VARIABLE,
                                         {variable_declaration->get_type()}};
       if (variable_declaration->get_exp() != nullptr) {
+        symbol_table[{var_name, indx}].isDefined = true;
         analyze_exp(variable_declaration->get_exp(), symbol_table, indx);
       }
+      globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
     }
   } else {
     // 1. Check that the variables always have different names.
     // 2. If the identifier has already been declared somewhere in the same
-    // scope
-    //    then make sure that it is also function declaration.
-    // 3. If we only have a function declaration, just add it to the symbol
-    // table
-    //    But if we have a function definition, then add the variables to a new
-    //    scope
+    //    scope then make sure that it is also function declaration.
+    // 3. Add the function declaration with the correct function type
+    //    (return type ++ args_type) into the symbol table
+    // 4. Check that two instances of the function declaration don't have
+    //    different types.
     auto function_declaration =
         std::static_pointer_cast<ast::AST_function_declaration_Node>(
             declaration);
@@ -64,8 +65,19 @@ void parser::analyze_declaration(
       funcType.emplace_back(param->type);
     }
 
-    symbol_table[{var_name, indx}] = {var_name, linkage::EXTERNAL,
-                                      symbolType::FUNCTION, funcType};
+    if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
+      if (globalSymbolTable[var_name].typeDef != funcType) {
+        success = false;
+        error_messages.emplace_back(var_name +
+                                    " redeclared with different signature");
+      } else if (globalSymbolTable[var_name].isDefined) {
+        symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
+      }
+    } else {
+      symbol_table[{var_name, indx}] = {var_name, linkage::EXTERNAL,
+                                        symbolType::FUNCTION, funcType};
+      globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
+    }
   }
 }
 
