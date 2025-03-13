@@ -19,8 +19,19 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
       std::cout << ")";
     }
   } else {
-    std::cout << factor->get_identifier_node()->get_AST_name() << "("
-              << factor->get_identifier_node()->get_value() << ")";
+    if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+      auto funcCall =
+          std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor);
+      std::cout << funcCall->get_AST_name() << "("
+                << funcCall->get_identifier_node()->get_value() << "), "
+                << "Arguments: " << std::endl;
+      for (auto arg : funcCall->get_arguments()) {
+        pretty_print_exp(arg);
+      }
+    } else {
+      std::cout << factor->get_identifier_node()->get_AST_name() << "("
+                << factor->get_identifier_node()->get_value() << ")";
+    }
     if (!factor->get_unop_nodes().empty()) {
       std::cout << ")";
     }

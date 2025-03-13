@@ -24,21 +24,19 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
 void parser::semantic_analysis() {
   std::map<std::pair<std::string, int>, symbolInfo> global_symbol_table;
   for (auto funcs : program.get_functions()) {
-    std::string func_name =
-        funcs->get_declaration()->get_identifier()->get_value();
-    if (global_symbol_table.find({func_name, 0}) != global_symbol_table.end()) {
-      success = false;
-      error_messages.emplace_back("Function " + func_name +
-                                  " has already been defined");
+    if (funcs->get_block() == nullptr) {
+      analyze_declaration(funcs->get_declaration(), global_symbol_table, 0);
     } else {
-      symbolInfo si;
-      si.name = func_name;
-      si.link = linkage::EXTERNAL;
-      si.type = symbolType::FUNCTION;
-
+      analyze_declaration(funcs->get_declaration(), global_symbol_table, 0);
       std::map<std::pair<std::string, int>, symbolInfo> symbol_table(
           global_symbol_table);
-      analyze_block(funcs->get_block(), symbol_table, 0);
+      for (auto param : funcs->get_declaration()->get_params()) {
+        std::string temp_name = get_temp_name(param->identifier->get_value());
+        symbol_table[{param->identifier->get_value(), 1}] = {
+            temp_name, linkage::INTERNAL, symbolType::VARIABLE, {param->type}};
+        param->identifier->set_identifier(temp_name);
+      }
+      analyze_block(funcs->get_block(), symbol_table, 1);
     }
   }
   // Check that all labels are declared

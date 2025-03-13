@@ -10,17 +10,26 @@ void parser::analyze_exp(
     return;
   analyze_exp(exp->get_left(), symbol_table, indx);
   // here we check that the factor of the expresssion is not an undeclared
-  // variable
+  // identifier
+  // In case of function call, we additionally check that the identifier being
+  // called is a function declaration only.
+  // We also check that when the factor is not a function call, it's not
+  // using a function name as an identifier.
   if (exp->get_factor_node() != nullptr and
       exp->get_factor_node()->get_identifier_node() != nullptr) {
+    bool isFuncCall =
+        exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL;
     std::string var_name =
         exp->get_factor_node()->get_identifier_node()->get_value();
     int level = indx;
     bool found = false;
+    std::string updatedIdentifierName;
+    bool isfuncType = false;
     while (level >= 0) {
       if (symbol_table.find({var_name, level}) != symbol_table.end()) {
-        exp->get_factor_node()->get_identifier_node()->set_identifier(
-            symbol_table[{var_name, level}].name);
+        updatedIdentifierName = symbol_table[{var_name, level}].name;
+        isfuncType =
+            symbol_table[{var_name, level}].type == symbolType::FUNCTION;
         found = true;
         break;
       }
@@ -28,7 +37,27 @@ void parser::analyze_exp(
     }
     if (!found) {
       success = false;
-      error_messages.emplace_back("Variable " + var_name + " not declared");
+      if (isFuncCall) {
+        error_messages.emplace_back("Function " + var_name + " not declared");
+      } else {
+        error_messages.emplace_back("Variable " + var_name + " not declared");
+      }
+    } else {
+      if (isFuncCall) {
+        if (!isfuncType) {
+          success = false;
+          error_messages.emplace_back("Object " + var_name +
+                                      " is not a function");
+        }
+      } else {
+        if (isfuncType) {
+          success = false;
+          error_messages.emplace_back("Illegal use of function " + var_name);
+        } else {
+          exp->get_factor_node()->get_identifier_node()->set_identifier(
+              updatedIdentifierName);
+        }
+      }
     }
   }
 
@@ -49,6 +78,11 @@ void parser::analyze_exp(
       success = false;
       error_messages.emplace_back("Expected a modifiable lvalue on the left "
                                   "side of the assignment operator");
+    }
+    if (exp->get_factor_node() != nullptr and
+        exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL) {
+      success = false;
+      error_messages.emplace_back("Invalid assignment to an rvalue");
     }
   }
   // SEMANTIC ANALYSIS FOR INCREMENT AND DECREMENT OPERATOR
@@ -134,6 +168,16 @@ void parser::analyze_exp(
               "Expected an lvalue for the increment / decrement operator");
         }
       }
+    }
+  }
+  // The factor can be a function call
+  if (exp->get_factor_node() != nullptr and
+      exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL) {
+    auto func_call =
+        std::static_pointer_cast<ast::AST_factor_function_call_Node>(
+            exp->get_factor_node());
+    for (auto it : func_call->get_arguments()) {
+      analyze_exp(it, symbol_table, indx);
     }
   }
   // since the factor can have its own exp as well, we recursively check that

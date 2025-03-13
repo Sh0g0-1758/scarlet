@@ -4,6 +4,7 @@
 #include <binary_operations/binop.hh>
 #include <iostream>
 #include <map>
+#include <set>
 #include <stack>
 #include <string>
 #include <token/token.hh>
@@ -113,6 +114,12 @@ private:
       int indx);
 
   std::string get_temp_name(std::string &name) {
+    std::string tmp = name + "." + std::to_string(symbol_counter);
+    symbol_counter++;
+    return tmp;
+  }
+
+  std::string get_temp_name(std::string &&name) {
     std::string tmp = name + "." + std::to_string(symbol_counter);
     symbol_counter++;
     return tmp;

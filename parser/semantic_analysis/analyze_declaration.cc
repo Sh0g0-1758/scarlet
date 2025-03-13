@@ -27,9 +27,45 @@ void parser::analyze_declaration(
       }
     }
   } else {
+    // 1. Check that the variables always have different names.
+    // 2. If the identifier has already been declared somewhere in the same
+    // scope
+    //    then make sure that it is also function declaration.
+    // 3. If we only have a function declaration, just add it to the symbol
+    // table
+    //    But if we have a function definition, then add the variables to a new
+    //    scope
     auto function_declaration =
         std::static_pointer_cast<ast::AST_function_declaration_Node>(
             declaration);
+    std::set<std::string> param_names;
+    for (auto param : function_declaration->get_params()) {
+      if (param_names.find(param->identifier->get_value()) !=
+          param_names.end()) {
+        success = false;
+        error_messages.emplace_back(
+            "Variable " + param->identifier->get_value() + " already declared");
+      } else {
+        param_names.insert(param->identifier->get_value());
+      }
+    }
+
+    if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
+      if (symbol_table[{var_name, indx}].type != symbolType::FUNCTION) {
+        success = false;
+        error_messages.emplace_back(
+            var_name + " redeclared as a different kind of symbol");
+      }
+    }
+
+    std::vector<ast::ElemType> funcType;
+    funcType.emplace_back(function_declaration->get_return_type());
+    for (auto param : function_declaration->get_params()) {
+      funcType.emplace_back(param->type);
+    }
+
+    symbol_table[{var_name, indx}] = {var_name, linkage::EXTERNAL,
+                                      symbolType::FUNCTION, funcType};
   }
 }
 
