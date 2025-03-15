@@ -63,7 +63,7 @@ void parser::pretty_print_statement(
     std::cout << "\t\t\t\tstmts=(" << std::endl;
     auto stmti = case_statement->get_stmt();
     for (auto stmtii : stmti) {
-      pretty_print_statement(stmtii);
+      pretty_print_statement(stmtii->get_statement());
       std::cout << std::endl;
     }
     std::cout << "\t\t\t\t)" << std::endl;

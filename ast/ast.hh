@@ -286,32 +286,21 @@ public:
   }
 };
 
-class AST_case_statement_Node : public AST_Statement_Node {
-private:
-  std::vector<std::shared_ptr<AST_Statement_Node>> stmts;
-
-public:
-  std::string get_AST_name() { return "CaseStatement"; }
-  std::vector<std::shared_ptr<AST_Statement_Node>> get_stmt() { return stmts; }
-  void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
-    this->stmts.push_back(std::move(stmt));
-  }
-};
 
 enum class DeclarationType { INT };
 
 class AST_Declaration_Node {
 private:
-  std::shared_ptr<AST_identifier_Node> identifier;
-  std::optional<std::shared_ptr<AST_exp_Node>> exp;
-  DeclarationType type;
+std::shared_ptr<AST_identifier_Node> identifier;
+std::optional<std::shared_ptr<AST_exp_Node>> exp;
+DeclarationType type;
 
 public:
-  // need to update this when we support more types
-  AST_Declaration_Node() { type = DeclarationType::INT; }
-  std::string get_AST_name() { return "Declaration"; }
-  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+// need to update this when we support more types
+AST_Declaration_Node() { type = DeclarationType::INT; }
+std::string get_AST_name() { return "Declaration"; }
+std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
   std::shared_ptr<AST_exp_Node> get_exp() {
@@ -327,14 +316,14 @@ public:
 
 class AST_For_Init_Node {
 private:
-  std::shared_ptr<AST_Declaration_Node> declaration;
-  std::shared_ptr<AST_exp_Node> exp;
+std::shared_ptr<AST_Declaration_Node> declaration;
+std::shared_ptr<AST_exp_Node> exp;
 
 public:
-  std::string get_AST_name() { return "ForInit"; }
-  std::shared_ptr<AST_Declaration_Node> get_declaration() {
-    return declaration;
-  }
+std::string get_AST_name() { return "ForInit"; }
+std::shared_ptr<AST_Declaration_Node> get_declaration() {
+  return declaration;
+}
   void set_declaration(std::shared_ptr<AST_Declaration_Node> declaration) {
     this->declaration = std::move(declaration);
   }
@@ -345,13 +334,13 @@ public:
 };
 
 class AST_For_Statement_Node : public AST_Statement_Node {
-private:
+  private:
   std::shared_ptr<AST_For_Init_Node> for_init;
   std::shared_ptr<AST_exp_Node> exp2;
   std::shared_ptr<AST_Statement_Node> stmt;
   std::string start_label;
-
-public:
+  
+  public:
   std::string get_AST_name() { return "ForStatement"; }
   std::shared_ptr<AST_For_Init_Node> get_for_init() { return for_init; }
   void set_for_init(std::shared_ptr<AST_For_Init_Node> for_init) {
@@ -366,7 +355,7 @@ public:
   void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
     this->stmt = std::move(stmt);
   }
-
+  
   std::string get_start_label() { return start_label; }
   void set_start_label(std::string &&start_label) {
     this->start_label = std::move(start_label);
@@ -383,7 +372,7 @@ private:
   std::shared_ptr<AST_Statement_Node> statement;
   std::shared_ptr<AST_Declaration_Node> declaration;
   BlockItemType type;
-
+  
 public:
   std::string get_AST_name() { return "BlockItem"; }
   std::shared_ptr<AST_Statement_Node> get_statement() { return statement; }
@@ -401,10 +390,10 @@ public:
 };
 
 class AST_Block_Node {
-private:
+  private:
   std::vector<std::shared_ptr<AST_Block_Item_Node>> blockItems;
-
-public:
+  
+  public:
   std::string get_AST_name() { return "Block"; }
   std::vector<std::shared_ptr<AST_Block_Item_Node>> &get_blockItems() {
     return blockItems;
@@ -416,13 +405,13 @@ public:
 
 class AST_Function_Node {
 private:
-  std::shared_ptr<AST_Block_Node> block;
-  std::shared_ptr<AST_identifier_Node> identifier;
+std::shared_ptr<AST_Block_Node> block;
+std::shared_ptr<AST_identifier_Node> identifier;
 
 public:
-  std::string get_AST_name() { return "Function"; }
-  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+std::string get_AST_name() { return "Function"; }
+std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
   std::shared_ptr<AST_Block_Node> get_block() { return block; }
@@ -434,7 +423,7 @@ public:
 class AST_Program_Node {
 private:
   std::vector<std::shared_ptr<AST_Function_Node>> functions;
-
+  
 public:
   AST_Program_Node() { functions.reserve(2); }
   std::string get_AST_name() { return "Program"; }
@@ -443,6 +432,41 @@ public:
   }
   void add_function(std::shared_ptr<AST_Function_Node> function) {
     functions.emplace_back(std::move(function));
+  }
+};
+class AST_switch_statement_Node : public AST_Statement_Node {
+  private:
+    std::shared_ptr<AST_Statement_Node> stmt;
+    std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>, std::shared_ptr<ast::AST_identifier_Node>>> case_exp_label;
+  
+  public:
+    std::string get_AST_name() { return "Switch Statement"; }
+    std::shared_ptr<AST_Statement_Node> get_stmt() { return stmt; }
+    void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
+      this->stmt = std::move(stmt);
+    }
+    void set_case_exp_label(std::shared_ptr<ast::AST_exp_Node> exp, std::shared_ptr<ast::AST_identifier_Node> label) {
+      this->case_exp_label.push_back(std::make_pair(move(exp), std::move(label)));
+    }
+    std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>, std::shared_ptr<ast::AST_identifier_Node>>> get_case_exp_label() {
+      return case_exp_label;
+    }
+  };
+
+class AST_case_statement_Node : public AST_Statement_Node {
+private:
+  std::vector<std::shared_ptr<AST_Block_Item_Node>> stmts;
+  std::string case_label;
+
+public:
+  std::string get_AST_name() { return "CaseStatement"; }
+  std::vector<std::shared_ptr<AST_Block_Item_Node>> get_stmt() { return stmts; }
+  void set_stmt(std::shared_ptr<AST_Block_Item_Node> stmt) {
+    this->stmts.push_back(std::move(stmt));
+  }
+  std::string get_case_label() { return case_label; }
+  void set_case_label(std::string &&case_label) {
+    this->case_label = std::move(case_label);
   }
 };
 } // namespace ast

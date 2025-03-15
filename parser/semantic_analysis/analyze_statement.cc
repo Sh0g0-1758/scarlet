@@ -28,7 +28,7 @@ void parser::analyze_statement(
       analyze_exp(case_statement->get_exps(), symbol_table, indx);
     }
     for (auto stmt : case_statement->get_stmt())
-      analyze_statement(stmt, symbol_table, indx);
+      analyze_statement(stmt->get_statement(), symbol_table, indx);
   } break;
   case ast::statementType::IF: {
     auto if_statement =

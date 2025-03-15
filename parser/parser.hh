@@ -27,6 +27,7 @@ private:
   int ifelse_counter = 0;
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
+  std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;
   std::shared_ptr<ast::AST_Function_Node>
   parse_function(std::vector<token::Token> &tokens);
   void parse_block(std::vector<token::Token> &tokens,
@@ -134,6 +135,16 @@ private:
     end_label_node->set_identifier(end_label);
     return {nullptr, end_label_node};
   }
+
+  std::shared_ptr<ast::AST_identifier_Node> get_case_label(){
+    static int case_counter = 0;
+    std::string case_label = "case." + std::to_string(case_counter);
+    case_counter++;
+    MAKE_SHARED(ast::AST_identifier_Node, label);
+    label->set_identifier(case_label);
+    return label;
+  }
+  
   std::string get_loop_start_label() {
     std::string label = "loop_start." + std::to_string(loop_start_counter);
     loop_start_counter++;
