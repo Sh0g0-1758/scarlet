@@ -21,14 +21,19 @@ namespace codegen {
   }
 
 void Codegen::fix_pseudo_registers() {
-  int offset = 1;
-  for (auto &funcs : scasm.get_functions()) {
-    for (auto &inst : funcs->get_instructions()) {
+  for (auto &func : scasm.get_functions()) {
+    int offset = 1;
+
+    for (auto &inst : func->get_instructions()) {
       FIX_PSEUDO(src);
       FIX_PSEUDO(dst);
     }
+
+    int stack_offset = (offset - 1) * 4;
+    int stack_offset_aligned = stack_offset + (stack_offset % 16);
+
+    func->set_frame_size(stack_offset_aligned);
   }
-  stack_offset = 4 * (offset - 1);
 }
 
 } // namespace codegen

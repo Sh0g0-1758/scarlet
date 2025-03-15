@@ -50,7 +50,6 @@ private:
   int curr_regNum;
   std::string reg_name;
   std::map<std::string, std::string> pseduo_registers;
-  int stack_offset{};
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
@@ -129,6 +128,7 @@ public:
     res_label_stack.pop();
     return tmp;
   }
+
   std::map<binop::BINOP, binop::BINOP> compound_to_base = {
       {binop::BINOP::COMPOUND_DIFFERENCE, binop::BINOP::SUB},
       {binop::BINOP::COMPOUND_DIVISION, binop::BINOP::DIV},
@@ -140,6 +140,11 @@ public:
       {binop::BINOP::COMPOUND_XOR, binop::BINOP::XOR},
       {binop::BINOP::COMPOUND_LEFTSHIFT, binop::BINOP::LEFT_SHIFT},
       {binop::BINOP::COMPOUND_RIGHTSHIFT, binop::BINOP::RIGHT_SHIFT}};
+
+  std::vector<scasm::register_type> argReg = {
+      scasm::register_type::DI, scasm::register_type::SI,
+      scasm::register_type::DX, scasm::register_type::CX,
+      scasm::register_type::R8, scasm::register_type::R9};
 };
 
 } // namespace codegen
