@@ -20,6 +20,8 @@ void Codegen::gen_scar_statement(
   } break;
   case ast::statementType::EXP: {
     gen_scar_exp(statement->get_exps(), scar_function);
+    variable_buffer.clear();
+    constant_buffer.clear();
   } break;
   case ast::statementType::IF: {
     // <instructions for condition> (stored in exps)
