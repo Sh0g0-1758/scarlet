@@ -130,7 +130,7 @@ void parser::parse_statement(
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
-    if(exp->get_factor_node()==nullptr){
+    if (exp->get_factor_node() == nullptr) {
       error_messages.emplace_back("case expression is empty");
       success = false;
     }
@@ -138,11 +138,11 @@ void parser::parse_statement(
     case_statement->set_labels({get_case_label(), nullptr});
     MAKE_SHARED(ast::AST_identifier_Node, label);
     label = case_statement->get_labels().first;
-    if(switch_stack.empty()){
-      error_messages.emplace_back("default case found outside of switch construct");
+    if (switch_stack.empty()) {
+      error_messages.emplace_back(
+          "default case found outside of switch construct");
       success = false;
-    }
-    else{
+    } else {
       switch_stack.top()->set_case_exp_label(nullptr, label);
     }
     EXPECT(token::TOKEN::COLON);
@@ -151,15 +151,14 @@ void parser::parse_statement(
            tokens[0].get_token() != token::TOKEN::DEFAULT_CASE &&
            tokens[0].get_token() != token::TOKEN::SEMICOLON) {
       MAKE_SHARED(ast::AST_Statement_Node, stmt);
-      if(tokens[0].get_token()==token::TOKEN::INT){
+      if (tokens[0].get_token() == token::TOKEN::INT) {
         MAKE_SHARED(ast::AST_Declaration_Node, declaration);
         parse_declaration(tokens, declaration);
         MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
         block_item->set_type(ast::BlockItemType::DECLARATION);
         block_item->set_declaration(std::move(declaration));
         case_statement->set_stmt(std::move(block_item));
-      }
-      else{
+      } else {
         parse_statement(tokens, stmt);
         MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
         block_item->set_type(ast::BlockItemType::STATEMENT);
@@ -175,11 +174,11 @@ void parser::parse_statement(
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_identifier_Node, label);
     label = default_case_statement->get_labels().first;
-    if(switch_stack.empty()){
-      error_messages.emplace_back("default case found outside of switch construct");
+    if (switch_stack.empty()) {
+      error_messages.emplace_back(
+          "default case found outside of switch construct");
       success = false;
-    }
-    else{
+    } else {
       switch_stack.top()->set_case_exp_label(nullptr, label);
     }
     EXPECT(token::TOKEN::COLON);
@@ -188,16 +187,15 @@ void parser::parse_statement(
            tokens[0].get_token() != token::TOKEN::CLOSE_BRACE &&
            tokens[0].get_token() != token::TOKEN::SEMICOLON) {
       MAKE_SHARED(ast::AST_Statement_Node, stmt);
-      
-      if(tokens[0].get_token()==token::TOKEN::INT){
+
+      if (tokens[0].get_token() == token::TOKEN::INT) {
         MAKE_SHARED(ast::AST_Declaration_Node, declaration);
         parse_declaration(tokens, declaration);
         MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
         block_item->set_type(ast::BlockItemType::DECLARATION);
         block_item->set_declaration(std::move(declaration));
         default_case_statement->set_stmt(std::move(block_item));
-      }
-      else{
+      } else {
         parse_statement(tokens, stmt);
         MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
         block_item->set_type(ast::BlockItemType::STATEMENT);

@@ -136,7 +136,7 @@ private:
     return {nullptr, end_label_node};
   }
 
-  std::shared_ptr<ast::AST_identifier_Node> get_case_label(){
+  std::shared_ptr<ast::AST_identifier_Node> get_case_label() {
     static int case_counter = 0;
     std::string case_label = "case." + std::to_string(case_counter);
     case_counter++;
@@ -144,7 +144,7 @@ private:
     label->set_identifier(case_label);
     return label;
   }
-  
+
   std::string get_loop_start_label() {
     std::string label = "loop_start." + std::to_string(loop_start_counter);
     loop_start_counter++;
