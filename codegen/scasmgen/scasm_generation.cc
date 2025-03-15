@@ -464,7 +464,19 @@ void Codegen::gen_scasm() {
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          SET_MOV_SOURCE();
+          switch (funcCall->get_args()[i]->get_type()) {
+          case scar::val_type::VAR:
+            scasm_src->set_type(scasm::operand_type::PSEUDO);
+            scasm_src->set_identifier_stack(funcCall->get_args()[i]->get_reg());
+            break;
+          case scar::val_type::CONSTANT:
+            scasm_src->set_type(scasm::operand_type::IMM);
+            scasm_src->set_imm(stoi(funcCall->get_args()[i]->get_value()));
+            break;
+          default:
+            break;
+          }
+          scasm_inst->set_src(std::move(scasm_src));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           scasm_dst->set_type(scasm::operand_type::REG);
           scasm_dst->set_reg(argReg[i]);
@@ -475,11 +487,27 @@ void Codegen::gen_scasm() {
           for (int i = numArgs - 1; i >= 6; i--) {
             MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
             MAKE_SHARED(scasm::scasm_operand, scasm_src);
-            SET_MOV_SOURCE();
+            switch (funcCall->get_args()[i]->get_type()) {
+            case scar::val_type::VAR:
+              scasm_src->set_type(scasm::operand_type::PSEUDO);
+              scasm_src->set_identifier_stack(
+                  funcCall->get_args()[i]->get_reg());
+              break;
+            case scar::val_type::CONSTANT:
+              scasm_src->set_type(scasm::operand_type::IMM);
+              scasm_src->set_imm(stoi(funcCall->get_args()[i]->get_value()));
+              break;
+            default:
+              break;
+            }
+
             if (scasm_src->get_type() == scasm::operand_type::IMM or
                 scasm_src->get_type() == scasm::operand_type::REG) {
+              scasm_inst->set_src(std::move(scasm_src));
               scasm_inst->set_type(scasm::instruction_type::PUSH);
+              scasm_func->add_instruction(std::move(scasm_inst));
             } else {
+              scasm_inst->set_src(std::move(scasm_src));
               scasm_inst->set_type(scasm::instruction_type::MOV);
               MAKE_SHARED(scasm::scasm_operand, scasm_dst);
               scasm_dst->set_type(scasm::operand_type::REG);

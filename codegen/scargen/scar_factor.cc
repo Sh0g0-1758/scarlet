@@ -244,7 +244,7 @@ void Codegen::gen_scar_factor_function_call(
   }
 
   std::string dstReg = get_reg_name();
-  // CHECK IF THIS IS CORRECT
+
   variable_buffer = dstReg;
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
   scar_val_dst->set_type(scar::val_type::VAR);

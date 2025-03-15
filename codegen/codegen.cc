@@ -46,6 +46,21 @@ void Codegen::codegen() {
     for (auto instr : funcs->get_instructions()) {
       if (instr->get_type() == scasm::instruction_type::ALLOCATE_STACK) {
         assembly << "\tsubq $" << instr->get_src()->get_imm() << ", %rsp\n";
+      } else if (instr->get_type() ==
+                 scasm::instruction_type::DEALLOCATE_STACK) {
+        assembly << "\taddq $" << instr->get_src()->get_imm() << ", %rsp\n";
+      } else if (instr->get_type() == scasm::instruction_type::CALL) {
+        assembly << "\tcall " << instr->get_src()->get_identifier_stack()
+                 << "\n";
+      } else if (instr->get_type() == scasm::instruction_type::PUSH) {
+        assembly << "\tpushq ";
+        if (instr->get_src()->get_type() == scasm::operand_type::STACK) {
+          assembly << instr->get_src()->get_identifier_stack();
+        } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {
+          assembly << scasm::to_string(instr->get_src()->get_reg(),
+                                       scasm::register_size::QWORD);
+        }
+        assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::RET) {
         assembly << "\tmovq %rbp, %rsp\n";
         assembly << "\tpopq %rbp\n";
