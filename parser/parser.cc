@@ -22,7 +22,7 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
 }
 
 void parser::semantic_analysis() {
-  std::map<std::pair<std::string, int>, symbolInfo> symbol_table;
+  std::map<std::pair<std::string, int>, symbolTable::symbolInfo> symbol_table;
   for (auto funcs : program.get_functions()) {
     if (funcs->get_block() == nullptr) {
       analyze_declaration(funcs->get_declaration(), symbol_table, 0);
@@ -38,12 +38,15 @@ void parser::semantic_analysis() {
       analyze_declaration(funcs->get_declaration(), symbol_table, 0);
       symbol_table[{func_name, 0}].isDefined = true;
       globalSymbolTable[func_name].isDefined = true;
-      std::map<std::pair<std::string, int>, symbolInfo> proxy_symbol_table(
-          symbol_table);
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          proxy_symbol_table(symbol_table);
       for (auto param : funcs->get_declaration()->get_params()) {
         std::string temp_name = get_temp_name(param->identifier->get_value());
         proxy_symbol_table[{param->identifier->get_value(), 1}] = {
-            temp_name, linkage::INTERNAL, symbolType::VARIABLE, {param->type}};
+            temp_name,
+            symbolTable::linkage::INTERNAL,
+            symbolTable::symbolType::VARIABLE,
+            {param->type}};
         param->identifier->set_identifier(temp_name);
       }
       analyze_block(funcs->get_block(), proxy_symbol_table, 1);

@@ -5,7 +5,9 @@ namespace parser {
 
 void parser::analyze_statement(
     std::shared_ptr<ast::AST_Statement_Node> statement,
-    std::map<std::pair<std::string, int>, symbolInfo> &symbol_table, int indx) {
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table,
+    int indx) {
 
   // every variable that is used in any of the statement should already
   // have been declared.
@@ -46,8 +48,8 @@ void parser::analyze_statement(
   case ast::statementType::BLOCK: {
     auto block_statement =
         std::static_pointer_cast<ast::AST_block_statement_node>(statement);
-    std::map<std::pair<std::string, int>, symbolInfo> proxy_symbol_table(
-        symbol_table);
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        proxy_symbol_table(symbol_table);
     analyze_block(block_statement->get_block(), proxy_symbol_table, indx + 1);
   } break;
   case ast::statementType::GOTO: {
@@ -83,7 +85,9 @@ void parser::analyze_statement(
 
 void parser::analyze_for_statement(
     std::shared_ptr<ast::AST_For_Statement_Node> for_statement,
-    std::map<std::pair<std::string, int>, symbolInfo> &symbol_table, int indx) {
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table,
+    int indx) {
   // When init is null or init is a simple expression, then
   // we don't need to add another level to the symbol table
   if (for_statement->get_for_init() == nullptr) {
@@ -109,8 +113,8 @@ void parser::analyze_for_statement(
     }
   } else {
     // Add another level to the symbol table
-    std::map<std::pair<std::string, int>, symbolInfo> proxy_symbol_table(
-        symbol_table);
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        proxy_symbol_table(symbol_table);
     analyze_declaration(for_statement->get_for_init()->get_declaration(),
                         proxy_symbol_table, indx + 1);
     analyze_exp(for_statement->get_exps(), proxy_symbol_table, indx + 1);

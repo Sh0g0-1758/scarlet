@@ -50,8 +50,13 @@ void Codegen::codegen() {
                  scasm::instruction_type::DEALLOCATE_STACK) {
         assembly << "\taddq $" << instr->get_src()->get_imm() << ", %rsp\n";
       } else if (instr->get_type() == scasm::instruction_type::CALL) {
+#ifdef __APPLE__
+        assembly << "\tcall " << "_" << instr->get_src()->get_identifier_stack()
+                 << "\n";
+#else
         assembly << "\tcall " << instr->get_src()->get_identifier_stack()
                  << "\n";
+#endif
       } else if (instr->get_type() == scasm::instruction_type::PUSH) {
         assembly << "\tpushq ";
         if (instr->get_src()->get_type() == scasm::operand_type::STACK) {

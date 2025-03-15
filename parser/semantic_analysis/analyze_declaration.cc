@@ -5,7 +5,9 @@ namespace parser {
 
 void parser::analyze_declaration(
     std::shared_ptr<ast::AST_Declaration_Node> declaration,
-    std::map<std::pair<std::string, int>, symbolInfo> &symbol_table, int indx) {
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table,
+    int indx) {
   std::string var_name = declaration->get_identifier()->get_value();
   if (declaration->get_type() == ast::DeclarationType::VARIABLE) {
     if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
@@ -19,8 +21,8 @@ void parser::analyze_declaration(
           std::static_pointer_cast<ast::AST_variable_declaration_Node>(
               declaration);
       symbol_table[{var_name, indx}] = {temp_name,
-                                        linkage::INTERNAL,
-                                        symbolType::VARIABLE,
+                                        symbolTable::linkage::INTERNAL,
+                                        symbolTable::symbolType::VARIABLE,
                                         {variable_declaration->get_type()}};
       if (variable_declaration->get_exp() != nullptr) {
         symbol_table[{var_name, indx}].isDefined = true;
@@ -52,7 +54,8 @@ void parser::analyze_declaration(
     }
 
     if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
-      if (symbol_table[{var_name, indx}].type != symbolType::FUNCTION) {
+      if (symbol_table[{var_name, indx}].type !=
+          symbolTable::symbolType::FUNCTION) {
         success = false;
         error_messages.emplace_back(
             var_name + " redeclared as a different kind of symbol");
@@ -74,8 +77,9 @@ void parser::analyze_declaration(
         symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
       }
     } else {
-      symbol_table[{var_name, indx}] = {var_name, linkage::EXTERNAL,
-                                        symbolType::FUNCTION, funcType};
+      symbol_table[{var_name, indx}] = {
+          var_name, symbolTable::linkage::EXTERNAL,
+          symbolTable::symbolType::FUNCTION, funcType};
       globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
     }
   }

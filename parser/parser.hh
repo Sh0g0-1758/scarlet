@@ -9,29 +9,12 @@
 #include <string>
 #include <token/token.hh>
 #include <tools/macros/macros.hh>
+#include <tools/symbolTable/symbolTable.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
 
 namespace scarlet {
 namespace parser {
-
-enum class linkage { INTERNAL, EXTERNAL };
-enum class symbolType { VARIABLE, FUNCTION };
-
-// This struct is used to store information about a symbol
-// - name: updated name of the symbol according to scope resolution
-// - link: linkage of the symbol
-// - type: type of the symbol
-// - typeDef: type definition of the symbol
-//            (used for variables and functions)
-//            (a vector because functions can have multiple args)
-struct symbolInfo {
-  std::string name;
-  linkage link;
-  symbolType type;
-  std::vector<ast::ElemType> typeDef;
-  bool isDefined = false;
-};
 
 class parser {
 private:
@@ -46,7 +29,7 @@ private:
   int ifelse_counter = 0;
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
-  std::map<std::string, symbolInfo> globalSymbolTable;
+  std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   void parse_function(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_Function_Node>);
   void
@@ -94,25 +77,27 @@ private:
       std::shared_ptr<ast::AST_variable_declaration_Node> declaration);
   void pretty_print_function_declaration(
       std::shared_ptr<ast::AST_function_declaration_Node> declaration);
-  void
-  analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-              std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
-              int indx);
-  void
-  analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
-                std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
-                int indx);
+  void analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                   std::map<std::pair<std::string, int>,
+                            symbolTable::symbolInfo> &symbol_table,
+                   int indx);
+  void analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
+                     std::map<std::pair<std::string, int>,
+                              symbolTable::symbolInfo> &symbol_table,
+                     int indx);
   void analyze_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration,
-      std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
       int indx);
-  void analyze_statement(
-      std::shared_ptr<ast::AST_Statement_Node> statement,
-      std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
-      int indx);
+  void analyze_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
+                         std::map<std::pair<std::string, int>,
+                                  symbolTable::symbolInfo> &symbol_table,
+                         int indx);
   void analyze_for_statement(
       std::shared_ptr<ast::AST_For_Statement_Node> for_statement,
-      std::map<std::pair<std::string, int>, symbolInfo> &symbol_table,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
       int indx);
 
   std::string get_temp_name(std::string &name) {
@@ -202,7 +187,7 @@ public:
   ast::AST_Program_Node get_program() { return program; }
   void pretty_print();
   int get_symbol_counter() { return symbol_counter; }
-  std::map<std::string, symbolInfo> &getGlobalSymbolTable() {
+  std::map<std::string, symbolTable::symbolInfo> &getGlobalSymbolTable() {
     return globalSymbolTable;
   }
 };

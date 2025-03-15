@@ -3,9 +3,10 @@
 namespace scarlet {
 namespace parser {
 
-void parser::analyze_exp(
-    std::shared_ptr<ast::AST_exp_Node> exp,
-    std::map<std::pair<std::string, int>, symbolInfo> &symbol_table, int indx) {
+void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                         std::map<std::pair<std::string, int>,
+                                  symbolTable::symbolInfo> &symbol_table,
+                         int indx) {
   if (exp == nullptr)
     return;
   analyze_exp(exp->get_left(), symbol_table, indx);
@@ -28,8 +29,8 @@ void parser::analyze_exp(
     while (level >= 0) {
       if (symbol_table.find({var_name, level}) != symbol_table.end()) {
         updatedIdentifierName = symbol_table[{var_name, level}].name;
-        isfuncType =
-            symbol_table[{var_name, level}].type == symbolType::FUNCTION;
+        isfuncType = symbol_table[{var_name, level}].type ==
+                     symbolTable::symbolType::FUNCTION;
         found = true;
         break;
       }
