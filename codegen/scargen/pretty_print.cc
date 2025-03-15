@@ -9,6 +9,13 @@ void Codegen::pretty_print() {
     std::cout << "\tFunction(" << std::endl;
     std::cout << "\t\tname=\"" << function->get_identifier()->get_value()
               << "\"," << std::endl;
+    std::cout << "\t\tparams=[";
+    std::stringstream ss;
+    for (auto param : function->get_params()) {
+      ss << "Var(" << param->get_value() << "), ";
+    }
+    std::cout << ss.str().substr(0, ss.str().size() - 2);
+    std::cout << "]," << std::endl;
     std::cout << "\t\tbody=[" << std::endl;
     for (auto statement : function->get_instructions()) {
       if (statement->get_type() == scar::instruction_type::CALL) {
