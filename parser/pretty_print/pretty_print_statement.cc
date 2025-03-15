@@ -7,6 +7,12 @@ std::string to_string(ast::statementType type) {
   switch (type) {
   case ast::statementType::NULLSTMT:
     return "NullStmt";
+  case ast::statementType::SWITCH:
+    return "Switch";
+  case ast::statementType::CASE:
+    return "Case";
+  case ast::statementType::DEFAULT_CASE:
+    return "Default";
   case ast::statementType::RETURN:
     return "Return";
   case ast::statementType::EXP:
@@ -48,6 +54,23 @@ void parser::pretty_print_statement(
   case ast::statementType::RETURN:
     pretty_print_exp(statement->get_exps());
     break;
+  case ast::statementType::CASE: {
+    auto case_statement =
+        std::static_pointer_cast<ast::AST_case_statement_Node>(statement);
+    std::cout << "\t\t\t\texps=(" << std::endl;
+    pretty_print_exp(case_statement->get_exps());
+    std::cout << "\t\t\t\t)," << std::endl;
+    std::cout << "\t\t\t\tstmts=(" << std::endl;
+    auto stmti = case_statement->get_stmt();
+    for (auto stmtii : stmti) {
+      pretty_print_statement(stmtii);
+      std::cout << std::endl;
+    }
+    std::cout << "\t\t\t\t)" << std::endl;
+  } break;
+  case ast::statementType::DEFAULT_CASE:
+    pretty_print_exp(statement->get_exps());
+    break;
   case ast::statementType::IF: {
     auto if_statement =
         std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
@@ -79,13 +102,15 @@ void parser::pretty_print_statement(
     pretty_print_statement(if_else_statement->get_stmt2());
     std::cout << "\t\t\t\t)" << std::endl;
   } break;
+  case ast::statementType::SWITCH:
   case ast::statementType::WHILE:
   case ast::statementType::DO_WHILE: {
     auto while_statement =
         std::static_pointer_cast<ast::AST_while_statement_Node>(statement);
-    std::cout << "\t\t\t\tlabels=("
-              << while_statement->get_labels().first->get_value() << ","
-              << while_statement->get_labels().second->get_value() << "),"
+    std::cout << "\t\t\t\tlabels=(";
+    if (while_statement->get_labels().first)
+      std::cout << while_statement->get_labels().first->get_value() << ",";
+    std::cout << while_statement->get_labels().second->get_value() << "),"
               << std::endl;
     std::cout << "\t\t\t\texps=(" << std::endl;
     pretty_print_exp(while_statement->get_exps());

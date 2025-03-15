@@ -9,6 +9,12 @@ void Codegen::gen_scar_statement(
   switch (statement->get_type()) {
   case ast::statementType::NULLSTMT:
     break;
+  case ast::statementType::SWITCH:
+    break;
+  case ast::statementType::CASE:
+    break;
+  case ast::statementType::DEFAULT_CASE:
+    break;
   case ast::statementType::RETURN: {
     gen_scar_exp(statement->get_exps(), scar_function);
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);

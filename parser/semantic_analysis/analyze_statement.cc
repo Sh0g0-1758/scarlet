@@ -19,6 +19,17 @@ void parser::analyze_statement(
   case ast::statementType::RETURN:
     analyze_exp(statement->get_exps(), symbol_table, indx);
     break;
+  case ast::statementType::CASE:
+  case ast::statementType::DEFAULT_CASE: {
+    auto case_statement =
+        std::static_pointer_cast<ast::AST_case_statement_Node>(statement);
+    if (case_statement->get_exps()) {
+      analyze_case_exp(case_statement->get_exps(), symbol_table, indx);
+      analyze_exp(case_statement->get_exps(), symbol_table, indx);
+    }
+    for (auto stmt : case_statement->get_stmt())
+      analyze_statement(stmt, symbol_table, indx);
+  } break;
   case ast::statementType::IF: {
     auto if_statement =
         std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
@@ -32,6 +43,7 @@ void parser::analyze_statement(
     analyze_statement(if_else_statement->get_stmt1(), symbol_table, indx);
     analyze_statement(if_else_statement->get_stmt2(), symbol_table, indx);
   } break;
+  case ast::statementType::SWITCH:
   case ast::statementType::WHILE:
   case ast::statementType::DO_WHILE: {
     auto while_statement =

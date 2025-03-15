@@ -55,6 +55,15 @@ void print_token(TOKEN token) {
   case TOKEN::STATIC:
     std::cerr << "static ";
     break;
+  case TOKEN::SWITCH:
+    std::cerr << "switch ";
+    break;
+  case TOKEN::CASE:
+    std::cerr << "case ";
+    break;
+  case TOKEN::DEFAULT_CASE:
+    std::cerr << "default_case ";
+    break;
   case TOKEN::EXTERN:
     std::cerr << "extern ";
     break;
@@ -269,6 +278,12 @@ std::string to_string(TOKEN token) {
     return "static";
   case TOKEN::EXTERN:
     return "extern";
+  case TOKEN::SWITCH:
+    return "switch";
+  case TOKEN::CASE:
+    return "case";
+  case TOKEN::DEFAULT_CASE:
+    return "default_case";
   case TOKEN::LONG:
     return "long";
   case TOKEN::SIGNED:

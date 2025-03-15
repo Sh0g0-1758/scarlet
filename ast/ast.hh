@@ -19,7 +19,7 @@ Grammar:
 <block> ::= "{" { <block_item> } "}"
 <declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
 <for-init> ::= <declaration> | [ <exp> ]
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";"
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";" | switch "("<exp>")" <statement> | case <exp> ":" { <statement> }
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "~" | "-" | "!" | "--" | "++"
@@ -197,6 +197,9 @@ enum class statementType {
   CONTINUE,
   WHILE,
   FOR,
+  SWITCH,
+  CASE,
+  DEFAULT_CASE,
   DO_WHILE
 };
 
@@ -280,6 +283,18 @@ public:
   std::string get_start_label() { return start_label; }
   void set_start_label(std::string &&start_label) {
     this->start_label = std::move(start_label);
+  }
+};
+
+class AST_case_statement_Node : public AST_Statement_Node {
+private:
+  std::vector<std::shared_ptr<AST_Statement_Node>> stmts;
+
+public:
+  std::string get_AST_name() { return "CaseStatement"; }
+  std::vector<std::shared_ptr<AST_Statement_Node>> get_stmt() { return stmts; }
+  void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
+    this->stmts.push_back(std::move(stmt));
   }
 };
 

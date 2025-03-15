@@ -67,6 +67,10 @@ private:
   analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
               std::map<std::pair<std::string, int>, std::string> &symbol_table,
               int indx);
+  void analyze_case_exp(
+      std::shared_ptr<ast::AST_exp_Node> exp,
+      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      int indx);
   void analyze_block(
       std::shared_ptr<ast::AST_Block_Node> block,
       std::map<std::pair<std::string, int>, std::string> &symbol_table,
@@ -119,7 +123,17 @@ private:
     end_label_node->set_identifier(end_label);
     return {start_label_node, end_label_node};
   }
-
+  std::pair<std::shared_ptr<ast::AST_identifier_Node>,
+            std::shared_ptr<ast::AST_identifier_Node>>
+  get_switch_loop_labels() {
+    std::string end_label = "loop_end." + std::to_string(loop_end_counter);
+    loop_continue_counter++;
+    loop_end_counter++;
+    loop_end_labels.push(end_label);
+    MAKE_SHARED(ast::AST_identifier_Node, end_label_node);
+    end_label_node->set_identifier(end_label);
+    return {nullptr, end_label_node};
+  }
   std::string get_loop_start_label() {
     std::string label = "loop_start." + std::to_string(loop_start_counter);
     loop_start_counter++;
@@ -148,6 +162,8 @@ private:
     loop_start_labels.pop();
     loop_end_labels.pop();
   }
+
+  void remove_switch_loop_labels() { loop_end_labels.pop(); }
 
 public:
   void parse_program(std::vector<token::Token> tokens);

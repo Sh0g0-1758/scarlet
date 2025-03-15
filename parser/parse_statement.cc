@@ -104,6 +104,55 @@ void parser::parse_statement(
     remove_loop_labels();
     statement =
         std::static_pointer_cast<ast::AST_Statement_Node>(while_statement);
+  } else if (tokens[0].get_token() == token::TOKEN::SWITCH) {
+    MAKE_SHARED(ast::AST_while_statement_Node, switch_statement);
+    switch_statement->set_type(ast::statementType::SWITCH);
+    tokens.erase(tokens.begin());
+    switch_statement->set_labels(get_switch_loop_labels());
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    switch_statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    MAKE_SHARED(ast::AST_Statement_Node, stmt);
+    parse_statement(tokens, stmt);
+    switch_statement->set_stmt(std::move(stmt));
+
+    remove_switch_loop_labels();
+    statement =
+        std::static_pointer_cast<ast::AST_Statement_Node>(switch_statement);
+
+  } else if (tokens[0].get_token() == token::TOKEN::CASE) {
+    MAKE_SHARED(ast::AST_case_statement_Node, case_statement);
+    case_statement->set_type(ast::statementType::CASE);
+    tokens.erase(tokens.begin());
+    MAKE_SHARED(ast::AST_exp_Node, exp);
+    parse_exp(tokens, exp);
+    case_statement->set_exp(std::move(exp));
+    EXPECT(token::TOKEN::COLON);
+    while (success && tokens[0].get_token() != token::TOKEN::CASE &&
+           tokens[0].get_token() != token::TOKEN::CLOSE_BRACE &&
+           tokens[0].get_token() != token::TOKEN::DEFAULT_CASE) {
+      MAKE_SHARED(ast::AST_Statement_Node, stmt);
+      parse_statement(tokens, stmt);
+      case_statement->set_stmt(std::move(stmt));
+    }
+    statement =
+        std::static_pointer_cast<ast::AST_Statement_Node>(case_statement);
+  } else if (tokens[0].get_token() == token::TOKEN::DEFAULT_CASE) {
+    MAKE_SHARED(ast::AST_case_statement_Node, default_case_statement);
+    default_case_statement->set_type(ast::statementType::DEFAULT_CASE);
+    tokens.erase(tokens.begin());
+    EXPECT(token::TOKEN::COLON);
+    while (success && tokens[0].get_token() != token::TOKEN::CASE &&
+           tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
+      MAKE_SHARED(ast::AST_Statement_Node, stmt);
+      parse_statement(tokens, stmt);
+      default_case_statement->set_stmt(std::move(stmt));
+    }
+    statement = std::static_pointer_cast<ast::AST_Statement_Node>(
+        default_case_statement);
+
   } else if (tokens[0].get_token() == token::TOKEN::CONTINUE) {
     tokens.erase(tokens.begin());
     statement->set_type(ast::statementType::CONTINUE);
