@@ -15,21 +15,37 @@
 Grammar:
 
 <program> ::= { <function-declaration> }
+
 <declaration> ::= <variable-declaration> | <function-declaration>
+
 <variable-declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
+
 <function-declaration> ::= "int" <identifier> "(" <param-list> ")" ( <block> | ";" )
+
 <param-list> ::= "void" | "int" <identifier> { "," "int" <identifier> }
+
 <function> ::= "int" <identifier> "(" "void" ")" <block>
+
 <block_item> ::= <statement> | <declaration>
+
 <block> ::= "{" { <block_item> } "}"
+
 <for-init> ::= <variable-declaration> | [ <exp> ]
+
 <statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";"
+
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
+
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+
 <argument-list> ::= <exp> { "," <exp> }
+
 <unop> ::= "~" | "-" | "!" | "--" | "++"
+
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
+
 <identifier> ::= ? An identifier
+
 token ? <int> ::= ? A constant token ?
 
 NOTE: in EBNF notation,
@@ -232,7 +248,7 @@ enum class statementType {
   CONTINUE,
   WHILE,
   FOR,
-  DO_WHILE
+  DO_WHILE,
 };
 
 class AST_Statement_Node {

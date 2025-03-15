@@ -42,8 +42,17 @@ void Codegen::gen_scar_factor(
           scar_val_dst->set_reg_name(variable_buffer);
           variable_buffer.clear();
         } else {
-          scar_val_dst->set_reg_name(
-              factor->get_identifier_node()->get_value());
+          if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+            gen_scar_factor_function_call(
+                std::static_pointer_cast<ast::AST_factor_function_call_Node>(
+                    factor),
+                scar_function);
+            scar_val_dst->set_reg_name(variable_buffer);
+            variable_buffer.clear();
+          } else {
+            scar_val_dst->set_reg_name(
+                factor->get_identifier_node()->get_value());
+          }
         }
 
         reg_name = scar_val_dst->get_reg();
@@ -76,8 +85,17 @@ void Codegen::gen_scar_factor(
           scar_val_src->set_reg_name(variable_buffer);
           variable_buffer.clear();
         } else {
-          scar_val_src->set_reg_name(
-              factor->get_identifier_node()->get_value());
+          if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+            gen_scar_factor_function_call(
+                std::static_pointer_cast<ast::AST_factor_function_call_Node>(
+                    factor),
+                scar_function);
+            scar_val_src->set_reg_name(variable_buffer);
+            variable_buffer.clear();
+          } else {
+            scar_val_src->set_reg_name(
+                factor->get_identifier_node()->get_value());
+          }
         }
         std::string _variable = scar_val_src->get_reg();
         scar_instruction->set_src1(std::move(scar_val_src));
@@ -130,8 +148,17 @@ void Codegen::gen_scar_factor(
         } else if (factor->get_identifier_node() != nullptr and
                    !factor->get_identifier_node()->get_value().empty()) {
           scar_val_src->set_type(scar::val_type::VAR);
-          scar_val_src->set_reg_name(
-              factor->get_identifier_node()->get_value());
+          if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+            gen_scar_factor_function_call(
+                std::static_pointer_cast<ast::AST_factor_function_call_Node>(
+                    factor),
+                scar_function);
+            scar_val_src->set_reg_name(variable_buffer);
+            variable_buffer.clear();
+          } else {
+            scar_val_src->set_reg_name(
+                factor->get_identifier_node()->get_value());
+          }
         } else if (!constant_buffer.empty()) {
           scar_val_src->set_type(scar::val_type::CONSTANT);
           scar_val_src->set_value(constant_buffer);
@@ -160,8 +187,8 @@ void Codegen::gen_scar_factor(
     // empty the unop buffer
     unop_buffer[curr_buff].clear();
   } else {
-    // NOTE: It is guaranteed that the factor node will have either an int node
-    // or an identifier node
+    // NOTE: It is guaranteed that the factor node will have either an int node,
+    //       an identifier node or a function call
 
     // save constant for later use
     if (factor->get_int_node() != nullptr and
@@ -172,9 +199,59 @@ void Codegen::gen_scar_factor(
     // save variable for later use
     if (factor->get_identifier_node() != nullptr and
         !factor->get_identifier_node()->get_value().empty()) {
-      variable_buffer = factor->get_identifier_node()->get_value();
+      if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+        gen_scar_factor_function_call(
+            std::static_pointer_cast<ast::AST_factor_function_call_Node>(
+                factor),
+            scar_function);
+      } else {
+        variable_buffer = factor->get_identifier_node()->get_value();
+      }
     }
   }
+}
+
+void Codegen::gen_scar_factor_function_call(
+    std::shared_ptr<ast::AST_factor_function_call_Node> factor,
+    std::shared_ptr<scar::scar_Function_Node> scar_function) {
+
+  MAKE_SHARED(scar::scar_FunctionCall_Instruction_Node, scar_instruction);
+  scar_instruction->set_type(scar::instruction_type::CALL);
+  MAKE_SHARED(scar::scar_Identifier_Node, scar_identifier);
+  scar_identifier->set_value(factor->get_identifier_node()->get_value());
+  scar_instruction->set_name(scar_identifier);
+
+  for (auto it : factor->get_arguments()) {
+    gen_scar_exp(it, scar_function);
+    if (!constant_buffer.empty()) {
+      MAKE_SHARED(scar::scar_Val_Node, scar_val);
+      scar_val->set_type(scar::val_type::CONSTANT);
+      scar_val->set_value(constant_buffer);
+      scar_instruction->add_arg(scar_val);
+      constant_buffer.clear();
+    } else if (!variable_buffer.empty()) {
+      MAKE_SHARED(scar::scar_Val_Node, scar_val);
+      scar_val->set_type(scar::val_type::VAR);
+      scar_val->set_reg_name(variable_buffer);
+      scar_instruction->add_arg(scar_val);
+      variable_buffer.clear();
+    } else {
+      MAKE_SHARED(scar::scar_Val_Node, scar_val);
+      scar_val->set_type(scar::val_type::VAR);
+      scar_val->set_reg_name(get_prev_reg_name());
+      scar_instruction->add_arg(scar_val);
+    }
+  }
+
+  std::string dstReg = get_reg_name();
+  // CHECK IF THIS IS CORRECT
+  variable_buffer = dstReg;
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+  scar_val_dst->set_type(scar::val_type::VAR);
+  scar_val_dst->set_reg_name(dstReg);
+  scar_instruction->set_dst(scar_val_dst);
+
+  scar_function->add_instruction(scar_instruction);
 }
 
 } // namespace codegen

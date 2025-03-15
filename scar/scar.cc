@@ -21,6 +21,8 @@ std::string to_string(scar::instruction_type type) {
     return "JumpIfNotZero";
   case scar::instruction_type::LABEL:
     return "Label";
+  case scar::instruction_type::CALL:
+    return "Call";
   }
   UNREACHABLE()
 }
