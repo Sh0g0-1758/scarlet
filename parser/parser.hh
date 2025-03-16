@@ -187,7 +187,7 @@ public:
   ast::AST_Program_Node get_program() { return program; }
   void pretty_print();
   int get_symbol_counter() { return symbol_counter; }
-  std::map<std::string, symbolTable::symbolInfo> &getGlobalSymbolTable() {
+  std::map<std::string, symbolTable::symbolInfo> getGlobalSymbolTable() {
     return globalSymbolTable;
   }
 };

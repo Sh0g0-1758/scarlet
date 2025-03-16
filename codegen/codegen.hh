@@ -9,6 +9,7 @@
 #include <stack>
 #include <string>
 #include <tools/macros/macros.hh>
+#include <tools/symbolTable/symbolTable.hh>
 #include <vector>
 
 // clang-format off
@@ -50,6 +51,7 @@ private:
   int curr_regNum;
   std::string reg_name;
   std::map<std::string, std::string> pseduo_registers;
+  std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
@@ -80,8 +82,9 @@ private:
   std::stack<std::string> res_label_stack;
 
 public:
-  Codegen(ast::AST_Program_Node program, int counter)
-      : program(program), curr_regNum(counter) {
+  Codegen(ast::AST_Program_Node program, int counter,
+          std::map<std::string, symbolTable::symbolInfo> gst)
+      : program(program), curr_regNum(counter), globalSymbolTable(gst) {
     unop_buffer.resize(2);
   }
   // ###### COMPILER PASSES ######

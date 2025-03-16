@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
   }
 
   // CODEGEN
-  scarlet::codegen::Codegen codegen(gnu.get_program(),
-                                    gnu.get_symbol_counter());
+  scarlet::codegen::Codegen codegen(gnu.get_program(), gnu.get_symbol_counter(),
+                                    gnu.getGlobalSymbolTable());
 
   codegen.gen_scar();
 
