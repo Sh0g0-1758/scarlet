@@ -171,6 +171,7 @@ void parser::parse_statement(
   } else if (tokens[0].get_token() == token::TOKEN::DEFAULT_CASE) {
     MAKE_SHARED(ast::AST_case_statement_Node, default_case_statement);
     default_case_statement->set_type(ast::statementType::DEFAULT_CASE);
+    default_case_statement->set_labels({get_case_label(), nullptr});
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_identifier_Node, label);
     label = default_case_statement->get_labels().first;
