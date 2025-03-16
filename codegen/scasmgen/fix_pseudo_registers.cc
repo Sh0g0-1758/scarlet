@@ -30,7 +30,7 @@ void Codegen::fix_pseudo_registers() {
     }
 
     int stack_offset = (offset - 1) * 4;
-    int stack_offset_aligned = stack_offset + (stack_offset % 16);
+    int stack_offset_aligned = stack_offset + (16 - (stack_offset % 16));
 
     func->set_frame_size(stack_offset_aligned);
   }
