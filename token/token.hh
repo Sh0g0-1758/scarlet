@@ -3,6 +3,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <tools/macros/macros.hh>
 
 namespace scarlet {
 namespace token {

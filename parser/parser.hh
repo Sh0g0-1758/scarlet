@@ -4,16 +4,18 @@
 #include <binary_operations/binop.hh>
 #include <iostream>
 #include <map>
+#include <set>
 #include <stack>
 #include <string>
 #include <token/token.hh>
+#include <tools/macros/macros.hh>
+#include <tools/symbolTable/symbolTable.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
 
-#define MAKE_SHARED(a, b) std::shared_ptr<a> b = std::make_shared<a>()
-
 namespace scarlet {
 namespace parser {
+
 class parser {
 private:
   bool success = true;
@@ -27,8 +29,18 @@ private:
   int ifelse_counter = 0;
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
-  std::shared_ptr<ast::AST_Function_Node>
-  parse_function(std::vector<token::Token> &tokens);
+  std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
+  void parse_function(std::vector<token::Token> &tokens,
+                      std::shared_ptr<ast::AST_Function_Node>);
+  void
+  parse_param_list(std::vector<token::Token> &tokens,
+                   std::shared_ptr<ast::AST_function_declaration_Node> decl);
+  void parse_function_declaration(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_function_declaration_Node> decl);
+  void parse_variable_declaration(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_variable_declaration_Node> decl);
   void parse_block(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_Block_Node> block);
   void parse_block_item(std::vector<token::Token> &tokens,
@@ -46,8 +58,6 @@ private:
                  std::shared_ptr<ast::AST_exp_Node> &exp, int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_factor_Node> &factor);
-  void parse_identifier(std::vector<token::Token> &tokens,
-                        std::shared_ptr<ast::AST_Function_Node> &function);
   void parse_int(std::vector<token::Token> &tokens,
                  std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_binop(std::vector<token::Token> &tokens,
@@ -63,28 +73,40 @@ private:
       std::shared_ptr<ast::AST_Declaration_Node> declaration);
   void
   pretty_print_statement(std::shared_ptr<ast::AST_Statement_Node> statement);
-  void
-  analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-              std::map<std::pair<std::string, int>, std::string> &symbol_table,
-              int indx);
-  void analyze_block(
-      std::shared_ptr<ast::AST_Block_Node> block,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
-      int indx);
+  void pretty_print_variable_declaration(
+      std::shared_ptr<ast::AST_variable_declaration_Node> declaration);
+  void pretty_print_function_declaration(
+      std::shared_ptr<ast::AST_function_declaration_Node> declaration);
+  void analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                   std::map<std::pair<std::string, int>,
+                            symbolTable::symbolInfo> &symbol_table,
+                   int indx);
+  void analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
+                     std::map<std::pair<std::string, int>,
+                              symbolTable::symbolInfo> &symbol_table,
+                     int indx);
   void analyze_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
       int indx);
-  void analyze_statement(
-      std::shared_ptr<ast::AST_Statement_Node> statement,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
-      int indx);
+  void analyze_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
+                         std::map<std::pair<std::string, int>,
+                                  symbolTable::symbolInfo> &symbol_table,
+                         int indx);
   void analyze_for_statement(
       std::shared_ptr<ast::AST_For_Statement_Node> for_statement,
-      std::map<std::pair<std::string, int>, std::string> &symbol_table,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
       int indx);
 
   std::string get_temp_name(std::string &name) {
+    std::string tmp = name + "." + std::to_string(symbol_counter);
+    symbol_counter++;
+    return tmp;
+  }
+
+  std::string get_temp_name(std::string &&name) {
     std::string tmp = name + "." + std::to_string(symbol_counter);
     symbol_counter++;
     return tmp;
@@ -149,6 +171,14 @@ private:
     loop_end_labels.pop();
   }
 
+  std::string type_to_string(ast::ElemType type) {
+    switch (type) {
+    case ast::ElemType::INT:
+      return "int";
+    }
+    UNREACHABLE()
+  }
+
 public:
   void parse_program(std::vector<token::Token> tokens);
   void semantic_analysis();
@@ -157,6 +187,9 @@ public:
   ast::AST_Program_Node get_program() { return program; }
   void pretty_print();
   int get_symbol_counter() { return symbol_counter; }
+  std::map<std::string, symbolTable::symbolInfo> getGlobalSymbolTable() {
+    return globalSymbolTable;
+  }
 };
 } // namespace parser
 } // namespace scarlet

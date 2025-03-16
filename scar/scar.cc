@@ -3,11 +3,6 @@
 namespace scarlet {
 namespace scar {
 
-#define UNREACHABLE()                                                          \
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
-            << __LINE__ << std::endl;                                          \
-  __builtin_unreachable();
-
 std::string to_string(scar::instruction_type type) {
   switch (type) {
   case scar::instruction_type::RETURN:
@@ -26,6 +21,8 @@ std::string to_string(scar::instruction_type type) {
     return "JumpIfNotZero";
   case scar::instruction_type::LABEL:
     return "Label";
+  case scar::instruction_type::CALL:
+    return "Call";
   }
   UNREACHABLE()
 }

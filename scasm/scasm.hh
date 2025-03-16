@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tools/macros/macros.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
 
@@ -17,14 +18,21 @@
 
 Grammar:
 
-program = Program(function_definition)
+program = Program(function_definition*)
+
 function_definition = Function(identifier, instruction* body)
-instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand) | Cmp(Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label)
+
+instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand) | Cmp(Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label) | Push(Operand) | Call(Identifier) | DeallocateStack(int)
+
 unary_operator = Neg | Not
+
 binary_operator = Add | Sub | Mul | And | Or | Xor | LeftShift | RightShift
+
 Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier) | Label(identifier)
+
 cond_code = E | NE | G | GE | L | LE
-reg = AX | DX | R10 | R11 | CX | CL
+
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL
 
 */
 
@@ -65,20 +73,25 @@ enum class instruction_type {
   RET,
   UNARY,
   ALLOCATE_STACK,
+  DEALLOCATE_STACK,
   CMP,
   JMP,
   JMPCC,
   SETCC,
-  LABEL
+  LABEL,
+  PUSH,
+  CALL,
 };
 
-enum class register_type { UNKNOWN, AX, DX, R10, R11, CX, CL };
+enum class register_type { UNKNOWN, AX, CX, DX, DI, SI, R8, R9, R10, R11, CL };
+// Word = 16 bits, Dword = 32 bits, Qword = 64 bits
+enum class register_size { BYTE, DWORD, QWORD };
 
 enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);
-std::string to_string(register_type reg, bool small = false);
+std::string to_string(register_type reg, register_size size);
 std::string to_string(Unop unop);
 std::string to_string(Binop binop);
 std::string to_string(cond_code cond);
@@ -137,6 +150,7 @@ class scasm_function {
 private:
   std::string name;
   std::vector<std::shared_ptr<scasm_instruction>> body;
+  int frameSize = 0;
 
 public:
   std::string get_scasm_name() { return "Function"; }
@@ -148,6 +162,8 @@ public:
   void add_instruction(std::shared_ptr<scasm_instruction> instruction) {
     body.emplace_back(std::move(instruction));
   }
+  int get_frame_size() { return frameSize; }
+  void set_frame_size(int frameSize) { this->frameSize = frameSize; }
 };
 
 class scasm_program {

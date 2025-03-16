@@ -4,17 +4,19 @@ namespace scarlet {
 namespace codegen {
 
 void Codegen::fix_instructions() {
-  MAKE_SHARED(scasm::scasm_instruction, scasm_stack_instr);
-  scasm_stack_instr->set_type(scasm::instruction_type::ALLOCATE_STACK);
-  MAKE_SHARED(scasm::scasm_operand, val);
-  val->set_type(scasm::operand_type::IMM);
-  val->set_imm(stack_offset);
-  scasm_stack_instr->set_src(std::move(val));
+  // Allocate stack frame
+  for (auto &funcs : scasm.get_functions()) {
+    MAKE_SHARED(scasm::scasm_instruction, scasm_stack_instr);
+    scasm_stack_instr->set_type(scasm::instruction_type::ALLOCATE_STACK);
+    MAKE_SHARED(scasm::scasm_operand, val);
+    val->set_type(scasm::operand_type::IMM);
+    val->set_imm(funcs->get_frame_size());
+    scasm_stack_instr->set_src(std::move(val));
+    funcs->get_instructions().insert(funcs->get_instructions().begin(),
+                                     std::move(scasm_stack_instr));
+  }
 
-  scasm.get_functions()[0]->get_instructions().insert(
-      scasm.get_functions()[0]->get_instructions().begin(),
-      std::move(scasm_stack_instr));
-
+  // Fixing up Stack to Stack move
   for (auto &funcs : scasm.get_functions()) {
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
@@ -25,7 +27,6 @@ void Codegen::fix_instructions() {
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_src((*it)->get_src());
 
-        // fixing up stack to stack move
         MAKE_SHARED(scasm::scasm_operand, dst);
         dst->set_type(scasm::operand_type::REG);
         dst->set_reg(scasm::register_type::R10);

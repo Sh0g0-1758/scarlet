@@ -33,6 +33,38 @@ void Codegen::gen_scasm() {
   for (auto func : scar.get_functions()) {
     MAKE_SHARED(scasm::scasm_function, scasm_func);
     scasm_func->set_name(func->get_identifier()->get_value());
+
+    // Move function args from registers and stack to the callee stack frame
+    int numParams = func->get_params().size();
+    for (int i = 0; i < std::min(6, numParams); i++) {
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+      scasm_inst->set_type(scasm::instruction_type::MOV);
+      MAKE_SHARED(scasm::scasm_operand, scasm_src);
+      scasm_src->set_type(scasm::operand_type::REG);
+      scasm_src->set_reg(argReg[i]);
+      scasm_inst->set_src(std::move(scasm_src));
+      MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+      scasm_dst->set_type(scasm::operand_type::PSEUDO);
+      scasm_dst->set_identifier_stack(func->get_params()[i]->get_value());
+      scasm_inst->set_dst(std::move(scasm_dst));
+      scasm_func->add_instruction(std::move(scasm_inst));
+    }
+    if (numParams > 6) {
+      for (int i = 6; i < numParams; i++) {
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        scasm_src->set_type(scasm::operand_type::STACK);
+        scasm_src->set_identifier_stack(std::to_string(16 + 8 * (i - 6)) +
+                                        "(%rbp)");
+        scasm_inst->set_src(std::move(scasm_src));
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        scasm_dst->set_type(scasm::operand_type::PSEUDO);
+        scasm_dst->set_identifier_stack(func->get_params()[i]->get_value());
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+      }
+    }
     for (auto inst : func->get_instructions()) {
       if (inst->get_type() == scar::instruction_type::RETURN) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
@@ -412,6 +444,119 @@ void Codegen::gen_scasm() {
         scasm_dst2->set_identifier_stack(inst->get_dst()->get_value());
         scasm_inst2->set_dst(std::move(scasm_dst2));
         scasm_func->add_instruction(std::move(scasm_inst2));
+      } else if (inst->get_type() == scar::instruction_type::CALL) {
+        auto funcCall =
+            std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
+                inst);
+        int numArgs = funcCall->get_args().size();
+        bool stack_padding =
+            numArgs > 6 ? ((numArgs - 6) % 2 ? true : false) : false;
+        if (stack_padding) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::ALLOCATE_STACK);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          scasm_src->set_type(scasm::operand_type::IMM);
+          scasm_src->set_imm(8);
+          scasm_inst->set_src(std::move(scasm_src));
+          scasm_func->add_instruction(std::move(scasm_inst));
+        }
+        for (int i = 0; i < std::min(6, numArgs); i++) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          switch (funcCall->get_args()[i]->get_type()) {
+          case scar::val_type::VAR:
+            scasm_src->set_type(scasm::operand_type::PSEUDO);
+            scasm_src->set_identifier_stack(funcCall->get_args()[i]->get_reg());
+            break;
+          case scar::val_type::CONSTANT:
+            scasm_src->set_type(scasm::operand_type::IMM);
+            scasm_src->set_imm(stoi(funcCall->get_args()[i]->get_value()));
+            break;
+          default:
+            break;
+          }
+          scasm_inst->set_src(std::move(scasm_src));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          scasm_dst->set_type(scasm::operand_type::REG);
+          scasm_dst->set_reg(argReg[i]);
+          scasm_inst->set_dst(std::move(scasm_dst));
+          scasm_func->add_instruction(std::move(scasm_inst));
+        }
+        if (numArgs > 6) {
+          for (int i = numArgs - 1; i >= 6; i--) {
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+            MAKE_SHARED(scasm::scasm_operand, scasm_src);
+            switch (funcCall->get_args()[i]->get_type()) {
+            case scar::val_type::VAR:
+              scasm_src->set_type(scasm::operand_type::PSEUDO);
+              scasm_src->set_identifier_stack(
+                  funcCall->get_args()[i]->get_reg());
+              break;
+            case scar::val_type::CONSTANT:
+              scasm_src->set_type(scasm::operand_type::IMM);
+              scasm_src->set_imm(stoi(funcCall->get_args()[i]->get_value()));
+              break;
+            default:
+              break;
+            }
+
+            if (scasm_src->get_type() == scasm::operand_type::IMM or
+                scasm_src->get_type() == scasm::operand_type::REG) {
+              scasm_inst->set_src(std::move(scasm_src));
+              scasm_inst->set_type(scasm::instruction_type::PUSH);
+              scasm_func->add_instruction(std::move(scasm_inst));
+            } else {
+              scasm_inst->set_src(std::move(scasm_src));
+              scasm_inst->set_type(scasm::instruction_type::MOV);
+              MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+              scasm_dst->set_type(scasm::operand_type::REG);
+              scasm_dst->set_reg(scasm::register_type::AX);
+              scasm_inst->set_dst(std::move(scasm_dst));
+              scasm_func->add_instruction(std::move(scasm_inst));
+
+              MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+              scasm_inst2->set_type(scasm::instruction_type::PUSH);
+              MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+              scasm_src2->set_type(scasm::operand_type::REG);
+              scasm_src2->set_reg(scasm::register_type::AX);
+              scasm_inst2->set_src(std::move(scasm_src2));
+              scasm_func->add_instruction(std::move(scasm_inst2));
+            }
+          }
+        }
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::CALL);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        scasm_src->set_type(scasm::operand_type::LABEL);
+        scasm_src->set_identifier_stack(funcCall->get_name()->get_value());
+        scasm_inst->set_src(std::move(scasm_src));
+        scasm_func->add_instruction(std::move(scasm_inst));
+
+        int bytesToRemove = numArgs > 6 ? 8 * (numArgs - 6) : 0;
+        bytesToRemove += stack_padding ? 8 : 0;
+
+        if (bytesToRemove != 0) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::DEALLOCATE_STACK);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+          scasm_src2->set_type(scasm::operand_type::IMM);
+          scasm_src2->set_imm(bytesToRemove);
+          scasm_inst2->set_src(std::move(scasm_src2));
+          scasm_func->add_instruction(std::move(scasm_inst2));
+        }
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
+        scasm_inst3->set_type(scasm::instruction_type::MOV);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src3);
+        scasm_src3->set_type(scasm::operand_type::REG);
+        scasm_src3->set_reg(scasm::register_type::AX);
+        scasm_inst3->set_src(std::move(scasm_src3));
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
+        SET_DST(scasm_dst3);
+        scasm_inst3->set_dst(std::move(scasm_dst3));
+        scasm_func->add_instruction(std::move(scasm_inst3));
       }
     }
     scasm_program.add_function(std::move(scasm_func));

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tools/macros/macros.hh>
 #include <vector>
 
 // clang-format off
@@ -16,9 +17,9 @@
 /*
 Grammar:
 
-program = Program(function_definition)
+program = Program(function_definition*)
 function_definition = Function(identifier, instruction* body)
-instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier)
+instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst)
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate | Not
 binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | leftShift | rightShift | Equal | notEqual | lessThan | LessOrEqual | greaterThan | greaterThanOrEqual
@@ -38,7 +39,8 @@ enum class instruction_type {
   JUMP,
   JUMP_IF_ZERO,
   JUMP_IF_NOT_ZERO,
-  LABEL
+  LABEL,
+  CALL,
 };
 // CONSTANT is a constant value (1, 2 , 42 etc.)
 // VAR is a scar register
@@ -62,6 +64,8 @@ public:
 // SCAR REGISTERS ARE JUST PSEUDO REGISTERS(VARIABLES), WHICH WILL BE REPLACED
 // BY FIRST STACK OPERANDS AND THEN REGISTERS IN THE INSTRUCTION FIXING PHASE
 // SCAR REGISTERS ARE JUST A WAY TO KEEP TRACK OF THE VALUES IN THE SCAR IR
+// HERE VAL IS FOR A CONSTANT VALUE AND REG_NAME IS FOR USER DEFINED IDENTIFIERS
+// AND TEMPORARY REGISTERS GENERATED INTERNALLY BY SCAR
 class scar_Val_Node {
 private:
   val_type type;
@@ -111,9 +115,26 @@ public:
   }
 };
 
+class scar_FunctionCall_Instruction_Node : public scar_Instruction_Node {
+private:
+  std::shared_ptr<scar_Identifier_Node> name;
+  std::vector<std::shared_ptr<scar_Val_Node>> args;
+
+public:
+  std::string get_scar_name() { return "FunctionCall"; }
+  std::shared_ptr<scar_Identifier_Node> get_name() { return name; }
+  void set_name(std::shared_ptr<scar_Identifier_Node> name) {
+    this->name = std::move(name);
+  }
+  std::vector<std::shared_ptr<scar_Val_Node>> &get_args() { return args; }
+  void add_arg(std::shared_ptr<scar_Val_Node> arg) {
+    args.emplace_back(std::move(arg));
+  }
+};
+
 class scar_Function_Node {
 private:
-  ;
+  std::vector<std::shared_ptr<scar_Identifier_Node>> params;
   std::shared_ptr<scar_Identifier_Node> identifier;
   std::vector<std::shared_ptr<scar_Instruction_Node>> body;
 
@@ -130,6 +151,13 @@ public:
   }
   std::vector<std::shared_ptr<scar_Instruction_Node>> &get_instructions() {
     return body;
+  }
+
+  std::vector<std::shared_ptr<scar_Identifier_Node>> &get_params() {
+    return params;
+  }
+  void add_param(std::shared_ptr<scar_Identifier_Node> param) {
+    params.emplace_back(std::move(param));
   }
 };
 

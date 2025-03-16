@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <token/token.hh>
+#include <tools/macros/macros.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
 
@@ -13,18 +14,38 @@
 
 Grammar:
 
-<program> ::= <function>
+<program> ::= { <function-declaration> }
+
+<declaration> ::= <variable-declaration> | <function-declaration>
+
+<variable-declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
+
+<function-declaration> ::= "int" <identifier> "(" <param-list> ")" ( <block> | ";" )
+
+<param-list> ::= "void" | "int" <identifier> { "," "int" <identifier> }
+
 <function> ::= "int" <identifier> "(" "void" ")" <block>
+
 <block_item> ::= <statement> | <declaration>
+
 <block> ::= "{" { <block_item> } "}"
-<declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<for-init> ::= <declaration> | [ <exp> ]
+
+<for-init> ::= <variable-declaration> | [ <exp> ]
+
 <statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";"
+
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
-<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
+
+<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+
+<argument-list> ::= <exp> { "," <exp> }
+
 <unop> ::= "~" | "-" | "!" | "--" | "++"
+
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
+
 <identifier> ::= ? An identifier
+
 token ? <int> ::= ? A constant token ?
 
 NOTE: in EBNF notation,
@@ -78,6 +99,8 @@ public:
 
 class AST_exp_Node;
 
+enum class FactorType { BASIC, FUNCTION_CALL };
+
 class AST_factor_Node {
 private:
   std::shared_ptr<AST_int_Node> int_node;
@@ -88,6 +111,7 @@ private:
   // another object of exp, say c. exp -> factor -> exp
   //  a  ->    b   ->  c
   std::shared_ptr<AST_exp_Node> exp_node;
+  FactorType type = FactorType::BASIC;
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -112,6 +136,22 @@ public:
     this->exp_node = std::move(exp_node);
   }
   std::shared_ptr<AST_exp_Node> get_exp_node() { return exp_node; }
+  FactorType get_type() { return type; }
+  void set_type(FactorType type) { this->type = type; }
+};
+
+class AST_factor_function_call_Node : public AST_factor_Node {
+private:
+  std::vector<std::shared_ptr<AST_exp_Node>> arguments;
+
+public:
+  std::string get_AST_name() { return "FunctionCall"; }
+  std::vector<std::shared_ptr<AST_exp_Node>> get_arguments() {
+    return arguments;
+  }
+  void add_argument(std::shared_ptr<AST_exp_Node> argument) {
+    arguments.emplace_back(argument);
+  }
 };
 
 /*
@@ -146,8 +186,6 @@ private:
   std::shared_ptr<AST_factor_Node> factor;
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
-  // NOTE : This is only used for the ternary operator
-  std::shared_ptr<AST_exp_Node> middle;
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -171,7 +209,20 @@ public:
   void set_left(std::shared_ptr<AST_exp_Node> left) {
     this->left = std::move(left);
   }
+};
 
+class AST_ternary_exp_Node : public AST_exp_Node {
+private:
+  std::shared_ptr<AST_exp_Node> middle;
+
+public:
+  AST_ternary_exp_Node(std::shared_ptr<AST_exp_Node> parent) {
+    this->set_binop_node(parent->get_binop_node());
+    this->set_factor_node(parent->get_factor_node());
+    this->set_left(parent->get_left());
+    this->set_right(parent->get_right());
+  }
+  std::string get_AST_name() { return "TernaryExp"; }
   std::shared_ptr<AST_exp_Node> get_middle() { return middle; }
   void set_middle(std::shared_ptr<AST_exp_Node> middle) {
     this->middle = std::move(middle);
@@ -197,7 +248,7 @@ enum class statementType {
   CONTINUE,
   WHILE,
   FOR,
-  DO_WHILE
+  DO_WHILE,
 };
 
 class AST_Statement_Node {
@@ -283,31 +334,60 @@ public:
   }
 };
 
-enum class DeclarationType { INT };
+enum class DeclarationType { VARIABLE, FUNCTION };
 
 class AST_Declaration_Node {
 private:
   std::shared_ptr<AST_identifier_Node> identifier;
-  std::optional<std::shared_ptr<AST_exp_Node>> exp;
   DeclarationType type;
 
 public:
-  // need to update this when we support more types
-  AST_Declaration_Node() { type = DeclarationType::INT; }
   std::string get_AST_name() { return "Declaration"; }
   std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
   void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
-  std::shared_ptr<AST_exp_Node> get_exp() {
-    if (exp.has_value()) {
-      return exp.value();
-    }
-    return nullptr;
-  }
+  DeclarationType get_type() { return type; }
+  void set_type(DeclarationType type) { this->type = type; }
+};
+
+enum class ElemType { INT };
+
+class AST_variable_declaration_Node : public AST_Declaration_Node {
+private:
+  std::shared_ptr<AST_exp_Node> exp;
+  ElemType type;
+
+public:
+  std::string get_AST_name() { return "VariableDeclaration"; }
   void set_exp(std::shared_ptr<AST_exp_Node> exp) {
     this->exp = std::move(exp);
   }
+  std::shared_ptr<AST_exp_Node> get_exp() { return exp; }
+  void set_type(ElemType type) { this->type = type; }
+  ElemType get_type() { return type; }
+};
+
+struct Param {
+  ElemType type;
+  std::shared_ptr<AST_identifier_Node> identifier;
+};
+
+class AST_function_declaration_Node : public AST_Declaration_Node {
+private:
+  std::vector<std::shared_ptr<Param>> params;
+  ElemType return_type;
+
+public:
+  std::string get_AST_name() { return "FunctionDeclaration"; }
+  std::vector<std::shared_ptr<Param>> get_params() { return params; }
+  void add_param(std::shared_ptr<Param> param) {
+    params.emplace_back(std::move(param));
+  }
+  void set_return_type(ElemType return_type) {
+    this->return_type = return_type;
+  }
+  ElemType get_return_type() { return return_type; }
 };
 
 class AST_For_Init_Node {
@@ -402,13 +482,16 @@ public:
 class AST_Function_Node {
 private:
   std::shared_ptr<AST_Block_Node> block;
-  std::shared_ptr<AST_identifier_Node> identifier;
+  std::shared_ptr<AST_function_declaration_Node> declaration;
 
 public:
   std::string get_AST_name() { return "Function"; }
-  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
-    this->identifier = std::move(identifier);
+  std::shared_ptr<AST_function_declaration_Node> get_declaration() {
+    return declaration;
+  }
+  void
+  set_declaration(std::shared_ptr<AST_function_declaration_Node> declaration) {
+    this->declaration = std::move(declaration);
   }
   std::shared_ptr<AST_Block_Node> get_block() { return block; }
   void set_block(std::shared_ptr<AST_Block_Node> block) {
