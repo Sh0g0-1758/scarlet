@@ -94,7 +94,10 @@ void parser::pretty_print_statement(
     pretty_print_statement(if_else_statement->get_stmt2());
     std::cout << "\t\t\t\t)" << std::endl;
   } break;
-  case ast::statementType::SWITCH:
+  case ast::statementType::SWITCH: {
+    auto switch_statement =
+        std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
+  } break;
   case ast::statementType::WHILE:
   case ast::statementType::DO_WHILE: {
     auto while_statement =

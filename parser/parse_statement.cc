@@ -143,7 +143,7 @@ void parser::parse_statement(
           "default case found outside of switch construct");
       success = false;
     } else {
-      switch_stack.top()->set_case_exp_label(nullptr, label);
+      switch_stack.top()->set_case_exp_label(exp, label);
     }
     EXPECT(token::TOKEN::COLON);
     // while (success && tokens[0].get_token() != token::TOKEN::CASE &&
