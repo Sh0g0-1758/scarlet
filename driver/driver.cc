@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
   }
   std::filesystem::path path(cmd.get_input_file());
   std::string file_name = path.stem().string();
+  std::string directory_path = path.parent_path().string();
 
   if (path.extension().string() != ".sc" and
       path.extension().string() != ".c" and
@@ -136,9 +137,9 @@ int main(int argc, char *argv[]) {
   }
 
   if (cmd.has_option("-c")) {
-    result =
-        system(std::format("gcc -c {}.s -o {}.o", file_name, output_file_name)
-                   .c_str());
+    result = system(std::format("gcc -c {}.s -o {}/{}.o", file_name,
+                                directory_path, output_file_name)
+                        .c_str());
     if (result != 0) {
       std::cerr << "[ERROR]: Failed to generate the object file" << std::endl;
       return 1;
