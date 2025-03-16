@@ -52,7 +52,11 @@ void Codegen::codegen() {
       } else if (instr->get_type() == scasm::instruction_type::CALL) {
         std::string funcName = instr->get_src()->get_identifier_stack();
 #ifdef __APPLE__
-        assembly << "\tcall " << "_" << funcName << "\n";
+        if (globalSymbolTable[funcName].isDefined) {
+          assembly << "\tcall " << "_" << funcName << "\n";
+        } else {
+          assembly << "\tcall " << funcName << "\n";
+        }
 #else
         if (globalSymbolTable[funcName].isDefined) {
           assembly << "\tcall " << funcName << "\n";
