@@ -30,13 +30,8 @@ void Codegen::codegen() {
 
   for (auto funcs : scasm.get_functions()) {
 #ifdef __APPLE__
-    if (funcs->get_name() == "main") {
-      assembly << "\t.globl " << "_main" << "\n";
-      assembly << "_main" << ":\n";
-    } else {
-      assembly << "\t.globl " << funcs->get_name() << "\n";
-      assembly << funcs->get_name() << ":\n";
-    }
+    assembly << "\t.globl " << "_" << funcs->get_name() << "\n";
+    assembly << "_" << funcs->get_name() << ":\n";
 #else
     assembly << "\t.globl " << funcs->get_name() << "\n";
     assembly << funcs->get_name() << ":\n";
@@ -52,11 +47,7 @@ void Codegen::codegen() {
       } else if (instr->get_type() == scasm::instruction_type::CALL) {
         std::string funcName = instr->get_src()->get_identifier_stack();
 #ifdef __APPLE__
-        if (globalSymbolTable[funcName].isDefined) {
-          assembly << "\tcall " << "_" << funcName << "\n";
-        } else {
-          assembly << "\tcall " << funcName << "\n";
-        }
+        assembly << "\tcall " << "_" << funcName << "\n";
 #else
         if (globalSymbolTable[funcName].isDefined) {
           assembly << "\tcall " << funcName << "\n";
