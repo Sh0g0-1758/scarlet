@@ -448,7 +448,8 @@ public:
   }
   void set_case_exp_label(std::shared_ptr<ast::AST_exp_Node> exp,
                           std::shared_ptr<ast::AST_identifier_Node> label) {
-    this->case_exp_label.push_back(std::make_pair(move(exp), std::move(label)));
+    this->case_exp_label.push_back(
+        std::make_pair(std::move(exp), std::move(label)));
   }
   std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
                         std::shared_ptr<ast::AST_identifier_Node>>>
