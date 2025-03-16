@@ -21,14 +21,14 @@ void parser::analyze_statement(
     break;
   case ast::statementType::CASE:
   case ast::statementType::DEFAULT_CASE: {
-    auto case_statement =
-        std::static_pointer_cast<ast::AST_case_statement_Node>(statement);
-    if (case_statement->get_exps()) {
-      analyze_case_exp(case_statement->get_exps(), symbol_table, indx);
-      analyze_exp(case_statement->get_exps(), symbol_table, indx);
-    }
-    for (auto stmt : case_statement->get_stmt())
-      analyze_statement(stmt->get_statement(), symbol_table, indx);
+    // auto case_statement =
+    //     std::static_pointer_cast<ast::AST_case_statement_Node>(statement);
+    // if (case_statement->get_exps()) {
+    //   analyze_case_exp(case_statement->get_exps(), symbol_table, indx);
+    //   analyze_exp(case_statement->get_exps(), symbol_table, indx);
+    // }
+    // for (auto stmt : case_statement->get_stmt())
+    //   analyze_statement(stmt->get_statement(), symbol_table, indx);
   } break;
   case ast::statementType::IF: {
     auto if_statement =

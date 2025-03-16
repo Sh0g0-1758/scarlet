@@ -146,26 +146,26 @@ void parser::parse_statement(
       switch_stack.top()->set_case_exp_label(nullptr, label);
     }
     EXPECT(token::TOKEN::COLON);
-    while (success && tokens[0].get_token() != token::TOKEN::CASE &&
-           tokens[0].get_token() != token::TOKEN::CLOSE_BRACE &&
-           tokens[0].get_token() != token::TOKEN::DEFAULT_CASE &&
-           tokens[0].get_token() != token::TOKEN::SEMICOLON) {
-      MAKE_SHARED(ast::AST_Statement_Node, stmt);
-      if (tokens[0].get_token() == token::TOKEN::INT) {
-        MAKE_SHARED(ast::AST_Declaration_Node, declaration);
-        parse_declaration(tokens, declaration);
-        MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-        block_item->set_type(ast::BlockItemType::DECLARATION);
-        block_item->set_declaration(std::move(declaration));
-        case_statement->set_stmt(std::move(block_item));
-      } else {
-        parse_statement(tokens, stmt);
-        MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-        block_item->set_type(ast::BlockItemType::STATEMENT);
-        block_item->set_statement(std::move(stmt));
-        case_statement->set_stmt(std::move(block_item));
-      }
-    }
+    // while (success && tokens[0].get_token() != token::TOKEN::CASE &&
+    //        tokens[0].get_token() != token::TOKEN::CLOSE_BRACE &&
+    //        tokens[0].get_token() != token::TOKEN::DEFAULT_CASE &&
+    //        tokens[0].get_token() != token::TOKEN::SEMICOLON) {
+    //   MAKE_SHARED(ast::AST_Statement_Node, stmt);
+    //   if (tokens[0].get_token() == token::TOKEN::INT) {
+    //     MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+    //     parse_declaration(tokens, declaration);
+    //     MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
+    //     block_item->set_type(ast::BlockItemType::DECLARATION);
+    //     block_item->set_declaration(std::move(declaration));
+    //     case_statement->set_stmt(std::move(block_item));
+    //   } else {
+    //     parse_statement(tokens, stmt);
+    //     MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
+    //     block_item->set_type(ast::BlockItemType::STATEMENT);
+    //     block_item->set_statement(std::move(stmt));
+    //     case_statement->set_stmt(std::move(block_item));
+    //   }
+    // }
     statement =
         std::static_pointer_cast<ast::AST_Statement_Node>(case_statement);
   } else if (tokens[0].get_token() == token::TOKEN::DEFAULT_CASE) {
@@ -183,26 +183,26 @@ void parser::parse_statement(
     }
     EXPECT(token::TOKEN::COLON);
 
-    while (success && tokens[0].get_token() != token::TOKEN::CASE &&
-           tokens[0].get_token() != token::TOKEN::CLOSE_BRACE &&
-           tokens[0].get_token() != token::TOKEN::SEMICOLON) {
-      MAKE_SHARED(ast::AST_Statement_Node, stmt);
+    // while (success && tokens[0].get_token() != token::TOKEN::CASE &&
+    //        tokens[0].get_token() != token::TOKEN::CLOSE_BRACE &&
+    //        tokens[0].get_token() != token::TOKEN::SEMICOLON) {
+    //   MAKE_SHARED(ast::AST_Statement_Node, stmt);
 
-      if (tokens[0].get_token() == token::TOKEN::INT) {
-        MAKE_SHARED(ast::AST_Declaration_Node, declaration);
-        parse_declaration(tokens, declaration);
-        MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-        block_item->set_type(ast::BlockItemType::DECLARATION);
-        block_item->set_declaration(std::move(declaration));
-        default_case_statement->set_stmt(std::move(block_item));
-      } else {
-        parse_statement(tokens, stmt);
-        MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-        block_item->set_type(ast::BlockItemType::STATEMENT);
-        block_item->set_statement(std::move(stmt));
-        default_case_statement->set_stmt(std::move(block_item));
-      }
-    }
+    //   if (tokens[0].get_token() == token::TOKEN::INT) {
+    //     MAKE_SHARED(ast::AST_Declaration_Node, declaration);
+    //     parse_declaration(tokens, declaration);
+    //     MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
+    //     block_item->set_type(ast::BlockItemType::DECLARATION);
+    //     block_item->set_declaration(std::move(declaration));
+    //     default_case_statement->set_stmt(std::move(block_item));
+    //   } else {
+    //     parse_statement(tokens, stmt);
+    //     MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
+    //     block_item->set_type(ast::BlockItemType::STATEMENT);
+    //     block_item->set_statement(std::move(stmt));
+    //     default_case_statement->set_stmt(std::move(block_item));
+    //   }
+    // }
     statement = std::static_pointer_cast<ast::AST_Statement_Node>(
         default_case_statement);
 
