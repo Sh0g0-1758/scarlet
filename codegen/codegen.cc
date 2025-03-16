@@ -67,6 +67,8 @@ void Codegen::codegen() {
         } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {
           assembly << scasm::to_string(instr->get_src()->get_reg(),
                                        scasm::register_size::QWORD);
+        } else if (instr->get_src()->get_type() == scasm::operand_type::IMM) {
+          assembly << "$" << instr->get_src()->get_imm();
         }
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::RET) {
