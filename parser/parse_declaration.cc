@@ -7,7 +7,22 @@ void parser::parse_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Declaration_Node> &declaration,
     bool atGlobalLevel) {
-  if (tokens[2].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+  bool isFuncDecl = false;
+  int iter = 0;
+  while (tokens[iter].get_token() != token::TOKEN::SEMICOLON and
+         iter < (int)tokens.size()) {
+    // If we find an assignment token, then this is a variable declaration
+    if (tokens[iter].get_token() == token::TOKEN::ASSIGNMENT) {
+      break;
+    }
+    // If we find an open parantheses, then this is a function declaration
+    if (tokens[iter].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      isFuncDecl = true;
+      break;
+    }
+    iter++;
+  }
+  if (isFuncDecl) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
     parse_function_declaration(tokens, decl, atGlobalLevel);
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
