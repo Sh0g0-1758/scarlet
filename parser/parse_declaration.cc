@@ -7,11 +7,6 @@ void parser::parse_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Declaration_Node> &declaration,
     bool atGlobalLevel) {
-  if (tokens.size() < 3) {
-    success = false;
-    error_messages.emplace_back("Invalid Declaration");
-    return;
-  }
   if (tokens[2].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
     parse_function_declaration(tokens, decl, atGlobalLevel);
