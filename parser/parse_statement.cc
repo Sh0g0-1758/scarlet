@@ -130,7 +130,8 @@ void parser::parse_statement(
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
-    if (exp->get_factor_node() == nullptr) {
+    if (exp->get_factor_node() == nullptr and
+        exp->get_binop_node() == nullptr) {
       error_messages.emplace_back("case expression is empty");
       success = false;
     }
