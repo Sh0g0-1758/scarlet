@@ -43,7 +43,17 @@ void parser::analyze_statement(
     analyze_statement(if_else_statement->get_stmt1(), symbol_table, indx);
     analyze_statement(if_else_statement->get_stmt2(), symbol_table, indx);
   } break;
-  case ast::statementType::SWITCH:
+  case ast::statementType::SWITCH: {
+    // iterate over case_exp_label and analyze the case expression
+    auto switch_statement =
+        std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
+    for (auto case_exp_label : switch_statement->get_case_exp_label()) {
+      analyze_case_exp(case_exp_label.first, symbol_table, indx);
+    }
+    // analyze the statement inside the switch
+    analyze_statement(switch_statement->get_stmt(), symbol_table, indx);
+
+  } break;
   case ast::statementType::WHILE:
   case ast::statementType::DO_WHILE: {
     auto while_statement =
