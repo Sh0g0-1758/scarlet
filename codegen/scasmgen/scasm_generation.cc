@@ -40,6 +40,7 @@ void Codegen::gen_scasm() {
       MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
       top_level_elem =
           std::static_pointer_cast<scasm::scasm_top_level>(scasm_var);
+      top_level_elem->set_type(scasm::scasm_top_level_type::STATIC_VARIABLE);
       scasm_program.add_elem(std::move(top_level_elem));
       continue;
     }

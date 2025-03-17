@@ -29,10 +29,10 @@ void Codegen::fix_instructions() {
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
       if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
-              ((*it)->get_src()->get_type() == scasm::operand_type::STACK or
-               (*it)->get_src()->get_type() == scasm::operand_type::DATA) &&
-              ((*it)->get_dst()->get_type() == scasm::operand_type::STACK) or
-          (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
+          ((*it)->get_src()->get_type() == scasm::operand_type::STACK or
+           (*it)->get_src()->get_type() == scasm::operand_type::DATA) &&
+          ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+           (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_src((*it)->get_src());
