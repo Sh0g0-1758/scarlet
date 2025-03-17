@@ -47,7 +47,7 @@ void parser::pretty_print_function_declaration(
   std::cout << "\t\tparams=[" << std::endl;
   for (auto param : decl->get_params()) {
     std::cout << "\t\t\tParam=(" << std::endl;
-    std::cout << "\t\t\t\type=" << to_string(param->type) << "," << std::endl;
+    std::cout << "\t\t\t\ttype=" << to_string(param->type) << "," << std::endl;
     std::cout << "\t\t\t\tidentifier=\"" << param->identifier->get_value()
               << "\"" << std::endl;
     std::cout << "\t\t\t)," << std::endl;

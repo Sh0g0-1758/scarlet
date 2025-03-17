@@ -40,7 +40,8 @@ void parser::semantic_analysis() {
       // Check if the symbol has been declared before
       if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
         // Ensure that the previous declaration has the same type
-        if (globalSymbolTable[var_name].typeDef.size() > 1 or
+        if (globalSymbolTable[var_name].type !=
+                symbolTable::symbolType::VARIABLE or
             globalSymbolTable[var_name].typeDef[0] != vars->get_type()) {
           success = false;
           error_messages.emplace_back(
@@ -97,8 +98,7 @@ void parser::semantic_analysis() {
                               ->get_value());
           }
         }
-
-      } else {
+      } else { // symbol has not been declared before
         // Give appropriate linkage to the variable
         symbol_table[{var_name, 0}] = {var_name,
                                        symbolTable::linkage::EXTERNAL,

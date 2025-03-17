@@ -44,7 +44,8 @@ void parser::analyze_declaration(
         if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
           // If the variable has already been declared, then it should have the
           // same type
-          if (globalSymbolTable[var_name].typeDef.size() > 1 or
+          if (globalSymbolTable[var_name].type !=
+                  symbolTable::symbolType::VARIABLE or
               globalSymbolTable[var_name].typeDef[0] != varDecl->get_type()) {
             success = false;
             error_messages.emplace_back(
@@ -66,17 +67,19 @@ void parser::analyze_declaration(
                                           symbolTable::linkage::NONE,
                                           symbolTable::symbolType::VARIABLE,
                                           {varDecl->get_type()}};
-        if (!EXPISCONSTANT(varDecl->get_exp())) {
-          success = false;
-          error_messages.emplace_back(
-              "Global variable " + var_name +
-              " is not initialized with a constant integer");
-        } else {
-          symbol_table[{var_name, indx}].value =
-              std::stoi(varDecl->get_exp()
-                            ->get_factor_node()
-                            ->get_int_node()
-                            ->get_value());
+        if (varDecl->get_exp() != nullptr) {
+          if (!EXPISCONSTANT(varDecl->get_exp())) {
+            success = false;
+            error_messages.emplace_back(
+                "Global variable " + var_name +
+                " is not initialized with a constant integer");
+          } else {
+            symbol_table[{var_name, indx}].value =
+                std::stoi(varDecl->get_exp()
+                              ->get_factor_node()
+                              ->get_int_node()
+                              ->get_value());
+          }
         }
       } else {
         std::string temp_name = get_temp_name(var_name);
@@ -140,7 +143,9 @@ void parser::analyze_declaration(
     }
 
     if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
-      if (globalSymbolTable[var_name].typeDef != funcType) {
+      if (globalSymbolTable[var_name].typeDef != funcType or
+          globalSymbolTable[var_name].type ==
+              symbolTable::symbolType::VARIABLE) {
         success = false;
         error_messages.emplace_back(var_name +
                                     " redeclared with different signature");
