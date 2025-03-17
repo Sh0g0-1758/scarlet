@@ -45,11 +45,22 @@ void parser::analyze_statement(
   } break;
   case ast::statementType::SWITCH: {
     // iterate over case_exp_label and analyze the case expression
+    bool default_case = false;
     std::set<int> case_val;
+    analyze_exp(statement->get_exps(), symbol_table, indx);
     auto switch_statement =
         std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
-
     for (auto case_exp_label : switch_statement->get_case_exp_label()) {
+      if (case_exp_label.first == nullptr) {
+        // default case
+        if (default_case) {
+          success = false;
+          error_messages.emplace_back(
+              "Duplicate default case in switch statement");
+        }
+        default_case = true;
+        continue;
+      }
       int val = analyze_case_exp(case_exp_label.first, symbol_table, indx);
       if (!success == false) {
         if (case_val.find(val) != case_val.end()) {

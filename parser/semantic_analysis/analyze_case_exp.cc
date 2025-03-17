@@ -8,7 +8,8 @@ int parser::analyze_case_exp(
     std::map<std::pair<std::string, int>, std::string> &symbol_table,
     int indx) {
   if (exp == nullptr)
-    return 0;
+    // if the original expression is null, then return -1
+    return -1;
   int left = -1;
   int right = -1;
   int middle = -1;
