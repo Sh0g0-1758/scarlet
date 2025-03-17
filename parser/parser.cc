@@ -107,6 +107,8 @@ void parser::semantic_analysis() {
                                        symbolTable::defType::TENTATIVE};
         if (vars->get_specifier() == ast::SpecifierType::STATIC) {
           symbol_table[{var_name, 0}].link = symbolTable::linkage::INTERNAL;
+        } else if (vars->get_specifier() == ast::SpecifierType::EXTERN) {
+          symbol_table[{var_name, 0}].def = symbolTable::defType::FALSE;
         }
 
         // Make sure that global variables are initialized only with

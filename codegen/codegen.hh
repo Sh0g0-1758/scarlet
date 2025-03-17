@@ -70,16 +70,23 @@ private:
       std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
   gen_scar_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
-                     std::shared_ptr<scar::scar_Function_Node> scar_function);
+                     std::shared_ptr<scar::scar_Function_Node> scar_function,
+                     scar::scar_Program_Node &scar_program);
   void
   gen_scar_declaration(std::shared_ptr<ast::AST_Declaration_Node> declaration,
-                       std::shared_ptr<scar::scar_Function_Node> scar_function);
+                       std::shared_ptr<scar::scar_Function_Node> scar_function,
+                       scar::scar_Program_Node &scar_program);
   void gen_scar_block(std::shared_ptr<ast::AST_Block_Node> block,
-                      std::shared_ptr<scar::scar_Function_Node> scar_function);
+                      std::shared_ptr<scar::scar_Function_Node> scar_function,
+                      scar::scar_Program_Node &scar_program);
   int fr_label_counter = 1;
   int res_label_counter = 1;
   std::stack<std::string> fr_label_stack;
   std::stack<std::string> res_label_stack;
+  void
+  pretty_print_function(std::shared_ptr<scar::scar_Function_Node> function);
+  void pretty_print_static_variable(
+      std::shared_ptr<scar::scar_StaticVariable_Node> static_variable);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

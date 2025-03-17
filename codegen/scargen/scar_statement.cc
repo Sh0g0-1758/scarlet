@@ -5,7 +5,8 @@ namespace codegen {
 
 void Codegen::gen_scar_statement(
     std::shared_ptr<ast::AST_Statement_Node> statement,
-    std::shared_ptr<scar::scar_Function_Node> scar_function) {
+    std::shared_ptr<scar::scar_Function_Node> scar_function,
+    scar::scar_Program_Node &scar_program) {
   switch (statement->get_type()) {
   case ast::statementType::NULLSTMT:
     break;
@@ -44,7 +45,7 @@ void Codegen::gen_scar_statement(
     scar_function->add_instruction(std::move(scar_instruction));
 
     // generate scar for the statement
-    gen_scar_statement(if_statement->get_stmt1(), scar_function);
+    gen_scar_statement(if_statement->get_stmt1(), scar_function, scar_program);
 
     // generate the end label
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
@@ -82,7 +83,8 @@ void Codegen::gen_scar_statement(
     scar_function->add_instruction(std::move(scar_instruction));
 
     // generate scar for the if statement
-    gen_scar_statement(if_else_statement->get_stmt1(), scar_function);
+    gen_scar_statement(if_else_statement->get_stmt1(), scar_function,
+                       scar_program);
 
     // jump to the end
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
@@ -105,7 +107,8 @@ void Codegen::gen_scar_statement(
     scar_function->add_instruction(std::move(scar_instruction3));
 
     // generate scar for the else statement
-    gen_scar_statement(if_else_statement->get_stmt2(), scar_function);
+    gen_scar_statement(if_else_statement->get_stmt2(), scar_function,
+                       scar_program);
 
     // generate the end label
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction4);
@@ -143,7 +146,7 @@ void Codegen::gen_scar_statement(
   case ast::statementType::BLOCK: {
     auto block_statement =
         std::static_pointer_cast<ast::AST_block_statement_node>(statement);
-    gen_scar_block(block_statement->get_block(), scar_function);
+    gen_scar_block(block_statement->get_block(), scar_function, scar_program);
   } break;
 
   case ast::statementType::WHILE: {
@@ -179,7 +182,8 @@ void Codegen::gen_scar_statement(
     scar_instruction2->set_dst(std::move(scar_val_dst2));
     scar_function->add_instruction(scar_instruction2);
 
-    gen_scar_statement(while_statement->get_stmt(), scar_function);
+    gen_scar_statement(while_statement->get_stmt(), scar_function,
+                       scar_program);
 
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
     scar_instruction3->set_type(scar::instruction_type::JUMP);
@@ -218,7 +222,8 @@ void Codegen::gen_scar_statement(
     scar_instruction->set_src1(std::move(scar_val_src));
     scar_function->add_instruction(scar_instruction);
 
-    gen_scar_statement(do_while_statement->get_stmt(), scar_function);
+    gen_scar_statement(do_while_statement->get_stmt(), scar_function,
+                       scar_program);
 
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction1);
     scar_instruction1->set_type(scar::instruction_type::LABEL);
@@ -270,7 +275,7 @@ void Codegen::gen_scar_statement(
     if (for_statement->get_for_init() != nullptr) {
       if (for_statement->get_for_init()->get_declaration() != nullptr) {
         gen_scar_declaration(for_statement->get_for_init()->get_declaration(),
-                             scar_function);
+                             scar_function, scar_program);
       } else {
         gen_scar_exp(for_statement->get_for_init()->get_exp(), scar_function);
       }
@@ -297,7 +302,7 @@ void Codegen::gen_scar_statement(
     scar_instruction2->set_dst(std::move(scar_val_dst2));
     scar_function->add_instruction(scar_instruction2);
 
-    gen_scar_statement(for_statement->get_stmt(), scar_function);
+    gen_scar_statement(for_statement->get_stmt(), scar_function, scar_program);
 
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
     scar_instruction3->set_type(scar::instruction_type::LABEL);

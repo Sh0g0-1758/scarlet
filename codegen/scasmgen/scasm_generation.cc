@@ -30,7 +30,10 @@ namespace codegen {
 
 void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
-  for (auto func : scar.get_functions()) {
+  for (auto elem : scar.get_elems()) {
+    if (elem->get_type() == scar::topLevelType::STATICVARIABLE)
+      continue;
+    auto func = std::static_pointer_cast<scar::scar_Function_Node>(elem);
     MAKE_SHARED(scasm::scasm_function, scasm_func);
     scasm_func->set_name(func->get_identifier()->get_value());
 
