@@ -9,12 +9,76 @@ void Codegen::gen_scar_statement(
   switch (statement->get_type()) {
   case ast::statementType::NULLSTMT:
     break;
-  case ast::statementType::SWITCH:
-    break;
-  case ast::statementType::CASE:
-    break;
-  case ast::statementType::DEFAULT_CASE:
-    break;
+  case ast::statementType::SWITCH: {
+    auto switch_statement =
+        std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
+    MAKE_SHARED(scar::scar_Instruction_Node, default_jump);
+    gen_scar_exp(switch_statement->get_exps(), scar_function);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+    SETVARCONSTANTREG(scar_val_src);
+    for (auto case_exp_label : switch_statement->get_case_exp_label()) {
+      // copy the switch exp to be useable later
+      auto switch_exp_pointer = scar_val_src;
+      if (case_exp_label.first != nullptr) {
+        MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+        scar_instruction->set_type(scar::instruction_type::BINARY);
+        scar_instruction->set_src1(switch_exp_pointer);
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+        gen_scar_exp(case_exp_label.first, scar_function);
+        SETVARCONSTANTREG(scar_val_src2);
+        scar_instruction->set_src2(scar_val_src2);
+        scar_instruction->set_binop(binop::EQUAL);
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+        scar_val_dst->set_type(scar::val_type::VAR);
+        scar_val_dst->set_reg_name(get_reg_name());
+        scar_instruction->set_dst(scar_val_dst);
+        scar_function->add_instruction(scar_instruction);
+
+        MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
+        scar_instruction2->set_type(scar::instruction_type::JUMP_IF_NOT_ZERO);
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
+        scar_val_src3->set_type(scar::val_type::VAR);
+        scar_val_src3->set_reg_name(get_prev_reg_name());
+        scar_instruction2->set_src1(scar_val_src3);
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+        scar_val_dst2->set_type(scar::val_type::UNKNOWN);
+        scar_val_dst2->set_value(case_exp_label.second->get_value());
+        scar_instruction2->set_dst(scar_val_dst2);
+        scar_function->add_instruction(scar_instruction2);
+      } else {
+        default_jump->set_type(scar::instruction_type::JUMP);
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+        scar_val_src2->set_type(scar::val_type::UNKNOWN);
+        scar_val_src2->set_value(case_exp_label.second->get_value());
+        default_jump->set_src1(scar_val_src2);
+      }
+    }
+    if (switch_statement->get_has_default_case()) {
+      scar_function->add_instruction(default_jump);
+    }
+    // jump to the end
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
+    scar_instruction3->set_type(scar::instruction_type::JUMP);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
+    scar_val_src3->set_type(scar::val_type::UNKNOWN);
+    scar_val_src3->set_value(
+        switch_statement->get_labels().second->get_value());
+    scar_instruction3->set_src1(scar_val_src3);
+    scar_function->add_instruction(scar_instruction3);
+
+    gen_scar_statement(switch_statement->get_stmt(), scar_function);
+
+    // generate the end label
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction4);
+    scar_instruction4->set_type(scar::instruction_type::LABEL);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
+    scar_val_src4->set_type(scar::val_type::UNKNOWN);
+    scar_val_src4->set_value(
+        switch_statement->get_labels().second->get_value());
+    scar_instruction4->set_src1(scar_val_src4);
+    scar_function->add_instruction(scar_instruction4);
+
+  } break;
   case ast::statementType::RETURN: {
     gen_scar_exp(statement->get_exps(), scar_function);
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
@@ -133,7 +197,8 @@ void Codegen::gen_scar_statement(
     scar_instruction->set_src1(std::move(scar_val_src));
     scar_function->add_instruction(scar_instruction);
   } break;
-
+  case ast::statementType::CASE:
+  case ast::statementType::DEFAULT_CASE:
   case ast::statementType::LABEL: {
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::LABEL);
