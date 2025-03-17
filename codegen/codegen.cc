@@ -49,7 +49,7 @@ void Codegen::codegen() {
 #ifdef __APPLE__
         assembly << "\tcall " << "_" << funcName << "\n";
 #else
-        if (globalSymbolTable[funcName].isDefined) {
+        if (globalSymbolTable[funcName].def == symbolTable::defType::TRUE) {
           assembly << "\tcall " << funcName << "\n";
         } else {
           assembly << "\tcall " << funcName << "@PLT" << "\n";
