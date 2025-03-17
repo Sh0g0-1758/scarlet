@@ -3,10 +3,10 @@
 namespace scarlet {
 namespace parser {
 
-int parser::analyze_case_exp(
-    std::shared_ptr<ast::AST_exp_Node> exp,
-    std::map<std::pair<std::string, int>, std::string> &symbol_table,
-    int indx) {
+int parser::analyze_case_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                             std::map<std::pair<std::string, int>,
+                                      symbolTable::symbolInfo> &symbol_table,
+                             int indx) {
   if (exp == nullptr)
     // if the original expression is null, then return -1
     return -1;
@@ -60,8 +60,12 @@ int parser::analyze_case_exp(
     right = analyze_case_exp(exp->get_right(), symbol_table, indx);
   // and a recursive check for the middle expression -> special case(ternary
   // operator)
-  if (exp->get_middle() != nullptr)
-    middle = analyze_case_exp(exp->get_middle(), symbol_table, indx);
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
+    auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
+    middle = analyze_case_exp(ternary->get_middle(), symbol_table, indx);
+  }
+
   if (exp->get_binop_node() == nullptr) {
     return left;
   }

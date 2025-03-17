@@ -100,7 +100,10 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
-
+  int analyze_case_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                       std::map<std::pair<std::string, int>,
+                                symbolTable::symbolInfo> &symbol_table,
+                       int indx);
   std::string get_temp_name(std::string &name) {
     std::string tmp = name + "." + std::to_string(symbol_counter);
     symbol_counter++;

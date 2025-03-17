@@ -68,7 +68,7 @@ void parser::analyze_statement(
         case_exp_label.first->set_binop_node(nullptr);
         case_exp_label.first->set_left(nullptr);
         case_exp_label.first->set_right(nullptr);
-        case_exp_label.first->set_middle(nullptr);
+        // case_exp_label.first->set_middle(nullptr);
       }
     }
     // analyze the statement inside the switch
