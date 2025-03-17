@@ -171,12 +171,58 @@ private:
     loop_end_labels.pop();
   }
 
-  std::string type_to_string(ast::ElemType type) {
+  std::string to_string(ast::statementType type) {
+    switch (type) {
+    case ast::statementType::NULLSTMT:
+      return "NullStmt";
+    case ast::statementType::RETURN:
+      return "Return";
+    case ast::statementType::EXP:
+      return "Exp";
+    case ast::statementType::IF:
+      return "If";
+    case ast::statementType::IFELSE:
+      return "IfElse";
+    case ast::statementType::GOTO:
+      return "Goto";
+    case ast::statementType::LABEL:
+      return "Label";
+    case ast::statementType::BLOCK:
+      return "Block";
+    case ast::statementType::CONTINUE:
+      return "Continue";
+    case ast::statementType::BREAK:
+      return "Break";
+    case ast::statementType::WHILE:
+      return "While";
+    case ast::statementType::DO_WHILE:
+      return "DoWhile";
+    case ast::statementType::FOR:
+      return "For";
+    case ast::statementType::UNKNOWN:
+      UNREACHABLE()
+    }
+    return "";
+  }
+
+  std::string to_string(ast::ElemType type) {
     switch (type) {
     case ast::ElemType::INT:
       return "int";
     }
     UNREACHABLE()
+  }
+
+  std::string to_string(ast::SpecifierType type) {
+    switch (type) {
+    case ast::SpecifierType::STATIC:
+      return "static";
+    case ast::SpecifierType::EXTERN:
+      return "extern";
+    case ast::SpecifierType::NONE:
+      return "none";
+    }
+    UNREACHABLE();
   }
 
   bool is_decl(token::TOKEN token) {

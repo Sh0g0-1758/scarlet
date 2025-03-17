@@ -51,11 +51,13 @@ void parser::parse_declaration(
   if (isFuncDecl) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
     parse_function_declaration(tokens, decl, atGlobalLevel);
+    decl->set_specifier(declaration->get_specifier());
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     declaration->set_type(ast::DeclarationType::FUNCTION);
   } else {
     MAKE_SHARED(ast::AST_variable_declaration_Node, decl);
     parse_variable_declaration(tokens, decl);
+    decl->set_specifier(declaration->get_specifier());
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     declaration->set_type(ast::DeclarationType::VARIABLE);
   }
