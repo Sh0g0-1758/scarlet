@@ -343,7 +343,7 @@ class AST_Declaration_Node {
 private:
   std::shared_ptr<AST_identifier_Node> identifier;
   DeclarationType type;
-  std::pair<ElemType, SpecifierType> specifier;
+  SpecifierType specifier;
 
 public:
   std::string get_AST_name() { return "Declaration"; }
@@ -354,10 +354,8 @@ public:
   DeclarationType get_type() { return type; }
   void set_type(DeclarationType type) { this->type = type; }
 
-  std::pair<ElemType, SpecifierType> get_specifier() { return specifier; }
-  void set_specifier(ElemType type, SpecifierType specifier) {
-    this->specifier = std::make_pair(type, specifier);
-  }
+  SpecifierType get_specifier() { return specifier; }
+  void set_specifier(SpecifierType specifier) { this->specifier = specifier; }
 };
 
 class AST_variable_declaration_Node : public AST_Declaration_Node {
