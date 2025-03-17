@@ -439,6 +439,7 @@ private:
   std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
                         std::shared_ptr<ast::AST_identifier_Node>>>
       case_exp_label;
+  bool has_default_case = false;
 
 public:
   std::string get_AST_name() { return "Switch Statement"; }
@@ -456,6 +457,10 @@ public:
   get_case_exp_label() {
     return case_exp_label;
   }
+  void set_has_default_case(bool has_default_case) {
+    this->has_default_case = has_default_case;
+  }
+  bool get_has_default_case() { return has_default_case; }
 };
 
 class AST_case_statement_Node : public AST_Statement_Node {

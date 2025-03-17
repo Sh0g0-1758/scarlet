@@ -118,7 +118,6 @@ void parser::parse_statement(
     MAKE_SHARED(ast::AST_Statement_Node, stmt);
     parse_statement(tokens, stmt);
     switch_statement->set_stmt(std::move(stmt));
-
     remove_switch_loop_labels();
     statement =
         std::static_pointer_cast<ast::AST_Statement_Node>(switch_statement);
@@ -181,7 +180,14 @@ void parser::parse_statement(
           "default case found outside of switch construct");
       success = false;
     } else {
-      switch_stack.top()->set_case_exp_label(nullptr, label);
+      if (switch_stack.top()->get_has_default_case()) {
+        success = false;
+        error_messages.emplace_back(
+            "Multiple default cases found in switch construct");
+      } else {
+        switch_stack.top()->set_has_default_case(true);
+        switch_stack.top()->set_case_exp_label(nullptr, label);
+      }
     }
     EXPECT(token::TOKEN::COLON);
 
