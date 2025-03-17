@@ -105,5 +105,5 @@ add_custom_target(test-scarlet
     COMMAND echo "Running bitwise, compound, increment/decrement and goto test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 7 --extra-credit
     COMMAND echo "Running test asm"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 9
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10
 )

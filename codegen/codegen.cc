@@ -8,6 +8,8 @@ namespace codegen {
     assembly << "$" << instr->get_src()->get_imm();                            \
   } else if (instr->get_src()->get_type() == scasm::operand_type::STACK) {     \
     assembly << instr->get_src()->get_identifier_stack();                      \
+  } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {      \
+    assembly << instr->get_src()->get_identifier_stack() << "(%rip)";          \
   } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {       \
     assembly << scasm::to_string(instr->get_src()->get_reg(),                  \
                                  scasm::register_size::DWORD);                 \
@@ -15,6 +17,8 @@ namespace codegen {
   assembly << ", ";                                                            \
   if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {            \
     assembly << instr->get_dst()->get_identifier_stack();                      \
+  } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {      \
+    assembly << instr->get_dst()->get_identifier_stack() << "(%rip)";          \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {       \
     assembly << scasm::to_string(instr->get_dst()->get_reg(),                  \
                                  scasm::register_size::DWORD);                 \
@@ -30,14 +34,48 @@ void Codegen::codegen() {
 
   for (auto elem : scasm.get_elems()) {
     if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
+      auto vars = std::static_pointer_cast<scasm::scasm_static_variable>(elem);
+      if (vars->is_global()) {
+        assembly << "\t.globl ";
+#ifdef __APPLE__
+        assembly << "_" << vars->get_name() << "\n";
+#else
+        assembly << vars->get_name() << "\n";
+#endif
+      }
+      if (vars->get_init() == 0) {
+        assembly << "\t.bss\n";
+      } else {
+        assembly << "\t.data\n";
+      }
+#ifdef __APPLE__
+      assembly << ".balign 4\n";
+      assembly << "_" << vars->get_name() << ":\n";
+#else
+      assembly << ".align 4\n";
+      assembly << vars->get_name() << ":\n";
+#endif
+      if (vars->get_init() != 0) {
+        assembly << "\t.long " << vars->get_init() << "\n";
+      } else {
+        assembly << "\t.zero 4\n";
+      }
       continue;
     }
     auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
+    if (funcs->is_global()) {
+      assembly << "\t.globl ";
 #ifdef __APPLE__
-    assembly << "\t.globl " << "_" << funcs->get_name() << "\n";
+      assembly << "_" << funcs->get_name() << "\n";
+#else
+      assembly << funcs->get_name() << "\n";
+#endif
+    }
+
+    assembly << "\t.text\n";
+#ifdef __APPLE__
     assembly << "_" << funcs->get_name() << ":\n";
 #else
-    assembly << "\t.globl " << funcs->get_name() << "\n";
     assembly << funcs->get_name() << ":\n";
 #endif
     assembly << "\tpushq %rbp\n";
@@ -68,6 +106,8 @@ void Codegen::codegen() {
                                        scasm::register_size::QWORD);
         } else if (instr->get_src()->get_type() == scasm::operand_type::IMM) {
           assembly << "$" << instr->get_src()->get_imm();
+        } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {
+          assembly << instr->get_src()->get_identifier_stack() << "(%rip)";
         }
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::RET) {
@@ -86,6 +126,8 @@ void Codegen::codegen() {
         } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
           assembly << scasm::to_string(instr->get_src()->get_reg(),
                                        scasm::register_size::DWORD);
+        } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {
+          assembly << instr->get_dst()->get_identifier_stack() << "(%rip)";
         }
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::CDQ) {
@@ -97,6 +139,8 @@ void Codegen::codegen() {
         } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {
           assembly << scasm::to_string(instr->get_src()->get_reg(),
                                        scasm::register_size::DWORD);
+        } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {
+          assembly << instr->get_src()->get_identifier_stack() << "(%rip)";
         }
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::BINARY) {
@@ -138,6 +182,8 @@ void Codegen::codegen() {
         } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
           assembly << scasm::to_string(instr->get_dst()->get_reg(),
                                        scasm::register_size::BYTE);
+        } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {
+          assembly << instr->get_dst()->get_identifier_stack() << "(%rip)";
         }
         assembly << "\n";
       }
