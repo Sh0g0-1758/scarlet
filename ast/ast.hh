@@ -14,17 +14,17 @@
 
 Grammar:
 
-<program> ::= { <function-declaration> }
+<program> ::= { <declaration> }
 
 <declaration> ::= <variable-declaration> | <function-declaration>
 
-<variable-declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
+<variable-declaration> ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
 
-<function-declaration> ::= "int" <identifier> "(" <param-list> ")" ( <block> | ";" )
+<function-declaration> ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
 
 <param-list> ::= "void" | "int" <identifier> { "," "int" <identifier> }
 
-<function> ::= "int" <identifier> "(" "void" ")" <block>
+<specifier> ::= "int" | "static" | "extern"
 
 <block_item> ::= <statement> | <declaration>
 
@@ -44,13 +44,14 @@ Grammar:
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
-<identifier> ::= ? An identifier
+<identifier> ::= ? An identifier token ?
 
-token ? <int> ::= ? A constant token ?
+<int> ::= ? A constant token ?
 
 NOTE: in EBNF notation,
 1. {} means 0 or more instances of the enclosed expression
-2. [] means 0 or 1 instances of the enclosed expression ie. it is optional
+2. {}+ means 1 or more instances of the enclosed expression
+3. [] means 0 or 1 instances of the enclosed expression ie. it is optional
 
 */
 // clang-format on
@@ -335,11 +336,14 @@ public:
 };
 
 enum class DeclarationType { VARIABLE, FUNCTION };
+enum class SpecifierType { NONE, STATIC, EXTERN };
+enum class ElemType { INT };
 
 class AST_Declaration_Node {
 private:
   std::shared_ptr<AST_identifier_Node> identifier;
   DeclarationType type;
+  std::pair<ElemType, SpecifierType> specifier;
 
 public:
   std::string get_AST_name() { return "Declaration"; }
@@ -349,9 +353,12 @@ public:
   }
   DeclarationType get_type() { return type; }
   void set_type(DeclarationType type) { this->type = type; }
-};
 
-enum class ElemType { INT };
+  std::pair<ElemType, SpecifierType> get_specifier() { return specifier; }
+  void set_specifier(ElemType type, SpecifierType specifier) {
+    this->specifier = std::make_pair(type, specifier);
+  }
+};
 
 class AST_variable_declaration_Node : public AST_Declaration_Node {
 private:
@@ -373,16 +380,23 @@ struct Param {
   std::shared_ptr<AST_identifier_Node> identifier;
 };
 
+class AST_Block_Node;
+
 class AST_function_declaration_Node : public AST_Declaration_Node {
 private:
   std::vector<std::shared_ptr<Param>> params;
   ElemType return_type;
+  std::shared_ptr<AST_Block_Node> block;
 
 public:
   std::string get_AST_name() { return "FunctionDeclaration"; }
   std::vector<std::shared_ptr<Param>> get_params() { return params; }
   void add_param(std::shared_ptr<Param> param) {
     params.emplace_back(std::move(param));
+  }
+  std::shared_ptr<AST_Block_Node> get_block() { return block; }
+  void set_block(std::shared_ptr<AST_Block_Node> block) {
+    this->block = std::move(block);
   }
   void set_return_type(ElemType return_type) {
     this->return_type = return_type;
@@ -479,38 +493,18 @@ public:
   }
 };
 
-class AST_Function_Node {
-private:
-  std::shared_ptr<AST_Block_Node> block;
-  std::shared_ptr<AST_function_declaration_Node> declaration;
-
-public:
-  std::string get_AST_name() { return "Function"; }
-  std::shared_ptr<AST_function_declaration_Node> get_declaration() {
-    return declaration;
-  }
-  void
-  set_declaration(std::shared_ptr<AST_function_declaration_Node> declaration) {
-    this->declaration = std::move(declaration);
-  }
-  std::shared_ptr<AST_Block_Node> get_block() { return block; }
-  void set_block(std::shared_ptr<AST_Block_Node> block) {
-    this->block = std::move(block);
-  }
-};
-
 class AST_Program_Node {
 private:
-  std::vector<std::shared_ptr<AST_Function_Node>> functions;
+  std::vector<std::shared_ptr<AST_Declaration_Node>> declarations;
 
 public:
-  AST_Program_Node() { functions.reserve(2); }
+  AST_Program_Node() { declarations.reserve(2); }
   std::string get_AST_name() { return "Program"; }
-  std::vector<std::shared_ptr<AST_Function_Node>> get_functions() {
-    return functions;
+  std::vector<std::shared_ptr<AST_Declaration_Node>> get_declarations() {
+    return declarations;
   }
-  void add_function(std::shared_ptr<AST_Function_Node> function) {
-    functions.emplace_back(std::move(function));
+  void add_declaration(std::shared_ptr<AST_Declaration_Node> declaration) {
+    declarations.emplace_back(std::move(declaration));
   }
 };
 } // namespace ast

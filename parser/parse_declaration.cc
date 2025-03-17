@@ -5,7 +5,8 @@ namespace parser {
 
 void parser::parse_declaration(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_Declaration_Node> &declaration) {
+    std::shared_ptr<ast::AST_Declaration_Node> &declaration,
+    bool atGlobalLevel) {
   if (tokens.size() < 3) {
     success = false;
     error_messages.emplace_back("Invalid Declaration");
@@ -13,8 +14,7 @@ void parser::parse_declaration(
   }
   if (tokens[2].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
-    parse_function_declaration(tokens, decl);
-    EXPECT(token::TOKEN::SEMICOLON);
+    parse_function_declaration(tokens, decl, atGlobalLevel);
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     declaration->set_type(ast::DeclarationType::FUNCTION);
   } else {
@@ -45,7 +45,8 @@ void parser::parse_variable_declaration(
 
 void parser::parse_function_declaration(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_function_declaration_Node> decl) {
+    std::shared_ptr<ast::AST_function_declaration_Node> decl,
+    bool atGlobalLevel) {
   EXPECT(token::TOKEN::INT);
   decl->set_return_type(ast::ElemType::INT);
   EXPECT_IDENTIFIER();
@@ -53,6 +54,16 @@ void parser::parse_function_declaration(
   EXPECT(token::TOKEN::OPEN_PARANTHESES);
   parse_param_list(tokens, decl);
   EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+  if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
+    tokens.erase(tokens.begin());
+    return;
+  } else if (atGlobalLevel) {
+    MAKE_SHARED(ast::AST_Block_Node, block);
+    parse_block(tokens, block);
+    decl->set_block(std::move(block));
+  } else {
+    EXPECT(token::TOKEN::SEMICOLON);
+  }
 }
 
 void parser::parse_param_list(

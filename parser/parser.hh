@@ -30,14 +30,13 @@ private:
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
-  void parse_function(std::vector<token::Token> &tokens,
-                      std::shared_ptr<ast::AST_Function_Node>);
   void
   parse_param_list(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_function_declaration_Node> decl);
   void parse_function_declaration(
       std::vector<token::Token> &tokens,
-      std::shared_ptr<ast::AST_function_declaration_Node> decl);
+      std::shared_ptr<ast::AST_function_declaration_Node> decl,
+      bool atGlobalLevel);
   void parse_variable_declaration(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_variable_declaration_Node> decl);
@@ -47,7 +46,8 @@ private:
                         std::shared_ptr<ast::AST_Block_Node> &block);
   void
   parse_declaration(std::vector<token::Token> &tokens,
-                    std::shared_ptr<ast::AST_Declaration_Node> &declaration);
+                    std::shared_ptr<ast::AST_Declaration_Node> &declaration,
+                    bool atGlobalLevel = false);
   void parse_statement(std::vector<token::Token> &tokens,
                        std::shared_ptr<ast::AST_Statement_Node> &stmt);
   void parse_for_init(std::vector<token::Token> &tokens,

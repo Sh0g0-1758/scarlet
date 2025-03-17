@@ -15,13 +15,19 @@
 // clang-format off
 
 /*
+
 Grammar:
 
 program = Program(function_definition*)
+
 function_definition = Function(identifier, instruction* body)
+
 instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst)
+
 val = Constant(int) | Var(identifier)
+
 unary_operator = Complement | Negate | Not
+
 binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | leftShift | rightShift | Equal | notEqual | lessThan | LessOrEqual | greaterThan | greaterThanOrEqual
 
 */
