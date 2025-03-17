@@ -205,6 +205,7 @@ void parser::parse_for_init(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_For_Statement_Node> &forstmt) {
   MAKE_SHARED(ast::AST_For_Init_Node, for_init);
+  // for init cannot have storage specifiers
   if (tokens[0].get_token() == token::TOKEN::INT) {
     MAKE_SHARED(ast::AST_variable_declaration_Node, varDecl);
     parse_variable_declaration(tokens, varDecl);

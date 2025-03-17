@@ -22,6 +22,32 @@ void parser::parse_declaration(
     }
     iter++;
   }
+  if (!tokens.empty() and is_storage_specifier(tokens[0].get_token())) {
+    switch (tokens[0].get_token()) {
+    case token::TOKEN::STATIC:
+      declaration->set_specifier(ast::SpecifierType::STATIC);
+      break;
+    case token::TOKEN::EXTERN:
+      declaration->set_specifier(ast::SpecifierType::EXTERN);
+      break;
+    default:
+      break;
+    }
+    tokens.erase(tokens.begin());
+  } else if (tokens.size() > 1 and
+             is_storage_specifier(tokens[1].get_token())) {
+    switch (tokens[1].get_token()) {
+    case token::TOKEN::STATIC:
+      declaration->set_specifier(ast::SpecifierType::STATIC);
+      break;
+    case token::TOKEN::EXTERN:
+      declaration->set_specifier(ast::SpecifierType::EXTERN);
+      break;
+    default:
+      break;
+    }
+    tokens.erase(tokens.begin() + 1);
+  }
   if (isFuncDecl) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
     parse_function_declaration(tokens, decl, atGlobalLevel);

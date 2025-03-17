@@ -179,6 +179,15 @@ private:
     UNREACHABLE()
   }
 
+  bool is_decl(token::TOKEN token) {
+    return token == token::TOKEN::INT || token == token::TOKEN::STATIC ||
+           token == token::TOKEN::EXTERN;
+  }
+
+  bool is_storage_specifier(token::TOKEN token) {
+    return token == token::TOKEN::STATIC || token == token::TOKEN::EXTERN;
+  }
+
 public:
   void parse_program(std::vector<token::Token> tokens);
   void semantic_analysis();
