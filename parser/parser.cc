@@ -97,6 +97,11 @@ void parser::semantic_analysis() {
                               ->get_int_node()
                               ->get_value());
           }
+        } else if (vars->get_specifier() != ast::SpecifierType::EXTERN) {
+          // If the variable has not been defined and is not extern,
+          // mark it as a tentative definition
+          symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
+          globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
         }
       } else { // symbol has not been declared before
         // Give appropriate linkage to the variable

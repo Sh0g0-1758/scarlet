@@ -33,7 +33,7 @@ void Codegen::codegen() {
   std::stringstream assembly;
 
   for (auto elem : scasm.get_elems()) {
-    if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
+    if (elem->get_type() == scasm::scasm_top_level_type::STATIC_VARIABLE) {
       auto vars = std::static_pointer_cast<scasm::scasm_static_variable>(elem);
       if (vars->is_global()) {
         assembly << "\t.globl ";
@@ -49,10 +49,10 @@ void Codegen::codegen() {
         assembly << "\t.data\n";
       }
 #ifdef __APPLE__
-      assembly << ".balign 4\n";
+      assembly << "\t.balign 4\n";
       assembly << "_" << vars->get_name() << ":\n";
 #else
-      assembly << ".align 4\n";
+      assembly << "\t.align 4\n";
       assembly << vars->get_name() << ":\n";
 #endif
       if (vars->get_init() != 0) {
@@ -61,7 +61,8 @@ void Codegen::codegen() {
         assembly << "\t.zero 4\n";
       }
       continue;
-    }
+    } // STATIC_VARIABLE
+
     auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
     if (funcs->is_global()) {
       assembly << "\t.globl ";
