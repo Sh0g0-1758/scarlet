@@ -14,7 +14,8 @@ void Codegen::gen_scar() {
         continue;
 
       MAKE_SHARED(scar::scar_Function_Node, scar_function);
-      if (funDecl->get_specifier() == ast::SpecifierType::STATIC) {
+      if (globalSymbolTable[funDecl->get_identifier()->get_value()].link ==
+          symbolTable::linkage::INTERNAL) {
         scar_function->set_global(false);
       }
       MAKE_SHARED(scar::scar_Identifier_Node, identifier);
