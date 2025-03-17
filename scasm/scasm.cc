@@ -3,11 +3,6 @@
 namespace scarlet {
 namespace scasm {
 
-#define UNREACHABLE()                                                          \
-  std::cerr << "Unreachable code reached in " << __FILE__ << " at line "       \
-            << __LINE__ << std::endl;                                          \
-  __builtin_unreachable();
-
 Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   switch (unop) {
   case unop::UNOP::NEGATE:
@@ -84,34 +79,112 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
 
 // If small is set, return the 8-bit version of the register
 // else return the 32-bit version of the register
-std::string to_string(register_type reg, bool small) {
+std::string to_string(register_type reg, register_size size) {
   switch (reg) {
   case register_type::AX:
-    if (small)
+    switch (size) {
+    case register_size::BYTE:
       return "%al";
-    return "%eax";
+    case register_size::DWORD:
+      return "%eax";
+    case register_size::QWORD:
+      return "%rax";
+    }
+    break;
+
   case register_type::DX:
-    if (small)
+    switch (size) {
+    case register_size::BYTE:
       return "%dl";
-    return "%edx";
+    case register_size::DWORD:
+      return "%edx";
+    case register_size::QWORD:
+      return "%rdx";
+    }
+    break;
+
   case register_type::CX:
-    if (small)
+    switch (size) {
+    case register_size::BYTE:
       return "%cl";
-    return "%ecx";
+    case register_size::DWORD:
+      return "%ecx";
+    case register_size::QWORD:
+      return "%rcx";
+    }
+    break;
+
+  case register_type::DI:
+    switch (size) {
+    case register_size::BYTE:
+      return "%dil";
+    case register_size::DWORD:
+      return "%edi";
+    case register_size::QWORD:
+      return "%rdi";
+    }
+    break;
+
+  case register_type::SI:
+    switch (size) {
+    case register_size::BYTE:
+      return "%sil";
+    case register_size::DWORD:
+      return "%esi";
+    case register_size::QWORD:
+      return "%rsi";
+    }
+    break;
+
+  case register_type::R8:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r8b";
+    case register_size::DWORD:
+      return "%r8d";
+    case register_size::QWORD:
+      return "%r8";
+    }
+    break;
+
+  case register_type::R9:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r9b";
+    case register_size::DWORD:
+      return "%r9d";
+    case register_size::QWORD:
+      return "%r9";
+    }
+    break;
+
+  case register_type::R10:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r10b";
+    case register_size::DWORD:
+      return "%r10d";
+    case register_size::QWORD:
+      return "%r10";
+    }
+    break;
+
+  case register_type::R11:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r11b";
+    case register_size::DWORD:
+      return "%r11d";
+    case register_size::QWORD:
+      return "%r11";
+    }
+    break;
   case register_type::CL:
     return "%cl";
-  case register_type::R10:
-    if (small)
-      return "%r10b";
-    return "%r10d";
-  case register_type::R11:
-    if (small)
-      return "%r11b";
-    return "%r11d";
   case register_type::UNKNOWN:
-    UNREACHABLE()
+    UNREACHABLE();
   }
-  UNREACHABLE()
+  UNREACHABLE();
 }
 
 std::string to_string(cond_code code) {

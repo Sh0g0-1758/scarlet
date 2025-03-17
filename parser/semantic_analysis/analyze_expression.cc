@@ -3,25 +3,34 @@
 namespace scarlet {
 namespace parser {
 
-void parser::analyze_exp(
-    std::shared_ptr<ast::AST_exp_Node> exp,
-    std::map<std::pair<std::string, int>, std::string> &symbol_table,
-    int indx) {
+void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                         std::map<std::pair<std::string, int>,
+                                  symbolTable::symbolInfo> &symbol_table,
+                         int indx) {
   if (exp == nullptr)
     return;
   analyze_exp(exp->get_left(), symbol_table, indx);
   // here we check that the factor of the expresssion is not an undeclared
-  // variable
+  // identifier and also do some type checking
+  // In case of function call, we additionally check that the identifier being
+  // called is a function declaration only.
+  // We also check that when the factor is not a function call, it's not
+  // using a function name as an identifier.
   if (exp->get_factor_node() != nullptr and
       exp->get_factor_node()->get_identifier_node() != nullptr) {
+    bool isFuncCall =
+        exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL;
     std::string var_name =
         exp->get_factor_node()->get_identifier_node()->get_value();
     int level = indx;
     bool found = false;
+    std::string updatedIdentifierName;
+    bool isfuncType = false;
     while (level >= 0) {
       if (symbol_table.find({var_name, level}) != symbol_table.end()) {
-        exp->get_factor_node()->get_identifier_node()->set_identifier(
-            symbol_table[{var_name, level}]);
+        updatedIdentifierName = symbol_table[{var_name, level}].name;
+        isfuncType = symbol_table[{var_name, level}].type ==
+                     symbolTable::symbolType::FUNCTION;
         found = true;
         break;
       }
@@ -29,7 +38,27 @@ void parser::analyze_exp(
     }
     if (!found) {
       success = false;
-      error_messages.emplace_back("Variable " + var_name + " not declared");
+      if (isFuncCall) {
+        error_messages.emplace_back("Function " + var_name + " not declared");
+      } else {
+        error_messages.emplace_back("Variable " + var_name + " not declared");
+      }
+    } else {
+      if (isFuncCall) {
+        if (!isfuncType) {
+          success = false;
+          error_messages.emplace_back("Object " + var_name +
+                                      " is not a function");
+        }
+      } else {
+        if (isfuncType) {
+          success = false;
+          error_messages.emplace_back("Illegal use of function " + var_name);
+        } else {
+          exp->get_factor_node()->get_identifier_node()->set_identifier(
+              updatedIdentifierName);
+        }
+      }
     }
   }
 
@@ -50,6 +79,11 @@ void parser::analyze_exp(
       success = false;
       error_messages.emplace_back("Expected a modifiable lvalue on the left "
                                   "side of the assignment operator");
+    }
+    if (exp->get_factor_node() != nullptr and
+        exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL) {
+      success = false;
+      error_messages.emplace_back("Invalid assignment to an rvalue");
     }
   }
   // SEMANTIC ANALYSIS FOR INCREMENT AND DECREMENT OPERATOR
@@ -137,16 +171,42 @@ void parser::analyze_exp(
       }
     }
   }
+  // The factor can be a function call
+  if (exp->get_factor_node() != nullptr and
+      exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL) {
+    auto func_call =
+        std::static_pointer_cast<ast::AST_factor_function_call_Node>(
+            exp->get_factor_node());
+    // Check that the function is being called with the correct set
+    // (number and type) of arguments
+    // TODO: check for wrong type of arguments
+    if (func_call->get_arguments().size() !=
+        globalSymbolTable[func_call->get_identifier_node()->get_value()]
+                .typeDef.size() -
+            1) {
+      success = false;
+      error_messages.emplace_back(
+          "Function " + func_call->get_identifier_node()->get_value() +
+          " called with wrong number of arguments");
+    }
+
+    for (auto it : func_call->get_arguments()) {
+      analyze_exp(it, symbol_table, indx);
+    }
+  }
   // since the factor can have its own exp as well, we recursively check that
   if (exp->get_factor_node() != nullptr)
     analyze_exp(exp->get_factor_node()->get_exp_node(), symbol_table, indx);
   // now we recursively check the right side of the expression
   if (exp->get_right() != nullptr)
     analyze_exp(exp->get_right(), symbol_table, indx);
-  // and a recursive check for the middle expression -> special case(ternary
-  // operator)
-  if (exp->get_middle() != nullptr)
-    analyze_exp(exp->get_middle(), symbol_table, indx);
+  // if exp is a binary exp of ternary op, add a recursive check for the middle
+  // expression
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
+    auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
+    analyze_exp(ternary->get_middle(), symbol_table, indx);
+  }
 }
 
 } // namespace parser

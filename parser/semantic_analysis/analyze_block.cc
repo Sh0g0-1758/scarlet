@@ -5,10 +5,10 @@ namespace parser {
 
 // NOTE: symbol table here is a map from {variable_name, block_indx} ->
 // temporary_variable_name(used as scar registers later)
-void parser::analyze_block(
-    std::shared_ptr<ast::AST_Block_Node> block,
-    std::map<std::pair<std::string, int>, std::string> &symbol_table,
-    int indx) {
+void parser::analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
+                           std::map<std::pair<std::string, int>,
+                                    symbolTable::symbolInfo> &symbol_table,
+                           int indx) {
   if (block == nullptr)
     return;
   auto block_item = block->get_blockItems().begin();

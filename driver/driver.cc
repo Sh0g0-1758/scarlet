@@ -21,13 +21,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   if (cmd.has_option("version")) {
-    std::cout << "\033[38;5;207m" // Neon pink color
-              << R"(
-     ┌─────────────────────────────────────┐
-     │       ░▒▓█ S C A R L E T █▓▒░       │
-     └─────────────────────────────────────┘
-)" << "\033[38;5;159m"
-              << "                  Compiler v0.1_  \033[0m\n\n";
+    cmd.ver();
     return 0;
   }
   if (!cmd.has_option("input-file")) {
@@ -38,6 +32,7 @@ int main(int argc, char *argv[]) {
   }
   std::filesystem::path path(cmd.get_input_file());
   std::string file_name = path.stem().string();
+  std::string directory_path = path.parent_path().string();
 
   if (path.extension().string() != ".sc" and
       path.extension().string() != ".c" and
@@ -112,8 +107,8 @@ int main(int argc, char *argv[]) {
   }
 
   // CODEGEN
-  scarlet::codegen::Codegen codegen(gnu.get_program(),
-                                    gnu.get_symbol_counter());
+  scarlet::codegen::Codegen codegen(gnu.get_program(), gnu.get_symbol_counter(),
+                                    gnu.getGlobalSymbolTable());
 
   codegen.gen_scar();
 
@@ -140,12 +135,22 @@ int main(int argc, char *argv[]) {
   if (cmd.has_option("output-file")) {
     output_file_name = cmd.get_option<std::string>("output-file");
   }
-  result = system(
-      std::format("gcc {}.s -o {}", file_name, output_file_name).c_str());
 
-  if (result != 0) {
-    std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
-    return 1;
+  if (cmd.has_option("-c")) {
+    result = system(std::format("gcc -c {}.s -o {}/{}.o", file_name,
+                                directory_path, output_file_name)
+                        .c_str());
+    if (result != 0) {
+      std::cerr << "[ERROR]: Failed to generate the object file" << std::endl;
+      return 1;
+    }
+  } else {
+    result = system(
+        std::format("gcc {}.s -o {}", file_name, output_file_name).c_str());
+    if (result != 0) {
+      std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
+      return 1;
+    }
   }
 
   // delete the intermediate assembly file
