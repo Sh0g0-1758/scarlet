@@ -4,6 +4,7 @@
 #include <binary_operations/binop.hh>
 #include <iostream>
 #include <map>
+#include <set>
 #include <stack>
 #include <string>
 #include <token/token.hh>
@@ -68,7 +69,7 @@ private:
   analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
               std::map<std::pair<std::string, int>, std::string> &symbol_table,
               int indx);
-  void analyze_case_exp(
+  int analyze_case_exp(
       std::shared_ptr<ast::AST_exp_Node> exp,
       std::map<std::pair<std::string, int>, std::string> &symbol_table,
       int indx);
