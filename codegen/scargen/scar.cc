@@ -27,7 +27,7 @@ void Codegen::gen_scar() {
         scar_function->add_param(param_id);
       }
 
-      gen_scar_block(funDecl->get_block(), scar_function, scar_program);
+      gen_scar_block(funDecl->get_block(), scar_function);
 
       // Add a complementary return 0 at the end of the function
       // in case there is no return statement

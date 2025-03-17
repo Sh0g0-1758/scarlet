@@ -64,9 +64,10 @@ void parser::analyze_declaration(
         std::string temp_name = get_temp_name(var_name);
         varDecl->get_identifier()->set_identifier(temp_name);
         symbol_table[{var_name, indx}] = {temp_name,
-                                          symbolTable::linkage::NONE,
+                                          symbolTable::linkage::INTERNAL,
                                           symbolTable::symbolType::VARIABLE,
                                           {varDecl->get_type()}};
+        symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
         if (varDecl->get_exp() != nullptr) {
           if (!EXPISCONSTANT(varDecl->get_exp())) {
             success = false;
@@ -81,6 +82,7 @@ void parser::analyze_declaration(
                               ->get_value());
           }
         }
+        globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
       } else {
         std::string temp_name = get_temp_name(var_name);
         varDecl->get_identifier()->set_identifier(temp_name);

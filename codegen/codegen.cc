@@ -28,7 +28,11 @@ void Codegen::codegen() {
   // ###########################
   std::stringstream assembly;
 
-  for (auto funcs : scasm.get_functions()) {
+  for (auto elem : scasm.get_elems()) {
+    if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
+      continue;
+    }
+    auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
 #ifdef __APPLE__
     assembly << "\t.globl " << "_" << funcs->get_name() << "\n";
     assembly << "_" << funcs->get_name() << ":\n";

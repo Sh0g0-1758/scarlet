@@ -31,11 +31,22 @@ namespace codegen {
 void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto elem : scar.get_elems()) {
-    if (elem->get_type() == scar::topLevelType::STATICVARIABLE)
+    if (elem->get_type() == scar::topLevelType::STATICVARIABLE) {
+      auto var = std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem);
+      MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
+      scasm_var->set_name(var->get_identifier()->get_value());
+      scasm_var->set_init(var->get_init());
+      scasm_var->set_global(elem->is_global());
+      MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
+      top_level_elem =
+          std::static_pointer_cast<scasm::scasm_top_level>(scasm_var);
+      scasm_program.add_elem(std::move(top_level_elem));
       continue;
+    }
     auto func = std::static_pointer_cast<scar::scar_Function_Node>(elem);
     MAKE_SHARED(scasm::scasm_function, scasm_func);
     scasm_func->set_name(func->get_identifier()->get_value());
+    scasm_func->set_global(elem->is_global());
 
     // Move function args from registers and stack to the callee stack frame
     int numParams = func->get_params().size();
@@ -562,7 +573,11 @@ void Codegen::gen_scasm() {
         scasm_func->add_instruction(std::move(scasm_inst3));
       }
     }
-    scasm_program.add_function(std::move(scasm_func));
+    MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
+    top_level_elem =
+        std::static_pointer_cast<scasm::scasm_top_level>(scasm_func);
+    top_level_elem->set_type(scasm::scasm_top_level_type::FUNCTION);
+    scasm_program.add_elem(std::move(top_level_elem));
   }
 
   this->scasm = scasm_program;

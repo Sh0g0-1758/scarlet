@@ -5,7 +5,11 @@ namespace codegen {
 
 void Codegen::fix_instructions() {
   // Allocate stack frame
-  for (auto &funcs : scasm.get_functions()) {
+  for (auto &elem : scasm.get_elems()) {
+    if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
+      continue;
+    }
+    auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
     MAKE_SHARED(scasm::scasm_instruction, scasm_stack_instr);
     scasm_stack_instr->set_type(scasm::instruction_type::ALLOCATE_STACK);
     MAKE_SHARED(scasm::scasm_operand, val);
@@ -16,13 +20,19 @@ void Codegen::fix_instructions() {
                                      std::move(scasm_stack_instr));
   }
 
-  // Fixing up Stack to Stack move
-  for (auto &funcs : scasm.get_functions()) {
+  // Fixing up Stack/Data to Stack/Data move
+  for (auto &elem : scasm.get_elems()) {
+    if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
+      continue;
+    }
+    auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
       if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
-          (*it)->get_src()->get_type() == scasm::operand_type::STACK &&
-          (*it)->get_dst()->get_type() == scasm::operand_type::STACK) {
+              ((*it)->get_src()->get_type() == scasm::operand_type::STACK or
+               (*it)->get_src()->get_type() == scasm::operand_type::DATA) &&
+              ((*it)->get_dst()->get_type() == scasm::operand_type::STACK) or
+          (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_src((*it)->get_src());
@@ -41,7 +51,11 @@ void Codegen::fix_instructions() {
 
   // case when DIV uses a constant as an operand
   // case when MUL have dst as a stack value
-  for (auto &funcs : scasm.get_functions()) {
+  for (auto &elem : scasm.get_elems()) {
+    if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
+      continue;
+    }
+    auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
 
