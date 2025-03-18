@@ -80,6 +80,13 @@ void parser::semantic_analysis() {
           }
         }
 
+        // If the previous declaration was because of a block scope extern
+        // then it is possible that the symbol definition is not present in the
+        // symbol table at index 0
+        if (symbol_table.find({var_name, 0}) == symbol_table.end()) {
+          symbol_table[{var_name, 0}] = globalSymbolTable[var_name];
+        }
+
         // If the variable has been defined, check that it is initialized with a
         // constant integer
         if (vars->get_exp() != nullptr) {
