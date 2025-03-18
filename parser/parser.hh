@@ -226,6 +226,12 @@ private:
       return "DoWhile";
     case ast::statementType::FOR:
       return "For";
+    case ast::statementType::CASE:
+      return "Case";
+    case ast::statementType::DEFAULT_CASE:
+      return "DefaultCase";
+    case ast::statementType::SWITCH:
+      return "Switch";
     case ast::statementType::UNKNOWN:
       UNREACHABLE()
     }
