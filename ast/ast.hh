@@ -540,15 +540,10 @@ public:
 
 class AST_case_statement_Node : public AST_Statement_Node {
 private:
-  // std::vector<std::shared_ptr<AST_Block_Item_Node>> stmts;
   std::string case_label;
 
 public:
   std::string get_AST_name() { return "CaseStatement"; }
-  // std::vector<std::shared_ptr<AST_Block_Item_Node>> get_stmt() { return
-  // stmts; } void set_stmt(std::shared_ptr<AST_Block_Item_Node> stmt) {
-  //   this->stmts.push_back(std::move(stmt));
-  // }
   std::string get_case_label() { return case_label; }
   void set_case_label(std::string &&case_label) {
     this->case_label = std::move(case_label);

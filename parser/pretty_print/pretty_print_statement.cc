@@ -21,7 +21,6 @@ void parser::pretty_print_statement(
   case ast::statementType::DEFAULT_CASE:
     std::cout << "\t\t\t\tlabel=(" << statement->get_labels().first->get_value()
               << ")" << std::endl;
-    // pretty_print_exp(statement->get_exps());
     break;
   case ast::statementType::IF: {
     auto if_statement =
