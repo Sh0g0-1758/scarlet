@@ -169,6 +169,7 @@ void parser::semantic_analysis() {
               {param->type}};
           param->identifier->set_identifier(temp_name);
         }
+        goto_labels.clear();
         analyze_block(funcs->get_block(), proxy_symbol_table, 1);
       }
     }

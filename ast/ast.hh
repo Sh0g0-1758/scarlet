@@ -32,7 +32,7 @@ Grammar:
 
 <for-init> ::= <variable-declaration> | [ <exp> ]
 
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";"
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";" | switch "("<exp>")" <statement> | case <exp> ":" { <statement> }
 
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 
@@ -249,7 +249,10 @@ enum class statementType {
   CONTINUE,
   WHILE,
   FOR,
-  DO_WHILE,
+  SWITCH,
+  CASE,
+  DEFAULT_CASE,
+  DO_WHILE
 };
 
 class AST_Statement_Node {
@@ -503,6 +506,47 @@ public:
   }
   void add_declaration(std::shared_ptr<AST_Declaration_Node> declaration) {
     declarations.emplace_back(std::move(declaration));
+  }
+};
+class AST_switch_statement_Node : public AST_Statement_Node {
+private:
+  std::shared_ptr<AST_Statement_Node> stmt;
+  std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
+                        std::shared_ptr<ast::AST_identifier_Node>>>
+      case_exp_label;
+  bool has_default_case = false;
+
+public:
+  std::string get_AST_name() { return "Switch Statement"; }
+  std::shared_ptr<AST_Statement_Node> get_stmt() { return stmt; }
+  void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
+    this->stmt = std::move(stmt);
+  }
+  void set_case_exp_label(std::shared_ptr<ast::AST_exp_Node> exp,
+                          std::shared_ptr<ast::AST_identifier_Node> label) {
+    this->case_exp_label.push_back(
+        std::make_pair(std::move(exp), std::move(label)));
+  }
+  std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
+                        std::shared_ptr<ast::AST_identifier_Node>>>
+  get_case_exp_label() {
+    return case_exp_label;
+  }
+  void set_has_default_case(bool has_default_case) {
+    this->has_default_case = has_default_case;
+  }
+  bool get_has_default_case() { return has_default_case; }
+};
+
+class AST_case_statement_Node : public AST_Statement_Node {
+private:
+  std::string case_label;
+
+public:
+  std::string get_AST_name() { return "CaseStatement"; }
+  std::string get_case_label() { return case_label; }
+  void set_case_label(std::string &&case_label) {
+    this->case_label = std::move(case_label);
   }
 };
 } // namespace ast

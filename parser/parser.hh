@@ -27,8 +27,10 @@ private:
   int loop_continue_counter = 0;
   int loop_end_counter = 0;
   int ifelse_counter = 0;
+  std::string function_name = "";
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
+  std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   void
   parse_param_list(std::vector<token::Token> &tokens,
@@ -99,7 +101,10 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
-
+  int analyze_case_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                       std::map<std::pair<std::string, int>,
+                                symbolTable::symbolInfo> &symbol_table,
+                       int indx);
   std::string get_temp_name(std::string &name) {
     std::string tmp = name + "." + std::to_string(symbol_counter);
     symbol_counter++;
@@ -141,6 +146,26 @@ private:
     end_label_node->set_identifier(end_label);
     return {start_label_node, end_label_node};
   }
+  std::pair<std::shared_ptr<ast::AST_identifier_Node>,
+            std::shared_ptr<ast::AST_identifier_Node>>
+  get_switch_loop_labels() {
+    std::string end_label = "loop_end." + std::to_string(loop_end_counter);
+    loop_continue_counter++;
+    loop_end_counter++;
+    loop_end_labels.push(end_label);
+    MAKE_SHARED(ast::AST_identifier_Node, end_label_node);
+    end_label_node->set_identifier(end_label);
+    return {nullptr, end_label_node};
+  }
+
+  std::shared_ptr<ast::AST_identifier_Node> get_case_label() {
+    static int case_counter = 0;
+    std::string case_label = "case." + std::to_string(case_counter);
+    case_counter++;
+    MAKE_SHARED(ast::AST_identifier_Node, label);
+    label->set_identifier(case_label);
+    return label;
+  }
 
   std::string get_loop_start_label() {
     std::string label = "loop_start." + std::to_string(loop_start_counter);
@@ -171,6 +196,8 @@ private:
     loop_end_labels.pop();
   }
 
+  void remove_switch_loop_labels() { loop_end_labels.pop(); }
+
   std::string to_string(ast::statementType type) {
     switch (type) {
     case ast::statementType::NULLSTMT:
@@ -199,6 +226,12 @@ private:
       return "DoWhile";
     case ast::statementType::FOR:
       return "For";
+    case ast::statementType::CASE:
+      return "Case";
+    case ast::statementType::DEFAULT_CASE:
+      return "DefaultCase";
+    case ast::statementType::SWITCH:
+      return "Switch";
     case ast::statementType::UNKNOWN:
       UNREACHABLE()
     }

@@ -327,6 +327,12 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::CONTINUE);
       } else if (identifier == "static") {
         tokens.emplace_back(token::TOKEN::STATIC);
+      } else if (identifier == "switch") {
+        tokens.emplace_back(token::TOKEN::SWITCH);
+      } else if (identifier == "case") {
+        tokens.emplace_back(token::TOKEN::CASE);
+      } else if (identifier == "default") {
+        tokens.emplace_back(token::TOKEN::DEFAULT_CASE);
       } else if (identifier == "extern") {
         tokens.emplace_back(token::TOKEN::EXTERN);
       } else if (identifier == "long") {

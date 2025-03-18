@@ -64,7 +64,7 @@ Scarlet currently supports the following architectures:
 - [x] Add support for goto statement
 - [x] Add support for compound statements
 - [x] Add support for Loops (for, while, do-while)
-- [ ] Add support for switch-case
+- [x] Add support for switch-case
 - [x] Add support for Functions
 - [x] Add support for static keyword and global scope
 - [ ] Add support for Long Integers
@@ -75,6 +75,10 @@ Scarlet currently supports the following architectures:
 - [ ] Add support for characters and strings
 - [ ] Add support for dynamic memory allocation
 - [ ] Add support for user defined structures
+
+## Resources
+
+Our compiler implementation draws primarily from Nora Sandler's 'How to Write a Compiler in C' guide, supplemented with concepts from the Dragon Book. Both resources are highly recommended for anyone studying compiler design.
 
 ## Contributing Guidelines
 

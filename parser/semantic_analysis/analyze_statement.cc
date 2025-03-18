@@ -20,6 +20,9 @@ void parser::analyze_statement(
   case ast::statementType::RETURN:
     analyze_exp(statement->get_exps(), symbol_table, indx);
     break;
+  case ast::statementType::CASE:
+  case ast::statementType::DEFAULT_CASE:
+    break;
   case ast::statementType::IF: {
     auto if_statement =
         std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
@@ -32,6 +35,36 @@ void parser::analyze_statement(
     analyze_exp(if_else_statement->get_exps(), symbol_table, indx);
     analyze_statement(if_else_statement->get_stmt1(), symbol_table, indx);
     analyze_statement(if_else_statement->get_stmt2(), symbol_table, indx);
+  } break;
+  case ast::statementType::SWITCH: {
+    // iterate over case_exp_label and analyze the case expression
+    std::set<int> case_val;
+    analyze_exp(statement->get_exps(), symbol_table, indx);
+    auto switch_statement =
+        std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
+    for (auto case_exp_label : switch_statement->get_case_exp_label()) {
+      int val = analyze_case_exp(case_exp_label.first, symbol_table, indx);
+      if (!success == false) {
+        if (case_exp_label.first == nullptr)
+          continue;
+        if (case_val.find(val) != case_val.end()) {
+          success = false;
+          error_messages.emplace_back(
+              "Duplicate case value in switch statement");
+          continue;
+        }
+        case_val.insert(val);
+        // clear out the current exp if valid
+        case_exp_label.first->get_factor_node()->get_int_node()->set_value(
+            std::to_string(val));
+        case_exp_label.first->set_binop_node(nullptr);
+        case_exp_label.first->set_left(nullptr);
+        case_exp_label.first->set_right(nullptr);
+      }
+    }
+    // analyze the statement inside the switch
+    analyze_statement(switch_statement->get_stmt(), symbol_table, indx);
+
   } break;
   case ast::statementType::WHILE:
   case ast::statementType::DO_WHILE: {
