@@ -9,6 +9,7 @@ void parser::parse_function(std::vector<token::Token> &tokens,
   declaration->set_type(ast::DeclarationType::FUNCTION);
   parse_function_declaration(tokens, declaration);
   function->set_declaration(std::move(declaration));
+  function_name = function->get_declaration()->get_identifier()->get_value();
   if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     tokens.erase(tokens.begin());
     return;

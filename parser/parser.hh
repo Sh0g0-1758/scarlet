@@ -27,6 +27,7 @@ private:
   int loop_continue_counter = 0;
   int loop_end_counter = 0;
   int ifelse_counter = 0;
+  std::string function_name = "";
   std::stack<std::string> loop_start_labels;
   std::stack<std::string> loop_end_labels;
   std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;

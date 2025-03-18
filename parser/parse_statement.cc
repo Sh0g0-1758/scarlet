@@ -68,6 +68,7 @@ void parser::parse_statement(
     tokens.erase(tokens.begin());
     statement->set_type(ast::statementType::GOTO);
     EXPECT_IDENTIFIER();
+    identifier->set_identifier(function_name + "." + identifier->get_value());
     statement->set_labels({std::move(identifier), nullptr});
     EXPECT(token::TOKEN::SEMICOLON);
   } else if (tokens.size() >= 2 &&
@@ -75,6 +76,7 @@ void parser::parse_statement(
              tokens[1].get_token() == token::TOKEN::COLON) {
     statement->set_type(ast::statementType::LABEL);
     EXPECT_IDENTIFIER();
+    identifier->set_identifier(function_name + "." + identifier->get_value());
     statement->set_labels({std::move(identifier), nullptr});
     EXPECT(token::TOKEN::COLON);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
