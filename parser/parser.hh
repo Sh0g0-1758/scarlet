@@ -32,14 +32,13 @@ private:
   std::stack<std::string> loop_end_labels;
   std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
-  void parse_function(std::vector<token::Token> &tokens,
-                      std::shared_ptr<ast::AST_Function_Node>);
   void
   parse_param_list(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_function_declaration_Node> decl);
   void parse_function_declaration(
       std::vector<token::Token> &tokens,
-      std::shared_ptr<ast::AST_function_declaration_Node> decl);
+      std::shared_ptr<ast::AST_function_declaration_Node> decl,
+      bool atGlobalLevel);
   void parse_variable_declaration(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_variable_declaration_Node> decl);
@@ -49,7 +48,8 @@ private:
                         std::shared_ptr<ast::AST_Block_Node> &block);
   void
   parse_declaration(std::vector<token::Token> &tokens,
-                    std::shared_ptr<ast::AST_Declaration_Node> &declaration);
+                    std::shared_ptr<ast::AST_Declaration_Node> &declaration,
+                    bool atGlobalLevel = false);
   void parse_statement(std::vector<token::Token> &tokens,
                        std::shared_ptr<ast::AST_Statement_Node> &stmt);
   void parse_for_init(std::vector<token::Token> &tokens,
@@ -198,12 +198,67 @@ private:
 
   void remove_switch_loop_labels() { loop_end_labels.pop(); }
 
-  std::string type_to_string(ast::ElemType type) {
+  std::string to_string(ast::statementType type) {
+    switch (type) {
+    case ast::statementType::NULLSTMT:
+      return "NullStmt";
+    case ast::statementType::RETURN:
+      return "Return";
+    case ast::statementType::EXP:
+      return "Exp";
+    case ast::statementType::IF:
+      return "If";
+    case ast::statementType::IFELSE:
+      return "IfElse";
+    case ast::statementType::GOTO:
+      return "Goto";
+    case ast::statementType::LABEL:
+      return "Label";
+    case ast::statementType::BLOCK:
+      return "Block";
+    case ast::statementType::CONTINUE:
+      return "Continue";
+    case ast::statementType::BREAK:
+      return "Break";
+    case ast::statementType::WHILE:
+      return "While";
+    case ast::statementType::DO_WHILE:
+      return "DoWhile";
+    case ast::statementType::FOR:
+      return "For";
+    case ast::statementType::UNKNOWN:
+      UNREACHABLE()
+    }
+    return "";
+  }
+
+  std::string to_string(ast::ElemType type) {
     switch (type) {
     case ast::ElemType::INT:
       return "int";
     }
     UNREACHABLE()
+  }
+
+  std::string to_string(ast::SpecifierType type) {
+    switch (type) {
+    case ast::SpecifierType::STATIC:
+      return "static";
+    case ast::SpecifierType::EXTERN:
+      return "extern";
+    case ast::SpecifierType::NONE:
+      return "none";
+    }
+    UNREACHABLE();
+  }
+
+  bool is_decl(token::TOKEN token) {
+    return token == token::TOKEN::INT || token == token::TOKEN::STATIC ||
+           token == token::TOKEN::EXTERN;
+  }
+
+  bool is_storage_specifier(token::TOKEN token) {
+    return token == token::TOKEN::STATIC || token == token::TOKEN::EXTERN;
   }
 
 public:

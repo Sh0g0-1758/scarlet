@@ -15,13 +15,19 @@
 // clang-format off
 
 /*
+
 Grammar:
 
-program = Program(function_definition*)
-function_definition = Function(identifier, instruction* body)
+program = Program(top_level*)
+
+top_level = Function(identifier, bool global, identifier* params, instruction* body) | StaticVariable(identifier, bool global, int init)
+
 instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst)
+
 val = Constant(int) | Var(identifier)
+
 unary_operator = Complement | Negate | Not
+
 binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | leftShift | rightShift | Equal | notEqual | lessThan | LessOrEqual | greaterThan | greaterThanOrEqual
 
 */
@@ -132,7 +138,22 @@ public:
   }
 };
 
-class scar_Function_Node {
+enum class topLevelType { FUNCTION, STATICVARIABLE };
+
+class scar_Top_Level_Node {
+private:
+  bool global = true;
+  topLevelType type;
+
+public:
+  std::string get_scar_name() { return "TopLevel"; }
+  bool is_global() { return global; }
+  void set_global(bool global) { this->global = global; }
+  topLevelType get_type() { return type; }
+  void set_type(topLevelType type) { this->type = type; }
+};
+
+class scar_Function_Node : public scar_Top_Level_Node {
 private:
   std::vector<std::shared_ptr<scar_Identifier_Node>> params;
   std::shared_ptr<scar_Identifier_Node> identifier;
@@ -161,18 +182,33 @@ public:
   }
 };
 
-class scar_Program_Node {
+class scar_StaticVariable_Node : public scar_Top_Level_Node {
 private:
-  std::vector<std::shared_ptr<scar_Function_Node>> functions;
+  std::shared_ptr<scar_Identifier_Node> identifier;
+  int init;
 
 public:
-  scar_Program_Node() { functions.reserve(2); }
-  std::string get_scar_name() { return "Program"; }
-  std::vector<std::shared_ptr<scar_Function_Node>> &get_functions() {
-    return functions;
+  std::string get_scar_name() { return "StaticVariable"; }
+  std::shared_ptr<scar_Identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<scar_Identifier_Node> identifier) {
+    this->identifier = std::move(identifier);
   }
-  void add_function(std::shared_ptr<scar_Function_Node> function) {
-    functions.emplace_back(std::move(function));
+  int get_init() { return init; }
+  void set_init(int init) { this->init = init; }
+};
+
+class scar_Program_Node {
+private:
+  std::vector<std::shared_ptr<scar_Top_Level_Node>> elems;
+
+public:
+  scar_Program_Node() { elems.reserve(4); }
+  std::string get_scar_name() { return "Program"; }
+  std::vector<std::shared_ptr<scar_Top_Level_Node>> &get_elems() {
+    return elems;
+  }
+  void add_elem(std::shared_ptr<scar_Top_Level_Node> elem) {
+    elems.emplace_back(std::move(elem));
   }
 };
 

@@ -18,9 +18,9 @@
 
 Grammar:
 
-program = Program(function_definition*)
+program = Program(top_level*)
 
-function_definition = Function(identifier, instruction* body)
+top_level = Function(identifier name, bool global, instruction* instructions) | StaticVariable(identifier name, bool global, int init)
 
 instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand) | Cmp(Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label) | Push(Operand) | Call(Identifier) | DeallocateStack(int)
 
@@ -28,7 +28,7 @@ unary_operator = Neg | Not
 
 binary_operator = Add | Sub | Mul | And | Or | Xor | LeftShift | RightShift
 
-Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier) | Label(identifier)
+Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier) | Label(identifier) | Data(Identifier)
 
 cond_code = E | NE | G | GE | L | LE
 
@@ -41,7 +41,7 @@ namespace scarlet {
 namespace scasm {
 
 // NOTE: Every Pseudo Operand gets converted into a stack operand
-enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK, LABEL, COND };
+enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK, LABEL, COND, DATA };
 enum class Unop { UNKNOWN, NEG, ANOT, LNOT };
 enum class Binop {
   UNKNOWN,
@@ -146,7 +146,22 @@ public:
   }
 };
 
-class scasm_function {
+enum class scasm_top_level_type { FUNCTION, STATIC_VARIABLE };
+
+class scasm_top_level {
+private:
+  bool global;
+  scasm_top_level_type type;
+
+public:
+  std::string get_scasm_name() { return "TopLevel"; }
+  bool is_global() { return global; }
+  void set_global(bool global) { this->global = global; }
+  scasm_top_level_type get_type() { return type; }
+  void set_type(scasm_top_level_type type) { this->type = type; }
+};
+
+class scasm_function : public scasm_top_level {
 private:
   std::string name;
   std::vector<std::shared_ptr<scasm_instruction>> body;
@@ -166,17 +181,28 @@ public:
   void set_frame_size(int frameSize) { this->frameSize = frameSize; }
 };
 
+class scasm_static_variable : public scasm_top_level {
+private:
+  std::string name;
+  int init;
+
+public:
+  std::string get_scasm_name() { return "StaticVariable"; }
+  std::string get_name() { return name; }
+  void set_name(std::string name) { this->name = std::move(name); }
+  int get_init() { return init; }
+  void set_init(int init) { this->init = init; }
+};
+
 class scasm_program {
 private:
-  std::vector<std::shared_ptr<scasm_function>> functions;
+  std::vector<std::shared_ptr<scasm_top_level>> elems;
 
 public:
   std::string get_scasm_name() { return "Program"; }
-  std::vector<std::shared_ptr<scasm_function>> &get_functions() {
-    return functions;
-  }
-  void add_function(std::shared_ptr<scasm_function> function) {
-    functions.emplace_back(std::move(function));
+  std::vector<std::shared_ptr<scasm_top_level>> &get_elems() { return elems; }
+  void add_elem(std::shared_ptr<scasm_top_level> elem) {
+    elems.emplace_back(std::move(elem));
   }
 };
 

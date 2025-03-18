@@ -3,46 +3,6 @@
 namespace scarlet {
 namespace parser {
 
-std::string to_string(ast::statementType type) {
-  switch (type) {
-  case ast::statementType::NULLSTMT:
-    return "NullStmt";
-  case ast::statementType::SWITCH:
-    return "Switch";
-  case ast::statementType::CASE:
-    return "Case";
-  case ast::statementType::DEFAULT_CASE:
-    return "Default";
-  case ast::statementType::RETURN:
-    return "Return";
-  case ast::statementType::EXP:
-    return "Exp";
-  case ast::statementType::IF:
-    return "If";
-  case ast::statementType::IFELSE:
-    return "IfElse";
-  case ast::statementType::GOTO:
-    return "Goto";
-  case ast::statementType::LABEL:
-    return "Label";
-  case ast::statementType::BLOCK:
-    return "Block";
-  case ast::statementType::CONTINUE:
-    return "Continue";
-  case ast::statementType::BREAK:
-    return "Break";
-  case ast::statementType::WHILE:
-    return "While";
-  case ast::statementType::DO_WHILE:
-    return "DoWhile";
-  case ast::statementType::FOR:
-    return "For";
-  case ast::statementType::UNKNOWN:
-    UNREACHABLE()
-  }
-  return "";
-}
-
 void parser::pretty_print_statement(
     std::shared_ptr<ast::AST_Statement_Node> statement) {
   if (statement == nullptr)

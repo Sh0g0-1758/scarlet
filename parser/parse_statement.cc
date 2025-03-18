@@ -276,16 +276,13 @@ void parser::parse_for_init(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_For_Statement_Node> &forstmt) {
   MAKE_SHARED(ast::AST_For_Init_Node, for_init);
+  // for init cannot have storage specifiers
   if (tokens[0].get_token() == token::TOKEN::INT) {
-    MAKE_SHARED(ast::AST_Declaration_Node, declaration);
-    parse_declaration(tokens, declaration);
-    if (declaration->get_type() == ast::DeclarationType::FUNCTION) {
-      error_messages.emplace_back(
-          "For statement cannot be initialized with function declarations");
-      success = false;
-    } else {
-      for_init->set_declaration(std::move(declaration));
-    }
+    MAKE_SHARED(ast::AST_variable_declaration_Node, varDecl);
+    parse_variable_declaration(tokens, varDecl);
+    auto decl = std::static_pointer_cast<ast::AST_Declaration_Node>(varDecl);
+    decl->set_type(ast::DeclarationType::VARIABLE);
+    for_init->set_declaration(std::move(decl));
   } else {
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);

@@ -80,6 +80,10 @@ private:
   int res_label_counter = 1;
   std::stack<std::string> fr_label_stack;
   std::stack<std::string> res_label_stack;
+  void
+  pretty_print_function(std::shared_ptr<scar::scar_Function_Node> function);
+  void pretty_print_static_variable(
+      std::shared_ptr<scar::scar_StaticVariable_Node> static_variable);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

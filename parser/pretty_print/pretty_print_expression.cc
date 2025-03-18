@@ -24,10 +24,11 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
           std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor);
       std::cout << funcCall->get_AST_name() << "("
                 << funcCall->get_identifier_node()->get_value() << "), "
-                << "Arguments: " << std::endl;
+                << "Arguments: {";
       for (auto arg : funcCall->get_arguments()) {
         pretty_print_exp(arg);
       }
+      std::cout << "}" << std::endl;
     } else {
       std::cout << factor->get_identifier_node()->get_AST_name() << "("
                 << factor->get_identifier_node()->get_value() << ")";
