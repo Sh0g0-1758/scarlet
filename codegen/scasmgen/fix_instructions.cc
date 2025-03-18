@@ -96,13 +96,14 @@ void Codegen::fix_instructions() {
         it++;
       } else if ((*it)->get_type() == scasm::instruction_type::BINARY and
                  (*it)->get_binop() == scasm::Binop::MUL and
-                 (*it)->get_dst()->get_type() == scasm::operand_type::STACK) {
-        // imull $3, STACK
+                 ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+                  (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
+        // imull $3, STACK/DATA
         //        |
         //        v
         // movl STACK, %r11d
         // imull $3, %r11d
-        // movl %r11d, STACK
+        // movl %r11d, STACK/DATA
 
         MAKE_SHARED(scasm::scasm_operand, dst);
         dst->set_type(scasm::operand_type::REG);
