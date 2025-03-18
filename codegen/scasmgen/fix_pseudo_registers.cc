@@ -10,18 +10,27 @@ namespace codegen {
         pseduo_registers.end()) {                                              \
       inst->get_##target()->set_identifier_stack(                              \
           pseduo_registers[inst->get_##target()->get_identifier_stack()]);     \
+      inst->get_##target()->set_type(scasm::operand_type::STACK);              \
     } else {                                                                   \
       std::string temp = inst->get_##target()->get_identifier_stack();         \
-      inst->get_##target()->set_identifier_stack(                              \
-          "-" + std::to_string(offset * 4) + "(%rbp)");                        \
-      pseduo_registers[temp] = inst->get_##target()->get_identifier_stack();   \
-      offset++;                                                                \
+      if (globalSymbolTable[temp].link != symbolTable::linkage::NONE) {        \
+        inst->get_##target()->set_type(scasm::operand_type::DATA);             \
+      } else {                                                                 \
+        inst->get_##target()->set_identifier_stack(                            \
+            "-" + std::to_string(offset * 4) + "(%rbp)");                      \
+        pseduo_registers[temp] = inst->get_##target()->get_identifier_stack(); \
+        offset++;                                                              \
+        inst->get_##target()->set_type(scasm::operand_type::STACK);            \
+      }                                                                        \
     }                                                                          \
-    inst->get_##target()->set_type(scasm::operand_type::STACK);                \
   }
 
 void Codegen::fix_pseudo_registers() {
-  for (auto &func : scasm.get_functions()) {
+  for (auto &elem : scasm.get_elems()) {
+    if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
+      continue;
+    }
+    auto func = std::static_pointer_cast<scasm::scasm_function>(elem);
     int offset = 1;
 
     for (auto &inst : func->get_instructions()) {
