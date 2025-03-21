@@ -8,8 +8,11 @@ void print_token(TOKEN token) {
   case TOKEN::IDENTIFIER:
     std::cerr << "identifier ";
     break;
-  case TOKEN::CONSTANT:
-    std::cerr << "constant ";
+  case TOKEN::INT_CONSTANT:
+    std::cerr << "int constant ";
+    break;
+  case TOKEN::LONG_CONSTANT:
+    std::cerr << "long constant ";
     break;
   case TOKEN::CHARACTER_CONSTANT:
     std::cerr << "character constant ";
@@ -243,8 +246,10 @@ std::string to_string(TOKEN token) {
   switch (token) {
   case TOKEN::IDENTIFIER:
     return "identifier";
-  case TOKEN::CONSTANT:
-    return "constant";
+  case TOKEN::INT_CONSTANT:
+    return "int constant";
+  case TOKEN::LONG_CONSTANT:
+    return "long constant";
   case TOKEN::CHARACTER_CONSTANT:
     return "character constant";
   case TOKEN::CHAR_ARR:

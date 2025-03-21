@@ -35,7 +35,7 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> &factor) {
-  if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
+  if (tokens[0].get_token() == token::TOKEN::INT_CONSTANT) {
     parse_int(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();

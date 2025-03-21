@@ -9,10 +9,10 @@ void parser::parse_int(std::vector<token::Token> &tokens,
     return;
   }
   if (tokens.empty()) {
-    eof_error(token::TOKEN::CONSTANT);
+    eof_error(token::TOKEN::INT_CONSTANT);
     return;
   }
-  expect(tokens[0].get_token(), token::TOKEN::CONSTANT);
+  expect(tokens[0].get_token(), token::TOKEN::INT_CONSTANT);
   if (!success) {
     return;
   }

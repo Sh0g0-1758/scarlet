@@ -22,9 +22,11 @@ Grammar:
 
 <function-declaration> ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
 
-<param-list> ::= "void" | "int" <identifier> { "," "int" <identifier> }
+<param-list> ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
 
-<specifier> ::= "int" | "static" | "extern"
+<type-specifier> ::= "int" | "long"
+
+<specifier> ::= <type-specifier> | "static" | "extern"
 
 <block_item> ::= <statement> | <declaration>
 
@@ -36,7 +38,7 @@ Grammar:
 
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 
-<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+<factor> ::= <const> | <identifier> | "(" { <type-specifier> }+ ")" <factor> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
 
 <argument-list> ::= <exp> { "," <exp> }
 
@@ -44,9 +46,13 @@ Grammar:
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
+<const> ::= <int> | <long>
+
 <identifier> ::= ? An identifier token ?
 
-<int> ::= ? A constant token ?
+<int> ::= ? A constant int token ?
+
+<long> ::= ? A constant long token ?
 
 NOTE: in EBNF notation,
 1. {} means 0 or more instances of the enclosed expression
