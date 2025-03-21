@@ -377,7 +377,8 @@ void lexer::tokenize() {
         }
       }
       constant += literal_suffix;
-      // This if for a float ie. when there is no proceeding l,L,u,U suffix
+      // Treat as a float when there is no proceeding l,L,u,U suffix and next
+      // token is dot
       if (ch == '.' and literal_suffix.size() == 0) {
         constant += '.';
         file.get(ch);
