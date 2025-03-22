@@ -18,8 +18,8 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   // using a function name as an identifier.
   if (exp->get_factor_node() != nullptr and
       exp->get_factor_node()->get_identifier_node() != nullptr) {
-    bool isFuncCall =
-        exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL;
+    bool isFuncCall = exp->get_factor_node()->get_factor_type() ==
+                      ast::FactorType::FUNCTION_CALL;
     std::string var_name =
         exp->get_factor_node()->get_identifier_node()->get_value();
     int level = indx;
@@ -81,7 +81,8 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                                   "side of the assignment operator");
     }
     if (exp->get_factor_node() != nullptr and
-        exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL) {
+        exp->get_factor_node()->get_factor_type() ==
+            ast::FactorType::FUNCTION_CALL) {
       success = false;
       error_messages.emplace_back("Invalid assignment to an rvalue");
     }
@@ -173,7 +174,8 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   }
   // The factor can be a function call
   if (exp->get_factor_node() != nullptr and
-      exp->get_factor_node()->get_type() == ast::FactorType::FUNCTION_CALL) {
+      exp->get_factor_node()->get_factor_type() ==
+          ast::FactorType::FUNCTION_CALL) {
     auto func_call =
         std::static_pointer_cast<ast::AST_factor_function_call_Node>(
             exp->get_factor_node());

@@ -42,7 +42,7 @@ void Codegen::gen_scar_factor(
           scar_val_dst->set_reg_name(variable_buffer);
           variable_buffer.clear();
         } else {
-          if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+          if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
             gen_scar_factor_function_call(
                 std::static_pointer_cast<ast::AST_factor_function_call_Node>(
                     factor),
@@ -88,7 +88,7 @@ void Codegen::gen_scar_factor(
           scar_val_src->set_reg_name(variable_buffer);
           variable_buffer.clear();
         } else {
-          if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+          if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
             gen_scar_factor_function_call(
                 std::static_pointer_cast<ast::AST_factor_function_call_Node>(
                     factor),
@@ -153,7 +153,7 @@ void Codegen::gen_scar_factor(
         } else if (factor->get_identifier_node() != nullptr and
                    !factor->get_identifier_node()->get_value().empty()) {
           scar_val_src->set_type(scar::val_type::VAR);
-          if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+          if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
             gen_scar_factor_function_call(
                 std::static_pointer_cast<ast::AST_factor_function_call_Node>(
                     factor),
@@ -203,7 +203,7 @@ void Codegen::gen_scar_factor(
     // save variable for later use
     if (factor->get_identifier_node() != nullptr and
         !factor->get_identifier_node()->get_value().empty()) {
-      if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+      if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
         gen_scar_factor_function_call(
             std::static_pointer_cast<ast::AST_factor_function_call_Node>(
                 factor),

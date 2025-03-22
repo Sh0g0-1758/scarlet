@@ -122,8 +122,9 @@ private:
   // another object of exp, say c. exp -> factor -> exp
   //  a  ->    b   ->  c
   std::shared_ptr<AST_exp_Node> exp_node;
-  FactorType type = FactorType::BASIC;
+  FactorType factorType = FactorType::BASIC;
   std::vector<ElemType> castTypes;
+  ElemType type = ElemType::NONE;
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -148,10 +149,13 @@ public:
     this->exp_node = std::move(exp_node);
   }
   std::shared_ptr<AST_exp_Node> get_exp_node() { return exp_node; }
-  FactorType get_type() { return type; }
-  void set_type(FactorType type) { this->type = type; }
+  FactorType get_factor_type() { return factorType; }
+  void set_factor_type(FactorType type) { this->factorType = type; }
   std::vector<ElemType> get_cast_types() { return castTypes; }
   void add_cast_type(ElemType castType) { castTypes.emplace_back(castType); }
+
+  ElemType get_type() { return type; }
+  void set_type(ElemType type) { this->type = type; }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {
@@ -200,6 +204,7 @@ private:
   std::shared_ptr<AST_factor_Node> factor;
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
+  ElemType type = ElemType::NONE;
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -223,6 +228,9 @@ public:
   void set_left(std::shared_ptr<AST_exp_Node> left) {
     this->left = std::move(left);
   }
+
+  ElemType get_type() { return type; }
+  void set_type(ElemType type) { this->type = type; }
 };
 
 class AST_ternary_exp_Node : public AST_exp_Node {

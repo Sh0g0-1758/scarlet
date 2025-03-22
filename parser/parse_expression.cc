@@ -66,7 +66,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
         function_call->add_unop_node(std::move(unop));
       }
 
-      function_call->set_type(ast::FactorType::FUNCTION_CALL);
+      function_call->set_factor_type(ast::FactorType::FUNCTION_CALL);
       function_call->set_identifier_node(std::move(identifier));
       EXPECT(token::TOKEN::OPEN_PARANTHESES);
       if (tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {

@@ -25,7 +25,7 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
       std::cout << ")";
     }
   } else {
-    if (factor->get_type() == ast::FactorType::FUNCTION_CALL) {
+    if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
       auto funcCall =
           std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor);
       std::cout << funcCall->get_AST_name() << "("
