@@ -24,7 +24,7 @@ void parser::parse_const(std::vector<token::Token> &tokens,
     } catch (std::out_of_range &e) {
       success = false;
       error_messages.emplace_back(
-          val + " is too large to represent as an int or long");
+          std::to_string(val) + " is too large to represent as an int or long");
       return;
     }
     if (val > INT_MAX) {
