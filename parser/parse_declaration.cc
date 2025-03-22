@@ -4,7 +4,8 @@ namespace scarlet {
 namespace parser {
 
 #define PARSE_SPECIFIER(decl)                                                  \
-  if (!tokens.empty() and is_storage_specifier(tokens[0].get_token())) {       \
+  if (!tokens.empty() and                                                      \
+      token::is_storage_specifier(tokens[0].get_token())) {                    \
     switch (tokens[0].get_token()) {                                           \
     case token::TOKEN::STATIC:                                                 \
       decl->set_specifier(ast::SpecifierType::STATIC);                         \
@@ -131,10 +132,9 @@ void parser::parse_param_list(
 
   while (tokens[0].get_token() == token::TOKEN::COMMA) {
     tokens.erase(tokens.begin());
-    EXPECT(token::TOKEN::INT);
-    EXPECT_IDENTIFIER();
     MAKE_SHARED(ast::Param, param);
-    param->type = ast::ElemType::INT;
+    PARSE_TYPE(param, set_type);
+    EXPECT_IDENTIFIER();
     param->identifier = std::move(identifier);
     decl->add_param(std::move(param));
   }

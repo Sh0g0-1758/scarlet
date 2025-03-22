@@ -4,6 +4,12 @@ namespace scarlet {
 namespace parser {
 
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
+  if (!factor->get_cast_types().empty()) {
+    std::cout << "Cast(";
+    for (auto cast_type : factor->get_cast_types()) {
+      std::cout << to_string(cast_type) << ", ";
+    }
+  }
   if (!factor->get_unop_nodes().empty()) {
     std::cout << "Unop( ";
     for (auto unop : factor->get_unop_nodes()) {
@@ -34,6 +40,9 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
                 << factor->get_identifier_node()->get_value() << ")";
     }
     if (!factor->get_unop_nodes().empty()) {
+      std::cout << ")";
+    }
+    if (!factor->get_cast_types().empty()) {
       std::cout << ")";
     }
   }

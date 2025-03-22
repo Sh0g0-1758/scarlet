@@ -3,6 +3,24 @@
 namespace scarlet {
 namespace parser {
 
+#define PARSE_TYPE(decl, func)                                                 \
+  if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::INT) {        \
+    tokens.erase(tokens.begin());                                              \
+    if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::LONG) {     \
+      tokens.erase(tokens.begin());                                            \
+      decl->func(ast::ElemType::LONG);                                         \
+    } else {                                                                   \
+      decl->func(ast::ElemType::INT);                                          \
+    }                                                                          \
+  } else {                                                                     \
+    EXPECT(token::TOKEN::LONG);                                                \
+    decl->func(ast::ElemType::LONG);                                           \
+    if (!tokens.empty() and (tokens[0].get_token() == token::TOKEN::INT or     \
+                             tokens[0].get_token() == token::TOKEN::LONG)) {   \
+      tokens.erase(tokens.begin());                                            \
+    }                                                                          \
+  }
+
 std::pair<bool, int>
 parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
   int i = 0;
@@ -95,11 +113,18 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
         tokens.erase(tokens.begin());
       }
     } else {
+      // it can have a nested expression or it could be a cast operation
       tokens.erase(tokens.begin());
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      factor->set_exp_node(std::move(exp));
-      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      if (!tokens.empty() and token::is_type_specifier(tokens[0].get_token())) {
+        PARSE_TYPE(factor, add_cast_type);
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+        parse_factor(tokens, factor);
+      } else {
+        MAKE_SHARED(ast::AST_exp_Node, exp);
+        parse_exp(tokens, exp);
+        factor->set_exp_node(std::move(exp));
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      }
     }
   } else {
     success = false;

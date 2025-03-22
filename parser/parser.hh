@@ -244,8 +244,10 @@ private:
       return "int";
     case ast::ElemType::LONG:
       return "long";
+    case ast::ElemType::NONE:
+      UNREACHABLE();
     }
-    UNREACHABLE()
+    UNREACHABLE();
   }
 
   std::string to_string(ast::SpecifierType type) {
@@ -258,15 +260,6 @@ private:
       return "none";
     }
     UNREACHABLE();
-  }
-
-  bool is_decl(token::TOKEN token) {
-    return token == token::TOKEN::INT || token == token::TOKEN::STATIC ||
-           token == token::TOKEN::EXTERN;
-  }
-
-  bool is_storage_specifier(token::TOKEN token) {
-    return token == token::TOKEN::STATIC || token == token::TOKEN::EXTERN;
   }
 
 public:

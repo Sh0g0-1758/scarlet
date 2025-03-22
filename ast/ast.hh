@@ -65,6 +65,9 @@ NOTE: in EBNF notation,
 namespace scarlet {
 namespace ast {
 
+enum class SpecifierType { NONE, STATIC, EXTERN };
+enum class ElemType { NONE, INT, LONG };
+
 class AST_const_Node {
 private:
   constant::Constant constant;
@@ -120,6 +123,7 @@ private:
   //  a  ->    b   ->  c
   std::shared_ptr<AST_exp_Node> exp_node;
   FactorType type = FactorType::BASIC;
+  std::vector<ElemType> castTypes;
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -146,6 +150,8 @@ public:
   std::shared_ptr<AST_exp_Node> get_exp_node() { return exp_node; }
   FactorType get_type() { return type; }
   void set_type(FactorType type) { this->type = type; }
+  std::vector<ElemType> get_cast_types() { return castTypes; }
+  void add_cast_type(ElemType castType) { castTypes.emplace_back(castType); }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {
@@ -346,8 +352,6 @@ public:
 };
 
 enum class DeclarationType { VARIABLE, FUNCTION };
-enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { INT, LONG };
 
 class AST_Declaration_Node {
 private:

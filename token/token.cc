@@ -513,6 +513,14 @@ bool is_right_associative(TOKEN token) {
          token == token::TOKEN::COMPOUND_RIGHTSHIFT;
 }
 
+bool is_type_specifier(TOKEN token) {
+  return token == TOKEN::INT or token == TOKEN::LONG;
+}
+
+bool is_storage_specifier(TOKEN token) {
+  return token == TOKEN::STATIC or token == TOKEN::EXTERN;
+}
+
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;

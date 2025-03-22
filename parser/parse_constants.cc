@@ -1,4 +1,5 @@
 #include "common.hh"
+#include <climits>
 
 namespace scarlet {
 namespace parser {
@@ -13,36 +14,44 @@ void parser::parse_const(std::vector<token::Token> &tokens,
     return;
   }
   MAKE_SHARED(ast::AST_const_Node, const_node);
+  constant::Constant constant;
+  constant::Value v;
   switch (tokens[0].get_token()) {
   case token::TOKEN::INT_CONSTANT: {
-    expect(tokens[0].get_token(), token::TOKEN::INT_CONSTANT);
-    if (!success)
+    long val{};
+    try {
+      val = std::stol(tokens[0].get_value().value());
+    } catch (std::out_of_range &e) {
+      success = false;
+      error_messages.emplace_back(
+          val + " is too large to represent as an int or long");
       return;
-    constant::Constant constant;
-    constant.set_type(constant::Type::INT);
-    constant::Value v;
-    v.i = std::stoi(tokens[0].get_value().value());
-    constant.set_value(v);
-    const_node->set_constant(constant);
-    factor->set_const_node(std::move(const_node));
-    tokens.erase(tokens.begin());
+    }
+    if (val > INT_MAX) {
+      constant.set_type(constant::Type::LONG);
+      v.l = val;
+    } else {
+      constant.set_type(constant::Type::INT);
+      v.i = val;
+    }
   } break;
   case token::TOKEN::LONG_CONSTANT: {
-    expect(tokens[0].get_token(), token::TOKEN::LONG_CONSTANT);
-    if (!success)
-      return;
-    constant::Constant constant;
     constant.set_type(constant::Type::LONG);
-    constant::Value v;
-    v.l = std::stol(tokens[0].get_value().value());
-    constant.set_value(v);
-    const_node->set_constant(constant);
-    factor->set_const_node(std::move(const_node));
-    tokens.erase(tokens.begin());
+    try {
+      v.l = std::stol(tokens[0].get_value().value());
+    } catch (std::out_of_range &e) {
+      success = false;
+      error_messages.emplace_back("Long constant out of range");
+      return;
+    }
   } break;
   default:
     break;
   }
+  constant.set_value(v);
+  const_node->set_constant(constant);
+  factor->set_const_node(std::move(const_node));
+  tokens.erase(tokens.begin());
 }
 
 } // namespace parser
