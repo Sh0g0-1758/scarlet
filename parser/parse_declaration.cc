@@ -55,17 +55,16 @@ void parser::parse_declaration(
     }
     iter++;
   }
-  PARSE_SPECIFIER(declaration);
   if (isFuncDecl) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
+    PARSE_SPECIFIER(decl);
     parse_function_declaration(tokens, decl, atGlobalLevel);
-    decl->set_specifier(declaration->get_specifier());
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     declaration->set_type(ast::DeclarationType::FUNCTION);
   } else {
     MAKE_SHARED(ast::AST_variable_declaration_Node, decl);
+    PARSE_SPECIFIER(decl);
     parse_variable_declaration(tokens, decl);
-    decl->set_specifier(declaration->get_specifier());
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     declaration->set_type(ast::DeclarationType::VARIABLE);
   }
@@ -75,7 +74,8 @@ void parser::parse_variable_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_variable_declaration_Node> decl) {
   PARSE_TYPE(decl, set_type);
-  PARSE_SPECIFIER(decl);
+  if (decl->get_specifier() == ast::SpecifierType::NONE)
+    PARSE_SPECIFIER(decl);
   EXPECT_IDENTIFIER();
   decl->set_identifier(std::move(identifier));
   if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
@@ -94,7 +94,8 @@ void parser::parse_function_declaration(
     std::shared_ptr<ast::AST_function_declaration_Node> decl,
     bool atGlobalLevel) {
   PARSE_TYPE(decl, set_return_type);
-  PARSE_SPECIFIER(decl);
+  if (decl->get_specifier() == ast::SpecifierType::NONE)
+    PARSE_SPECIFIER(decl);
   EXPECT_IDENTIFIER();
   decl->set_identifier(std::move(identifier));
   EXPECT(token::TOKEN::OPEN_PARANTHESES);
