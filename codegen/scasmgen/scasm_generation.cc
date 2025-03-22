@@ -11,7 +11,7 @@ namespace codegen {
     break;                                                                     \
   case scar::val_type::CONSTANT:                                               \
     scasm_src->set_type(scasm::operand_type::IMM);                             \
-    scasm_src->set_imm(stoi(inst->get_src1()->get_value()));                   \
+    scasm_src->set_imm(inst->get_src1()->get_const_val());                     \
     break;                                                                     \
   default:                                                                     \
     break;                                                                     \
@@ -106,7 +106,10 @@ void Codegen::gen_scasm() {
           scasm_inst->set_type(scasm::instruction_type::CMP);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
           scasm_src->set_type(scasm::operand_type::IMM);
-          scasm_src->set_imm(0);
+          constant::Constant zero;
+          zero.set_type(constant::Type::INT);
+          zero.set_value({.i = 0});
+          scasm_src->set_imm(zero);
           scasm_inst->set_src(std::move(scasm_src));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           switch (inst->get_src1()->get_type()) {
@@ -116,7 +119,7 @@ void Codegen::gen_scasm() {
             break;
           case scar::val_type::CONSTANT:
             scasm_dst->set_type(scasm::operand_type::IMM);
-            scasm_dst->set_imm(stoi(inst->get_src1()->get_value()));
+            scasm_dst->set_imm(inst->get_src1()->get_const_val());
             break;
           default:
             break;
@@ -128,7 +131,7 @@ void Codegen::gen_scasm() {
           scasm_inst2->set_type(scasm::instruction_type::MOV);
           MAKE_SHARED(scasm::scasm_operand, scasm_src2);
           scasm_src2->set_type(scasm::operand_type::IMM);
-          scasm_src2->set_imm(0);
+          scasm_src2->set_imm(zero);
           scasm_inst2->set_src(std::move(scasm_src2));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
           SET_DST(scasm_dst2);
@@ -195,7 +198,7 @@ void Codegen::gen_scasm() {
             break;
           case scar::val_type::CONSTANT:
             scasm_src->set_type(scasm::operand_type::IMM);
-            scasm_src->set_imm(stoi(inst->get_src2()->get_value()));
+            scasm_src->set_imm(inst->get_src2()->get_const_val());
             break;
           default:
             break;
@@ -209,7 +212,7 @@ void Codegen::gen_scasm() {
             break;
           case scar::val_type::CONSTANT:
             scasm_dst->set_type(scasm::operand_type::IMM);
-            scasm_dst->set_imm(stoi(inst->get_src1()->get_value()));
+            scasm_dst->set_imm(inst->get_src1()->get_const_val());
             break;
           default:
             break;
@@ -221,7 +224,10 @@ void Codegen::gen_scasm() {
           scasm_inst2->set_type(scasm::instruction_type::MOV);
           MAKE_SHARED(scasm::scasm_operand, scasm_src2);
           scasm_src2->set_type(scasm::operand_type::IMM);
-          scasm_src2->set_imm(0);
+          constant::Constant zero;
+          zero.set_type(constant::Type::INT);
+          zero.set_value({.i = 0});
+          scasm_src2->set_imm(zero);
           scasm_inst2->set_src(std::move(scasm_src2));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
           SET_DST(scasm_dst2);
@@ -288,7 +294,7 @@ void Codegen::gen_scasm() {
             scasm_src2->set_identifier_stack(inst->get_src2()->get_reg());
           } else if (inst->get_src2()->get_type() == scar::val_type::CONSTANT) {
             scasm_src2->set_type(scasm::operand_type::IMM);
-            scasm_src2->set_imm(stoi(inst->get_src2()->get_value()));
+            scasm_src2->set_imm(inst->get_src2()->get_const_val());
           }
           scasm_inst3->set_src(std::move(scasm_src2));
           scasm_func->add_instruction(std::move(scasm_inst3));
@@ -330,7 +336,7 @@ void Codegen::gen_scasm() {
           MAKE_SHARED(scasm::scasm_operand, scasm_src2);
           if (inst->get_src2()->get_type() == scar::val_type::CONSTANT) {
             scasm_src2->set_type(scasm::operand_type::IMM);
-            scasm_src2->set_imm(stoi(inst->get_src2()->get_value()));
+            scasm_src2->set_imm(inst->get_src2()->get_const_val());
           } else if (inst->get_src2()->get_type() == scar::val_type::VAR) {
             scasm_src2->set_type(scasm::operand_type::PSEUDO);
             scasm_src2->set_identifier_stack(inst->get_src2()->get_reg());
@@ -382,7 +388,7 @@ void Codegen::gen_scasm() {
             scasm_src2->set_identifier_stack(inst->get_src2()->get_reg());
           } else if (inst->get_src2()->get_type() == scar::val_type::CONSTANT) {
             scasm_src2->set_type(scasm::operand_type::IMM);
-            scasm_src2->set_imm(stoi(inst->get_src2()->get_value()));
+            scasm_src2->set_imm(inst->get_src2()->get_const_val());
           }
           scasm_inst2->set_src(std::move(scasm_src2));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
@@ -407,7 +413,7 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::LABEL);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::LABEL);
-        scasm_src->set_identifier_stack(inst->get_src1()->get_value());
+        scasm_src->set_identifier_stack(inst->get_src1()->get_label());
         scasm_inst->set_src(std::move(scasm_src));
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::JUMP) {
@@ -415,7 +421,7 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::JMP);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::LABEL);
-        scasm_src->set_identifier_stack(inst->get_src1()->get_value());
+        scasm_src->set_identifier_stack(inst->get_src1()->get_label());
         scasm_inst->set_src(std::move(scasm_src));
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO or
@@ -426,7 +432,10 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::CMP);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::IMM);
-        scasm_src->set_imm(0);
+        constant::Constant zero;
+        zero.set_type(constant::Type::INT);
+        zero.set_value({.i = 0});
+        scasm_src->set_imm(zero);
         scasm_inst->set_src(std::move(scasm_src));
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         switch (inst->get_src1()->get_type()) {
@@ -436,7 +445,7 @@ void Codegen::gen_scasm() {
           break;
         case scar::val_type::CONSTANT:
           scasm_dst->set_type(scasm::operand_type::IMM);
-          scasm_dst->set_imm(stoi(inst->get_src1()->get_value()));
+          scasm_dst->set_imm(inst->get_src1()->get_const_val());
           break;
         default:
           break;
@@ -456,7 +465,7 @@ void Codegen::gen_scasm() {
         scasm_inst2->set_src(std::move(scasm_src2));
         MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
         scasm_dst2->set_type(scasm::operand_type::LABEL);
-        scasm_dst2->set_identifier_stack(inst->get_dst()->get_value());
+        scasm_dst2->set_identifier_stack(inst->get_dst()->get_label());
         scasm_inst2->set_dst(std::move(scasm_dst2));
         scasm_func->add_instruction(std::move(scasm_inst2));
       } else if (inst->get_type() == scar::instruction_type::CALL) {
@@ -471,7 +480,10 @@ void Codegen::gen_scasm() {
           scasm_inst->set_type(scasm::instruction_type::ALLOCATE_STACK);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
           scasm_src->set_type(scasm::operand_type::IMM);
-          scasm_src->set_imm(8);
+          constant::Constant cpd;
+          cpd.set_type(constant::Type::INT);
+          cpd.set_value({.i = 8});
+          scasm_src->set_imm(cpd);
           scasm_inst->set_src(std::move(scasm_src));
           scasm_func->add_instruction(std::move(scasm_inst));
         }
@@ -486,7 +498,7 @@ void Codegen::gen_scasm() {
             break;
           case scar::val_type::CONSTANT:
             scasm_src->set_type(scasm::operand_type::IMM);
-            scasm_src->set_imm(stoi(funcCall->get_args()[i]->get_value()));
+            scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
             break;
           default:
             break;
@@ -510,7 +522,7 @@ void Codegen::gen_scasm() {
               break;
             case scar::val_type::CONSTANT:
               scasm_src->set_type(scasm::operand_type::IMM);
-              scasm_src->set_imm(stoi(funcCall->get_args()[i]->get_value()));
+              scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
               break;
             default:
               break;
@@ -557,7 +569,10 @@ void Codegen::gen_scasm() {
           scasm_inst2->set_type(scasm::instruction_type::DEALLOCATE_STACK);
           MAKE_SHARED(scasm::scasm_operand, scasm_src2);
           scasm_src2->set_type(scasm::operand_type::IMM);
-          scasm_src2->set_imm(bytesToRemove);
+          constant::Constant cbtr;
+          cbtr.set_type(constant::Type::INT);
+          cbtr.set_value({.i = bytesToRemove});
+          scasm_src2->set_imm(cbtr);
           scasm_inst2->set_src(std::move(scasm_src2));
           scasm_func->add_instruction(std::move(scasm_inst2));
         }

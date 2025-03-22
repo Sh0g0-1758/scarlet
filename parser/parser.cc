@@ -24,7 +24,7 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
 #define EXPISCONSTANT(exp)                                                     \
   (exp->get_binop_node() == nullptr and exp->get_left() == nullptr and         \
    exp->get_right() == nullptr and exp->get_factor_node() != nullptr and       \
-   exp->get_factor_node()->get_int_node() != nullptr and                       \
+   exp->get_factor_node()->get_const_node() != nullptr and                     \
    exp->get_factor_node()->get_unop_nodes().empty() and                        \
    exp->get_factor_node()->get_identifier_node() == nullptr and                \
    exp->get_factor_node()->get_exp_node() == nullptr)
@@ -98,11 +98,11 @@ void parser::semantic_analysis() {
                 "Variable " + var_name +
                 " is not initialized with a constant integer");
           } else {
-            globalSymbolTable[var_name].value =
-                std::stoi(vars->get_exp()
-                              ->get_factor_node()
-                              ->get_int_node()
-                              ->get_value());
+            globalSymbolTable[var_name].value = vars->get_exp()
+                                                    ->get_factor_node()
+                                                    ->get_const_node()
+                                                    ->get_constant()
+                                                    .get_value();
           }
         } else if (vars->get_specifier() != ast::SpecifierType::EXTERN) {
           // If the variable has not been defined and is not extern,
@@ -133,11 +133,11 @@ void parser::semantic_analysis() {
                 "Global variable " + var_name +
                 " is not initialized with a constant integer");
           } else {
-            symbol_table[{var_name, 0}].value =
-                std::stoi(vars->get_exp()
-                              ->get_factor_node()
-                              ->get_int_node()
-                              ->get_value());
+            symbol_table[{var_name, 0}].value = vars->get_exp()
+                                                    ->get_factor_node()
+                                                    ->get_const_node()
+                                                    ->get_constant()
+                                                    .get_value();
           }
         }
         globalSymbolTable[var_name] = symbol_table[{var_name, 0}];

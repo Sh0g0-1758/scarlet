@@ -55,8 +55,11 @@ void parser::analyze_statement(
         }
         case_val.insert(val);
         // clear out the current exp if valid
-        case_exp_label.first->get_factor_node()->get_int_node()->set_value(
-            std::to_string(val));
+        // TODO: CHANGE THIS
+        case_exp_label.first->get_factor_node()
+            ->get_const_node()
+            ->get_constant()
+            .set_value({.i = val});
         case_exp_label.first->set_binop_node(nullptr);
         case_exp_label.first->set_left(nullptr);
         case_exp_label.first->set_right(nullptr);

@@ -75,8 +75,8 @@ void Codegen::gen_scar_short_circuit_exp(
 
   // create a label to jump to
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst1);
-  scar_val_dst1->set_type(scar::val_type::UNKNOWN);
-  scar_val_dst1->set_value(get_fr_label_name());
+  scar_val_dst1->set_type(scar::val_type::LABEL);
+  scar_val_dst1->set_label(get_fr_label_name());
   scar_instruction->set_dst(std::move(scar_val_dst1));
   scar_function->add_instruction(std::move(scar_instruction));
 
@@ -91,8 +91,8 @@ void Codegen::gen_scar_short_circuit_exp(
   }
   scar_instruction2->set_src1(std::move(scar_val_src2));
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
-  scar_val_dst2->set_type(scar::val_type::UNKNOWN);
-  scar_val_dst2->set_value(get_last_fr_label_name());
+  scar_val_dst2->set_type(scar::val_type::LABEL);
+  scar_val_dst2->set_label(get_last_fr_label_name());
   scar_instruction2->set_dst(std::move(scar_val_dst2));
   scar_function->add_instruction(std::move(scar_instruction2));
 
@@ -103,9 +103,15 @@ void Codegen::gen_scar_short_circuit_exp(
   scar_instruction3->set_type(scar::instruction_type::COPY);
   scar_val_src3->set_type(scar::val_type::CONSTANT);
   if (sc_binop == binop::BINOP::LAND) {
-    scar_val_src3->set_value(std::to_string(1));
+    constant::Constant one;
+    one.set_type(constant::Type::INT);
+    one.set_value({.i = 1});
+    scar_val_src3->set_const_val(one);
   } else {
-    scar_val_src3->set_value(std::to_string(0));
+    constant::Constant zero;
+    zero.set_type(constant::Type::INT);
+    zero.set_value({.i = 0});
+    scar_val_src3->set_const_val(zero);
   }
   scar_val_dst3->set_type(scar::val_type::VAR);
   scar_val_dst3->set_reg_name(get_reg_name());
@@ -117,8 +123,8 @@ void Codegen::gen_scar_short_circuit_exp(
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction4);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
   scar_instruction4->set_type(scar::instruction_type::JUMP);
-  scar_val_src4->set_type(scar::val_type::UNKNOWN);
-  scar_val_src4->set_value(get_res_label_name());
+  scar_val_src4->set_type(scar::val_type::LABEL);
+  scar_val_src4->set_label(get_res_label_name());
   scar_instruction4->set_src1(std::move(scar_val_src4));
   scar_function->add_instruction(std::move(scar_instruction4));
 
@@ -126,8 +132,8 @@ void Codegen::gen_scar_short_circuit_exp(
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction5);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src5);
   scar_instruction5->set_type(scar::instruction_type::LABEL);
-  scar_val_src5->set_type(scar::val_type::UNKNOWN);
-  scar_val_src5->set_value(get_last_fr_label_name(true));
+  scar_val_src5->set_type(scar::val_type::LABEL);
+  scar_val_src5->set_label(get_last_fr_label_name(true));
   scar_instruction5->set_src1(std::move(scar_val_src5));
   scar_function->add_instruction(std::move(scar_instruction5));
 
@@ -138,9 +144,15 @@ void Codegen::gen_scar_short_circuit_exp(
   scar_instruction6->set_type(scar::instruction_type::COPY);
   scar_val_src6->set_type(scar::val_type::CONSTANT);
   if (sc_binop == binop::BINOP::LAND) {
-    scar_val_src6->set_value(std::to_string(0));
+    constant::Constant zero;
+    zero.set_type(constant::Type::INT);
+    zero.set_value({.i = 0});
+    scar_val_src6->set_const_val(zero);
   } else {
-    scar_val_src6->set_value(std::to_string(1));
+    constant::Constant one;
+    one.set_type(constant::Type::INT);
+    one.set_value({.i = 1});
+    scar_val_src6->set_const_val(one);
   }
   scar_val_dst6->set_type(scar::val_type::VAR);
   scar_val_dst6->set_reg_name(get_prev_reg_name());
@@ -152,8 +164,8 @@ void Codegen::gen_scar_short_circuit_exp(
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction7);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src7);
   scar_instruction7->set_type(scar::instruction_type::LABEL);
-  scar_val_src7->set_type(scar::val_type::UNKNOWN);
-  scar_val_src7->set_value(get_last_res_label_name());
+  scar_val_src7->set_type(scar::val_type::LABEL);
+  scar_val_src7->set_label(get_last_res_label_name());
   scar_instruction7->set_src1(std::move(scar_val_src7));
   scar_function->add_instruction(std::move(scar_instruction7));
 }
@@ -180,8 +192,8 @@ void Codegen::gen_scar_ternary_exp(
 
   // create a label to jump to
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst1);
-  scar_val_dst1->set_type(scar::val_type::UNKNOWN);
-  scar_val_dst1->set_value(get_fr_label_name());
+  scar_val_dst1->set_type(scar::val_type::LABEL);
+  scar_val_dst1->set_label(get_fr_label_name());
   scar_instruction->set_dst(std::move(scar_val_dst1));
   scar_function->add_instruction(std::move(scar_instruction));
 
@@ -210,8 +222,8 @@ void Codegen::gen_scar_ternary_exp(
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
   scar_instruction3->set_type(scar::instruction_type::JUMP);
-  scar_val_src3->set_type(scar::val_type::UNKNOWN);
-  scar_val_src3->set_value(get_res_label_name());
+  scar_val_src3->set_type(scar::val_type::LABEL);
+  scar_val_src3->set_label(get_res_label_name());
   scar_instruction3->set_src1(std::move(scar_val_src3));
   scar_function->add_instruction(std::move(scar_instruction3));
 
@@ -219,8 +231,8 @@ void Codegen::gen_scar_ternary_exp(
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction4);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
   scar_instruction4->set_type(scar::instruction_type::LABEL);
-  scar_val_src4->set_type(scar::val_type::UNKNOWN);
-  scar_val_src4->set_value(get_last_fr_label_name(true));
+  scar_val_src4->set_type(scar::val_type::LABEL);
+  scar_val_src4->set_label(get_last_fr_label_name(true));
   scar_instruction4->set_src1(std::move(scar_val_src4));
   scar_function->add_instruction(std::move(scar_instruction4));
 
@@ -243,8 +255,8 @@ void Codegen::gen_scar_ternary_exp(
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction6);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src6);
   scar_instruction6->set_type(scar::instruction_type::LABEL);
-  scar_val_src6->set_type(scar::val_type::UNKNOWN);
-  scar_val_src6->set_value(get_last_res_label_name());
+  scar_val_src6->set_type(scar::val_type::LABEL);
+  scar_val_src6->set_label(get_last_res_label_name());
   scar_instruction6->set_src1(std::move(scar_val_src6));
   scar_function->add_instruction(std::move(scar_instruction6));
 }

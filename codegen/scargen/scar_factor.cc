@@ -63,7 +63,10 @@ void Codegen::gen_scar_factor(
         scar_instruction->set_src1(std::move(scar_val_src));
 
         scar_val_src2->set_type(scar::val_type::CONSTANT);
-        scar_val_src2->set_value("1");
+        constant::Constant one;
+        one.set_type(constant::Type::INT);
+        one.set_value({.i = 1});
+        scar_val_src2->set_const_val(one);
         scar_instruction->set_src2(std::move(scar_val_src2));
 
         scar_function->add_instruction(std::move(scar_instruction));
@@ -121,7 +124,10 @@ void Codegen::gen_scar_factor(
         scar_instruction2->set_src1(std::move(scar_val_src2));
 
         scar_val_src3->set_type(scar::val_type::CONSTANT);
-        scar_val_src3->set_value("1");
+        constant::Constant one;
+        one.set_type(constant::Type::INT);
+        one.set_value({.i = 1});
+        scar_val_src3->set_const_val(one);
         scar_instruction2->set_src2(std::move(scar_val_src3));
 
         scar_val_dst2->set_type(scar::val_type::VAR);
@@ -141,10 +147,9 @@ void Codegen::gen_scar_factor(
 
       // deal with the source
       if (i == num_unpos - 1) {
-        if (factor->get_int_node() != nullptr and
-            !factor->get_int_node()->get_value().empty()) {
+        if (factor->get_const_node() != nullptr) {
           scar_val_src->set_type(scar::val_type::CONSTANT);
-          scar_val_src->set_value(factor->get_int_node()->get_value());
+          scar_val_src->set_const_val(factor->get_const_node()->get_constant());
         } else if (factor->get_identifier_node() != nullptr and
                    !factor->get_identifier_node()->get_value().empty()) {
           scar_val_src->set_type(scar::val_type::VAR);
@@ -161,7 +166,7 @@ void Codegen::gen_scar_factor(
           }
         } else if (!constant_buffer.empty()) {
           scar_val_src->set_type(scar::val_type::CONSTANT);
-          scar_val_src->set_value(constant_buffer);
+          scar_val_src->set_const_val(constant_buffer);
           constant_buffer.clear();
         } else if (!variable_buffer.empty()) {
           scar_val_src->set_type(scar::val_type::VAR);
@@ -191,9 +196,8 @@ void Codegen::gen_scar_factor(
     //       an identifier node or a function call
 
     // save constant for later use
-    if (factor->get_int_node() != nullptr and
-        !factor->get_int_node()->get_value().empty()) {
-      constant_buffer = factor->get_int_node()->get_value();
+    if (factor->get_const_node() != nullptr) {
+      constant_buffer = factor->get_const_node()->get_constant();
     }
 
     // save variable for later use
@@ -226,7 +230,7 @@ void Codegen::gen_scar_factor_function_call(
     if (!constant_buffer.empty()) {
       MAKE_SHARED(scar::scar_Val_Node, scar_val);
       scar_val->set_type(scar::val_type::CONSTANT);
-      scar_val->set_value(constant_buffer);
+      scar_val->set_const_val(constant_buffer);
       scar_instruction->add_arg(scar_val);
       constant_buffer.clear();
     } else if (!variable_buffer.empty()) {

@@ -60,8 +60,8 @@ private:
                  std::shared_ptr<ast::AST_exp_Node> &exp, int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_factor_Node> &factor);
-  void parse_int(std::vector<token::Token> &tokens,
-                 std::shared_ptr<ast::AST_factor_Node> &factor);
+  void parse_const(std::vector<token::Token> &tokens,
+                   std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_binop(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_binop_Node> &binop);
   void expect(token::TOKEN actual_token, token::TOKEN expected_token);

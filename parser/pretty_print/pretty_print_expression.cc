@@ -12,9 +12,9 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
   }
   if (factor->get_exp_node() != nullptr) {
     pretty_print_exp(factor->get_exp_node());
-  } else if (factor->get_int_node() != nullptr) {
-    std::cout << factor->get_int_node()->get_AST_name() << "("
-              << factor->get_int_node()->get_value() << ")";
+  } else if (factor->get_const_node() != nullptr) {
+    std::cout << factor->get_const_node()->get_AST_name() << "("
+              << factor->get_const_node()->get_constant() << ")";
     if (!factor->get_unop_nodes().empty()) {
       std::cout << ")";
     }

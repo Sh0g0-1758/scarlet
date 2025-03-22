@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <token/token.hh>
+#include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
@@ -64,14 +65,14 @@ NOTE: in EBNF notation,
 namespace scarlet {
 namespace ast {
 
-class AST_int_Node {
+class AST_const_Node {
 private:
-  std::string value;
+  constant::Constant constant;
 
 public:
-  std::string get_AST_name() { return "Int"; }
-  std::string get_value() { return value; }
-  void set_value(std::string value) { this->value = std::move(value); }
+  std::string get_AST_name() { return "Constant"; }
+  constant::Constant &get_constant() { return constant; }
+  void set_constant(constant::Constant constant) { this->constant = constant; }
 };
 
 class AST_identifier_Node {
@@ -110,7 +111,7 @@ enum class FactorType { BASIC, FUNCTION_CALL };
 
 class AST_factor_Node {
 private:
-  std::shared_ptr<AST_int_Node> int_node;
+  std::shared_ptr<AST_const_Node> const_node;
   std::shared_ptr<AST_identifier_Node> identifier_node;
   std::vector<std::shared_ptr<AST_unop_Node>> unop_nodes;
   // No need to make this a weak pointer because if an object of exp a points to
@@ -122,9 +123,9 @@ private:
 
 public:
   std::string get_AST_name() { return "Factor"; }
-  std::shared_ptr<AST_int_Node> get_int_node() { return int_node; }
-  void set_int_node(std::shared_ptr<AST_int_Node> int_node) {
-    this->int_node = std::move(int_node);
+  std::shared_ptr<AST_const_Node> get_const_node() { return const_node; }
+  void set_const_node(std::shared_ptr<AST_const_Node> const_node) {
+    this->const_node = std::move(const_node);
   }
   std::shared_ptr<AST_identifier_Node> get_identifier_node() {
     return identifier_node;
