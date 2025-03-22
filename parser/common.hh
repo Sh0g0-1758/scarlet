@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parser.hh"
+#include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 
 namespace scarlet {

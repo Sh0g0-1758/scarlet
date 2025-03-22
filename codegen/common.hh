@@ -12,7 +12,7 @@ namespace codegen {
     variable_buffer.clear();                                                   \
   } else if (!constant_buffer.empty()) {                                       \
     src->set_type(scar::val_type::CONSTANT);                                   \
-    src->set_value(constant_buffer);                                           \
+    src->set_const_val(constant_buffer);                                       \
     constant_buffer.clear();                                                   \
   } else {                                                                     \
     src->set_type(scar::val_type::VAR);                                        \

@@ -377,7 +377,8 @@ void lexer::tokenize() {
         }
       }
       constant += literal_suffix;
-      // This if for a float ie. when there is no proceeding l,L,u,U suffix
+      // Treat as a float when there is no proceeding l,L,u,U suffix and next
+      // token is dot
       if (ch == '.' and literal_suffix.size() == 0) {
         constant += '.';
         file.get(ch);
@@ -429,7 +430,13 @@ void lexer::tokenize() {
         file.seekg(-1, std::ios::cur);
         continue;
       } else {
-        tokens.emplace_back(token::Token(token::TOKEN::CONSTANT, constant));
+        if (literal_suffix == "") {
+          tokens.emplace_back(
+              token::Token(token::TOKEN::INT_CONSTANT, constant));
+        } else if (literal_suffix == "l" or literal_suffix == "L") {
+          tokens.emplace_back(
+              token::Token(token::TOKEN::LONG_CONSTANT, constant));
+        }
       }
       file.seekg(-1, std::ios::cur);
       col_number += (constant.length());

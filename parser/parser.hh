@@ -60,8 +60,8 @@ private:
                  std::shared_ptr<ast::AST_exp_Node> &exp, int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_factor_Node> &factor);
-  void parse_int(std::vector<token::Token> &tokens,
-                 std::shared_ptr<ast::AST_factor_Node> &factor);
+  void parse_const(std::vector<token::Token> &tokens,
+                   std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_binop(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_binop_Node> &binop);
   void expect(token::TOKEN actual_token, token::TOKEN expected_token);
@@ -242,8 +242,12 @@ private:
     switch (type) {
     case ast::ElemType::INT:
       return "int";
+    case ast::ElemType::LONG:
+      return "long";
+    case ast::ElemType::NONE:
+      UNREACHABLE();
     }
-    UNREACHABLE()
+    UNREACHABLE();
   }
 
   std::string to_string(ast::SpecifierType type) {
@@ -256,15 +260,6 @@ private:
       return "none";
     }
     UNREACHABLE();
-  }
-
-  bool is_decl(token::TOKEN token) {
-    return token == token::TOKEN::INT || token == token::TOKEN::STATIC ||
-           token == token::TOKEN::EXTERN;
-  }
-
-  bool is_storage_specifier(token::TOKEN token) {
-    return token == token::TOKEN::STATIC || token == token::TOKEN::EXTERN;
   }
 
 public:

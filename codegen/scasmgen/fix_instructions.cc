@@ -14,7 +14,10 @@ void Codegen::fix_instructions() {
     scasm_stack_instr->set_type(scasm::instruction_type::ALLOCATE_STACK);
     MAKE_SHARED(scasm::scasm_operand, val);
     val->set_type(scasm::operand_type::IMM);
-    val->set_imm(funcs->get_frame_size());
+    constant::Constant cfs;
+    cfs.set_type(constant::Type::INT);
+    cfs.set_value({.i = funcs->get_frame_size()});
+    val->set_imm(cfs);
     scasm_stack_instr->set_src(std::move(val));
     funcs->get_instructions().insert(funcs->get_instructions().begin(),
                                      std::move(scasm_stack_instr));

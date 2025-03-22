@@ -16,7 +16,8 @@ void parser::parse_block(std::vector<token::Token> &tokens,
 void parser::parse_block_item(std::vector<token::Token> &tokens,
                               std::shared_ptr<ast::AST_Block_Node> &block) {
   MAKE_SHARED(ast::AST_Block_Item_Node, block_item);
-  if (is_decl(tokens[0].get_token())) {
+  if (token::is_type_specifier(tokens[0].get_token()) or
+      token::is_storage_specifier(tokens[0].get_token())) {
     block_item->set_type(ast::BlockItemType::DECLARATION);
     MAKE_SHARED(ast::AST_Declaration_Node, declaration);
     parse_declaration(tokens, declaration);

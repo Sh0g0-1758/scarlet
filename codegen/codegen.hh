@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 #include <tools/symbolTable/symbolTable.hh>
 #include <vector>
@@ -45,7 +46,7 @@ private:
   std::string file_name;
   int curr_buff = 0;
   std::vector<std::vector<unop::UNOP>> unop_buffer;
-  std::string constant_buffer;
+  constant::Constant constant_buffer;
   std::string variable_buffer;
   bool success = true;
   int curr_regNum;

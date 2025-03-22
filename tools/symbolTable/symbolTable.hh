@@ -2,6 +2,7 @@
 
 #include <ast/ast.hh>
 #include <string>
+#include <tools/constant/constant.hh>
 #include <vector>
 
 namespace scarlet {
@@ -30,7 +31,7 @@ struct symbolInfo {
   symbolType type;
   std::vector<ast::ElemType> typeDef;
   defType def = defType::FALSE;
-  int value = 0;
+  constant::Value value{};
 };
 } // namespace symbolTable
 } // namespace scarlet

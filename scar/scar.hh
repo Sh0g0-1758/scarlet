@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 #include <vector>
 
@@ -50,8 +51,8 @@ enum class instruction_type {
 };
 // CONSTANT is a constant value (1, 2 , 42 etc.)
 // VAR is a scar register
-// UNKNOWN is everything else (labels, etc.)
-enum class val_type { UNKNOWN, CONSTANT, VAR };
+// LABEL is label which can be jumped to
+enum class val_type { LABEL, CONSTANT, VAR };
 
 std::string to_string(instruction_type type);
 std::string to_string(val_type type);
@@ -75,19 +76,24 @@ public:
 class scar_Val_Node {
 private:
   val_type type;
-  std::string val;
+  constant::Constant const_val;
   std::string reg_name;
+  std::string label;
 
 public:
   std::string get_scar_name() { return "Val"; }
   val_type get_type() { return type; }
   void set_type(val_type type) { this->type = std::move(type); }
-  std::string get_value() { return val; }
-  void set_value(std::string value) { this->val = std::move(value); }
+  constant::Constant get_const_val() { return const_val; }
+  void set_const_val(constant::Constant const_val) {
+    this->const_val = const_val;
+  }
   std::string get_reg() { return reg_name; }
   void set_reg_name(std::string identifier) {
     this->reg_name = std::move(identifier);
   }
+  std::string get_label() { return label; }
+  void set_label(std::string label) { this->label = std::move(label); }
 };
 
 class scar_Instruction_Node {

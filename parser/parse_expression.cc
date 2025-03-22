@@ -3,6 +3,24 @@
 namespace scarlet {
 namespace parser {
 
+#define PARSE_TYPE(decl, func)                                                 \
+  if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::INT) {        \
+    tokens.erase(tokens.begin());                                              \
+    if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::LONG) {     \
+      tokens.erase(tokens.begin());                                            \
+      decl->func(ast::ElemType::LONG);                                         \
+    } else {                                                                   \
+      decl->func(ast::ElemType::INT);                                          \
+    }                                                                          \
+  } else {                                                                     \
+    EXPECT(token::TOKEN::LONG);                                                \
+    decl->func(ast::ElemType::LONG);                                           \
+    if (!tokens.empty() and (tokens[0].get_token() == token::TOKEN::INT or     \
+                             tokens[0].get_token() == token::TOKEN::LONG)) {   \
+      tokens.erase(tokens.begin());                                            \
+    }                                                                          \
+  }
+
 std::pair<bool, int>
 parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
   int i = 0;
@@ -35,8 +53,9 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> &factor) {
-  if (tokens[0].get_token() == token::TOKEN::CONSTANT) {
-    parse_int(tokens, factor);
+  if (tokens[0].get_token() == token::TOKEN::INT_CONSTANT or
+      tokens[0].get_token() == token::TOKEN::LONG_CONSTANT) {
+    parse_const(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();
     if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
@@ -47,7 +66,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
         function_call->add_unop_node(std::move(unop));
       }
 
-      function_call->set_type(ast::FactorType::FUNCTION_CALL);
+      function_call->set_factor_type(ast::FactorType::FUNCTION_CALL);
       function_call->set_identifier_node(std::move(identifier));
       EXPECT(token::TOKEN::OPEN_PARANTHESES);
       if (tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
@@ -94,11 +113,18 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
         tokens.erase(tokens.begin());
       }
     } else {
+      // it can have a nested expression or it could be a cast operation
       tokens.erase(tokens.begin());
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      factor->set_exp_node(std::move(exp));
-      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      if (!tokens.empty() and token::is_type_specifier(tokens[0].get_token())) {
+        PARSE_TYPE(factor, add_cast_type);
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+        parse_factor(tokens, factor);
+      } else {
+        MAKE_SHARED(ast::AST_exp_Node, exp);
+        parse_exp(tokens, exp);
+        factor->set_exp_node(std::move(exp));
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      }
     }
   } else {
     success = false;

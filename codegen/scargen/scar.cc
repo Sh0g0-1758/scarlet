@@ -36,7 +36,10 @@ void Codegen::gen_scar() {
       scar_instruction->set_type(scar::instruction_type::RETURN);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       scar_val_src->set_type(scar::val_type::CONSTANT);
-      scar_val_src->set_value("0");
+      constant::Constant ret_0;
+      ret_0.set_type(constant::Type::INT);
+      ret_0.set_value({.i = 0});
+      scar_val_src->set_const_val(ret_0);
       scar_instruction->set_src1(scar_val_src);
       scar_function->add_instruction(scar_instruction);
 
@@ -57,7 +60,8 @@ void Codegen::gen_scar() {
       MAKE_SHARED(scar::scar_Identifier_Node, identifier);
       identifier->set_value(symbol.second.name);
       static_variable->set_identifier(std::move(identifier));
-      static_variable->set_init(symbol.second.value);
+      // TODO change this
+      static_variable->set_init(symbol.second.value.i);
       if (symbol.second.link == symbolTable::linkage::INTERNAL) {
         static_variable->set_global(false);
       }

@@ -6,7 +6,7 @@ namespace parser {
 #define EXPISCONSTANT(exp)                                                     \
   (exp->get_binop_node() == nullptr and exp->get_left() == nullptr and         \
    exp->get_right() == nullptr and exp->get_factor_node() != nullptr and       \
-   exp->get_factor_node()->get_int_node() != nullptr and                       \
+   exp->get_factor_node()->get_const_node() != nullptr and                     \
    exp->get_factor_node()->get_unop_nodes().empty() and                        \
    exp->get_factor_node()->get_identifier_node() == nullptr and                \
    exp->get_factor_node()->get_exp_node() == nullptr)
@@ -75,11 +75,11 @@ void parser::analyze_declaration(
                 "Global variable " + var_name +
                 " is not initialized with a constant integer");
           } else {
-            symbol_table[{var_name, indx}].value =
-                std::stoi(varDecl->get_exp()
-                              ->get_factor_node()
-                              ->get_int_node()
-                              ->get_value());
+            symbol_table[{var_name, indx}].value = varDecl->get_exp()
+                                                       ->get_factor_node()
+                                                       ->get_const_node()
+                                                       ->get_constant()
+                                                       .get_value();
           }
         }
         globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];

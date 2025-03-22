@@ -24,8 +24,13 @@ int parser::analyze_case_exp(std::shared_ptr<ast::AST_exp_Node> exp,
         "case expression is not an integer constant expression");
   } else if (exp->get_factor_node() != nullptr) {
     // the factor base can either be an int or an expression
-    if (exp->get_factor_node()->get_int_node() != nullptr)
-      left = std::stoi(exp->get_factor_node()->get_int_node()->get_value());
+    if (exp->get_factor_node()->get_const_node() != nullptr)
+      // TODO: left can be any other type as well
+      left = exp->get_factor_node()
+                 ->get_const_node()
+                 ->get_constant()
+                 .get_value()
+                 .i;
     else if (exp->get_factor_node()->get_exp_node() != nullptr)
       left = analyze_case_exp(exp->get_factor_node()->get_exp_node(),
                               symbol_table, indx);
