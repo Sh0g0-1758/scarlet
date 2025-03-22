@@ -347,7 +347,7 @@ public:
 
 enum class DeclarationType { VARIABLE, FUNCTION };
 enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { INT };
+enum class ElemType { INT, LONG };
 
 class AST_Declaration_Node {
 private:
@@ -386,6 +386,8 @@ public:
 struct Param {
   ElemType type;
   std::shared_ptr<AST_identifier_Node> identifier;
+
+  void set_type(ElemType type) { this->type = type; }
 };
 
 class AST_Block_Node;

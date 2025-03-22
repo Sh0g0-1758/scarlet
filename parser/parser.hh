@@ -242,6 +242,8 @@ private:
     switch (type) {
     case ast::ElemType::INT:
       return "int";
+    case ast::ElemType::LONG:
+      return "long";
     }
     UNREACHABLE()
   }

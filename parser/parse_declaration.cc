@@ -3,6 +3,39 @@
 namespace scarlet {
 namespace parser {
 
+#define PARSE_SPECIFIER(decl)                                                  \
+  if (!tokens.empty() and is_storage_specifier(tokens[0].get_token())) {       \
+    switch (tokens[0].get_token()) {                                           \
+    case token::TOKEN::STATIC:                                                 \
+      decl->set_specifier(ast::SpecifierType::STATIC);                         \
+      break;                                                                   \
+    case token::TOKEN::EXTERN:                                                 \
+      decl->set_specifier(ast::SpecifierType::EXTERN);                         \
+      break;                                                                   \
+    default:                                                                   \
+      break;                                                                   \
+    }                                                                          \
+    tokens.erase(tokens.begin());                                              \
+  }
+
+#define PARSE_TYPE(decl, func)                                                 \
+  if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::INT) {        \
+    tokens.erase(tokens.begin());                                              \
+    if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::LONG) {     \
+      tokens.erase(tokens.begin());                                            \
+      decl->func(ast::ElemType::LONG);                                         \
+    } else {                                                                   \
+      decl->func(ast::ElemType::INT);                                          \
+    }                                                                          \
+  } else {                                                                     \
+    EXPECT(token::TOKEN::LONG);                                                \
+    decl->func(ast::ElemType::LONG);                                           \
+    if (!tokens.empty() and (tokens[0].get_token() == token::TOKEN::INT or     \
+                             tokens[0].get_token() == token::TOKEN::LONG)) {   \
+      tokens.erase(tokens.begin());                                            \
+    }                                                                          \
+  }
+
 void parser::parse_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Declaration_Node> &declaration,
@@ -22,32 +55,7 @@ void parser::parse_declaration(
     }
     iter++;
   }
-  if (!tokens.empty() and is_storage_specifier(tokens[0].get_token())) {
-    switch (tokens[0].get_token()) {
-    case token::TOKEN::STATIC:
-      declaration->set_specifier(ast::SpecifierType::STATIC);
-      break;
-    case token::TOKEN::EXTERN:
-      declaration->set_specifier(ast::SpecifierType::EXTERN);
-      break;
-    default:
-      break;
-    }
-    tokens.erase(tokens.begin());
-  } else if (tokens.size() > 1 and
-             is_storage_specifier(tokens[1].get_token())) {
-    switch (tokens[1].get_token()) {
-    case token::TOKEN::STATIC:
-      declaration->set_specifier(ast::SpecifierType::STATIC);
-      break;
-    case token::TOKEN::EXTERN:
-      declaration->set_specifier(ast::SpecifierType::EXTERN);
-      break;
-    default:
-      break;
-    }
-    tokens.erase(tokens.begin() + 1);
-  }
+  PARSE_SPECIFIER(declaration);
   if (isFuncDecl) {
     MAKE_SHARED(ast::AST_function_declaration_Node, decl);
     parse_function_declaration(tokens, decl, atGlobalLevel);
@@ -66,8 +74,8 @@ void parser::parse_declaration(
 void parser::parse_variable_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_variable_declaration_Node> decl) {
-  EXPECT(token::TOKEN::INT);
-  decl->set_type(ast::ElemType::INT);
+  PARSE_TYPE(decl, set_type);
+  PARSE_SPECIFIER(decl);
   EXPECT_IDENTIFIER();
   decl->set_identifier(std::move(identifier));
   if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
@@ -85,8 +93,8 @@ void parser::parse_function_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_function_declaration_Node> decl,
     bool atGlobalLevel) {
-  EXPECT(token::TOKEN::INT);
-  decl->set_return_type(ast::ElemType::INT);
+  PARSE_TYPE(decl, set_return_type);
+  PARSE_SPECIFIER(decl);
   EXPECT_IDENTIFIER();
   decl->set_identifier(std::move(identifier));
   EXPECT(token::TOKEN::OPEN_PARANTHESES);
@@ -112,12 +120,11 @@ void parser::parse_param_list(
     tokens.erase(tokens.begin());
     return;
   }
+  MAKE_SHARED(ast::Param, param);
 
-  EXPECT(token::TOKEN::INT);
+  PARSE_TYPE(param, set_type);
 
   EXPECT_IDENTIFIER();
-  MAKE_SHARED(ast::Param, param);
-  param->type = ast::ElemType::INT;
   param->identifier = std::move(identifier);
   decl->add_param(std::move(param));
 
