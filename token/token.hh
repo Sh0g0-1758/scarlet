@@ -129,5 +129,6 @@ std::string get_token_type(TOKEN token);
 bool is_right_associative(TOKEN token);
 bool is_type_specifier(TOKEN token);
 bool is_storage_specifier(TOKEN token);
+bool is_constant_or_identifier(TOKEN token);
 } // namespace token
 } // namespace scarlet

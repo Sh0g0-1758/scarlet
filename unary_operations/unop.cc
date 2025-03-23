@@ -23,5 +23,11 @@ std::string to_string(UNOP unop) {
   }
   return "";
 }
+
+bool is_incr_decr(UNOP unop) {
+  return unop == UNOP::PREINCREMENT or unop == UNOP::PREDECREMENT or
+         unop == UNOP::POSTINCREMENT or unop == UNOP::POSTDECREMENT;
+}
+
 } // namespace unop
 } // namespace scarlet

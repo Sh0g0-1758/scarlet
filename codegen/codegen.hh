@@ -44,8 +44,6 @@ private:
   scar::scar_Program_Node scar;
   scasm::scasm_program scasm;
   std::string file_name;
-  int curr_buff = 0;
-  std::vector<std::vector<unop::UNOP>> unop_buffer;
   constant::Constant constant_buffer;
   std::string variable_buffer;
   bool success = true;
@@ -89,9 +87,7 @@ private:
 public:
   Codegen(ast::AST_Program_Node program, int counter,
           std::map<std::string, symbolTable::symbolInfo> gst)
-      : program(program), curr_regNum(counter), globalSymbolTable(gst) {
-    unop_buffer.resize(2);
-  }
+      : program(program), curr_regNum(counter), globalSymbolTable(gst) {}
   // ###### COMPILER PASSES ######
   // IR PASS
   void gen_scar();

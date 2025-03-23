@@ -14,5 +14,6 @@ enum class UNOP {
   POSTDECREMENT
 };
 std::string to_string(UNOP unop);
+bool is_incr_decr(UNOP unop);
 } // namespace unop
 } // namespace scarlet

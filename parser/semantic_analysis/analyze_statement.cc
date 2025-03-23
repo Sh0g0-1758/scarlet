@@ -3,6 +3,14 @@
 namespace scarlet {
 namespace parser {
 
+#define EXPISCONSTANT(exp)                                                     \
+  (exp->get_binop_node() == nullptr and exp->get_left() == nullptr and         \
+   exp->get_right() == nullptr and exp->get_factor_node() != nullptr and       \
+   exp->get_factor_node()->get_const_node() != nullptr and                     \
+   exp->get_factor_node()->get_unop_node() == nullptr and                      \
+   exp->get_factor_node()->get_identifier_node() == nullptr and                \
+   exp->get_factor_node()->get_exp_node() == nullptr)
+
 void parser::analyze_statement(
     std::shared_ptr<ast::AST_Statement_Node> statement,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -38,28 +46,36 @@ void parser::analyze_statement(
   } break;
   case ast::statementType::SWITCH: {
     // iterate over case_exp_label and analyze the case expression
-    std::set<int> case_val;
+    std::map<constant::Constant, bool> case_val;
     analyze_exp(statement->get_exps(), symbol_table, indx);
     auto switch_statement =
         std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
     for (auto case_exp_label : switch_statement->get_case_exp_label()) {
-      int val = analyze_case_exp(case_exp_label.first, symbol_table, indx);
-      if (!success == false) {
-        if (case_exp_label.first == nullptr)
-          continue;
-        if (case_val.find(val) != case_val.end()) {
+      // default case has no expression
+      if (case_exp_label.first == nullptr) {
+        continue;
+      }
+      // switch expression should be a constant value
+      if (!EXPISCONSTANT(case_exp_label.first)) {
+        success = false;
+        error_messages.emplace_back(
+            "Case expression is not a constant integer expression");
+        continue;
+      } else {
+        constant::Constant constVal = case_exp_label.first->get_factor_node()
+                                          ->get_const_node()
+                                          ->get_constant();
+        if (case_val.find(constVal) != case_val.end()) {
           success = false;
           error_messages.emplace_back(
               "Duplicate case value in switch statement");
           continue;
         }
-        case_val.insert(val);
-        // clear out the current exp if valid
-        // TODO: CHANGE THIS
+        case_val[constVal] = true;
         case_exp_label.first->get_factor_node()
             ->get_const_node()
             ->get_constant()
-            .set_value({.i = val});
+            .set_value(constVal.get_value());
         case_exp_label.first->set_binop_node(nullptr);
         case_exp_label.first->set_left(nullptr);
         case_exp_label.first->set_right(nullptr);

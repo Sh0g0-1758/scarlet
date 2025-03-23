@@ -32,7 +32,7 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
       break;
     }
   }
-  if (tokens[i].get_token() == token::TOKEN::IDENTIFIER) {
+  if (token::is_constant_or_identifier(tokens[i].get_token())) {
     int num_open_parentheses = i;
     int tmp = i;
     i++;
@@ -61,11 +61,6 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
       // TREAT IT AS A FUNCTION CALL
       MAKE_SHARED(ast::AST_factor_function_call_Node, function_call);
-
-      for (auto unop : factor->get_unop_nodes()) {
-        function_call->add_unop_node(std::move(unop));
-      }
-
       function_call->set_factor_type(ast::FactorType::FUNCTION_CALL);
       function_call->set_identifier_node(std::move(identifier));
       EXPECT(token::TOKEN::OPEN_PARANTHESES);
@@ -87,28 +82,37 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     }
   } else if (token::is_unary_op(tokens[0].get_token())) {
     parse_unary_op(tokens, factor);
-    parse_factor(tokens, factor);
+    MAKE_SHARED(ast::AST_factor_Node, nested_factor);
+    parse_factor(tokens, nested_factor);
+    factor->set_child(std::move(nested_factor));
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     /**
      * Simplification for Single-Identifier Parentheses
      *
-     * When encountering an expression with a single identifier wrapped in
-     * parentheses, e.g., (identifier), we treat it as a simple identifier
-     * rather than a complex expression. This optimization significantly reduces
-     * complexity during semantic analysis by avoiding unnecessary nested
-     * expression handling.
+     * When encountering an expression with a single identifier or numeric
+     * constant wrapped in parentheses, we treat it as a simple identifier or
+     * numeric constant rather than a complex expression. This optimization
+     * significantly reduces complexity during semantic analysis by avoiding
+     * unnecessary nested expression handling.
      *
      * Example:
      *   Input: (((((((((((((((((a)))))))))))))))))
      *   Treats as: a
+     *
+     *   Input: (((((((((((((((((1)))))))))))))))))
+     *   Treats as: 1
      */
     std::pair<bool, int> res = is_single_identifier_parentheses(tokens);
     if (res.first) {
       for (int i = 0; i < res.second; i++) {
         tokens.erase(tokens.begin());
       }
-      EXPECT_IDENTIFIER();
-      factor->set_identifier_node(std::move(identifier));
+      if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+        EXPECT_IDENTIFIER();
+        factor->set_identifier_node(std::move(identifier));
+      } else {
+        parse_const(tokens, factor);
+      }
       for (int i = 0; i < res.second; i++) {
         tokens.erase(tokens.begin());
       }
@@ -116,9 +120,11 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       // it can have a nested expression or it could be a cast operation
       tokens.erase(tokens.begin());
       if (!tokens.empty() and token::is_type_specifier(tokens[0].get_token())) {
-        PARSE_TYPE(factor, add_cast_type);
+        PARSE_TYPE(factor, set_cast_type);
         EXPECT(token::TOKEN::CLOSE_PARANTHESES);
-        parse_factor(tokens, factor);
+        MAKE_SHARED(ast::AST_factor_Node, nested_factor);
+        parse_factor(tokens, nested_factor);
+        factor->set_child(std::move(nested_factor));
       } else {
         MAKE_SHARED(ast::AST_exp_Node, exp);
         parse_exp(tokens, exp);
@@ -137,14 +143,25 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
   // POST INCREMENT OR DECREMENT
   if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR or
       tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
-    MAKE_SHARED(ast::AST_unop_Node, unop);
-    if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR) {
-      unop->set_op(unop::UNOP::POSTINCREMENT);
+    if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
+      success = false;
+      error_messages.emplace_back(
+          "Expected an lvalue for the increment / decrement operator");
     } else {
-      unop->set_op(unop::UNOP::POSTDECREMENT);
+      MAKE_SHARED(ast::AST_factor_Node, nested_factor);
+      nested_factor->set_identifier_node(factor->get_identifier_node());
+      factor->set_identifier_node(nullptr);
+      factor->set_child(std::move(nested_factor));
+
+      MAKE_SHARED(ast::AST_unop_Node, unop);
+      if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR) {
+        unop->set_op(unop::UNOP::POSTINCREMENT);
+      } else {
+        unop->set_op(unop::UNOP::POSTDECREMENT);
+      }
+      tokens.erase(tokens.begin());
+      factor->set_unop_node(std::move(unop));
     }
-    tokens.erase(tokens.begin());
-    factor->add_unop_node(std::move(unop));
   }
 }
 

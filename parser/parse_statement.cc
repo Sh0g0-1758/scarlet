@@ -109,18 +109,23 @@ void parser::parse_statement(
   } else if (tokens[0].get_token() == token::TOKEN::SWITCH) {
     MAKE_SHARED(ast::AST_switch_statement_Node, switch_statement);
     switch_statement->set_type(ast::statementType::SWITCH);
+
     switch_stack.push(switch_statement);
+
     tokens.erase(tokens.begin());
     switch_statement->set_labels(get_switch_loop_labels());
+
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     switch_statement->set_exp(std::move(exp));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+
     MAKE_SHARED(ast::AST_Statement_Node, stmt);
     parse_statement(tokens, stmt);
     switch_statement->set_stmt(std::move(stmt));
-    remove_switch_loop_labels();
+    remove_switch_loop_label();
+
     statement =
         std::static_pointer_cast<ast::AST_Statement_Node>(switch_statement);
     switch_stack.pop();
@@ -131,22 +136,24 @@ void parser::parse_statement(
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
-    if (exp->get_factor_node() == nullptr and
-        exp->get_binop_node() == nullptr) {
+
+    if (exp->get_factor_node() == nullptr) {
       error_messages.emplace_back("case expression is empty");
       success = false;
     }
-    // case_statement->set_exp(std::move(exp));
+
     case_statement->set_labels({get_case_label(), nullptr});
     MAKE_SHARED(ast::AST_identifier_Node, label);
     label = case_statement->get_labels().first;
+
     if (switch_stack.empty()) {
       error_messages.emplace_back(
-          "default case found outside of switch construct");
+          "case statement found outside of switch construct");
       success = false;
     } else {
       switch_stack.top()->set_case_exp_label(exp, label);
     }
+
     EXPECT(token::TOKEN::COLON);
     statement =
         std::static_pointer_cast<ast::AST_Statement_Node>(case_statement);
@@ -159,7 +166,7 @@ void parser::parse_statement(
     label = default_case_statement->get_labels().first;
     if (switch_stack.empty()) {
       error_messages.emplace_back(
-          "default case found outside of switch construct");
+          "default case statement found outside of switch construct");
       success = false;
     } else {
       if (switch_stack.top()->get_has_default_case()) {
@@ -174,7 +181,6 @@ void parser::parse_statement(
     EXPECT(token::TOKEN::COLON);
     statement = std::static_pointer_cast<ast::AST_Statement_Node>(
         default_case_statement);
-
   } else if (tokens[0].get_token() == token::TOKEN::CONTINUE) {
     tokens.erase(tokens.begin());
     statement->set_type(ast::statementType::CONTINUE);

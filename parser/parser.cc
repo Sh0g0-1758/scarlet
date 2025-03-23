@@ -25,7 +25,7 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
   (exp->get_binop_node() == nullptr and exp->get_left() == nullptr and         \
    exp->get_right() == nullptr and exp->get_factor_node() != nullptr and       \
    exp->get_factor_node()->get_const_node() != nullptr and                     \
-   exp->get_factor_node()->get_unop_nodes().empty() and                        \
+   exp->get_factor_node()->get_unop_node() == nullptr and                      \
    exp->get_factor_node()->get_identifier_node() == nullptr and                \
    exp->get_factor_node()->get_exp_node() == nullptr)
 

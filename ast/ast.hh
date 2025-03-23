@@ -116,14 +116,15 @@ class AST_factor_Node {
 private:
   std::shared_ptr<AST_const_Node> const_node;
   std::shared_ptr<AST_identifier_Node> identifier_node;
-  std::vector<std::shared_ptr<AST_unop_Node>> unop_nodes;
+  std::shared_ptr<AST_unop_Node> unop_node;
   // No need to make this a weak pointer because if an object of exp a points to
   // factor b then factor b can never point to exp a. It can only point to
   // another object of exp, say c. exp -> factor -> exp
   //  a  ->    b   ->  c
   std::shared_ptr<AST_exp_Node> exp_node;
   FactorType factorType = FactorType::BASIC;
-  std::vector<ElemType> castTypes;
+  ElemType castType;
+  std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
 
 public:
@@ -139,20 +140,25 @@ public:
   set_identifier_node(std::shared_ptr<AST_identifier_Node> identifier_node) {
     this->identifier_node = std::move(identifier_node);
   }
-  std::vector<std::shared_ptr<AST_unop_Node>> get_unop_nodes() {
-    return unop_nodes;
-  }
-  void add_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
-    unop_nodes.emplace_back(std::move(unop_node));
+  std::shared_ptr<AST_unop_Node> get_unop_node() { return unop_node; }
+  void set_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
+    this->unop_node = std::move(unop_node);
   }
   void set_exp_node(std::shared_ptr<AST_exp_Node> exp_node) {
     this->exp_node = std::move(exp_node);
   }
   std::shared_ptr<AST_exp_Node> get_exp_node() { return exp_node; }
+
   FactorType get_factor_type() { return factorType; }
   void set_factor_type(FactorType type) { this->factorType = type; }
-  std::vector<ElemType> get_cast_types() { return castTypes; }
-  void add_cast_type(ElemType castType) { castTypes.emplace_back(castType); }
+
+  ElemType get_cast_type() { return castType; }
+  void set_cast_type(ElemType castType) { this->castType = castType; }
+
+  std::shared_ptr<AST_factor_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_factor_Node> child) {
+    this->child = std::move(child);
+  }
 
   ElemType get_type() { return type; }
   void set_type(ElemType type) { this->type = type; }
