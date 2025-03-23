@@ -3,14 +3,6 @@
 namespace scarlet {
 namespace parser {
 
-#define EXPISCONSTANT(exp)                                                     \
-  (exp->get_binop_node() == nullptr and exp->get_left() == nullptr and         \
-   exp->get_right() == nullptr and exp->get_factor_node() != nullptr and       \
-   exp->get_factor_node()->get_const_node() != nullptr and                     \
-   exp->get_factor_node()->get_unop_node() == nullptr and                      \
-   exp->get_factor_node()->get_identifier_node() == nullptr and                \
-   exp->get_factor_node()->get_exp_node() == nullptr)
-
 void parser::analyze_declaration(
     std::shared_ptr<ast::AST_Declaration_Node> declaration,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -34,79 +26,11 @@ void parser::analyze_declaration(
       auto varDecl =
           std::static_pointer_cast<ast::AST_variable_declaration_Node>(
               declaration);
-      if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
-        // extern variables within block scope can't have initializers
-        if (varDecl->get_exp() != nullptr) {
-          success = false;
-          error_messages.emplace_back("Variable " + var_name +
-                                      " has both 'extern' and initializer");
-        }
-        if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
-          // If the variable has already been declared, then it should have the
-          // same type
-          if (globalSymbolTable[var_name].type !=
-                  symbolTable::symbolType::VARIABLE or
-              globalSymbolTable[var_name].typeDef[0] != varDecl->get_type()) {
-            success = false;
-            error_messages.emplace_back(
-                var_name + " redeclared as a different kind of symbol");
-          }
-          // do nothing as the variable has already been declared
-          symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
-        } else {
-          symbol_table[{var_name, indx}] = {var_name,
-                                            symbolTable::linkage::EXTERNAL,
-                                            symbolTable::symbolType::VARIABLE,
-                                            {varDecl->get_type()}};
-          globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
-        }
-      } else if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
-        std::string temp_name = get_temp_name(var_name);
-        varDecl->get_identifier()->set_identifier(temp_name);
-        symbol_table[{var_name, indx}] = {temp_name,
-                                          symbolTable::linkage::INTERNAL,
-                                          symbolTable::symbolType::VARIABLE,
-                                          {varDecl->get_type()}};
-        symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
-        if (varDecl->get_exp() != nullptr) {
-          if (!EXPISCONSTANT(varDecl->get_exp())) {
-            success = false;
-            error_messages.emplace_back(
-                "Global variable " + var_name +
-                " is not initialized with a constant integer");
-          } else {
-            symbol_table[{var_name, indx}].value = varDecl->get_exp()
-                                                       ->get_factor_node()
-                                                       ->get_const_node()
-                                                       ->get_constant()
-                                                       .get_value();
-          }
-        }
-        globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
-      } else {
-        std::string temp_name = get_temp_name(var_name);
-        varDecl->get_identifier()->set_identifier(temp_name);
-        symbol_table[{var_name, indx}] = {temp_name,
-                                          symbolTable::linkage::NONE,
-                                          symbolTable::symbolType::VARIABLE,
-                                          {varDecl->get_type()}};
-        if (varDecl->get_exp() != nullptr) {
-          symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
-          analyze_exp(varDecl->get_exp(), symbol_table, indx);
-        }
-        globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
-      }
+      analyze_local_variable_declaration(varDecl, symbol_table, var_name, indx);
     }
   } else {
-    // 1. Check that the function parameters always have different names.
-    // 2. If the identifier has already been declared somewhere in the same
-    //    scope then make sure that it is also function declaration.
-    // 3. Add the function declaration with the correct function type
-    //    (return type ++ args_type) into the symbol table
-    // 4. Check that two instances of the function declaration don't have
-    //    different types.
-    // 5. Make sure that function declarations at block scope don't have
-    //    static storage specifier.
+    // Make sure that function declarations at block scope don't have
+    // static storage specifier.
     if (indx != 0 and
         declaration->get_specifier() == ast::SpecifierType::STATIC) {
       success = false;
@@ -117,68 +41,294 @@ void parser::analyze_declaration(
     auto funcDecl =
         std::static_pointer_cast<ast::AST_function_declaration_Node>(
             declaration);
-    std::set<std::string> param_names;
-    for (auto param : funcDecl->get_params()) {
-      if (param_names.find(param->identifier->get_value()) !=
-          param_names.end()) {
+    analyze_function_declaration(funcDecl, symbol_table, var_name, indx);
+  }
+}
+
+void parser::analyze_global_variable_declaration(
+    std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table) {
+  std::string var_name = varDecl->get_identifier()->get_value();
+
+  // Check if the symbol has been declared before
+  if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
+    // Ensure that the previous declaration has the same type
+    if (globalSymbolTable[var_name].type != symbolTable::symbolType::VARIABLE or
+        globalSymbolTable[var_name].typeDef[0] != varDecl->get_type()) {
+      success = false;
+      error_messages.emplace_back(var_name +
+                                  " redeclared as a different kind of symbol");
+    }
+
+    // If the symbol has been redefined, throw an error
+    if (globalSymbolTable[var_name].def == symbolTable::defType::TRUE and
+        varDecl->get_exp() != nullptr) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " has already been defined");
+    }
+
+    if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
+      // The linkage will be the same as the linkage of the previous
+      // declaration.
+    } else if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
+      // If the previous declaration was external, throw an error
+      if (globalSymbolTable[var_name].link == symbolTable::linkage::EXTERNAL) {
         success = false;
         error_messages.emplace_back(
-            "Variable " + param->identifier->get_value() + " already declared");
-      } else {
-        param_names.insert(param->identifier->get_value());
+            "Variable " + var_name +
+            " declared with static storage specifier after being declared "
+            "with external linkage");
+      }
+    } else {
+      // If the previous declaration was internal, throw an error
+      if (globalSymbolTable[var_name].link == symbolTable::linkage::INTERNAL) {
+        success = false;
+        error_messages.emplace_back("Variable " + var_name +
+                                    " declared with external linkage after "
+                                    "being declared with internal linkage");
       }
     }
 
-    if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
-      if (symbol_table[{var_name, indx}].type !=
-          symbolTable::symbolType::FUNCTION) {
+    // If the previous declaration was because of a block scope extern
+    // then it is possible that the symbol definition is not present in the
+    // symbol table at index 0
+    if (symbol_table.find({var_name, 0}) == symbol_table.end()) {
+      symbol_table[{var_name, 0}] = globalSymbolTable[var_name];
+    }
+
+    // If the variable has been defined, check that it is initialized with a
+    // constant integer
+    if (varDecl->get_exp() != nullptr) {
+      symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
+      globalSymbolTable[var_name].def = symbolTable::defType::TRUE;
+      if (!EXPISCONSTANT(varDecl->get_exp())) {
+        success = false;
+        error_messages.emplace_back(
+            "Variable " + var_name +
+            " is not initialized with a constant integer");
+      } else {
+        globalSymbolTable[var_name].value = varDecl->get_exp()
+                                                ->get_factor_node()
+                                                ->get_const_node()
+                                                ->get_constant()
+                                                .get_value();
+      }
+    } else if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
+      // If the variable has not been defined and is not extern,
+      // mark it as a tentative definition
+      symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
+      globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
+    }
+  } else { // symbol has not been declared before
+    // Give appropriate linkage to the variable
+    symbol_table[{var_name, 0}] = {var_name,
+                                   symbolTable::linkage::EXTERNAL,
+                                   symbolTable::symbolType::VARIABLE,
+                                   {varDecl->get_type()},
+                                   symbolTable::defType::TENTATIVE};
+    if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
+      symbol_table[{var_name, 0}].link = symbolTable::linkage::INTERNAL;
+    } else if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
+      symbol_table[{var_name, 0}].def = symbolTable::defType::FALSE;
+    }
+
+    // Make sure that global variables are initialized only with
+    // constant integers
+    if (varDecl->get_exp() != nullptr) {
+      symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
+      if (!EXPISCONSTANT(varDecl->get_exp())) {
+        success = false;
+        error_messages.emplace_back(
+            "Global variable " + var_name +
+            " is not initialized with a constant integer");
+      } else {
+        symbol_table[{var_name, 0}].value = varDecl->get_exp()
+                                                ->get_factor_node()
+                                                ->get_const_node()
+                                                ->get_constant()
+                                                .get_value();
+      }
+    }
+    globalSymbolTable[var_name] = symbol_table[{var_name, 0}];
+  }
+}
+
+void parser::analyze_global_function_declaration(
+    std::shared_ptr<ast::AST_function_declaration_Node> funcDecl,
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table) {
+  if (funcDecl->get_block() == nullptr) {
+    analyze_declaration(funcDecl, symbol_table, 0);
+  } else {
+    std::string func_name = funcDecl->get_identifier()->get_value();
+    if (globalSymbolTable.find(func_name) != globalSymbolTable.end() and
+        globalSymbolTable[func_name].def == symbolTable::defType::TRUE) {
+      success = false;
+      error_messages.emplace_back("Function " + func_name +
+                                  " has already been defined");
+    }
+    analyze_declaration(funcDecl, symbol_table, 0);
+    symbol_table[{func_name, 0}].def = symbolTable::defType::TRUE;
+    globalSymbolTable[func_name].def = symbolTable::defType::TRUE;
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        proxy_symbol_table(symbol_table);
+    for (auto param : funcDecl->get_params()) {
+      std::string temp_name = get_temp_name(param->identifier->get_value());
+      proxy_symbol_table[{param->identifier->get_value(), 1}] = {
+          temp_name,
+          symbolTable::linkage::NONE,
+          symbolTable::symbolType::VARIABLE,
+          {param->type}};
+      param->identifier->set_identifier(temp_name);
+    }
+    goto_labels.clear();
+    analyze_block(funcDecl->get_block(), proxy_symbol_table, 1);
+  }
+}
+
+void parser::analyze_function_declaration(
+    std::shared_ptr<ast::AST_function_declaration_Node> funcDecl,
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table,
+    std::string &var_name, int indx) {
+  // Check that the function parameters always have different names.
+  std::set<std::string> param_names;
+  for (auto param : funcDecl->get_params()) {
+    if (param_names.find(param->identifier->get_value()) != param_names.end()) {
+      success = false;
+      error_messages.emplace_back("Variable " + param->identifier->get_value() +
+                                  " already declared");
+    } else {
+      param_names.insert(param->identifier->get_value());
+    }
+  }
+
+  // If the identifier has already been declared somewhere in the same
+  // scope then make sure that it is also function declaration.
+  if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
+    if (symbol_table[{var_name, indx}].type !=
+        symbolTable::symbolType::FUNCTION) {
+      success = false;
+      error_messages.emplace_back(var_name +
+                                  " redeclared as a different kind of symbol");
+    }
+  }
+
+  // create the function type (return_type ++ arg_types)
+  std::vector<ast::ElemType> funcType;
+  funcType.emplace_back(funcDecl->get_return_type());
+  for (auto param : funcDecl->get_params()) {
+    funcType.emplace_back(param->type);
+  }
+
+  // If the function has already been declared, make sure that it has the
+  // same type as the current declaration and has an acceptable linkage.
+  if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
+    if (globalSymbolTable[var_name].typeDef != funcType or
+        globalSymbolTable[var_name].type == symbolTable::symbolType::VARIABLE) {
+      success = false;
+      error_messages.emplace_back(var_name +
+                                  " redeclared with different signature");
+    } else {
+      symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
+      if (funcDecl->get_specifier() == ast::SpecifierType::EXTERN or
+          funcDecl->get_specifier() == ast::SpecifierType::NONE) {
+        // This function declaration will have the same linkage as the earlier
+        // function declaration. Hence we don't need to do anything.
+      } else if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
+        if (globalSymbolTable[var_name].link ==
+            symbolTable::linkage::EXTERNAL) {
+          // Two declarations of the same identifier with different linkages
+          // is illegal
+          success = false;
+          error_messages.emplace_back(
+              "Function " + var_name +
+              " declared with static storage specifier after being declared "
+              "with external linkage");
+        }
+      }
+    }
+  } else {
+    // Add the function declaration with the correct function type
+    // and linkage into the symbol table
+    symbol_table[{var_name, indx}] = {var_name, symbolTable::linkage::EXTERNAL,
+                                      symbolTable::symbolType::FUNCTION,
+                                      funcType};
+    if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
+      symbol_table[{var_name, indx}].link = symbolTable::linkage::INTERNAL;
+    }
+    globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
+  }
+}
+
+void parser::analyze_local_variable_declaration(
+    std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table,
+    std::string &var_name, int indx) {
+  if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
+    // extern variables within block scope can't have initializers
+    if (varDecl->get_exp() != nullptr) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " has both 'extern' and initializer");
+    }
+    if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
+      // If the variable has already been declared, then it should have the
+      // same type
+      if (globalSymbolTable[var_name].type !=
+              symbolTable::symbolType::VARIABLE or
+          globalSymbolTable[var_name].typeDef[0] != varDecl->get_type()) {
         success = false;
         error_messages.emplace_back(
             var_name + " redeclared as a different kind of symbol");
       }
-    }
-
-    std::vector<ast::ElemType> funcType;
-    funcType.emplace_back(funcDecl->get_return_type());
-    for (auto param : funcDecl->get_params()) {
-      funcType.emplace_back(param->type);
-    }
-
-    if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
-      if (globalSymbolTable[var_name].typeDef != funcType or
-          globalSymbolTable[var_name].type ==
-              symbolTable::symbolType::VARIABLE) {
-        success = false;
-        error_messages.emplace_back(var_name +
-                                    " redeclared with different signature");
-      } else {
-        symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
-        if (funcDecl->get_specifier() == ast::SpecifierType::EXTERN or
-            funcDecl->get_specifier() == ast::SpecifierType::NONE) {
-          // This function declaration will have the same linkage as the earlier
-          // function declaration. Hence we don't need to do anything.
-        } else if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
-          if (globalSymbolTable[var_name].link ==
-              symbolTable::linkage::EXTERNAL) {
-            // Two declarations of the same identifier with different linkages
-            // is illegal
-            success = false;
-            error_messages.emplace_back(
-                "Function " + var_name +
-                " declared with static storage specifier after being declared "
-                "with external linkage");
-          }
-        }
-      }
+      // do nothing as the variable has already been declared
+      symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
     } else {
-      symbol_table[{var_name, indx}] = {
-          var_name, symbolTable::linkage::EXTERNAL,
-          symbolTable::symbolType::FUNCTION, funcType};
-      if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
-        symbol_table[{var_name, indx}].link = symbolTable::linkage::INTERNAL;
-      }
+      symbol_table[{var_name, indx}] = {var_name,
+                                        symbolTable::linkage::EXTERNAL,
+                                        symbolTable::symbolType::VARIABLE,
+                                        {varDecl->get_type()}};
       globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
     }
+  } else if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
+    std::string temp_name = get_temp_name(var_name);
+    varDecl->get_identifier()->set_identifier(temp_name);
+    symbol_table[{var_name, indx}] = {temp_name,
+                                      symbolTable::linkage::INTERNAL,
+                                      symbolTable::symbolType::VARIABLE,
+                                      {varDecl->get_type()}};
+    symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
+    if (varDecl->get_exp() != nullptr) {
+      if (!EXPISCONSTANT(varDecl->get_exp())) {
+        success = false;
+        error_messages.emplace_back(
+            "Global variable " + var_name +
+            " is not initialized with a constant integer");
+      } else {
+        symbol_table[{var_name, indx}].value = varDecl->get_exp()
+                                                   ->get_factor_node()
+                                                   ->get_const_node()
+                                                   ->get_constant()
+                                                   .get_value();
+      }
+    }
+    globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
+  } else {
+    std::string temp_name = get_temp_name(var_name);
+    varDecl->get_identifier()->set_identifier(temp_name);
+    symbol_table[{var_name, indx}] = {temp_name,
+                                      symbolTable::linkage::NONE,
+                                      symbolTable::symbolType::VARIABLE,
+                                      {varDecl->get_type()}};
+    if (varDecl->get_exp() != nullptr) {
+      symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
+      analyze_exp(varDecl->get_exp(), symbol_table, indx);
+    }
+    globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
   }
 }
 

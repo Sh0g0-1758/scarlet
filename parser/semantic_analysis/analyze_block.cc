@@ -23,5 +23,16 @@ void parser::analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
   }
 }
 
+void parser::analyze_goto_labels() {
+  // Check that all labels are declared
+  for (auto label : goto_labels) {
+    if (label.second == false) {
+      success = false;
+      error_messages.emplace_back("Label " + label.first +
+                                  " used but not declared");
+    }
+  }
+}
+
 } // namespace parser
 } // namespace scarlet

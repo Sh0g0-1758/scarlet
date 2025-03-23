@@ -95,11 +95,30 @@ private:
                      std::map<std::pair<std::string, int>,
                               symbolTable::symbolInfo> &symbol_table,
                      int indx);
+  void analyze_goto_labels();
   void analyze_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration,
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
+  void analyze_global_variable_declaration(
+      std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table);
+  void analyze_global_function_declaration(
+      std::shared_ptr<ast::AST_function_declaration_Node> funcDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table);
+  void analyze_function_declaration(
+      std::shared_ptr<ast::AST_function_declaration_Node> funcDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
+      std::string &var_name, int indx);
+  void analyze_local_variable_declaration(
+      std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
+      std::string &var_name, int indx);
   void analyze_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
                          std::map<std::pair<std::string, int>,
                                   symbolTable::symbolInfo> &symbol_table,
@@ -109,14 +128,6 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
-  // void assign_type_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
-  //                            std::map<std::pair<std::string, int>,
-  //                                     symbolTable::symbolInfo> &symbol_table,
-  //                            int indx);
-  // void assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-  //                         std::map<std::pair<std::string, int>,
-  //                                  symbolTable::symbolInfo> &symbol_table,
-  //                         int indx);
   std::string get_temp_name(std::string &name) {
     std::string tmp = name + "." + std::to_string(symbol_counter);
     symbol_counter++;
