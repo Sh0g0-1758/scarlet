@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
@@ -99,7 +100,7 @@ std::string to_string(cond_code cond);
 class scasm_operand {
 private:
   operand_type type;
-  int imm;
+  constant::Constant imm;
   register_type reg;
   cond_code cond;
   std::string identifier_stack;
@@ -108,8 +109,8 @@ public:
   std::string get_scasm_name() { return "Operand"; }
   operand_type get_type() { return type; }
   void set_type(operand_type type) { this->type = type; }
-  int get_imm() { return imm; }
-  void set_imm(int imm) { this->imm = imm; }
+  constant::Constant get_imm() { return imm; }
+  void set_imm(constant::Constant imm) { this->imm = imm; }
   register_type get_reg() { return reg; }
   void set_reg(register_type reg) { this->reg = reg; }
   cond_code get_cond() { return cond; }

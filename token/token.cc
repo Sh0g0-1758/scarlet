@@ -8,8 +8,11 @@ void print_token(TOKEN token) {
   case TOKEN::IDENTIFIER:
     std::cerr << "identifier ";
     break;
-  case TOKEN::CONSTANT:
-    std::cerr << "constant ";
+  case TOKEN::INT_CONSTANT:
+    std::cerr << "int constant ";
+    break;
+  case TOKEN::LONG_CONSTANT:
+    std::cerr << "long constant ";
     break;
   case TOKEN::CHARACTER_CONSTANT:
     std::cerr << "character constant ";
@@ -243,8 +246,10 @@ std::string to_string(TOKEN token) {
   switch (token) {
   case TOKEN::IDENTIFIER:
     return "identifier";
-  case TOKEN::CONSTANT:
-    return "constant";
+  case TOKEN::INT_CONSTANT:
+    return "int constant";
+  case TOKEN::LONG_CONSTANT:
+    return "long constant";
   case TOKEN::CHARACTER_CONSTANT:
     return "character constant";
   case TOKEN::CHAR_ARR:
@@ -506,6 +511,19 @@ bool is_right_associative(TOKEN token) {
          token == token::TOKEN::COMPOUND_XOR or
          token == token::TOKEN::COMPOUND_LEFTSHIFT or
          token == token::TOKEN::COMPOUND_RIGHTSHIFT;
+}
+
+bool is_type_specifier(TOKEN token) {
+  return token == TOKEN::INT or token == TOKEN::LONG;
+}
+
+bool is_storage_specifier(TOKEN token) {
+  return token == TOKEN::STATIC or token == TOKEN::EXTERN;
+}
+
+bool is_constant_or_identifier(TOKEN token) {
+  return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
+         token == TOKEN::IDENTIFIER;
 }
 
 int get_binop_prec(TOKEN token) {

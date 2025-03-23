@@ -13,7 +13,8 @@ enum class TOKEN {
   IDENTIFIER,
   // CONSTANTS
   CONSTANTSTART,
-  CONSTANT,
+  INT_CONSTANT,
+  LONG_CONSTANT,
   CHARACTER_CONSTANT,
   CHAR_ARR,
   CONSTANTEND,
@@ -126,5 +127,8 @@ std::string char_to_esc(char c);
 int get_binop_prec(TOKEN token);
 std::string get_token_type(TOKEN token);
 bool is_right_associative(TOKEN token);
+bool is_type_specifier(TOKEN token);
+bool is_storage_specifier(TOKEN token);
+bool is_constant_or_identifier(TOKEN token);
 } // namespace token
 } // namespace scarlet

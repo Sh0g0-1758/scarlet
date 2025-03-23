@@ -13,7 +13,6 @@ add_library(scarParser STATIC
     semantic_analysis/analyze_block.cc
     semantic_analysis/analyze_declaration.cc
     semantic_analysis/analyze_expression.cc
-    semantic_analysis/analyze_case_exp.cc
     semantic_analysis/analyze_statement.cc
 
     pretty_print/pretty_print_block.cc

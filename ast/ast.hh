@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <token/token.hh>
+#include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
@@ -22,9 +23,11 @@ Grammar:
 
 <function-declaration> ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
 
-<param-list> ::= "void" | "int" <identifier> { "," "int" <identifier> }
+<param-list> ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
 
-<specifier> ::= "int" | "static" | "extern"
+<type-specifier> ::= "int" | "long"
+
+<specifier> ::= <type-specifier> | "static" | "extern"
 
 <block_item> ::= <statement> | <declaration>
 
@@ -36,7 +39,7 @@ Grammar:
 
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 
-<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+<factor> ::= <const> | <identifier> | "(" { <type-specifier> }+ ")" <factor> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
 
 <argument-list> ::= <exp> { "," <exp> }
 
@@ -44,9 +47,13 @@ Grammar:
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
+<const> ::= <int> | <long>
+
 <identifier> ::= ? An identifier token ?
 
-<int> ::= ? A constant token ?
+<int> ::= ? A constant int token ?
+
+<long> ::= ? A constant long token ?
 
 NOTE: in EBNF notation,
 1. {} means 0 or more instances of the enclosed expression
@@ -58,14 +65,17 @@ NOTE: in EBNF notation,
 namespace scarlet {
 namespace ast {
 
-class AST_int_Node {
+enum class SpecifierType { NONE, STATIC, EXTERN };
+enum class ElemType { NONE, INT, LONG };
+
+class AST_const_Node {
 private:
-  std::string value;
+  constant::Constant constant;
 
 public:
-  std::string get_AST_name() { return "Int"; }
-  std::string get_value() { return value; }
-  void set_value(std::string value) { this->value = std::move(value); }
+  std::string get_AST_name() { return "Constant"; }
+  constant::Constant &get_constant() { return constant; }
+  void set_constant(constant::Constant constant) { this->constant = constant; }
 };
 
 class AST_identifier_Node {
@@ -104,21 +114,24 @@ enum class FactorType { BASIC, FUNCTION_CALL };
 
 class AST_factor_Node {
 private:
-  std::shared_ptr<AST_int_Node> int_node;
+  std::shared_ptr<AST_const_Node> const_node;
   std::shared_ptr<AST_identifier_Node> identifier_node;
-  std::vector<std::shared_ptr<AST_unop_Node>> unop_nodes;
+  std::shared_ptr<AST_unop_Node> unop_node;
   // No need to make this a weak pointer because if an object of exp a points to
   // factor b then factor b can never point to exp a. It can only point to
   // another object of exp, say c. exp -> factor -> exp
   //  a  ->    b   ->  c
   std::shared_ptr<AST_exp_Node> exp_node;
-  FactorType type = FactorType::BASIC;
+  FactorType factorType = FactorType::BASIC;
+  ElemType castType;
+  std::shared_ptr<AST_factor_Node> child;
+  ElemType type = ElemType::NONE;
 
 public:
   std::string get_AST_name() { return "Factor"; }
-  std::shared_ptr<AST_int_Node> get_int_node() { return int_node; }
-  void set_int_node(std::shared_ptr<AST_int_Node> int_node) {
-    this->int_node = std::move(int_node);
+  std::shared_ptr<AST_const_Node> get_const_node() { return const_node; }
+  void set_const_node(std::shared_ptr<AST_const_Node> const_node) {
+    this->const_node = std::move(const_node);
   }
   std::shared_ptr<AST_identifier_Node> get_identifier_node() {
     return identifier_node;
@@ -127,18 +140,28 @@ public:
   set_identifier_node(std::shared_ptr<AST_identifier_Node> identifier_node) {
     this->identifier_node = std::move(identifier_node);
   }
-  std::vector<std::shared_ptr<AST_unop_Node>> get_unop_nodes() {
-    return unop_nodes;
-  }
-  void add_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
-    unop_nodes.emplace_back(std::move(unop_node));
+  std::shared_ptr<AST_unop_Node> get_unop_node() { return unop_node; }
+  void set_unop_node(std::shared_ptr<AST_unop_Node> unop_node) {
+    this->unop_node = std::move(unop_node);
   }
   void set_exp_node(std::shared_ptr<AST_exp_Node> exp_node) {
     this->exp_node = std::move(exp_node);
   }
   std::shared_ptr<AST_exp_Node> get_exp_node() { return exp_node; }
-  FactorType get_type() { return type; }
-  void set_type(FactorType type) { this->type = type; }
+
+  FactorType get_factor_type() { return factorType; }
+  void set_factor_type(FactorType type) { this->factorType = type; }
+
+  ElemType get_cast_type() { return castType; }
+  void set_cast_type(ElemType castType) { this->castType = castType; }
+
+  std::shared_ptr<AST_factor_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_factor_Node> child) {
+    this->child = std::move(child);
+  }
+
+  ElemType get_type() { return type; }
+  void set_type(ElemType type) { this->type = type; }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {
@@ -187,6 +210,7 @@ private:
   std::shared_ptr<AST_factor_Node> factor;
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
+  ElemType type = ElemType::NONE;
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -210,6 +234,9 @@ public:
   void set_left(std::shared_ptr<AST_exp_Node> left) {
     this->left = std::move(left);
   }
+
+  ElemType get_type() { return type; }
+  void set_type(ElemType type) { this->type = type; }
 };
 
 class AST_ternary_exp_Node : public AST_exp_Node {
@@ -339,8 +366,6 @@ public:
 };
 
 enum class DeclarationType { VARIABLE, FUNCTION };
-enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { INT };
 
 class AST_Declaration_Node {
 private:
@@ -379,6 +404,8 @@ public:
 struct Param {
   ElemType type;
   std::shared_ptr<AST_identifier_Node> identifier;
+
+  void set_type(ElemType type) { this->type = type; }
 };
 
 class AST_Block_Node;

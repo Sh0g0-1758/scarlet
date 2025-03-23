@@ -27,9 +27,13 @@ private:
   int loop_continue_counter = 0;
   int loop_end_counter = 0;
   int ifelse_counter = 0;
-  std::string function_name = "";
+  int switch_counter = 0;
+  int case_counter = 0;
+  int goto_label_counter = 0;
+  std::string function_name{};
   std::stack<std::string> loop_start_labels;
-  std::stack<std::string> loop_end_labels;
+  // break can appear in both loop and switch statements
+  std::stack<std::string> loop_switch_end_labels;
   std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   void
@@ -60,8 +64,8 @@ private:
                  std::shared_ptr<ast::AST_exp_Node> &exp, int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,
                       std::shared_ptr<ast::AST_factor_Node> &factor);
-  void parse_int(std::vector<token::Token> &tokens,
-                 std::shared_ptr<ast::AST_factor_Node> &factor);
+  void parse_const(std::vector<token::Token> &tokens,
+                   std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_binop(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_binop_Node> &binop);
   void expect(token::TOKEN actual_token, token::TOKEN expected_token);
@@ -83,15 +87,38 @@ private:
                    std::map<std::pair<std::string, int>,
                             symbolTable::symbolInfo> &symbol_table,
                    int indx);
+  void analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
+                      std::map<std::pair<std::string, int>,
+                               symbolTable::symbolInfo> &symbol_table,
+                      int indx);
   void analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
                      std::map<std::pair<std::string, int>,
                               symbolTable::symbolInfo> &symbol_table,
                      int indx);
+  void analyze_goto_labels();
   void analyze_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration,
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
+  void analyze_global_variable_declaration(
+      std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table);
+  void analyze_global_function_declaration(
+      std::shared_ptr<ast::AST_function_declaration_Node> funcDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table);
+  void analyze_function_declaration(
+      std::shared_ptr<ast::AST_function_declaration_Node> funcDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
+      std::string &var_name, int indx);
+  void analyze_local_variable_declaration(
+      std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
+      std::string &var_name, int indx);
   void analyze_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
                          std::map<std::pair<std::string, int>,
                                   symbolTable::symbolInfo> &symbol_table,
@@ -101,10 +128,6 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
-  int analyze_case_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-                       std::map<std::pair<std::string, int>,
-                                symbolTable::symbolInfo> &symbol_table,
-                       int indx);
   std::string get_temp_name(std::string &name) {
     std::string tmp = name + "." + std::to_string(symbol_counter);
     symbol_counter++;
@@ -139,7 +162,7 @@ private:
     loop_continue_counter++;
     loop_end_counter++;
     loop_start_labels.push(start_label);
-    loop_end_labels.push(end_label);
+    loop_switch_end_labels.push(end_label);
     MAKE_SHARED(ast::AST_identifier_Node, start_label_node);
     MAKE_SHARED(ast::AST_identifier_Node, end_label_node);
     start_label_node->set_identifier(start_label);
@@ -149,17 +172,15 @@ private:
   std::pair<std::shared_ptr<ast::AST_identifier_Node>,
             std::shared_ptr<ast::AST_identifier_Node>>
   get_switch_loop_labels() {
-    std::string end_label = "loop_end." + std::to_string(loop_end_counter);
-    loop_continue_counter++;
-    loop_end_counter++;
-    loop_end_labels.push(end_label);
-    MAKE_SHARED(ast::AST_identifier_Node, end_label_node);
-    end_label_node->set_identifier(end_label);
-    return {nullptr, end_label_node};
+    std::string label = "switch." + std::to_string(switch_counter);
+    switch_counter++;
+    loop_switch_end_labels.push(label);
+    MAKE_SHARED(ast::AST_identifier_Node, label_node);
+    label_node->set_identifier(label);
+    return {nullptr, label_node};
   }
 
   std::shared_ptr<ast::AST_identifier_Node> get_case_label() {
-    static int case_counter = 0;
     std::string case_label = "case." + std::to_string(case_counter);
     case_counter++;
     MAKE_SHARED(ast::AST_identifier_Node, label);
@@ -183,20 +204,20 @@ private:
   }
 
   std::shared_ptr<ast::AST_identifier_Node> get_prev_loop_end_label() {
-    if (loop_end_labels.empty()) {
+    if (loop_switch_end_labels.empty()) {
       return nullptr;
     }
     MAKE_SHARED(ast::AST_identifier_Node, label);
-    label->set_identifier(loop_end_labels.top());
+    label->set_identifier(loop_switch_end_labels.top());
     return label;
   }
 
   void remove_loop_labels() {
     loop_start_labels.pop();
-    loop_end_labels.pop();
+    loop_switch_end_labels.pop();
   }
 
-  void remove_switch_loop_labels() { loop_end_labels.pop(); }
+  void remove_switch_loop_label() { loop_switch_end_labels.pop(); }
 
   std::string to_string(ast::statementType type) {
     switch (type) {
@@ -242,8 +263,12 @@ private:
     switch (type) {
     case ast::ElemType::INT:
       return "int";
+    case ast::ElemType::LONG:
+      return "long";
+    case ast::ElemType::NONE:
+      UNREACHABLE();
     }
-    UNREACHABLE()
+    UNREACHABLE();
   }
 
   std::string to_string(ast::SpecifierType type) {
@@ -256,15 +281,6 @@ private:
       return "none";
     }
     UNREACHABLE();
-  }
-
-  bool is_decl(token::TOKEN token) {
-    return token == token::TOKEN::INT || token == token::TOKEN::STATIC ||
-           token == token::TOKEN::EXTERN;
-  }
-
-  bool is_storage_specifier(token::TOKEN token) {
-    return token == token::TOKEN::STATIC || token == token::TOKEN::EXTERN;
   }
 
 public:

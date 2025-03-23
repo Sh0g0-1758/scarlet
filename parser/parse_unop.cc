@@ -25,7 +25,7 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
   default:
     UNREACHABLE()
   }
-  factor->add_unop_node(std::move(unop));
+  factor->set_unop_node(std::move(unop));
   tokens.erase(tokens.begin());
 }
 

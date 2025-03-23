@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 #include <tools/symbolTable/symbolTable.hh>
 #include <vector>
@@ -43,9 +44,7 @@ private:
   scar::scar_Program_Node scar;
   scasm::scasm_program scasm;
   std::string file_name;
-  int curr_buff = 0;
-  std::vector<std::vector<unop::UNOP>> unop_buffer;
-  std::string constant_buffer;
+  constant::Constant constant_buffer;
   std::string variable_buffer;
   bool success = true;
   int curr_regNum;
@@ -88,9 +87,7 @@ private:
 public:
   Codegen(ast::AST_Program_Node program, int counter,
           std::map<std::string, symbolTable::symbolInfo> gst)
-      : program(program), curr_regNum(counter), globalSymbolTable(gst) {
-    unop_buffer.resize(2);
-  }
+      : program(program), curr_regNum(counter), globalSymbolTable(gst) {}
   // ###### COMPILER PASSES ######
   // IR PASS
   void gen_scar();
