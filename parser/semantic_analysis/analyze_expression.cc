@@ -36,6 +36,8 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
     }
   }
 
+  if(!success) return;
+
   // check the factor
   analyze_factor(exp->get_factor_node(), symbol_table, indx);
 
@@ -109,6 +111,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     }
   }
 
+  if(!success) return;
+
   // The factor can be a function call
   if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
     auto func_call =
@@ -138,6 +142,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       }
     }
   }
+
+  if(!success) return;
 
   // If factor has an increment/decrement operator
   // make sure it operates on an lvalue

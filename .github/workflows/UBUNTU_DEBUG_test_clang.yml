@@ -1,4 +1,4 @@
-name: UBUNTU => Build and Test (gcc)
+name: UBUNTU_DEBUG => Build and Test (clang)
 
 on:
   push:
@@ -17,12 +17,12 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt update
-        sudo apt install gcc g++ libboost-all-dev
+        sudo apt install clang libboost-all-dev
         
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ .. && make
 
     - name: Test scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make test-scarlet
+        mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ .. && make test-scarlet

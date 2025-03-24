@@ -268,7 +268,13 @@ class TestChapter(unittest.TestCase):
         args.append(source_file)
 
         # run the command: '{self.cc} {options} {source_file}'
+        # print(source_file.name + " in")
         proc = subprocess.run(args, capture_output=True, check=False, text=True)
+        # print(source_file.name + " out")
+
+        if(proc.returncode != 0 and proc.returncode != 1):
+            print("Error in compiler " + source_file.parent.name + "/" + source_file.name)
+            sys.exit(1)
 
         return proc
 
