@@ -275,7 +275,7 @@ private:
     case ast::ElemType::LONG:
       return "long";
     case ast::ElemType::NONE:
-      UNREACHABLE();
+      return "";
     }
     UNREACHABLE();
   }

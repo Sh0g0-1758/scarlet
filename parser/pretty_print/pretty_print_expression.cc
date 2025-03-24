@@ -6,6 +6,7 @@ namespace parser {
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
   if (factor == nullptr)
     return;
+  std::cout << "<<" << to_string(factor->get_type()) << ">>";
   if (factor->get_unop_node() != nullptr) {
     std::cout << "Unop(" << unop::to_string(factor->get_unop_node()->get_op())
               << "(";
@@ -41,11 +42,13 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
 void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   if (exp == nullptr)
     return;
-  pretty_print_exp(exp->get_left());
   if (exp->get_binop_node() != nullptr and
       exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
-    std::cout << "\t\t\t\t\tBinop("
-              << binop::to_string(exp->get_binop_node()->get_op()) << " ,";
+    pretty_print_exp(exp->get_left());
+
+    std::cout << "\t\t\t<<" << to_string(exp->get_type()) << ">>";
+    std::cout << "Binop(" << binop::to_string(exp->get_binop_node()->get_op())
+              << " ,";
     if (exp->get_left() == nullptr) {
       pretty_print_factor(exp->get_factor_node());
     } else {
@@ -59,7 +62,7 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     pretty_print_exp(exp->get_right());
     std::cout << ")" << std::endl;
   } else {
-    std::cout << "\t\t\t\t\t";
+    std::cout << "\t\t\t";
     pretty_print_factor(exp->get_factor_node());
     std::cout << std::endl;
   }
