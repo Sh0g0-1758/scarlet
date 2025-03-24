@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(Scarlet LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose build type: Debug Release" FORCE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type: Debug Release" FORCE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

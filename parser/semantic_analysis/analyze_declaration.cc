@@ -124,8 +124,25 @@ void parser::analyze_global_variable_declaration(
     } else if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
       // If the variable has not been defined and is not extern,
       // mark it as a tentative definition
-      symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
-      globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
+      if (globalSymbolTable[var_name].def == symbolTable::defType::FALSE) {
+        constant::Constant constZero;
+        switch (varDecl->get_type()) {
+        case ast::ElemType::INT:
+          constZero.set_type(constant::Type::INT);
+          constZero.set_value({.i = 0});
+          break;
+        case ast::ElemType::LONG:
+          constZero.set_type(constant::Type::LONG);
+          constZero.set_value({.l = 0});
+          break;
+        case ast::ElemType::NONE:
+          UNREACHABLE();
+        }
+        symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
+        globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
+        symbol_table[{var_name, 0}].value = constZero;
+        globalSymbolTable[var_name].value = constZero;
+      }
     }
   } else { // symbol has not been declared before
     // Give appropriate linkage to the variable
@@ -138,6 +155,24 @@ void parser::analyze_global_variable_declaration(
       symbol_table[{var_name, 0}].link = symbolTable::linkage::INTERNAL;
     } else if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
       symbol_table[{var_name, 0}].def = symbolTable::defType::FALSE;
+    }
+
+    // If storage specifier is not extern, set the tentative value to zero
+    if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
+      constant::Constant constZero;
+      switch (varDecl->get_type()) {
+      case ast::ElemType::INT:
+        constZero.set_type(constant::Type::INT);
+        constZero.set_value({.i = 0});
+        break;
+      case ast::ElemType::LONG:
+        constZero.set_type(constant::Type::LONG);
+        constZero.set_value({.l = 0});
+        break;
+      case ast::ElemType::NONE:
+        UNREACHABLE();
+      }
+      symbol_table[{var_name, 0}].value = constZero;
     }
 
     // Make sure that global variables are initialized only with
@@ -323,6 +358,21 @@ void parser::analyze_local_variable_declaration(
                                ->get_constant(),
                            varDecl->get_type());
       }
+    } else {
+      constant::Constant constZero;
+      switch (varDecl->get_type()) {
+      case ast::ElemType::INT:
+        constZero.set_type(constant::Type::INT);
+        constZero.set_value({.i = 0});
+        break;
+      case ast::ElemType::LONG:
+        constZero.set_type(constant::Type::LONG);
+        constZero.set_value({.l = 0});
+        break;
+      case ast::ElemType::NONE:
+        UNREACHABLE();
+      }
+      symbol_table[{var_name, indx}].value = constZero;
     }
     globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
   } else {

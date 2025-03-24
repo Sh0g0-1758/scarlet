@@ -303,6 +303,17 @@ private:
     }
   }
 
+  constant::Type elemTypeToConstType(ast::ElemType t) {
+    switch (t) {
+    case ast::ElemType::INT:
+      return constant::Type::INT;
+    case ast::ElemType::LONG:
+      return constant::Type::LONG;
+    default:
+      return constant::Type::NONE;
+    }
+  }
+
   ast::ElemType getParentType(ast::ElemType left, ast::ElemType right) {
     if (left == right)
       return left;

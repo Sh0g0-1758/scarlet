@@ -357,16 +357,18 @@ void Codegen::gen_scar_statement(
 
     gen_scar_exp(for_statement->get_exps(), scar_function);
 
-    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
-    scar_instruction2->set_type(scar::instruction_type::JUMP_IF_ZERO);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-    SETVARCONSTANTREG(scar_val_src2);
-    scar_instruction2->set_src1(std::move(scar_val_src2));
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
-    scar_val_dst2->set_type(scar::val_type::LABEL);
-    scar_val_dst2->set_label(for_statement->get_labels().second->get_value());
-    scar_instruction2->set_dst(std::move(scar_val_dst2));
-    scar_function->add_instruction(scar_instruction2);
+    if (for_statement->get_exps() != nullptr) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
+      scar_instruction2->set_type(scar::instruction_type::JUMP_IF_ZERO);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+      SETVARCONSTANTREG(scar_val_src2);
+      scar_instruction2->set_src1(std::move(scar_val_src2));
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+      scar_val_dst2->set_type(scar::val_type::LABEL);
+      scar_val_dst2->set_label(for_statement->get_labels().second->get_value());
+      scar_instruction2->set_dst(std::move(scar_val_dst2));
+      scar_function->add_instruction(scar_instruction2);
+    }
 
     gen_scar_statement(for_statement->get_stmt(), scar_function);
 

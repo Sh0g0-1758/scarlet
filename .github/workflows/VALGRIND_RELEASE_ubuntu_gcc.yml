@@ -1,4 +1,4 @@
-name: VALGRIND => test memory leaks (ubuntu, clang)
+name: VALGRIND_RELEASE => test memory leaks (ubuntu, gcc)
 
 on:
   push:
@@ -17,11 +17,11 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt update
-        sudo apt install clang libboost-all-dev valgrind
+        sudo apt install gcc g++ libboost-all-dev valgrind
 
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ .. && make
 
     - name: Test memory leaks
       run: |

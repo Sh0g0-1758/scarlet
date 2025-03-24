@@ -270,6 +270,10 @@ class TestChapter(unittest.TestCase):
         # run the command: '{self.cc} {options} {source_file}'
         proc = subprocess.run(args, capture_output=True, check=False, text=True)
 
+        if(proc.returncode != 0 and proc.returncode != 1):
+            print("Error in compiler " + source_file.parent.name + "/" + source_file.name)
+            sys.exit(1)
+
         return proc
 
     def validate_no_output(self, source_file: Path) -> None:
