@@ -16,7 +16,11 @@ void parser::analyze_declaration(
       if (symbol_table[{var_name, indx}].link ==
               symbolTable::linkage::EXTERNAL and
           declaration->get_specifier() == ast::SpecifierType::EXTERN) {
-        ; // do nothing
+        auto varDecl =
+            std::static_pointer_cast<ast::AST_variable_declaration_Node>(
+                declaration);
+        analyze_local_variable_declaration(varDecl, symbol_table, var_name,
+                                           indx);
       } else {
         success = false;
         error_messages.emplace_back("Variable " + var_name +
@@ -101,19 +105,21 @@ void parser::analyze_global_variable_declaration(
     // If the variable has been defined, check that it is initialized with a
     // constant integer
     if (varDecl->get_exp() != nullptr) {
-      symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
-      globalSymbolTable[var_name].def = symbolTable::defType::TRUE;
       if (!EXPISCONSTANT(varDecl->get_exp())) {
         success = false;
         error_messages.emplace_back(
             "Variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        globalSymbolTable[var_name].value = varDecl->get_exp()
-                                                ->get_factor_node()
-                                                ->get_const_node()
-                                                ->get_constant()
-                                                .get_value();
+        globalSymbolTable[var_name].def = symbolTable::defType::TRUE;
+        globalSymbolTable[var_name].value =
+            castConstToVal(varDecl->get_exp()
+                               ->get_factor_node()
+                               ->get_const_node()
+                               ->get_constant(),
+                           varDecl->get_type());
+        symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
+        symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
       }
     } else if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
       // If the variable has not been defined and is not extern,
@@ -144,11 +150,12 @@ void parser::analyze_global_variable_declaration(
             "Global variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        symbol_table[{var_name, 0}].value = varDecl->get_exp()
-                                                ->get_factor_node()
-                                                ->get_const_node()
-                                                ->get_constant()
-                                                .get_value();
+        symbol_table[{var_name, 0}].value =
+            castConstToVal(varDecl->get_exp()
+                               ->get_factor_node()
+                               ->get_const_node()
+                               ->get_constant(),
+                           varDecl->get_type());
       }
     }
     globalSymbolTable[var_name] = symbol_table[{var_name, 0}];
@@ -160,18 +167,17 @@ void parser::analyze_global_function_declaration(
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
         &symbol_table) {
   if (funcDecl->get_block() == nullptr) {
-    analyze_declaration(funcDecl, symbol_table, 0);
+    analyze_function_declaration(funcDecl, symbol_table, currFuncName, 0);
   } else {
-    std::string func_name = funcDecl->get_identifier()->get_value();
-    if (globalSymbolTable.find(func_name) != globalSymbolTable.end() and
-        globalSymbolTable[func_name].def == symbolTable::defType::TRUE) {
+    if (globalSymbolTable.find(currFuncName) != globalSymbolTable.end() and
+        globalSymbolTable[currFuncName].def == symbolTable::defType::TRUE) {
       success = false;
-      error_messages.emplace_back("Function " + func_name +
+      error_messages.emplace_back("Function " + currFuncName +
                                   " has already been defined");
     }
-    analyze_declaration(funcDecl, symbol_table, 0);
-    symbol_table[{func_name, 0}].def = symbolTable::defType::TRUE;
-    globalSymbolTable[func_name].def = symbolTable::defType::TRUE;
+    analyze_function_declaration(funcDecl, symbol_table, currFuncName, 0);
+    symbol_table[{currFuncName, 0}].def = symbolTable::defType::TRUE;
+    globalSymbolTable[currFuncName].def = symbolTable::defType::TRUE;
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
         proxy_symbol_table(symbol_table);
     for (auto param : funcDecl->get_params()) {
@@ -181,9 +187,10 @@ void parser::analyze_global_function_declaration(
           symbolTable::linkage::NONE,
           symbolTable::symbolType::VARIABLE,
           {param->type}};
+      globalSymbolTable[temp_name] =
+          proxy_symbol_table[{param->identifier->get_value(), 1}];
       param->identifier->set_identifier(temp_name);
     }
-    goto_labels.clear();
     analyze_block(funcDecl->get_block(), proxy_symbol_table, 1);
   }
 }
@@ -309,11 +316,12 @@ void parser::analyze_local_variable_declaration(
             "Global variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        symbol_table[{var_name, indx}].value = varDecl->get_exp()
-                                                   ->get_factor_node()
-                                                   ->get_const_node()
-                                                   ->get_constant()
-                                                   .get_value();
+        symbol_table[{var_name, indx}].value =
+            castConstToVal(varDecl->get_exp()
+                               ->get_factor_node()
+                               ->get_const_node()
+                               ->get_constant(),
+                           varDecl->get_type());
       }
     }
     globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
@@ -324,11 +332,16 @@ void parser::analyze_local_variable_declaration(
                                       symbolTable::linkage::NONE,
                                       symbolTable::symbolType::VARIABLE,
                                       {varDecl->get_type()}};
+
+    globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
     if (varDecl->get_exp() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
+      globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
+      if (varDecl->get_exp()->get_type() != varDecl->get_type()) {
+        add_cast_to_exp(varDecl->get_exp(), varDecl->get_type());
+      }
     }
-    globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
   }
 }
 

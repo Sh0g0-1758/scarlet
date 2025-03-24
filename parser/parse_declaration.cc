@@ -107,7 +107,7 @@ void parser::parse_function_declaration(
     return;
   } else if (atGlobalLevel) {
     MAKE_SHARED(ast::AST_Block_Node, block);
-    function_name = decl->get_identifier()->get_value();
+    currFuncName = decl->get_identifier()->get_value();
     parse_block(tokens, block);
     decl->set_block(std::move(block));
   } else {

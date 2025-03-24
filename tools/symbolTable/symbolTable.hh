@@ -31,7 +31,7 @@ struct symbolInfo {
   symbolType type;
   std::vector<ast::ElemType> typeDef;
   defType def = defType::FALSE;
-  constant::Value value{};
+  constant::Constant value{};
 };
 } // namespace symbolTable
 } // namespace scarlet

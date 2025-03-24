@@ -30,7 +30,10 @@ private:
   int switch_counter = 0;
   int case_counter = 0;
   int goto_label_counter = 0;
-  std::string function_name{};
+  // Used to annotate goto labels during parsing and explicitly cast
+  // return expressions in a function to the correct type during semantic
+  // analysis
+  std::string currFuncName{};
   std::stack<std::string> loop_start_labels;
   // break can appear in both loop and switch statements
   std::stack<std::string> loop_switch_end_labels;
@@ -119,6 +122,12 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       std::string &var_name, int indx);
+  void assign_type_to_factor(std::shared_ptr<ast::AST_factor_Node> factor);
+  void assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp);
+  void add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                       ast::ElemType type);
+  void add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
+                          ast::ElemType type);
   void analyze_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
                          std::map<std::pair<std::string, int>,
                                   symbolTable::symbolInfo> &symbol_table,
@@ -281,6 +290,67 @@ private:
       return "none";
     }
     UNREACHABLE();
+  }
+
+  ast::ElemType constTypeToElemType(constant::Type t) {
+    switch (t) {
+    case constant::Type::INT:
+      return ast::ElemType::INT;
+    case constant::Type::LONG:
+      return ast::ElemType::LONG;
+    default:
+      return ast::ElemType::NONE;
+    }
+  }
+
+  ast::ElemType getParentType(ast::ElemType left, ast::ElemType right) {
+    if (left == right)
+      return left;
+    if (left == ast::ElemType::LONG || right == ast::ElemType::LONG) {
+      return ast::ElemType::LONG;
+    }
+    return ast::ElemType::INT;
+  }
+
+  constant::Constant castConstToVal(constant::Constant c, ast::ElemType type) {
+    if (constTypeToElemType(c.get_type()) == type) {
+      return c;
+    }
+
+    constant::Constant ret;
+
+    switch (type) {
+    case ast::ElemType::INT: {
+      ret.set_type(constant::Type::INT);
+      switch (c.get_type()) {
+      case constant::Type::INT:
+        ret.set_value({.i = static_cast<int>(c.get_value().i)});
+        break;
+      case constant::Type::LONG:
+        ret.set_value({.i = static_cast<int>(c.get_value().i)});
+        break;
+      default:
+        UNREACHABLE();
+      }
+    } break;
+    case ast::ElemType::LONG: {
+      ret.set_type(constant::Type::LONG);
+      switch (c.get_type()) {
+      case constant::Type::INT:
+        ret.set_value({.l = static_cast<long>(c.get_value().i)});
+        break;
+      case constant::Type::LONG:
+        ret.set_value({.l = static_cast<long>(c.get_value().l)});
+        break;
+      default:
+        UNREACHABLE();
+      }
+    } break;
+    default:
+      UNREACHABLE();
+    }
+
+    return ret;
   }
 
 public:
