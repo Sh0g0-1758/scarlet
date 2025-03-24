@@ -114,7 +114,7 @@ void Codegen::gen_scar_short_circuit_exp(
     scar_val_src3->set_const_val(zero);
   }
   scar_val_dst3->set_type(scar::val_type::VAR);
-  scar_val_dst3->set_reg_name(get_reg_name());
+  scar_val_dst3->set_reg_name(get_reg_name(exp->get_type()));
   scar_instruction3->set_src1(std::move(scar_val_src3));
   scar_instruction3->set_dst(std::move(scar_val_dst3));
   scar_function->add_instruction(std::move(scar_instruction3));
@@ -213,7 +213,7 @@ void Codegen::gen_scar_ternary_exp(
   // We cannot simply use get_prev_reg_name() since we need to
   // parse the second expression first and that will change the
   // register counter
-  std::string result = get_reg_name();
+  std::string result = get_reg_name(exp->get_type());
   scar_val_dst2->set_reg_name(result);
   scar_instruction2->set_dst(std::move(scar_val_dst2));
   scar_function->add_instruction(std::move(scar_instruction2));
@@ -319,7 +319,7 @@ void Codegen::gen_scar_exp(
           exp->get_factor_node()->get_identifier_node()->get_value());
       reg_name = scar_val_dst->get_reg();
     } else {
-      scar_val_dst->set_reg_name(get_reg_name());
+      scar_val_dst->set_reg_name(get_reg_name(exp->get_type()));
     }
     scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));

@@ -21,11 +21,11 @@ Grammar:
 
 program = Program(top_level*)
 
-top_level = Function(identifier, bool global, identifier* params, instruction* body) | StaticVariable(identifier, bool global, int init)
+top_level = Function(identifier, bool global, identifier* params, instruction* body) | StaticVariable(identifier, bool global, const init)
 
-instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst)
+instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst) | SignExtend(val src, val dst) | Truncate(val src, val dst)
 
-val = Constant(int) | Var(identifier)
+val = Constant(const) | Var(identifier)
 
 unary_operator = Complement | Negate | Not
 
@@ -48,6 +48,8 @@ enum class instruction_type {
   JUMP_IF_NOT_ZERO,
   LABEL,
   CALL,
+  SIGN_EXTEND,
+  TRUNCATE
 };
 // CONSTANT is a constant value (1, 2 , 42 etc.)
 // VAR is a scar register

@@ -102,8 +102,12 @@ public:
   // #############################
   void set_file_name(std::string file_name) { this->file_name = file_name; }
   bool is_success() { return success; }
-  std::string get_reg_name() {
-    reg_name = "temp." + std::to_string(curr_regNum);
+  std::string get_reg_name(ast::ElemType type) {
+    reg_name = "scarReg." + std::to_string(curr_regNum);
+    globalSymbolTable[reg_name] = {reg_name,
+                                   symbolTable::linkage::NONE,
+                                   symbolTable::symbolType::VARIABLE,
+                                   {type}};
     curr_regNum++;
     return reg_name;
   }
@@ -131,6 +135,18 @@ public:
     std::string tmp = res_label_stack.top();
     res_label_stack.pop();
     return tmp;
+  }
+
+  std::string to_string(ast::ElemType type) {
+    switch (type) {
+    case ast::ElemType::INT:
+      return "int";
+    case ast::ElemType::LONG:
+      return "long";
+    case ast::ElemType::NONE:
+      return "";
+    }
+    UNREACHABLE();
   }
 
   std::map<binop::BINOP, binop::BINOP> compound_to_base = {

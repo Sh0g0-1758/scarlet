@@ -239,7 +239,6 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       ast::ElemType rightType = exp->get_right()->get_type();
 
       ast::ElemType expType = getParentType(leftType, rightType);
-      exp->set_type(expType);
 
       // Explicitly add cast operation in case of type mismatch
       if (expType != rightType) {
@@ -249,6 +248,12 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         (exp->get_left() != nullptr)
             ? add_cast_to_exp(exp->get_left(), expType)
             : add_cast_to_factor(exp->get_factor_node(), expType);
+      }
+
+      if (binop::is_relational(exp->get_binop_node()->get_op())) {
+        exp->set_type(ast::ElemType::INT);
+      } else {
+        exp->set_type(expType);
       }
     }
   }
