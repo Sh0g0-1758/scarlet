@@ -1,4 +1,4 @@
-name: VALGRIND => test memory leaks (ubuntu, gcc)
+name: VALGRIND_RELEASE => test memory leaks (ubuntu, gcc)
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
 
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ .. && make
 
     - name: Test memory leaks
       run: |

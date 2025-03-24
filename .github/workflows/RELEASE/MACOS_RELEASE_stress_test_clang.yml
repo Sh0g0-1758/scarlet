@@ -1,4 +1,4 @@
-name: MACOS => Stress Test (clang)
+name: MACOS_RELEASE => Stress Test (clang)
 on:
   push:
     branches: [ "main" ]
@@ -24,7 +24,7 @@ jobs:
 
     - name: Build scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make'
+        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release .. && make'
     
     - name: Test scarlet
       run: |
