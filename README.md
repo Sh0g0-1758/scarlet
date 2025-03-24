@@ -67,6 +67,7 @@ Scarlet currently supports the following architectures:
 - [x] Add support for switch-case
 - [x] Add support for Functions
 - [x] Add support for static keyword and global scope
+- [x] Add support for a type system
 - [ ] Add support for Long Integers
 - [ ] Add support for Unsigned Integers
 - [ ] Add support for Floating-Point Numbers
