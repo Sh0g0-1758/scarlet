@@ -149,9 +149,11 @@ void Codegen::codegen() {
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::JMP) {
 #ifdef __APPLE__
-        assembly << "\tjmp " << "L" << instr->get_src()->get_identifier_stack() << "\n";
+        assembly << "\tjmp " << "L" << instr->get_src()->get_identifier_stack()
+                 << "\n";
 #else
-        assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier_stack() << "\n";
+        assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier_stack()
+                 << "\n";
 #endif
       } else if (instr->get_type() == scasm::instruction_type::LABEL) {
 #ifdef __APPLE__
