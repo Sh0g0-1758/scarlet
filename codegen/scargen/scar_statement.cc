@@ -357,7 +357,7 @@ void Codegen::gen_scar_statement(
 
     gen_scar_exp(for_statement->get_exps(), scar_function);
 
-    if(for_statement->get_exps() != nullptr) {
+    if (for_statement->get_exps() != nullptr) {
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
       scar_instruction2->set_type(scar::instruction_type::JUMP_IF_ZERO);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
