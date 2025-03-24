@@ -1,4 +1,4 @@
-name: UBUNTU => Stress Test (clang)
+name: UBUNTU_RELEASE => Stress Test (clang)
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
         
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release .. && make
 
     - name: Test scarlet
       run: |
