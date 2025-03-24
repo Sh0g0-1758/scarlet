@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(Scarlet LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type: Debug Release" FORCE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose build type: Debug Release" FORCE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -97,7 +97,7 @@ add_custom_target(test-scarlet
     COMMAND echo "Running parser test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage parse
     COMMAND echo "Running semantic analysis test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10 --stage validate
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage validate
     COMMAND echo "Running scar test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10 --stage tacky
     COMMAND echo "Running Codegen test"

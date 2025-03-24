@@ -185,14 +185,14 @@ public:
 class scasm_static_variable : public scasm_top_level {
 private:
   std::string name;
-  int init;
+  constant::Constant init;
 
 public:
   std::string get_scasm_name() { return "StaticVariable"; }
   std::string get_name() { return name; }
   void set_name(std::string name) { this->name = std::move(name); }
-  int get_init() { return init; }
-  void set_init(int init) { this->init = init; }
+  constant::Constant get_init() { return init; }
+  void set_init(constant::Constant init) { this->init = init; }
 };
 
 class scasm_program {

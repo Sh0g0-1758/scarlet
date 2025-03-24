@@ -11,15 +11,12 @@ void parser::analyze_block(std::shared_ptr<ast::AST_Block_Node> block,
                            int indx) {
   if (block == nullptr)
     return;
-  auto block_item = block->get_blockItems().begin();
-  auto block_end = block->get_blockItems().end();
-  while (block_item != block_end) {
-    if (((*block_item)->get_type()) == ast::BlockItemType::DECLARATION) {
-      analyze_declaration((*block_item)->get_declaration(), symbol_table, indx);
-    } else if ((*block_item)->get_type() == ast::BlockItemType::STATEMENT) {
-      analyze_statement((*block_item)->get_statement(), symbol_table, indx);
+  for (auto block_item : block->get_blockItems()) {
+    if (block_item->get_type() == ast::BlockItemType::DECLARATION) {
+      analyze_declaration(block_item->get_declaration(), symbol_table, indx);
+    } else if (block_item->get_type() == ast::BlockItemType::STATEMENT) {
+      analyze_statement(block_item->get_statement(), symbol_table, indx);
     }
-    block_item++;
   }
 }
 

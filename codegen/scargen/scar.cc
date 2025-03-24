@@ -60,8 +60,7 @@ void Codegen::gen_scar() {
       MAKE_SHARED(scar::scar_Identifier_Node, identifier);
       identifier->set_value(symbol.second.name);
       static_variable->set_identifier(std::move(identifier));
-      // TODO change this
-      static_variable->set_init(symbol.second.value.i);
+      static_variable->set_init(symbol.second.value);
       if (symbol.second.link == symbolTable::linkage::INTERNAL) {
         static_variable->set_global(false);
       }

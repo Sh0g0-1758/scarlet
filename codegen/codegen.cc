@@ -47,7 +47,7 @@ void Codegen::codegen() {
         assembly << "\t.globl ";
         assembly << ARCHPREFIX << vars->get_name() << "\n";
       }
-      if (vars->get_init() == 0) {
+      if (vars->get_init().empty()) {
         assembly << "\t.bss\n";
       } else {
         assembly << "\t.data\n";
@@ -58,7 +58,7 @@ void Codegen::codegen() {
       assembly << "\t.align 4\n";
 #endif
       assembly << ARCHPREFIX << vars->get_name() << ":\n";
-      if (vars->get_init() != 0) {
+      if (!vars->get_init().empty()) {
         assembly << "\t.long " << vars->get_init() << "\n";
       } else {
         assembly << "\t.zero 4\n";

@@ -31,10 +31,16 @@ void parser::semantic_analysis() {
     } else if (decls->get_type() == ast::DeclarationType::FUNCTION) {
       auto funcs =
           std::static_pointer_cast<ast::AST_function_declaration_Node>(decls);
+      currFuncName = funcs->get_identifier()->get_value();
       analyze_global_function_declaration(funcs, symbol_table);
+
+      // Each function has its own set of goto labels
+      // Two functions can have labels with the same name and goto label
+      // for each function will point to the label in that function
+      analyze_goto_labels();
+      goto_labels.clear();
     }
   }
-  analyze_goto_labels();
 }
 
 void parser::display_errors() {

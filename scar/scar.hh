@@ -191,7 +191,7 @@ public:
 class scar_StaticVariable_Node : public scar_Top_Level_Node {
 private:
   std::shared_ptr<scar_Identifier_Node> identifier;
-  int init;
+  constant::Constant init;
 
 public:
   std::string get_scar_name() { return "StaticVariable"; }
@@ -199,8 +199,8 @@ public:
   void set_identifier(std::shared_ptr<scar_Identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
-  int get_init() { return init; }
-  void set_init(int init) { this->init = init; }
+  constant::Constant get_init() { return init; }
+  void set_init(constant::Constant init) { this->init = init; }
 };
 
 class scar_Program_Node {

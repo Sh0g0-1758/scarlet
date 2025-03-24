@@ -19,6 +19,11 @@ void parser::analyze_statement(
   switch (statement->get_type()) {
   case ast::statementType::RETURN:
     analyze_exp(statement->get_exps(), symbol_table, indx);
+    if (statement->get_exps()->get_type() !=
+        globalSymbolTable[currFuncName].typeDef[0]) {
+      add_cast_to_exp(statement->get_exps(),
+                      globalSymbolTable[currFuncName].typeDef[0]);
+    }
     break;
   case ast::statementType::CASE:
   case ast::statementType::DEFAULT_CASE:

@@ -244,6 +244,7 @@ private:
   std::shared_ptr<AST_exp_Node> middle;
 
 public:
+  AST_ternary_exp_Node() = default;
   AST_ternary_exp_Node(std::shared_ptr<AST_exp_Node> parent) {
     this->set_binop_node(parent->get_binop_node());
     this->set_factor_node(parent->get_factor_node());
