@@ -51,6 +51,7 @@ private:
   std::string reg_name;
   std::map<std::string, std::string> pseduo_registers;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
+  std::map<std::string, scasm::backendSymbol> backendSymbolTable;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
@@ -145,6 +146,44 @@ public:
       return "long";
     case ast::ElemType::NONE:
       return "";
+    }
+    UNREACHABLE();
+  }
+
+  scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
+    switch (val->get_type()) {
+    case scar::val_type::CONSTANT:
+      switch (val->get_const_val().get_type()) {
+      case constant::Type::INT:
+        return scasm::AssemblyType::LONG_WORD;
+      case constant::Type::LONG:
+        return scasm::AssemblyType::QUAD_WORD;
+      default:
+        return scasm::AssemblyType::NONE;
+      }
+    case scar::val_type::VAR:
+      switch (globalSymbolTable[val->get_reg()].typeDef[0]) {
+      case ast::ElemType::INT:
+        return scasm::AssemblyType::LONG_WORD;
+      case ast::ElemType::LONG:
+        return scasm::AssemblyType::QUAD_WORD;
+      default:
+        return scasm::AssemblyType::NONE;
+      }
+    case scar::val_type::LABEL:
+      return scasm::AssemblyType::NONE;
+    }
+    UNREACHABLE();
+  }
+
+  scasm::AssemblyType elemToAsmType(ast::ElemType type) {
+    switch (type) {
+    case ast::ElemType::INT:
+      return scasm::AssemblyType::LONG_WORD;
+    case ast::ElemType::LONG:
+      return scasm::AssemblyType::QUAD_WORD;
+    case ast::ElemType::NONE:
+      return scasm::AssemblyType::NONE;
     }
     UNREACHABLE();
   }

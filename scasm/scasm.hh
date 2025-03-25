@@ -21,9 +21,11 @@ Grammar:
 
 program = Program(top_level*)
 
-top_level = Function(identifier name, bool global, instruction* instructions) | StaticVariable(identifier name, bool global, int init)
+assembly_type = LongWord | QuadWord
 
-instruction = Mov(Operand src, Operand dst) | Binary(binary_operator, Operand src, Operand dst) | Idiv(Operand src) | Cdq | Ret | Unary(Unary_operator, Operand src/dst) | AllocateStack(Operand) | Cmp(Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label) | Push(Operand) | Call(Identifier) | DeallocateStack(int)
+top_level = Function(identifier name, bool global, instruction* instructions) | StaticVariable(identifier name, bool global, int alignment, const init)
+
+instruction = Mov(assembly_type, Operand src, Operand dst) | Movsx(Operand src, Operand dst) | Binary(binary_operator, assembly_type,  Operand src, Operand dst) | Idiv(assembly_type, Operand src) | Cdq(assembly_type) | Ret | Unary(Unary_operator, assembly_type, Operand src/dst) | AllocateStack(Operand) | Cmp(assembly_type, Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label) | Push(Operand) | Call(Identifier) | DeallocateStack(int)
 
 unary_operator = Neg | Not
 
@@ -33,7 +35,7 @@ Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier) | Label(i
 
 cond_code = E | NE | G | GE | L | LE
 
-reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL | SP
 
 */
 
@@ -41,6 +43,7 @@ reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL
 namespace scarlet {
 namespace scasm {
 
+enum class AssemblyType { NONE, LONG_WORD, QUAD_WORD };
 // NOTE: Every Pseudo Operand gets converted into a stack operand
 enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK, LABEL, COND, DATA };
 enum class Unop { UNKNOWN, NEG, ANOT, LNOT };
@@ -68,13 +71,12 @@ enum class Binop {
 enum class instruction_type {
   UNKNOWN,
   MOV,
+  MOVSX,
   BINARY,
   IDIV,
   CDQ,
   RET,
   UNARY,
-  ALLOCATE_STACK,
-  DEALLOCATE_STACK,
   CMP,
   JMP,
   JMPCC,
@@ -84,7 +86,20 @@ enum class instruction_type {
   CALL,
 };
 
-enum class register_type { UNKNOWN, AX, CX, DX, DI, SI, R8, R9, R10, R11, CL };
+enum class register_type {
+  UNKNOWN,
+  AX,
+  CX,
+  DX,
+  DI,
+  SI,
+  R8,
+  R9,
+  R10,
+  R11,
+  CL,
+  SP
+};
 // Word = 16 bits, Dword = 32 bits, Qword = 64 bits
 enum class register_size { BYTE, DWORD, QWORD };
 
@@ -128,6 +143,7 @@ private:
   Binop binop;
   std::shared_ptr<scasm_operand> src;
   std::shared_ptr<scasm_operand> dst;
+  AssemblyType asmType;
 
 public:
   std::string get_scasm_name() { return "Instruction"; }
@@ -145,6 +161,8 @@ public:
   void set_dst(std::shared_ptr<scasm_operand> dst) {
     this->dst = std::move(dst);
   }
+  AssemblyType get_asm_type() { return asmType; }
+  void set_asm_type(AssemblyType asmType) { this->asmType = asmType; }
 };
 
 enum class scasm_top_level_type { FUNCTION, STATIC_VARIABLE };
@@ -186,6 +204,7 @@ class scasm_static_variable : public scasm_top_level {
 private:
   std::string name;
   constant::Constant init;
+  int alignment;
 
 public:
   std::string get_scasm_name() { return "StaticVariable"; }
@@ -193,6 +212,8 @@ public:
   void set_name(std::string name) { this->name = std::move(name); }
   constant::Constant get_init() { return init; }
   void set_init(constant::Constant init) { this->init = init; }
+  int get_alignment() { return alignment; }
+  void set_alignment(int alignment) { this->alignment = alignment; }
 };
 
 class scasm_program {
@@ -205,6 +226,15 @@ public:
   void add_elem(std::shared_ptr<scasm_top_level> elem) {
     elems.emplace_back(std::move(elem));
   }
+};
+
+enum backendSymbolType { FUNCTION, STATIC_VARIABLE };
+
+struct backendSymbol {
+  backendSymbolType type;
+  AssemblyType asmType;
+  bool isTopLevel;
+  bool isDefined;
 };
 
 } // namespace scasm

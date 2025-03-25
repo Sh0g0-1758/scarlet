@@ -10,17 +10,26 @@ void Codegen::fix_instructions() {
       continue;
     }
     auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
-    MAKE_SHARED(scasm::scasm_instruction, scasm_stack_instr);
-    scasm_stack_instr->set_type(scasm::instruction_type::ALLOCATE_STACK);
-    MAKE_SHARED(scasm::scasm_operand, val);
-    val->set_type(scasm::operand_type::IMM);
+    MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+    scasm_inst->set_type(scasm::instruction_type::BINARY);
+    scasm_inst->set_binop(scasm::Binop::SUB);
+    scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+
+    MAKE_SHARED(scasm::scasm_operand, scasm_src);
+    scasm_src->set_type(scasm::operand_type::IMM);
     constant::Constant cfs;
     cfs.set_type(constant::Type::INT);
     cfs.set_value({.i = funcs->get_frame_size()});
-    val->set_imm(cfs);
-    scasm_stack_instr->set_src(std::move(val));
+    scasm_src->set_imm(cfs);
+    scasm_inst->set_src(std::move(scasm_src));
+
+    MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+    scasm_dst->set_type(scasm::operand_type::REG);
+    scasm_dst->set_reg(scasm::register_type::SP);
+    scasm_inst->set_dst(std::move(scasm_dst));
+
     funcs->get_instructions().insert(funcs->get_instructions().begin(),
-                                     std::move(scasm_stack_instr));
+                                     std::move(scasm_inst));
   }
 
   // Fixing up Stack/Data to Stack/Data move

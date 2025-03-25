@@ -77,12 +77,7 @@ void Codegen::codegen() {
     assembly << "\tpushq %rbp\n";
     assembly << "\tmovq %rsp, %rbp\n";
     for (auto instr : funcs->get_instructions()) {
-      if (instr->get_type() == scasm::instruction_type::ALLOCATE_STACK) {
-        assembly << "\tsubq $" << instr->get_src()->get_imm() << ", %rsp\n";
-      } else if (instr->get_type() ==
-                 scasm::instruction_type::DEALLOCATE_STACK) {
-        assembly << "\taddq $" << instr->get_src()->get_imm() << ", %rsp\n";
-      } else if (instr->get_type() == scasm::instruction_type::CALL) {
+      if (instr->get_type() == scasm::instruction_type::CALL) {
         std::string funcName = instr->get_src()->get_identifier_stack();
 #ifdef __APPLE__
         assembly << "\tcall " << "_" << funcName << "\n";
