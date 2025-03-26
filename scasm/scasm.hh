@@ -101,8 +101,8 @@ enum class register_type {
   CL,
   SP
 };
-// Byte = 8 bits, Word = 16 bits, Dword = 32 bits, Qword = 64 bits
-enum class register_size { BYTE, DWORD, QWORD };
+// Byte = 8 bits, Word = 16 bits, Lword = 32 bits, Qword = 64 bits
+enum class register_size { BYTE, LWORD, QWORD };
 
 enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE };
 

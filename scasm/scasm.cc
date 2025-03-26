@@ -85,7 +85,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%al";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%eax";
     case register_size::QWORD:
       return "%rax";
@@ -96,7 +96,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%dl";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%edx";
     case register_size::QWORD:
       return "%rdx";
@@ -107,7 +107,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%cl";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%ecx";
     case register_size::QWORD:
       return "%rcx";
@@ -118,7 +118,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%dil";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%edi";
     case register_size::QWORD:
       return "%rdi";
@@ -129,7 +129,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%sil";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%esi";
     case register_size::QWORD:
       return "%rsi";
@@ -140,7 +140,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%r8b";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%r8d";
     case register_size::QWORD:
       return "%r8";
@@ -151,7 +151,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%r9b";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%r9d";
     case register_size::QWORD:
       return "%r9";
@@ -162,7 +162,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%r10b";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%r10d";
     case register_size::QWORD:
       return "%r10";
@@ -173,7 +173,7 @@ std::string to_string(register_type reg, register_size size) {
     switch (size) {
     case register_size::BYTE:
       return "%r11b";
-    case register_size::DWORD:
+    case register_size::LWORD:
       return "%r11d";
     case register_size::QWORD:
       return "%r11";

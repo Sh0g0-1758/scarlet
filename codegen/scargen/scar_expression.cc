@@ -259,6 +259,10 @@ void Codegen::gen_scar_ternary_exp(
   scar_val_src6->set_label(get_last_res_label_name());
   scar_instruction6->set_src1(std::move(scar_val_src6));
   scar_function->add_instruction(std::move(scar_instruction6));
+
+  // make sure that the result is propagated ahead. gen_scar_exp
+  // could have changed the current register name
+  reg_name = result;
 }
 
 void Codegen::gen_scar_exp(

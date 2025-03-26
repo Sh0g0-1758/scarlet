@@ -25,7 +25,7 @@ namespace codegen {
       break;                                                                   \
     case scasm::AssemblyType::LONG_WORD:                                       \
       assembly << scasm::to_string(instr->get_src()->get_reg(),                \
-                                   scasm::register_size::DWORD);               \
+                                   scasm::register_size::LWORD);               \
       break;                                                                   \
     default:                                                                   \
       break;                                                                   \
@@ -46,7 +46,7 @@ namespace codegen {
       break;                                                                   \
     case scasm::AssemblyType::LONG_WORD:                                       \
       assembly << scasm::to_string(instr->get_dst()->get_reg(),                \
-                                   scasm::register_size::DWORD);               \
+                                   scasm::register_size::LWORD);               \
       break;                                                                   \
     default:                                                                   \
       break;                                                                   \
@@ -214,27 +214,10 @@ void Codegen::codegen() {
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::MOVSX) {
         assembly << "\tmovslq ";
-        if (instr->get_src()->get_type() == scasm::operand_type::IMM) {
-          assembly << "$" << instr->get_src()->get_imm();
-        } else if (instr->get_src()->get_type() == scasm::operand_type::STACK) {
-          assembly << instr->get_src()->get_identifier_stack();
-        } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {
-          assembly << ARCHPREFIX << instr->get_src()->get_identifier_stack()
-                   << "(%rip)";
-        } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {
-          assembly << scasm::to_string(instr->get_src()->get_reg(),
-                                       scasm::register_size::DWORD);
-        }
+        CODEGEN_SRC();
         assembly << ", ";
-        if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {
-          assembly << instr->get_dst()->get_identifier_stack();
-        } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {
-          assembly << ARCHPREFIX << instr->get_dst()->get_identifier_stack()
-                   << "(%rip)";
-        } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
-          assembly << scasm::to_string(instr->get_dst()->get_reg(),
-                                       scasm::register_size::QWORD);
-        }
+        instr->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+        CODEGEN_DST();
         assembly << "\n";
       }
     }

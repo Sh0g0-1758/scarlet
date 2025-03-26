@@ -64,8 +64,9 @@ void Codegen::gen_scasm() {
     for (int i = 0; i < std::min(6, numParams); i++) {
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::MOV);
-      scasm_inst->set_asm_type(elemToAsmType(
-          globalSymbolTable[func->get_identifier()->get_value()].typeDef[i]));
+      scasm_inst->set_asm_type(
+          elemToAsmType(globalSymbolTable[func->get_identifier()->get_value()]
+                            .typeDef[i + 1]));
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
       scasm_src->set_type(scasm::operand_type::REG);
       scasm_src->set_reg(argReg[i]);
@@ -80,8 +81,9 @@ void Codegen::gen_scasm() {
       for (int i = 6; i < numParams; i++) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
-        scasm_inst->set_asm_type(elemToAsmType(
-            globalSymbolTable[func->get_identifier()->get_value()].typeDef[i]));
+        scasm_inst->set_asm_type(
+            elemToAsmType(globalSymbolTable[func->get_identifier()->get_value()]
+                              .typeDef[i + 1]));
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::STACK);
         scasm_src->set_identifier_stack(std::to_string(16 + 8 * (i - 6)) +
@@ -644,7 +646,7 @@ void Codegen::gen_scasm() {
       } else if (inst->get_type() == scar::instruction_type::SIGN_EXTEND) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOVSX);
-        scasm_inst->set_asm_type(scasm::AssemblyType::NONE);
+        scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         SET_MOV_SOURCE();
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);

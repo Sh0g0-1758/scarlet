@@ -23,7 +23,6 @@ namespace codegen {
       } else {                                                                 \
         if (backendSymbolTable[temp].asmType ==                                \
             scasm::AssemblyType::QUAD_WORD) {                                  \
-          std::cout << temp << std::endl;                                      \
           offset += 8;                                                         \
           MAKE_ALIGNED(offset, 8);                                             \
         } else if (backendSymbolTable[temp].asmType ==                         \

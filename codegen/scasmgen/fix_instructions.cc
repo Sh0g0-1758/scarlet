@@ -32,7 +32,7 @@ void Codegen::fix_instructions() {
                                      std::move(scasm_inst));
   }
 
-  // Fixing up Stack/Data to Stack/Data move
+  // Fixing up instructions in which both src and dst are Stack/Data
   for (auto &elem : scasm.get_elems()) {
     if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
       continue;
@@ -146,15 +146,16 @@ void Codegen::fix_instructions() {
         //       v
         // <<LONGWORD>>  movl $10, %r10l
         //               movsx %r10l, %r11d
-        // <<QUADWORD>>  movl %r11d, STACK/DATA
+        // <<QUADWORD>>  movq %r11d, STACK/DATA
         if ((*it)->get_src()->get_type() == scasm::operand_type::IMM) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
           dst->set_reg(scasm::register_type::R10);
 
-          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-          scasm_inst->set_type(scasm::instruction_type::MOV);
-          scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
           scasm_inst->set_src((*it)->get_src());
           scasm_inst->set_dst(dst);
 
@@ -185,15 +186,10 @@ void Codegen::fix_instructions() {
 
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
-      // Only for unary operations and return instruction
-      if ((*it)->get_src() == nullptr)
-        continue;
-
       // If the Immediate value cannot be represented as a signed 32 bit,
       // then it is moved to a register(r10) and then used.
-      if ((*it)->get_src() == nullptr)
-        std::cout << (int)((*it)->get_type()) << std::endl;
-      if ((*it)->get_asm_type() == scasm::AssemblyType::QUAD_WORD and
+      if (NOTNULL((*it)->get_src()) and
+          (*it)->get_asm_type() == scasm::AssemblyType::QUAD_WORD and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
         if ((*it)->get_src()->get_imm().get_type() == constant::Type::LONG and
             (*it)->get_src()->get_imm().get_value().l > INT32_MAX) {
@@ -218,7 +214,8 @@ void Codegen::fix_instructions() {
       // automatically truncate the immediate value if it exceeds INT32_MAX.
       // Though this might emit a warning. So instead, we do the truncation here
       // only.
-      if ((*it)->get_asm_type() == scasm::AssemblyType::LONG_WORD and
+      if (NOTNULL((*it)->get_src()) and
+          (*it)->get_asm_type() == scasm::AssemblyType::LONG_WORD and
           (*it)->get_type() == scasm::instruction_type::MOV and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
         if ((*it)->get_src()->get_imm().get_type() == constant::Type::LONG and
