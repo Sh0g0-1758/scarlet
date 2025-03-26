@@ -43,7 +43,8 @@ reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL | SP
 namespace scarlet {
 namespace scasm {
 
-enum class AssemblyType { NONE, LONG_WORD, QUAD_WORD };
+// BYTE = 8 bits, LONG WORD = 32 bits, QUAD WORD = 64 bits
+enum class AssemblyType { NONE, BYTE, LONG_WORD, QUAD_WORD };
 // NOTE: Every Pseudo Operand gets converted into a stack operand
 enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK, LABEL, COND, DATA };
 enum class Unop { UNKNOWN, NEG, ANOT, LNOT };
@@ -100,7 +101,7 @@ enum class register_type {
   CL,
   SP
 };
-// Word = 16 bits, Dword = 32 bits, Qword = 64 bits
+// Byte = 8 bits, Word = 16 bits, Dword = 32 bits, Qword = 64 bits
 enum class register_size { BYTE, DWORD, QWORD };
 
 enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE };

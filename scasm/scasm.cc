@@ -179,6 +179,8 @@ std::string to_string(register_type reg, register_size size) {
       return "%r11";
     }
     break;
+  case register_type::SP:
+    return "%rsp";
   case register_type::CL:
     return "%cl";
   case register_type::UNKNOWN:
@@ -210,9 +212,9 @@ std::string to_string(cond_code code) {
 std::string to_string(Unop unop) {
   switch (unop) {
   case Unop::NEG:
-    return "negl";
+    return "neg";
   case Unop::ANOT:
-    return "notl";
+    return "not";
   case Unop::UNKNOWN:
   case Unop::LNOT:
     UNREACHABLE()
@@ -223,21 +225,21 @@ std::string to_string(Unop unop) {
 std::string to_string(Binop binop) {
   switch (binop) {
   case Binop::ADD:
-    return "addl";
+    return "add";
   case Binop::SUB:
-    return "subl";
+    return "sub";
   case Binop::MUL:
-    return "imull";
+    return "imul";
   case Binop::AAND:
-    return "andl";
+    return "and";
   case Binop::AOR:
-    return "orl";
+    return "or";
   case Binop::XOR:
-    return "xorl";
+    return "xor";
   case Binop::LEFT_SHIFT:
-    return "sall";
+    return "sal";
   case Binop::RIGHT_SHIFT:
-    return "sarl";
+    return "sar";
   case Binop::UNKNOWN:
   // All relational operators are handled by the cmpl instruction using register
   // flags and results are interpreted from the flags using setcc instruction.

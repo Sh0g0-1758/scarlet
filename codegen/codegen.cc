@@ -9,7 +9,7 @@ namespace codegen {
 #define ARCHPREFIX ""
 #endif
 
-#define CODEGEN_SRC_DST()                                                      \
+#define CODEGEN_SRC()                                                          \
   if (instr->get_src()->get_type() == scasm::operand_type::IMM) {              \
     assembly << "$" << instr->get_src()->get_imm();                            \
   } else if (instr->get_src()->get_type() == scasm::operand_type::STACK) {     \
@@ -18,18 +18,56 @@ namespace codegen {
     assembly << ARCHPREFIX << instr->get_src()->get_identifier_stack()         \
              << "(%rip)";                                                      \
   } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {       \
-    assembly << scasm::to_string(instr->get_src()->get_reg(),                  \
-                                 scasm::register_size::DWORD);                 \
-  }                                                                            \
-  assembly << ", ";                                                            \
+    switch (instr->get_asm_type()) {                                           \
+    case scasm::AssemblyType::QUAD_WORD:                                       \
+      assembly << scasm::to_string(instr->get_src()->get_reg(),                \
+                                   scasm::register_size::QWORD);               \
+      break;                                                                   \
+    case scasm::AssemblyType::LONG_WORD:                                       \
+      assembly << scasm::to_string(instr->get_src()->get_reg(),                \
+                                   scasm::register_size::DWORD);               \
+      break;                                                                   \
+    default:                                                                   \
+      break;                                                                   \
+    }                                                                          \
+  }
+
+#define CODEGEN_DST()                                                          \
   if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {            \
     assembly << instr->get_dst()->get_identifier_stack();                      \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {      \
     assembly << ARCHPREFIX << instr->get_dst()->get_identifier_stack()         \
              << "(%rip)";                                                      \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {       \
-    assembly << scasm::to_string(instr->get_dst()->get_reg(),                  \
-                                 scasm::register_size::DWORD);                 \
+    switch (instr->get_asm_type()) {                                           \
+    case scasm::AssemblyType::QUAD_WORD:                                       \
+      assembly << scasm::to_string(instr->get_dst()->get_reg(),                \
+                                   scasm::register_size::QWORD);               \
+      break;                                                                   \
+    case scasm::AssemblyType::LONG_WORD:                                       \
+      assembly << scasm::to_string(instr->get_dst()->get_reg(),                \
+                                   scasm::register_size::DWORD);               \
+      break;                                                                   \
+    default:                                                                   \
+      break;                                                                   \
+    }                                                                          \
+  }
+
+#define CODEGEN_SRC_DST()                                                      \
+  CODEGEN_SRC();                                                               \
+  assembly << ", ";                                                            \
+  CODEGEN_DST();
+
+#define POSTFIX_ASM_TYPE()                                                     \
+  switch (instr->get_asm_type()) {                                             \
+  case scasm::AssemblyType::QUAD_WORD:                                         \
+    assembly << "q";                                                           \
+    break;                                                                     \
+  case scasm::AssemblyType::LONG_WORD:                                         \
+    assembly << "l";                                                           \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
   }
 
 void Codegen::codegen() {
@@ -53,15 +91,21 @@ void Codegen::codegen() {
         assembly << "\t.data\n";
       }
 #ifdef __APPLE__
-      assembly << "\t.balign 4\n";
+      assembly << "\t.balign " + std::to_string(vars->get_alignment()) + '\n';
 #else
-      assembly << "\t.align 4\n";
+      assembly << "\t.align " + std::to_string(vars->get_alignment()) + '\n';
 #endif
       assembly << ARCHPREFIX << vars->get_name() << ":\n";
       if (!vars->get_init().empty()) {
-        assembly << "\t.long " << vars->get_init() << "\n";
+        if (backendSymbolTable[vars->get_name()].asmType ==
+            scasm::AssemblyType::QUAD_WORD) {
+          assembly << "\t.quad ";
+        } else {
+          assembly << "\t.long ";
+        }
+        assembly << vars->get_init() << "\n";
       } else {
-        assembly << "\t.zero 4\n";
+        assembly << "\t.zero " + std::to_string(vars->get_alignment()) + '\n';
       }
       continue;
     } // STATIC_VARIABLE
@@ -82,64 +126,57 @@ void Codegen::codegen() {
 #ifdef __APPLE__
         assembly << "\tcall " << "_" << funcName << "\n";
 #else
-        if (globalSymbolTable[funcName].def == symbolTable::defType::TRUE) {
+        if (backendSymbolTable[funcName].isDefined) {
           assembly << "\tcall " << funcName << "\n";
         } else {
           assembly << "\tcall " << funcName << "@PLT" << "\n";
         }
 #endif
       } else if (instr->get_type() == scasm::instruction_type::PUSH) {
-        assembly << "\tpushq ";
-        if (instr->get_src()->get_type() == scasm::operand_type::STACK) {
-          assembly << instr->get_src()->get_identifier_stack();
-        } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {
-          assembly << scasm::to_string(instr->get_src()->get_reg(),
-                                       scasm::register_size::QWORD);
-        } else if (instr->get_src()->get_type() == scasm::operand_type::IMM) {
-          assembly << "$" << instr->get_src()->get_imm();
-        } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {
-          assembly << ARCHPREFIX << instr->get_src()->get_identifier_stack()
-                   << "(%rip)";
-        }
+        assembly << "\tpush";
+        POSTFIX_ASM_TYPE();
+        assembly << " ";
+        CODEGEN_SRC();
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::RET) {
         assembly << "\tmovq %rbp, %rsp\n";
         assembly << "\tpopq %rbp\n";
         assembly << "\tret\n";
       } else if (instr->get_type() == scasm::instruction_type::MOV) {
-        assembly << "\tmovl ";
+        assembly << "\tmov";
+        POSTFIX_ASM_TYPE();
+        assembly << " ";
         CODEGEN_SRC_DST();
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::UNARY) {
         assembly << "\t";
-        assembly << scasm::to_string(instr->get_unop()) << " ";
-        if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {
-          assembly << instr->get_dst()->get_identifier_stack();
-        } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
-          assembly << scasm::to_string(instr->get_src()->get_reg(),
-                                       scasm::register_size::DWORD);
-        } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {
-          assembly << ARCHPREFIX << instr->get_dst()->get_identifier_stack()
-                   << "(%rip)";
-        }
+        assembly << scasm::to_string(instr->get_unop());
+        POSTFIX_ASM_TYPE();
+        assembly << " ";
+        CODEGEN_DST();
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::CDQ) {
-        assembly << "\tcdq\n";
-      } else if (instr->get_type() == scasm::instruction_type::IDIV) {
-        assembly << "\tidivl ";
-        if (instr->get_src()->get_type() == scasm::operand_type::STACK) {
-          assembly << instr->get_src()->get_identifier_stack();
-        } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {
-          assembly << scasm::to_string(instr->get_src()->get_reg(),
-                                       scasm::register_size::DWORD);
-        } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {
-          assembly << ARCHPREFIX << instr->get_src()->get_identifier_stack()
-                   << "(%rip)";
+        switch (instr->get_asm_type()) {
+        case scasm::AssemblyType::QUAD_WORD:
+          assembly << "\tcqo\n";
+          break;
+        case scasm::AssemblyType::LONG_WORD:
+          assembly << "\tcdq\n";
+          break;
+        default:
+          break;
         }
+      } else if (instr->get_type() == scasm::instruction_type::IDIV) {
+        assembly << "\tidiv";
+        POSTFIX_ASM_TYPE();
+        assembly << " ";
+        CODEGEN_SRC();
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::BINARY) {
         assembly << "\t";
-        assembly << scasm::to_string(instr->get_binop()) << " ";
+        assembly << scasm::to_string(instr->get_binop());
+        POSTFIX_ASM_TYPE();
+        assembly << " ";
         CODEGEN_SRC_DST();
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::JMP) {
@@ -157,7 +194,9 @@ void Codegen::codegen() {
         assembly << ".L" << instr->get_src()->get_identifier_stack() << ":\n";
 #endif
       } else if (instr->get_type() == scasm::instruction_type::CMP) {
-        assembly << "\tcmpl ";
+        assembly << "\tcmp";
+        POSTFIX_ASM_TYPE();
+        assembly << " ";
         CODEGEN_SRC_DST();
         assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::JMPCC) {
@@ -171,14 +210,30 @@ void Codegen::codegen() {
       } else if (instr->get_type() == scasm::instruction_type::SETCC) {
         assembly << "\tset";
         assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
+        CODEGEN_DST();
+        assembly << "\n";
+      } else if (instr->get_type() == scasm::instruction_type::MOVSX) {
+        assembly << "\tmovslq ";
+        if (instr->get_src()->get_type() == scasm::operand_type::IMM) {
+          assembly << "$" << instr->get_src()->get_imm();
+        } else if (instr->get_src()->get_type() == scasm::operand_type::STACK) {
+          assembly << instr->get_src()->get_identifier_stack();
+        } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {
+          assembly << ARCHPREFIX << instr->get_src()->get_identifier_stack()
+                   << "(%rip)";
+        } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {
+          assembly << scasm::to_string(instr->get_src()->get_reg(),
+                                       scasm::register_size::DWORD);
+        }
+        assembly << ", ";
         if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {
           assembly << instr->get_dst()->get_identifier_stack();
-        } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
-          assembly << scasm::to_string(instr->get_dst()->get_reg(),
-                                       scasm::register_size::BYTE);
         } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {
           assembly << ARCHPREFIX << instr->get_dst()->get_identifier_stack()
                    << "(%rip)";
+        } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {
+          assembly << scasm::to_string(instr->get_dst()->get_reg(),
+                                       scasm::register_size::QWORD);
         }
         assembly << "\n";
       }

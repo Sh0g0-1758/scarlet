@@ -159,6 +159,7 @@ void Codegen::gen_scasm() {
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
           scasm_inst3->set_type(scasm::instruction_type::SETCC);
+          scasm_inst3->set_asm_type(scasm::AssemblyType::BYTE);
           MAKE_SHARED(scasm::scasm_operand, scasm_src3);
           scasm_src3->set_type(scasm::operand_type::COND);
           scasm_src3->set_cond(scasm::cond_code::E);
@@ -182,11 +183,9 @@ void Codegen::gen_scasm() {
           SET_MOV_SOURCE();
 
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
-            scasm_dst->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst->set_identifier_stack(inst->get_dst()->get_reg());
-          }
-          scasm_inst->set_dst(std::move(scasm_dst));
+          SET_DST(scasm_dst);
+
+          scasm_inst->set_dst(scasm_dst);
 
           scasm_func->add_instruction(std::move(scasm_inst));
 
@@ -195,12 +194,7 @@ void Codegen::gen_scasm() {
           scasm_inst2->set_asm_type(instType);
           scasm_inst2->set_unop(inst->get_unop());
 
-          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
-          if (inst->get_dst()->get_type() == scar::val_type::VAR) {
-            scasm_dst2->set_type(scasm::operand_type::PSEUDO);
-            scasm_dst2->set_identifier_stack(inst->get_dst()->get_reg());
-          }
-          scasm_inst2->set_dst(std::move(scasm_dst2));
+          scasm_inst2->set_dst(std::move(scasm_dst));
 
           scasm_func->add_instruction(std::move(scasm_inst2));
         }
@@ -261,6 +255,7 @@ void Codegen::gen_scasm() {
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
           scasm_inst3->set_type(scasm::instruction_type::SETCC);
+          scasm_inst3->set_asm_type(scasm::AssemblyType::BYTE);
           MAKE_SHARED(scasm::scasm_operand, scasm_src3);
           scasm_src3->set_type(scasm::operand_type::COND);
           switch (inst->get_binop()) {
@@ -465,6 +460,7 @@ void Codegen::gen_scasm() {
         // JmpCC(E, label) | JmpCC(NE, label)
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::CMP);
+        scasm_inst->set_asm_type(valToAsmType(inst->get_src1()));
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::IMM);
         constant::Constant zero;
@@ -635,6 +631,7 @@ void Codegen::gen_scasm() {
 
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
         scasm_inst3->set_type(scasm::instruction_type::MOV);
+        scasm_inst3->set_asm_type(valToAsmType(inst->get_dst()));
         MAKE_SHARED(scasm::scasm_operand, scasm_src3);
         scasm_src3->set_type(scasm::operand_type::REG);
         scasm_src3->set_reg(scasm::register_type::AX);
@@ -678,7 +675,7 @@ void Codegen::gen_scasm() {
       scasm::backendSymbol sym;
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
       sym.asmType = elemToAsmType(it.second.typeDef[0]);
-      if (it.second.link == symbolTable::linkage::EXTERNAL) {
+      if (it.second.link != symbolTable::linkage::NONE) {
         sym.isTopLevel = true;
       } else {
         sym.isTopLevel = false;
