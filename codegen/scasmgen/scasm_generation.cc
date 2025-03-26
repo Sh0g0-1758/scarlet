@@ -574,6 +574,7 @@ void Codegen::gen_scasm() {
                 scasm_inst->get_asm_type() == scasm::AssemblyType::QUAD_WORD) {
               scasm_inst->set_src(std::move(scasm_src));
               scasm_inst->set_type(scasm::instruction_type::PUSH);
+              scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
               scasm_func->add_instruction(std::move(scasm_inst));
             } else {
               scasm_inst->set_src(std::move(scasm_src));

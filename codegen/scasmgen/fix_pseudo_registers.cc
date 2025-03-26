@@ -23,6 +23,7 @@ namespace codegen {
       } else {                                                                 \
         if (backendSymbolTable[temp].asmType ==                                \
             scasm::AssemblyType::QUAD_WORD) {                                  \
+          std::cout << temp << std::endl;                                      \
           offset += 8;                                                         \
           MAKE_ALIGNED(offset, 8);                                             \
         } else if (backendSymbolTable[temp].asmType ==                         \
@@ -31,9 +32,8 @@ namespace codegen {
           MAKE_ALIGNED(offset, 4);                                             \
         }                                                                      \
         inst->get_##target()->set_identifier_stack(                            \
-            "-" + std::to_string(offset * 4) + "(%rbp)");                      \
+            "-" + std::to_string(offset) + "(%rbp)");                          \
         pseduo_registers[temp] = inst->get_##target()->get_identifier_stack(); \
-        offset++;                                                              \
         inst->get_##target()->set_type(scasm::operand_type::STACK);            \
       }                                                                        \
     }                                                                          \
