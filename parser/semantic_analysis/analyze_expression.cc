@@ -263,6 +263,17 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
             ? add_cast_to_exp(ternary->get_middle(), expType)
             : add_cast_to_factor(exp->get_factor_node(), expType);
       }
+    } else if (exp->get_binop_node()->get_op() == binop::BINOP::RIGHT_SHIFT or
+               exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT) {
+      ast::ElemType leftType = (exp->get_left() != nullptr)
+                                   ? exp->get_left()->get_type()
+                                   : exp->get_factor_node()->get_type();
+      ast::ElemType rightType = exp->get_right()->get_type();
+      ast::ElemType expType = leftType;
+      if (expType != rightType) {
+        add_cast_to_exp(exp->get_right(), expType);
+      }
+      exp->set_type(expType);
     } else {
       ast::ElemType leftType = (exp->get_left() != nullptr)
                                    ? exp->get_left()->get_type()

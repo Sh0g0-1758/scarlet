@@ -122,6 +122,10 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       std::string &var_name, int indx);
+  template <typename T>
+  void analyze_switch_case(
+      std::shared_ptr<ast::AST_switch_statement_Node> switch_statement,
+      constant::Type switchType);
   void assign_type_to_factor(std::shared_ptr<ast::AST_factor_Node> factor);
   void assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
