@@ -343,9 +343,9 @@ private:
   }
 
   int getSizeType(ast::ElemType type) {
-    if(type == ast::ElemType::INT || type == ast::ElemType::UINT) 
+    if (type == ast::ElemType::INT || type == ast::ElemType::UINT)
       return 4;
-    else if(type == ast::ElemType::LONG || type == ast::ElemType::ULONG)
+    else if (type == ast::ElemType::LONG || type == ast::ElemType::ULONG)
       return 8;
     else
       return -1;
@@ -354,13 +354,12 @@ private:
   ast::ElemType getParentType(ast::ElemType left, ast::ElemType right) {
     if (left == right)
       return left;
-    else if(getSizeType(left) == getSizeType(right)) {
-      if(left == ast::ElemType::UINT || left == ast::ElemType::ULONG) 
+    else if (getSizeType(left) == getSizeType(right)) {
+      if (left == ast::ElemType::UINT || left == ast::ElemType::ULONG)
         return left;
       else
         return right;
-    }
-    else if(getSizeType(left) > getSizeType(right)) 
+    } else if (getSizeType(left) > getSizeType(right))
       return left;
     else
       return right;
