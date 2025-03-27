@@ -11,8 +11,14 @@ void print_token(TOKEN token) {
   case TOKEN::INT_CONSTANT:
     std::cerr << "int constant ";
     break;
+  case TOKEN::UINT_CONSTANT:
+    std::cerr << "uint constant ";
+    break;
   case TOKEN::LONG_CONSTANT:
     std::cerr << "long constant ";
+    break;
+  case TOKEN::ULONG_CONSTANT:
+    std::cerr << "ulong constant ";
     break;
   case TOKEN::CHARACTER_CONSTANT:
     std::cerr << "character constant ";
@@ -248,8 +254,12 @@ std::string to_string(TOKEN token) {
     return "identifier";
   case TOKEN::INT_CONSTANT:
     return "int constant";
+  case TOKEN::UINT_CONSTANT:
+    return "uint constant";
   case TOKEN::LONG_CONSTANT:
     return "long constant";
+  case TOKEN::ULONG_CONSTANT:
+    return "ulong constant";
   case TOKEN::CHARACTER_CONSTANT:
     return "character constant";
   case TOKEN::CHAR_ARR:
@@ -514,7 +524,8 @@ bool is_right_associative(TOKEN token) {
 }
 
 bool is_type_specifier(TOKEN token) {
-  return token == TOKEN::INT or token == TOKEN::LONG;
+  return token == TOKEN::INT or token == TOKEN::LONG or
+         token == TOKEN::SIGNED or token == TOKEN::UNSIGNED;
 }
 
 bool is_storage_specifier(TOKEN token) {
@@ -523,6 +534,7 @@ bool is_storage_specifier(TOKEN token) {
 
 bool is_constant_or_identifier(TOKEN token) {
   return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
+         token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
          token == TOKEN::IDENTIFIER;
 }
 

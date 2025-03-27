@@ -290,6 +290,10 @@ private:
       return "int";
     case ast::ElemType::LONG:
       return "long";
+    case ast::ElemType::UINT:
+      return "unsigned int";
+    case ast::ElemType::ULONG:
+      return "unsigned long";
     case ast::ElemType::NONE:
       return "";
     }
@@ -314,6 +318,10 @@ private:
       return ast::ElemType::INT;
     case constant::Type::LONG:
       return ast::ElemType::LONG;
+    case constant::Type::UINT:
+      return ast::ElemType::UINT;
+    case constant::Type::ULONG:
+      return ast::ElemType::ULONG;
     default:
       return ast::ElemType::NONE;
     }

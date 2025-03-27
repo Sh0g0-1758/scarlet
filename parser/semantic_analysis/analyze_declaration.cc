@@ -135,6 +135,14 @@ void parser::analyze_global_variable_declaration(
           constZero.set_type(constant::Type::LONG);
           constZero.set_value({.l = 0});
           break;
+        case ast::ElemType::UINT:
+          constZero.set_type(constant::Type::UINT);
+          constZero.set_value({.ui = 0});
+          break;
+        case ast::ElemType::ULONG:
+          constZero.set_type(constant::Type::ULONG);
+          constZero.set_value({.ul = 0});
+          break;
         case ast::ElemType::NONE:
           UNREACHABLE();
         }
@@ -168,6 +176,14 @@ void parser::analyze_global_variable_declaration(
       case ast::ElemType::LONG:
         constZero.set_type(constant::Type::LONG);
         constZero.set_value({.l = 0});
+        break;
+      case ast::ElemType::UINT:
+        constZero.set_type(constant::Type::UINT);
+        constZero.set_value({.ui = 0});
+        break;
+      case ast::ElemType::ULONG:
+        constZero.set_type(constant::Type::ULONG);
+        constZero.set_value({.ul = 0});
         break;
       case ast::ElemType::NONE:
         UNREACHABLE();
@@ -368,6 +384,14 @@ void parser::analyze_local_variable_declaration(
       case ast::ElemType::LONG:
         constZero.set_type(constant::Type::LONG);
         constZero.set_value({.l = 0});
+        break;
+      case ast::ElemType::UINT:
+        constZero.set_type(constant::Type::UINT);
+        constZero.set_value({.ui = 0});
+        break;
+      case ast::ElemType::ULONG:
+        constZero.set_type(constant::Type::ULONG);
+        constZero.set_value({.ul = 0});
         break;
       case ast::ElemType::NONE:
         UNREACHABLE();

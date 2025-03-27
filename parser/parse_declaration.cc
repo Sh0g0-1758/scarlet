@@ -19,24 +19,6 @@ namespace parser {
     tokens.erase(tokens.begin());                                              \
   }
 
-#define PARSE_TYPE(decl, func)                                                 \
-  if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::INT) {        \
-    tokens.erase(tokens.begin());                                              \
-    if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::LONG) {     \
-      tokens.erase(tokens.begin());                                            \
-      decl->func(ast::ElemType::LONG);                                         \
-    } else {                                                                   \
-      decl->func(ast::ElemType::INT);                                          \
-    }                                                                          \
-  } else {                                                                     \
-    EXPECT(token::TOKEN::LONG);                                                \
-    decl->func(ast::ElemType::LONG);                                           \
-    if (!tokens.empty() and (tokens[0].get_token() == token::TOKEN::INT or     \
-                             tokens[0].get_token() == token::TOKEN::LONG)) {   \
-      tokens.erase(tokens.begin());                                            \
-    }                                                                          \
-  }
-
 void parser::parse_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Declaration_Node> &declaration,

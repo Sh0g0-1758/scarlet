@@ -3,24 +3,6 @@
 namespace scarlet {
 namespace parser {
 
-#define PARSE_TYPE(decl, func)                                                 \
-  if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::INT) {        \
-    tokens.erase(tokens.begin());                                              \
-    if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::LONG) {     \
-      tokens.erase(tokens.begin());                                            \
-      decl->func(ast::ElemType::LONG);                                         \
-    } else {                                                                   \
-      decl->func(ast::ElemType::INT);                                          \
-    }                                                                          \
-  } else {                                                                     \
-    EXPECT(token::TOKEN::LONG);                                                \
-    decl->func(ast::ElemType::LONG);                                           \
-    if (!tokens.empty() and (tokens[0].get_token() == token::TOKEN::INT or     \
-                             tokens[0].get_token() == token::TOKEN::LONG)) {   \
-      tokens.erase(tokens.begin());                                            \
-    }                                                                          \
-  }
-
 std::pair<bool, int>
 parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
   int i = 0;
@@ -54,7 +36,9 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> &factor) {
   if (tokens[0].get_token() == token::TOKEN::INT_CONSTANT or
-      tokens[0].get_token() == token::TOKEN::LONG_CONSTANT) {
+      tokens[0].get_token() == token::TOKEN::LONG_CONSTANT or
+      tokens[0].get_token() == token::TOKEN::UINT_CONSTANT or
+      tokens[0].get_token() == token::TOKEN::ULONG_CONSTANT) {
     parse_const(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();

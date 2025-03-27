@@ -18,8 +18,8 @@ enum class Type {
   INT,
   LONG,
   DOUBLE,
-  UNSIGNED_INT,
-  UNSIGNED_LONG,
+  UINT,
+  ULONG,
 };
 
 class Constant {
@@ -45,9 +45,9 @@ public:
       return "long";
     case Type::DOUBLE:
       return "double";
-    case Type::UNSIGNED_INT:
+    case Type::UINT:
       return "unsigned int";
-    case Type::UNSIGNED_LONG:
+    case Type::ULONG:
       return "unsigned long";
     case Type::NONE:
       return "";
@@ -65,9 +65,9 @@ public:
       return value.l < constant.value.l;
     case Type::DOUBLE:
       return value.d < constant.value.d;
-    case Type::UNSIGNED_INT:
+    case Type::UINT:
       return value.ui < constant.value.ui;
-    case Type::UNSIGNED_LONG:
+    case Type::ULONG:
       return value.ul < constant.value.ul;
     case Type::NONE:
       UNREACHABLE();
@@ -85,9 +85,9 @@ public:
       return value.l == constant.value.l;
     case Type::DOUBLE:
       return value.d == constant.value.d;
-    case Type::UNSIGNED_INT:
+    case Type::UINT:
       return value.ui == constant.value.ui;
-    case Type::UNSIGNED_LONG:
+    case Type::ULONG:
       return value.ul == constant.value.ul;
     case Type::NONE:
       UNREACHABLE();
@@ -105,10 +105,10 @@ public:
     case Type::DOUBLE:
       os << constant.value.d;
       break;
-    case Type::UNSIGNED_INT:
+    case Type::UINT:
       os << constant.value.ui;
       break;
-    case Type::UNSIGNED_LONG:
+    case Type::ULONG:
       os << constant.value.ul;
       break;
     case Type::NONE:
