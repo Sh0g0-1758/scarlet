@@ -43,40 +43,19 @@ void parser::analyze_statement(
   } break;
   case ast::statementType::SWITCH: {
     // iterate over case_exp_label and analyze the case expression
-    std::map<constant::Constant, bool> case_val;
     analyze_exp(statement->get_exps(), symbol_table, indx);
+    ast::ElemType switchType = statement->get_exps()->get_type();
     auto switch_statement =
         std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
-    for (auto case_exp_label : switch_statement->get_case_exp_label()) {
-      // default case has no expression
-      if (case_exp_label.first == nullptr) {
-        continue;
-      }
-      // switch expression should be a constant value
-      if (!EXPISCONSTANT(case_exp_label.first)) {
-        success = false;
-        error_messages.emplace_back(
-            "Case expression is not a constant integer expression");
-        continue;
-      } else {
-        constant::Constant constVal = case_exp_label.first->get_factor_node()
-                                          ->get_const_node()
-                                          ->get_constant();
-        if (case_val.find(constVal) != case_val.end()) {
-          success = false;
-          error_messages.emplace_back(
-              "Duplicate case value in switch statement");
-          continue;
-        }
-        case_val[constVal] = true;
-        case_exp_label.first->get_factor_node()
-            ->get_const_node()
-            ->get_constant()
-            .set_value(constVal.get_value());
-        case_exp_label.first->set_binop_node(nullptr);
-        case_exp_label.first->set_left(nullptr);
-        case_exp_label.first->set_right(nullptr);
-      }
+    switch (switchType) {
+    case ast::ElemType::INT:
+      analyze_switch_case<int>(switch_statement, constant::Type::INT);
+      break;
+    case ast::ElemType::LONG:
+      analyze_switch_case<long>(switch_statement, constant::Type::LONG);
+      break;
+    case ast::ElemType::NONE:
+      break;
     }
     // analyze the statement inside the switch
     analyze_statement(switch_statement->get_stmt(), symbol_table, indx);
@@ -175,6 +154,81 @@ void parser::analyze_for_statement(
     } else {
       analyze_statement(for_statement->get_stmt(), proxy_symbol_table,
                         indx + 1);
+    }
+  }
+}
+
+template <typename T>
+void parser::analyze_switch_case(
+    std::shared_ptr<ast::AST_switch_statement_Node> switch_statement,
+    constant::Type switchType) {
+  std::map<T, bool> case_val;
+  for (auto case_exp_label : switch_statement->get_case_exp_label()) {
+    // default case has no expression
+    if (case_exp_label.first == nullptr) {
+      continue;
+    }
+    // switch expression should be a constant value
+    if (!EXPISCONSTANT(case_exp_label.first)) {
+      success = false;
+      error_messages.emplace_back(
+          "Case expression is not a constant integer expression");
+      continue;
+    } else {
+      auto constVal = case_exp_label.first->get_factor_node()
+                          ->get_const_node()
+                          ->get_constant();
+      T val;
+      switch (constVal.get_type()) {
+      case constant::Type::INT:
+        val = static_cast<T>(constVal.get_value().i);
+        break;
+      case constant::Type::LONG:
+        val = static_cast<T>(constVal.get_value().l);
+        break;
+      case constant::Type::DOUBLE:
+        val = static_cast<T>(constVal.get_value().d);
+        break;
+      case constant::Type::UNSIGNED_INT:
+        val = static_cast<T>(constVal.get_value().ui);
+        break;
+      case constant::Type::UNSIGNED_LONG:
+        val = static_cast<T>(constVal.get_value().ul);
+        break;
+      default:
+        break;
+      }
+      constant::Constant newConst;
+      newConst.set_type(switchType);
+      switch (switchType) {
+      case constant::Type::INT:
+        newConst.set_value({.i = static_cast<int>(val)});
+        break;
+      case constant::Type::LONG:
+        newConst.set_value({.l = static_cast<long>(val)});
+        break;
+      case constant::Type::DOUBLE:
+        newConst.set_value({.d = static_cast<double>(val)});
+        break;
+      case constant::Type::UNSIGNED_INT:
+        newConst.set_value({.ui = static_cast<unsigned int>(val)});
+        break;
+      case constant::Type::UNSIGNED_LONG:
+        newConst.set_value({.ul = static_cast<unsigned long>(val)});
+        break;
+      default:
+        break;
+      }
+
+      case_exp_label.first->get_factor_node()->get_const_node()->set_constant(
+          newConst);
+
+      if (case_val.find(val) != case_val.end()) {
+        success = false;
+        error_messages.emplace_back("Duplicate case value in switch statement");
+        continue;
+      }
+      case_val[val] = true;
     }
   }
 }

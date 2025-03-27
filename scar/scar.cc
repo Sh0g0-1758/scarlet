@@ -23,6 +23,10 @@ std::string to_string(scar::instruction_type type) {
     return "Label";
   case scar::instruction_type::CALL:
     return "Call";
+  case scar::instruction_type::SIGN_EXTEND:
+    return "SignExtend";
+  case scar::instruction_type::TRUNCATE:
+    return "Truncate";
   }
   UNREACHABLE()
 }
