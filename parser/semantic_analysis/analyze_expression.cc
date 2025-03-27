@@ -11,7 +11,8 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
     return;
   analyze_exp(exp->get_left(), symbol_table, indx);
 
-  // Check that if the exp is of type assignment, then factor is an identifier
+  // Check that if the exp is of type assignment or exp is a compound expression
+  // then factor is an identifier
   if (exp->get_binop_node() != nullptr and
       (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
        binop::is_compound(exp->get_binop_node()->get_op()))) {
@@ -38,6 +39,36 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
   if (!success)
     return;
+
+  // expand the compound expression
+  if (exp->get_binop_node() != nullptr and
+      binop::is_compound(exp->get_binop_node()->get_op())) {
+    // a += 5
+    //    |
+    //    v
+    // a = a + 5
+    MAKE_SHARED(ast::AST_exp_Node, rightChild);
+
+    MAKE_SHARED(ast::AST_binop_Node, rightBinop);
+    rightBinop->set_op(compound_to_base[exp->get_binop_node()->get_op()]);
+    rightChild->set_binop_node(rightBinop);
+
+    MAKE_SHARED(ast::AST_factor_Node, rightFactor);
+    rightFactor->set_factor_type(ast::FactorType::BASIC);
+    MAKE_SHARED(ast::AST_identifier_Node, rightIdentifier);
+    rightIdentifier->set_identifier(
+        exp->get_factor_node()->get_identifier_node()->get_value());
+    rightFactor->set_identifier_node(std::move(rightIdentifier));
+
+    rightChild->set_factor_node(std::move(rightFactor));
+    rightChild->set_right(exp->get_right());
+
+    MAKE_SHARED(ast::AST_binop_Node, binop);
+    binop->set_op(binop::BINOP::ASSIGN);
+    exp->set_binop_node(binop);
+
+    exp->set_right(rightChild);
+  }
 
   // check the factor
   analyze_factor(exp->get_factor_node(), symbol_table, indx);
@@ -232,6 +263,17 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
             ? add_cast_to_exp(ternary->get_middle(), expType)
             : add_cast_to_factor(exp->get_factor_node(), expType);
       }
+    } else if (exp->get_binop_node()->get_op() == binop::BINOP::RIGHT_SHIFT or
+               exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT) {
+      ast::ElemType leftType = (exp->get_left() != nullptr)
+                                   ? exp->get_left()->get_type()
+                                   : exp->get_factor_node()->get_type();
+      ast::ElemType rightType = exp->get_right()->get_type();
+      ast::ElemType expType = leftType;
+      if (expType != rightType) {
+        add_cast_to_exp(exp->get_right(), expType);
+      }
+      exp->set_type(expType);
     } else {
       ast::ElemType leftType = (exp->get_left() != nullptr)
                                    ? exp->get_left()->get_type()
@@ -239,7 +281,6 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       ast::ElemType rightType = exp->get_right()->get_type();
 
       ast::ElemType expType = getParentType(leftType, rightType);
-      exp->set_type(expType);
 
       // Explicitly add cast operation in case of type mismatch
       if (expType != rightType) {
@@ -249,6 +290,12 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         (exp->get_left() != nullptr)
             ? add_cast_to_exp(exp->get_left(), expType)
             : add_cast_to_factor(exp->get_factor_node(), expType);
+      }
+
+      if (binop::is_relational(exp->get_binop_node()->get_op())) {
+        exp->set_type(ast::ElemType::INT);
+      } else {
+        exp->set_type(expType);
       }
     }
   }

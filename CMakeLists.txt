@@ -99,11 +99,11 @@ add_custom_target(test-scarlet
     COMMAND echo "Running semantic analysis test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage validate
     COMMAND echo "Running scar test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10 --stage tacky
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage tacky
     COMMAND echo "Running Codegen test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10 --stage codegen
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage codegen
     COMMAND echo "Running bitwise, compound, increment/decrement and goto test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10 --extra-credit
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --extra-credit
     COMMAND echo "Running test asm"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 10
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11
 )
