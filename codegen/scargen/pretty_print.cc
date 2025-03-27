@@ -3,6 +3,17 @@
 namespace scarlet {
 namespace codegen {
 
+#define PRINT_VAR_CONST(scarValNode)                                           \
+  if (scarValNode->get_type() == scar::val_type::CONSTANT) {                   \
+    std::cout << "<<" << scarValNode->get_const_val().typeToString() << ">>"   \
+              << "Constant(" << scarValNode->get_const_val() << ")";           \
+  } else if (scarValNode->get_type() == scar::val_type::VAR) {                 \
+    std::cout << "<<"                                                          \
+              << to_string(                                                    \
+                     globalSymbolTable[scarValNode->get_reg()].typeDef[0])     \
+              << ">>" << "Var(" << scarValNode->get_reg() << ")";              \
+  }
+
 void Codegen::pretty_print_function(
     std::shared_ptr<scar::scar_Function_Node> function) {
   std::cout << "\tFunction(" << std::endl;
@@ -23,82 +34,39 @@ void Codegen::pretty_print_function(
       auto callStmt =
           std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
               statement);
-      std::cout << "\t\t\t" << to_string(callStmt->get_type()) << "(";
+      std::cout << "\t\t\t" << scar::to_string(callStmt->get_type()) << "(";
       std::cout << "name=\"" << callStmt->get_name()->get_value() << "\", ";
       std::cout << "args=[";
       for (auto arg : callStmt->get_args()) {
-        if (arg->get_type() == scar::val_type::VAR) {
-          std::cout << "Var(" << arg->get_reg() << "), ";
-        } else if (arg->get_type() == scar::val_type::CONSTANT) {
-          std::cout << "Constant(" << arg->get_const_val() << "), ";
-        }
+        PRINT_VAR_CONST(arg);
+        std::cout << ", ";
       }
       std::cout << "], Dst=Var(" << callStmt->get_dst()->get_reg() << "))"
                 << std::endl;
       continue;
     }
-    std::cout << "\t\t\t" << to_string(statement->get_type()) << "(";
+    std::cout << "\t\t\t" << scar::to_string(statement->get_type()) << "(";
     if (statement->get_type() == scar::instruction_type::RETURN) {
-      if (statement->get_src1()->get_type() == scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_src1()->get_const_val()
-                  << ")";
-      } else if (statement->get_src1()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_src1()->get_reg() << ")";
-      }
+      PRINT_VAR_CONST(statement->get_src1());
       std::cout << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::UNARY) {
       std::cout << unop::to_string(statement->get_unop()) << ", ";
-      if (statement->get_src1()->get_type() == scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_src1()->get_const_val()
-                  << ")";
-      } else if (statement->get_src1()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_src1()->get_reg() << ")";
-      }
+      PRINT_VAR_CONST(statement->get_src1());
       std::cout << ", ";
-      if (statement->get_dst()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_dst()->get_reg() << ")";
-      } else if (statement->get_dst()->get_type() == scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_dst()->get_const_val()
-                  << ")";
-      }
+      PRINT_VAR_CONST(statement->get_dst());
       std::cout << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::BINARY) {
       std::cout << binop::to_string(statement->get_binop()) << ", ";
-      if (statement->get_src1()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_src1()->get_reg() << ")";
-      } else if (statement->get_src1()->get_type() ==
-                 scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_src1()->get_const_val()
-                  << ")";
-      }
+      PRINT_VAR_CONST(statement->get_src1());
       std::cout << ", ";
-      if (statement->get_src2()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_src2()->get_reg() << ")";
-      } else if (statement->get_src2()->get_type() ==
-                 scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_src2()->get_const_val()
-                  << ")";
-      }
+      PRINT_VAR_CONST(statement->get_src2());
       std::cout << ", ";
-      if (statement->get_dst()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_dst()->get_reg() << ")";
-      } else if (statement->get_dst()->get_type() == scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_dst()->get_const_val()
-                  << ")";
-      }
+      PRINT_VAR_CONST(statement->get_dst());
       std::cout << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::COPY) {
-      if (statement->get_src1()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_src1()->get_reg() << ")";
-      } else if (statement->get_src1()->get_type() ==
-                 scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_src1()->get_const_val()
-                  << ")";
-      }
+      PRINT_VAR_CONST(statement->get_src1());
       std::cout << " ,";
-      if (statement->get_dst()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_dst()->get_reg() << ")";
-      }
+      PRINT_VAR_CONST(statement->get_dst());
       std::cout << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::JUMP or
                statement->get_type() == scar::instruction_type::LABEL) {
@@ -106,15 +74,15 @@ void Codegen::pretty_print_function(
     } else if (statement->get_type() == scar::instruction_type::JUMP_IF_ZERO or
                statement->get_type() ==
                    scar::instruction_type::JUMP_IF_NOT_ZERO) {
-      if (statement->get_src1()->get_type() == scar::val_type::VAR) {
-        std::cout << "Var(" << statement->get_src1()->get_reg() << ")";
-      } else if (statement->get_src1()->get_type() ==
-                 scar::val_type::CONSTANT) {
-        std::cout << "Constant(" << statement->get_src1()->get_const_val()
-                  << ")";
-      }
+      PRINT_VAR_CONST(statement->get_src1());
       std::cout << ", ";
       std::cout << statement->get_dst()->get_label() << ")" << std::endl;
+    } else if (statement->get_type() == scar::instruction_type::SIGN_EXTEND or
+               statement->get_type() == scar::instruction_type::TRUNCATE) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ")" << std::endl;
     }
   }
   std::cout << "\t\t]" << std::endl;

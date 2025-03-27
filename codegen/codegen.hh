@@ -51,6 +51,7 @@ private:
   std::string reg_name;
   std::map<std::string, std::string> pseduo_registers;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
+  std::map<std::string, scasm::backendSymbol> backendSymbolTable;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
@@ -102,8 +103,12 @@ public:
   // #############################
   void set_file_name(std::string file_name) { this->file_name = file_name; }
   bool is_success() { return success; }
-  std::string get_reg_name() {
-    reg_name = "temp." + std::to_string(curr_regNum);
+  std::string get_reg_name(ast::ElemType type) {
+    reg_name = "scarReg." + std::to_string(curr_regNum);
+    globalSymbolTable[reg_name] = {reg_name,
+                                   symbolTable::linkage::NONE,
+                                   symbolTable::symbolType::VARIABLE,
+                                   {type}};
     curr_regNum++;
     return reg_name;
   }
@@ -133,17 +138,63 @@ public:
     return tmp;
   }
 
-  std::map<binop::BINOP, binop::BINOP> compound_to_base = {
-      {binop::BINOP::COMPOUND_DIFFERENCE, binop::BINOP::SUB},
-      {binop::BINOP::COMPOUND_DIVISION, binop::BINOP::DIV},
-      {binop::BINOP::COMPOUND_PRODUCT, binop::BINOP::MUL},
-      {binop::BINOP::COMPOUND_REMAINDER, binop::BINOP::MOD},
-      {binop::BINOP::COMPOUND_SUM, binop::BINOP::ADD},
-      {binop::BINOP::COMPOUND_AND, binop::BINOP::AAND},
-      {binop::BINOP::COMPOUND_OR, binop::BINOP::AOR},
-      {binop::BINOP::COMPOUND_XOR, binop::BINOP::XOR},
-      {binop::BINOP::COMPOUND_LEFTSHIFT, binop::BINOP::LEFT_SHIFT},
-      {binop::BINOP::COMPOUND_RIGHTSHIFT, binop::BINOP::RIGHT_SHIFT}};
+  std::string to_string(ast::ElemType type) {
+    switch (type) {
+    case ast::ElemType::INT:
+      return "int";
+    case ast::ElemType::LONG:
+      return "long";
+    case ast::ElemType::UINT:
+      return "unsigned int";
+    case ast::ElemType::ULONG:
+      return "unsigned long";
+    case ast::ElemType::NONE:
+      return "";
+    }
+    UNREACHABLE();
+  }
+
+  scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
+    switch (val->get_type()) {
+    case scar::val_type::CONSTANT:
+      switch (val->get_const_val().get_type()) {
+      case constant::Type::INT:
+        return scasm::AssemblyType::LONG_WORD;
+      case constant::Type::LONG:
+        return scasm::AssemblyType::QUAD_WORD;
+      default:
+        return scasm::AssemblyType::NONE;
+      }
+    case scar::val_type::VAR:
+      switch (globalSymbolTable[val->get_reg()].typeDef[0]) {
+      case ast::ElemType::INT:
+        return scasm::AssemblyType::LONG_WORD;
+      case ast::ElemType::LONG:
+        return scasm::AssemblyType::QUAD_WORD;
+      default:
+        return scasm::AssemblyType::NONE;
+      }
+    case scar::val_type::LABEL:
+      return scasm::AssemblyType::NONE;
+    }
+    UNREACHABLE();
+  }
+
+  scasm::AssemblyType elemToAsmType(ast::ElemType type) {
+    switch (type) {
+    case ast::ElemType::INT:
+      return scasm::AssemblyType::LONG_WORD;
+    case ast::ElemType::LONG:
+      return scasm::AssemblyType::QUAD_WORD;
+    case ast::ElemType::UINT:
+      return scasm::AssemblyType::LONG_WORD;
+    case ast::ElemType::ULONG:
+      return scasm::AssemblyType::QUAD_WORD;
+    case ast::ElemType::NONE:
+      return scasm::AssemblyType::NONE;
+    }
+    UNREACHABLE();
+  }
 
   std::vector<scasm::register_type> argReg = {
       scasm::register_type::DI, scasm::register_type::SI,

@@ -28,6 +28,7 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       return;
     }
     if (val > INT_MAX) {
+      // implicit promotion to long
       constant.set_type(constant::Type::LONG);
       v.l = val;
     } else {
@@ -39,12 +40,12 @@ void parser::parse_const(std::vector<token::Token> &tokens,
     constant.set_type(constant::Type::UINT);
     try {
       unsigned long ul = std::stoul(tokens[0].get_value().value());
-      // should you warn if the value is negative?
       if (ul > UINT_MAX) {
         // implict promotion to unsigned long
         constant.set_type(constant::Type::ULONG);
+        v.ul = ul;
       } else {
-        v.ui = static_cast<unsigned int>(ul);
+        v.ui = ul;
       }
     } catch (std::out_of_range &e) {
       success = false;

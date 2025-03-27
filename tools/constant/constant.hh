@@ -37,6 +37,23 @@ public:
     type = Type::NONE;
     value = {};
   }
+  std::string typeToString() {
+    switch (type) {
+    case Type::INT:
+      return "int";
+    case Type::LONG:
+      return "long";
+    case Type::DOUBLE:
+      return "double";
+    case Type::UINT:
+      return "unsigned int";
+    case Type::ULONG:
+      return "unsigned long";
+    case Type::NONE:
+      return "";
+    }
+    UNREACHABLE();
+  }
   bool operator<(const Constant &constant) const {
     if (type != constant.type) {
       return type < constant.type;
