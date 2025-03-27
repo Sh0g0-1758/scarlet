@@ -54,6 +54,13 @@ void parser::analyze_statement(
     case ast::ElemType::LONG:
       analyze_switch_case<long>(switch_statement, constant::Type::LONG);
       break;
+    case ast::ElemType::UINT:
+      analyze_switch_case<unsigned int>(switch_statement, constant::Type::UINT);
+      break;
+    case ast::ElemType::ULONG:
+      analyze_switch_case<unsigned long>(switch_statement,
+                                         constant::Type::ULONG);
+      break;
     case ast::ElemType::NONE:
       break;
     }
@@ -189,10 +196,10 @@ void parser::analyze_switch_case(
       case constant::Type::DOUBLE:
         val = static_cast<T>(constVal.get_value().d);
         break;
-      case constant::Type::UNSIGNED_INT:
+      case constant::Type::UINT:
         val = static_cast<T>(constVal.get_value().ui);
         break;
-      case constant::Type::UNSIGNED_LONG:
+      case constant::Type::ULONG:
         val = static_cast<T>(constVal.get_value().ul);
         break;
       default:
@@ -210,10 +217,10 @@ void parser::analyze_switch_case(
       case constant::Type::DOUBLE:
         newConst.set_value({.d = static_cast<double>(val)});
         break;
-      case constant::Type::UNSIGNED_INT:
+      case constant::Type::UINT:
         newConst.set_value({.ui = static_cast<unsigned int>(val)});
         break;
-      case constant::Type::UNSIGNED_LONG:
+      case constant::Type::ULONG:
         newConst.set_value({.ul = static_cast<unsigned long>(val)});
         break;
       default:

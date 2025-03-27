@@ -45,9 +45,9 @@ public:
       return "long";
     case Type::DOUBLE:
       return "double";
-    case Type::UNSIGNED_INT:
+    case Type::UINT:
       return "unsigned int";
-    case Type::UNSIGNED_LONG:
+    case Type::ULONG:
       return "unsigned long";
     case Type::NONE:
       return "";

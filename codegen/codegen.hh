@@ -144,6 +144,10 @@ public:
       return "int";
     case ast::ElemType::LONG:
       return "long";
+    case ast::ElemType::UINT:
+      return "unsigned int";
+    case ast::ElemType::ULONG:
+      return "unsigned long";
     case ast::ElemType::NONE:
       return "";
     }
@@ -181,6 +185,10 @@ public:
     case ast::ElemType::INT:
       return scasm::AssemblyType::LONG_WORD;
     case ast::ElemType::LONG:
+      return scasm::AssemblyType::QUAD_WORD;
+    case ast::ElemType::UINT:
+      return scasm::AssemblyType::LONG_WORD;
+    case ast::ElemType::ULONG:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;

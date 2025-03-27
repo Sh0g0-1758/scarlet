@@ -8,7 +8,7 @@
 
 static int i;
 signed extern i;
-int static signed i = 5;
+static int signed i = 5;
 signed int static i;
 
 long signed l;
@@ -17,26 +17,26 @@ int long l;
 signed long int l;
 
 int main(void) {
-    int signed extern i;
-    extern signed long l;
+  int signed extern i;
+  extern signed long l;
 
-    if (i != 5) {
-        return 1;
-    }
+  if (i != 5) {
+    return 1;
+  }
 
-    if (l != 7) {
-        return 2;
-    }
+  if (l != 7) {
+    return 2;
+  }
 
-    /* use signed type specifier in for loop */
-    int counter = 0;
-    for (signed int index = 10; index > 0; index = index - 1) {
-        counter = counter + 1;
-    }
+  /* use signed type specifier in for loop */
+  int counter = 0;
+  for (signed int index = 10; index > 0; index = index - 1) {
+    counter = counter + 1;
+  }
 
-    if (counter != 10) {
-        return 3;
-    }
+  if (counter != 10) {
+    return 3;
+  }
 
-    return 0;
+  return 0;
 }
