@@ -317,14 +317,8 @@ void Codegen::gen_scar_exp(
 
     MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
     scar_val_dst->set_type(scar::val_type::VAR);
-    if (binop::is_compound(binop)) {
-      binop = compound_to_base[binop];
-      scar_val_dst->set_reg_name(
-          exp->get_factor_node()->get_identifier_node()->get_value());
-      reg_name = scar_val_dst->get_reg();
-    } else {
-      scar_val_dst->set_reg_name(get_reg_name(exp->get_type()));
-    }
+    scar_val_dst->set_reg_name(get_reg_name(exp->get_type()));
+
     scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));
     scar_instruction->set_binop(binop);
