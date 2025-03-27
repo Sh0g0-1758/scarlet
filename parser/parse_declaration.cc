@@ -30,7 +30,6 @@ namespace parser {
 */
 #define PARSE_TYPE(decl, func)                                                 \
   std::set<token::TOKEN> type_specifiers;                                      \
-  std::set<token::TOKEN> storage_specifiers;                                   \
   while (!tokens.empty() and                                                   \
          token::is_type_specifier(tokens[0].get_token())) {                    \
     if (type_specifiers.find(tokens[0].get_token()) !=                         \
