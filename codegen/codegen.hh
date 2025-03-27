@@ -138,6 +138,15 @@ public:
     return tmp;
   }
 
+  int getSizeType(ast::ElemType type) {
+    if(type == ast::ElemType::INT || type == ast::ElemType::UINT) 
+      return 4;
+    else if(type == ast::ElemType::LONG || type == ast::ElemType::ULONG)
+      return 8;
+    else
+      return -1;
+  }
+
   std::string to_string(ast::ElemType type) {
     switch (type) {
     case ast::ElemType::INT:
@@ -159,17 +168,22 @@ public:
     case scar::val_type::CONSTANT:
       switch (val->get_const_val().get_type()) {
       case constant::Type::INT:
+      case constant::Type::UINT:
         return scasm::AssemblyType::LONG_WORD;
       case constant::Type::LONG:
+      case constant::Type::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
+      
       default:
         return scasm::AssemblyType::NONE;
       }
     case scar::val_type::VAR:
       switch (globalSymbolTable[val->get_reg()].typeDef[0]) {
       case ast::ElemType::INT:
+      case ast::ElemType::UINT:
         return scasm::AssemblyType::LONG_WORD;
       case ast::ElemType::LONG:
+      case ast::ElemType::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
       default:
         return scasm::AssemblyType::NONE;
@@ -179,23 +193,44 @@ public:
     }
     UNREACHABLE();
   }
-
+  
   scasm::AssemblyType elemToAsmType(ast::ElemType type) {
     switch (type) {
-    case ast::ElemType::INT:
+      case ast::ElemType::INT:
       return scasm::AssemblyType::LONG_WORD;
-    case ast::ElemType::LONG:
+      case ast::ElemType::LONG:
       return scasm::AssemblyType::QUAD_WORD;
-    case ast::ElemType::UINT:
+      case ast::ElemType::UINT:
       return scasm::AssemblyType::LONG_WORD;
-    case ast::ElemType::ULONG:
+      case ast::ElemType::ULONG:
       return scasm::AssemblyType::QUAD_WORD;
-    case ast::ElemType::NONE:
+      case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
     }
     UNREACHABLE();
   }
+  
+  constant::Type valType(std::shared_ptr<scar::scar_Val_Node> val){
+    switch (val->get_type()){
+      case scar::val_type::CONSTANT:
+        return val->get_const_val().get_type();
+        break;
+      case scar::val_type::VAR:
+        switch(globalSymbolTable[val->get_reg()].typeDef[0]){
+          case ast::ElemType::INT:
+            return constant::Type::INT;
+          case ast::ElemType::UINT:
+          return constant::Type::UINT;
+          case ast::ElemType::LONG:
+          return constant::Type::LONG;
+          case ast::ElemType::ULONG:
+          return constant::Type::ULONG;
+          default:
+            return constant::Type::NONE;
+        }
 
+    }
+  }
   std::vector<scasm::register_type> argReg = {
       scasm::register_type::DI, scasm::register_type::SI,
       scasm::register_type::DX, scasm::register_type::CX,

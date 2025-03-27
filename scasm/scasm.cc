@@ -203,6 +203,14 @@ std::string to_string(cond_code code) {
     return "l";
   case cond_code::LE:
     return "le";
+  case cond_code::A:
+    return "a";
+  case cond_code::AE:
+    return "ae";
+  case cond_code::B:
+    return "b";
+  case cond_code::BE:
+    return "be";
   case cond_code::UNKNOWN:
     UNREACHABLE()
   }
