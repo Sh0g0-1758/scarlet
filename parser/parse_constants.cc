@@ -35,6 +35,23 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       v.i = val;
     }
   } break;
+  case token::TOKEN::UINT_CONSTANT:
+    constant.set_type(constant::Type::UINT);
+    try {
+      unsigned long ul = std::stoul(tokens[0].get_value().value());
+      // should you warn if the value is negative?
+      if (ul > UINT_MAX) {
+        // implict promotion to unsigned long
+        constant.set_type(constant::Type::ULONG);
+      } else {
+        v.ui = static_cast<unsigned int>(ul);
+      }
+    } catch (std::out_of_range &e) {
+      success = false;
+      error_messages.emplace_back("Unsigned int constant out of range");
+      return;
+    }
+    break;
   case token::TOKEN::LONG_CONSTANT: {
     constant.set_type(constant::Type::LONG);
     try {
@@ -45,6 +62,16 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       return;
     }
   } break;
+  case token::TOKEN::ULONG_CONSTANT:
+    constant.set_type(constant::Type::ULONG);
+    try {
+      v.ul = std::stoul(tokens[0].get_value().value());
+    } catch (std::out_of_range &e) {
+      success = false;
+      error_messages.emplace_back("Unsigned long constant out of range");
+      return;
+    }
+    break;
   default:
     break;
   }

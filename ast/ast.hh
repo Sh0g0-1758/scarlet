@@ -25,7 +25,7 @@ Grammar:
 
 <param-list> ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
 
-<type-specifier> ::= "int" | "long"
+<type-specifier> ::= "int" | "long" |"unsigned" | "signed" 
 
 <specifier> ::= <type-specifier> | "static" | "extern"
 
@@ -47,7 +47,7 @@ Grammar:
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
-<const> ::= <int> | <long>
+<const> ::= <int> | <long> | <uint> | <ulong> 
 
 <identifier> ::= ? An identifier token ?
 
@@ -66,7 +66,7 @@ namespace scarlet {
 namespace ast {
 
 enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { NONE, INT, LONG };
+enum class ElemType { NONE, INT, LONG, ULONG, UINT };
 
 class AST_const_Node {
 private:

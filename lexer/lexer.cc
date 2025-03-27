@@ -376,7 +376,6 @@ void lexer::tokenize() {
           }
         }
       }
-      constant += literal_suffix;
       // Treat as a float when there is no proceeding l,L,u,U suffix and next
       // token is dot
       if (ch == '.' and literal_suffix.size() == 0) {
@@ -436,6 +435,15 @@ void lexer::tokenize() {
         } else if (literal_suffix == "l" or literal_suffix == "L") {
           tokens.emplace_back(
               token::Token(token::TOKEN::LONG_CONSTANT, constant));
+        } else if (literal_suffix == "u" or literal_suffix == "U") {
+          tokens.emplace_back(
+              token::Token(token::TOKEN::UINT_CONSTANT, constant));
+        } else if (literal_suffix == "lu" or literal_suffix == "lU" or
+                   literal_suffix == "Lu" or literal_suffix == "LU" or
+                   literal_suffix == "ul" or literal_suffix == "uL" or
+                   literal_suffix == "Ul" or literal_suffix == "UL") {
+          tokens.emplace_back(
+              token::Token(token::TOKEN::ULONG_CONSTANT, constant));
         }
       }
       file.seekg(-1, std::ios::cur);

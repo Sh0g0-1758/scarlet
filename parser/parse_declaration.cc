@@ -19,21 +19,52 @@ namespace parser {
     tokens.erase(tokens.begin());                                              \
   }
 
+/*
+-same specifier ->wrong
+-empty -> wrong
+-unsigned and signed -> wrong
+-unsigned and long -> ulong
+-IF unsigned -> uint
+-IF long -> long
+-default int
+*/
 #define PARSE_TYPE(decl, func)                                                 \
-  if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::INT) {        \
+  std::set<token::TOKEN> type_specifiers;                                      \
+  std::set<token::TOKEN> storage_specifiers;                                   \
+  while (!tokens.empty() and                                                   \
+         token::is_type_specifier(tokens[0].get_token())) {                    \
+    if (type_specifiers.find(tokens[0].get_token()) !=                         \
+        type_specifiers.end()) {                                               \
+      success = false;                                                         \
+      error_messages.emplace_back("Multiple same type specifiers found");      \
+    } else {                                                                   \
+      type_specifiers.insert(tokens[0].get_token());                           \
+    }                                                                          \
     tokens.erase(tokens.begin());                                              \
-    if (!tokens.empty() and tokens[0].get_token() == token::TOKEN::LONG) {     \
-      tokens.erase(tokens.begin());                                            \
+  }                                                                            \
+  if (type_specifiers.empty()) {                                               \
+    success = false;                                                           \
+    error_messages.emplace_back("No type specifiers found");                   \
+  } else if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                   \
+                 type_specifiers.end() and                                     \
+             type_specifiers.find(token::TOKEN::SIGNED) !=                     \
+                 type_specifiers.end()) {                                      \
+    success = false;                                                           \
+    error_messages.emplace_back(                                               \
+        "Unsigned and signed specifiers found together");                      \
+  } else {                                                                     \
+    if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                        \
+            type_specifiers.end() and                                          \
+        type_specifiers.find(token::TOKEN::LONG) != type_specifiers.end()) {   \
+      decl->func(ast::ElemType::ULONG);                                        \
+    } else if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                 \
+               type_specifiers.end()) {                                        \
+      decl->func(ast::ElemType::UINT);                                         \
+    } else if (type_specifiers.find(token::TOKEN::LONG) !=                     \
+               type_specifiers.end()) {                                        \
       decl->func(ast::ElemType::LONG);                                         \
     } else {                                                                   \
       decl->func(ast::ElemType::INT);                                          \
-    }                                                                          \
-  } else {                                                                     \
-    EXPECT(token::TOKEN::LONG);                                                \
-    decl->func(ast::ElemType::LONG);                                           \
-    if (!tokens.empty() and (tokens[0].get_token() == token::TOKEN::INT or     \
-                             tokens[0].get_token() == token::TOKEN::LONG)) {   \
-      tokens.erase(tokens.begin());                                            \
     }                                                                          \
   }
 
