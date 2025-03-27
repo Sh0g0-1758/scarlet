@@ -172,6 +172,12 @@ void Codegen::codegen() {
         assembly << " ";
         CODEGEN_SRC();
         assembly << "\n";
+      } else if (instr->get_type() == scasm::instruction_type::DIV) {
+        assembly << "\tdiv";
+        POSTFIX_ASM_TYPE();
+        assembly << " ";
+        CODEGEN_SRC();
+        assembly << "\n";
       } else if (instr->get_type() == scasm::instruction_type::BINARY) {
         assembly << "\t";
         assembly << scasm::to_string(instr->get_binop());

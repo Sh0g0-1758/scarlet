@@ -58,6 +58,8 @@ enum class Binop {
   XOR,
   LEFT_SHIFT,
   RIGHT_SHIFT,
+  LOGICAL_LEFT_SHIFT,
+  LOGICAL_RIGHT_SHIFT,
   LAND,
   LOR,
   EQUAL,

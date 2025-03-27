@@ -21,10 +21,12 @@ void Codegen::gen_scar_factor(
     gen_scar_exp(factor->get_exp_node(), scar_function);
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     gen_scar_factor(factor->get_child(), scar_function);
-    
-    if (factor->get_child()->get_type() != factor->get_cast_type()) {
-      auto inner_type = factor->get_child()->get_type();
-      auto typeCast_type =  factor->get_cast_type();
+
+    auto inner_type = factor->get_child()->get_exp_node() != nullptr
+                          ? factor->get_child()->get_exp_node()->get_type()
+                          : factor->get_child()->get_type();
+    if (inner_type != factor->get_cast_type()) {
+      auto typeCast_type = factor->get_cast_type();
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -36,16 +38,14 @@ void Codegen::gen_scar_factor(
       scar_val_dst->set_reg_name(get_reg_name(factor->get_cast_type()));
       scar_instruction->set_dst(std::move(scar_val_dst));
 
-      if(getSizeType(typeCast_type)==getSizeType(inner_type)){
+      if (getSizeType(typeCast_type) == getSizeType(inner_type)) {
         scar_instruction->set_type(scar::instruction_type::COPY);
-      }
-      else if(getSizeType(typeCast_type) < getSizeType(inner_type)){
+      } else if (getSizeType(typeCast_type) < getSizeType(inner_type)) {
         scar_instruction->set_type(scar::instruction_type::TRUNCATE);
-      }
-      else if(inner_type==ast::ElemType::INT or inner_type==ast::ElemType::LONG){
+      } else if (inner_type == ast::ElemType::INT or
+                 inner_type == ast::ElemType::LONG) {
         scar_instruction->set_type(scar::instruction_type::SIGN_EXTEND);
-      }
-      else{
+      } else {
         scar_instruction->set_type(scar::instruction_type::ZERO_EXTEND);
       }
 
@@ -137,7 +137,7 @@ void Codegen::gen_scar_factor(
 
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-      
+
       SETVARCONSTANTREG(scar_val_src)
       scar_instruction->set_src1(std::move(scar_val_src));
 
