@@ -86,6 +86,21 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
   // assign type to the expression
   assign_type_to_exp(exp);
+
+  // if the left/right shift change to logical left/right shift if the type is
+  // unsigned
+  if (exp->get_binop_node() != nullptr and
+      (exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT or
+       exp->get_binop_node()->get_op() == binop::BINOP::RIGHT_SHIFT)) {
+    if (exp->get_type() == ast::ElemType::UINT or
+        exp->get_type() == ast::ElemType::ULONG) {
+      if (exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT) {
+        exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
+      } else {
+        exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
+      }
+    }
+  }
 }
 
 void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,

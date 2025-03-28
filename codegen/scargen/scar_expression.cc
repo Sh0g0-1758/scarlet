@@ -322,16 +322,6 @@ void Codegen::gen_scar_exp(
     scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));
     scar_instruction->set_binop(binop);
-
-    if (binop == binop::LEFT_SHIFT and
-        (exp->get_type() == ast::ElemType::UINT or
-         exp->get_type() == ast::ElemType::ULONG)) {
-      scar_instruction->set_binop(binop::LOGICAL_LEFT_SHIFT);
-    } else if (binop == binop::RIGHT_SHIFT and
-               (exp->get_type() == ast::ElemType::UINT or
-                exp->get_type() == ast::ElemType::ULONG)) {
-      scar_instruction->set_binop(binop::LOGICAL_RIGHT_SHIFT);
-    }
     scar_function->add_instruction(std::move(scar_instruction));
   } else {
     // When we do not have a binary operator, so only parse the factor node

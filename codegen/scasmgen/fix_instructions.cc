@@ -89,31 +89,14 @@ void Codegen::fix_instructions() {
         (*it)->set_dst(std::move(dst));
         it = funcs->get_instructions().insert(it, std::move(scasm_inst));
         it++;
-      } else if ((*it)->get_type() == scasm::instruction_type::IDIV and
+      } else if (((*it)->get_type() == scasm::instruction_type::IDIV or
+                  (*it)->get_type() == scasm::instruction_type::DIV) and
                  (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
         // idivl $3
         //   |
         //   v
         // movl $3, %r10d
         // idivl %r10d
-        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-        scasm_inst->set_type(scasm::instruction_type::MOV);
-        scasm_inst->set_asm_type((*it)->get_asm_type());
-        scasm_inst->set_src((*it)->get_src());
-        MAKE_SHARED(scasm::scasm_operand, dst);
-        dst->set_type(scasm::operand_type::REG);
-        dst->set_reg(scasm::register_type::R10);
-        scasm_inst->set_dst(dst);
-        (*it)->set_src(std::move(dst));
-        it = funcs->get_instructions().insert(it, std::move(scasm_inst));
-        it++;
-      } else if ((*it)->get_type() == scasm::instruction_type::DIV and
-                 (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
-        // divl $3
-        //   |
-        //   v
-        // movl $3, %r10d
-        // divl %r10d
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type((*it)->get_asm_type());
