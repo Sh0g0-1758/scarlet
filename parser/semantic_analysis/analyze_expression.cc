@@ -101,6 +101,16 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
       }
     }
   }
+
+  // check that modulus operator is not used on floating point types
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
+    if (exp->get_type() == ast::ElemType::DOUBLE) {
+      success = false;
+      error_messages.emplace_back("Modulus operator not allowed on floating "
+                                  "point types");
+    }
+  }
 }
 
 void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
@@ -215,6 +225,16 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
 
   // assign type to the factor
   assign_type_to_factor(factor);
+
+  // complement operator cannot be used on floating point types
+  if (factor->get_unop_node() != nullptr and
+      factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
+    if (factor->get_type() == ast::ElemType::DOUBLE) {
+      success = false;
+      error_messages.emplace_back("Complement operator not allowed on "
+                                  "floating point types");
+    }
+  }
 }
 
 void parser::assign_type_to_factor(

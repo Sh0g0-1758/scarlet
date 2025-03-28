@@ -3,6 +3,33 @@
 namespace scarlet {
 namespace parser {
 
+#define INITZERO()                                                             \
+  constant::Constant constZero;                                                \
+  switch (varDecl->get_type()) {                                               \
+  case ast::ElemType::INT:                                                     \
+    constZero.set_type(constant::Type::INT);                                   \
+    constZero.set_value({.i = 0});                                             \
+    break;                                                                     \
+  case ast::ElemType::LONG:                                                    \
+    constZero.set_type(constant::Type::LONG);                                  \
+    constZero.set_value({.l = 0});                                             \
+    break;                                                                     \
+  case ast::ElemType::UINT:                                                    \
+    constZero.set_type(constant::Type::UINT);                                  \
+    constZero.set_value({.ui = 0});                                            \
+    break;                                                                     \
+  case ast::ElemType::ULONG:                                                   \
+    constZero.set_type(constant::Type::ULONG);                                 \
+    constZero.set_value({.ul = 0});                                            \
+    break;                                                                     \
+  case ast::ElemType::DOUBLE:                                                  \
+    constZero.set_type(constant::Type::DOUBLE);                                \
+    constZero.set_value({.d = 0});                                             \
+    break;                                                                     \
+  case ast::ElemType::NONE:                                                    \
+    UNREACHABLE();                                                             \
+  }
+
 void parser::analyze_declaration(
     std::shared_ptr<ast::AST_Declaration_Node> declaration,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -125,31 +152,7 @@ void parser::analyze_global_variable_declaration(
       // If the variable has not been defined and is not extern,
       // mark it as a tentative definition
       if (globalSymbolTable[var_name].def == symbolTable::defType::FALSE) {
-        constant::Constant constZero;
-        switch (varDecl->get_type()) {
-        case ast::ElemType::INT:
-          constZero.set_type(constant::Type::INT);
-          constZero.set_value({.i = 0});
-          break;
-        case ast::ElemType::LONG:
-          constZero.set_type(constant::Type::LONG);
-          constZero.set_value({.l = 0});
-          break;
-        case ast::ElemType::UINT:
-          constZero.set_type(constant::Type::UINT);
-          constZero.set_value({.ui = 0});
-          break;
-        case ast::ElemType::ULONG:
-          constZero.set_type(constant::Type::ULONG);
-          constZero.set_value({.ul = 0});
-          break;
-        case ast::ElemType::DOUBLE:
-          constZero.set_type(constant::Type::DOUBLE);
-          constZero.set_value({.d = 0});
-          break;
-        case ast::ElemType::NONE:
-          UNREACHABLE();
-        }
+        INITZERO();
         symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
         globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
         symbol_table[{var_name, 0}].value = constZero;
@@ -171,31 +174,7 @@ void parser::analyze_global_variable_declaration(
 
     // If storage specifier is not extern, set the tentative value to zero
     if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
-      constant::Constant constZero;
-      switch (varDecl->get_type()) {
-      case ast::ElemType::INT:
-        constZero.set_type(constant::Type::INT);
-        constZero.set_value({.i = 0});
-        break;
-      case ast::ElemType::LONG:
-        constZero.set_type(constant::Type::LONG);
-        constZero.set_value({.l = 0});
-        break;
-      case ast::ElemType::UINT:
-        constZero.set_type(constant::Type::UINT);
-        constZero.set_value({.ui = 0});
-        break;
-      case ast::ElemType::ULONG:
-        constZero.set_type(constant::Type::ULONG);
-        constZero.set_value({.ul = 0});
-        break;
-      case ast::ElemType::DOUBLE:
-        constZero.set_type(constant::Type::DOUBLE);
-        constZero.set_value({.d = 0});
-        break;
-      case ast::ElemType::NONE:
-        UNREACHABLE();
-      }
+      INITZERO();
       symbol_table[{var_name, 0}].value = constZero;
     }
 
@@ -383,31 +362,7 @@ void parser::analyze_local_variable_declaration(
                                 varDecl->get_type());
       }
     } else {
-      constant::Constant constZero;
-      switch (varDecl->get_type()) {
-      case ast::ElemType::INT:
-        constZero.set_type(constant::Type::INT);
-        constZero.set_value({.i = 0});
-        break;
-      case ast::ElemType::LONG:
-        constZero.set_type(constant::Type::LONG);
-        constZero.set_value({.l = 0});
-        break;
-      case ast::ElemType::UINT:
-        constZero.set_type(constant::Type::UINT);
-        constZero.set_value({.ui = 0});
-        break;
-      case ast::ElemType::ULONG:
-        constZero.set_type(constant::Type::ULONG);
-        constZero.set_value({.ul = 0});
-        break;
-      case ast::ElemType::DOUBLE:
-        constZero.set_type(constant::Type::DOUBLE);
-        constZero.set_value({.d = 0});
-        break;
-      case ast::ElemType::NONE:
-        UNREACHABLE();
-      }
+      INITZERO();
       symbol_table[{var_name, indx}].value = constZero;
     }
     globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
