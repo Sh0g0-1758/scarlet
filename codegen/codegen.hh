@@ -138,15 +138,6 @@ public:
     return tmp;
   }
 
-  int getSizeType(ast::ElemType type) {
-    if (type == ast::ElemType::INT || type == ast::ElemType::UINT)
-      return 4;
-    else if (type == ast::ElemType::LONG || type == ast::ElemType::ULONG)
-      return 8;
-    else
-      return -1;
-  }
-
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:

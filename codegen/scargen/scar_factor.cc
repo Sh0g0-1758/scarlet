@@ -23,8 +23,8 @@ void Codegen::gen_scar_factor(
     gen_scar_factor(factor->get_child(), scar_function);
 
     auto inner_type = factor->get_child()->get_type();
-    if (inner_type != factor->get_cast_type()) {
-      auto typeCast_type = factor->get_cast_type();
+    auto typeCast_type = factor->get_cast_type();
+    if (inner_type != typeCast_type) {
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -33,18 +33,35 @@ void Codegen::gen_scar_factor(
       scar_instruction->set_src1(std::move(scar_val_src));
 
       scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(get_reg_name(factor->get_cast_type()));
+      scar_val_dst->set_reg_name(get_reg_name(typeCast_type));
       scar_instruction->set_dst(std::move(scar_val_dst));
 
-      if (getSizeType(typeCast_type) == getSizeType(inner_type)) {
-        scar_instruction->set_type(scar::instruction_type::COPY);
-      } else if (getSizeType(typeCast_type) < getSizeType(inner_type)) {
-        scar_instruction->set_type(scar::instruction_type::TRUNCATE);
-      } else if (inner_type == ast::ElemType::INT or
-                 inner_type == ast::ElemType::LONG) {
-        scar_instruction->set_type(scar::instruction_type::SIGN_EXTEND);
+      if (typeCast_type == ast::ElemType::DOUBLE) {
+        if (inner_type == ast::ElemType::INT or
+            inner_type == ast::ElemType::LONG) {
+          scar_instruction->set_type(scar::instruction_type::INT_TO_DOUBLE);
+        } else {
+          scar_instruction->set_type(scar::instruction_type::UINT_TO_DOUBLE);
+        }
+      } else if (inner_type == ast::ElemType::DOUBLE) {
+        if (typeCast_type == ast::ElemType::INT or
+            typeCast_type == ast::ElemType::LONG) {
+          scar_instruction->set_type(scar::instruction_type::DOUBLE_TO_INT);
+        } else {
+          scar_instruction->set_type(scar::instruction_type::DOUBLE_TO_UINT);
+        }
       } else {
-        scar_instruction->set_type(scar::instruction_type::ZERO_EXTEND);
+        if (ast::getSizeType(typeCast_type) == ast::getSizeType(inner_type)) {
+          scar_instruction->set_type(scar::instruction_type::COPY);
+        } else if (ast::getSizeType(typeCast_type) <
+                   ast::getSizeType(inner_type)) {
+          scar_instruction->set_type(scar::instruction_type::TRUNCATE);
+        } else if (inner_type == ast::ElemType::INT or
+                   inner_type == ast::ElemType::LONG) {
+          scar_instruction->set_type(scar::instruction_type::SIGN_EXTEND);
+        } else {
+          scar_instruction->set_type(scar::instruction_type::ZERO_EXTEND);
+        }
       }
 
       scar_function->add_instruction(std::move(scar_instruction));

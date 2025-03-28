@@ -29,6 +29,14 @@ std::string to_string(scar::instruction_type type) {
     return "Truncate";
   case scar::instruction_type::ZERO_EXTEND:
     return "ZeroExtend";
+  case scar::instruction_type::DOUBLE_TO_INT:
+    return "DoubleToInt";
+  case scar::instruction_type::DOUBLE_TO_UINT:
+    return "DoubleToUint";
+  case scar::instruction_type::INT_TO_DOUBLE:
+    return "IntToDouble";
+  case scar::instruction_type::UINT_TO_DOUBLE:
+    return "UintToDouble";
   }
   UNREACHABLE()
 }

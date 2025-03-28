@@ -23,7 +23,7 @@ program = Program(top_level*)
 
 top_level = Function(identifier, bool global, identifier* params, instruction* body) | StaticVariable(identifier, bool global, const init)
 
-instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst) | SignExtend(val src, val dst) | Truncate(val src, val dst) | ZeroExtend(val src, val dst)
+instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst) | SignExtend(val src, val dst) | Truncate(val src, val dst) | ZeroExtend(val src, val dst) | DoubleToInt(val src, val dst) | DoubleToUint(val src, val dst) | IntToDouble(val src, val dst) | UintToDouble(val src, val dst)
 
 val = Constant(const) | Var(identifier)
 
@@ -50,7 +50,11 @@ enum class instruction_type {
   CALL,
   SIGN_EXTEND,
   TRUNCATE,
-  ZERO_EXTEND
+  ZERO_EXTEND,
+  DOUBLE_TO_INT,
+  DOUBLE_TO_UINT,
+  INT_TO_DOUBLE,
+  UINT_TO_DOUBLE,
 };
 // CONSTANT is a constant value (1, 2 , 42 etc.)
 // VAR is a scar register
