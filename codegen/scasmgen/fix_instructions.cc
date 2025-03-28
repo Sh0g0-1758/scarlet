@@ -89,9 +89,9 @@ void Codegen::fix_instructions() {
         (*it)->set_dst(std::move(dst));
         it = funcs->get_instructions().insert(it, std::move(scasm_inst));
         it++;
-      }
-      if ((*it)->get_type() == scasm::instruction_type::IDIV and
-          (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
+      } else if (((*it)->get_type() == scasm::instruction_type::IDIV or
+                  (*it)->get_type() == scasm::instruction_type::DIV) and
+                 (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
         // idivl $3
         //   |
         //   v
@@ -108,6 +108,27 @@ void Codegen::fix_instructions() {
         (*it)->set_src(std::move(dst));
         it = funcs->get_instructions().insert(it, std::move(scasm_inst));
         it++;
+      } else if ((*it)->get_type() == scasm::instruction_type::MOVZX) {
+        if ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+            (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+          scasm_inst->set_src((*it)->get_src());
+          MAKE_SHARED(scasm::scasm_operand, dst);
+          dst->set_type(scasm::operand_type::REG);
+          dst->set_reg(scasm::register_type::R11);
+          scasm_inst->set_dst(dst);
+          (*it)->set_src(std::move(dst));
+          (*it)->set_type(scasm::instruction_type::MOV);
+          (*it)->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+          it++;
+        } else {
+          (*it)->set_type(scasm::instruction_type::MOV);
+          (*it)->set_asm_type(scasm::AssemblyType::LONG_WORD);
+          it++;
+        }
       } else if ((*it)->get_type() == scasm::instruction_type::BINARY and
                  (*it)->get_binop() == scasm::Binop::MUL and
                  ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
@@ -207,6 +228,40 @@ void Codegen::fix_instructions() {
 
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
+        } else if ((*it)->get_src()->get_imm().get_type() ==
+                       constant::Type::UINT and
+                   (*it)->get_src()->get_imm().get_value().ui > INT32_MAX) {
+          MAKE_SHARED(scasm::scasm_operand, dst);
+          dst->set_type(scasm::operand_type::REG);
+          dst->set_reg(scasm::register_type::R10);
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+          scasm_inst->set_src((*it)->get_src());
+          scasm_inst->set_dst(dst);
+
+          (*it)->set_src(std::move(dst));
+
+          it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+          it++;
+        } else if ((*it)->get_src()->get_imm().get_type() ==
+                       constant::Type::ULONG and
+                   (*it)->get_src()->get_imm().get_value().ul > INT32_MAX) {
+          MAKE_SHARED(scasm::scasm_operand, dst);
+          dst->set_type(scasm::operand_type::REG);
+          dst->set_reg(scasm::register_type::R10);
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          scasm_inst->set_src((*it)->get_src());
+          scasm_inst->set_dst(dst);
+
+          (*it)->set_src(std::move(dst));
+
+          it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+          it++;
         }
       }
 
@@ -222,6 +277,16 @@ void Codegen::fix_instructions() {
             (*it)->get_src()->get_imm().get_value().l > INT32_MAX) {
           int trunc_val =
               static_cast<int>((*it)->get_src()->get_imm().get_value().l);
+          constant::Constant trunc;
+          trunc.set_type(constant::Type::INT);
+          trunc.set_value({.i = trunc_val});
+
+          (*it)->get_src()->set_imm(trunc);
+        }
+        if ((*it)->get_src()->get_imm().get_type() == constant::Type::ULONG and
+            (*it)->get_src()->get_imm().get_value().ul > INT32_MAX) {
+          int trunc_val =
+              static_cast<int>((*it)->get_src()->get_imm().get_value().ul);
           constant::Constant trunc;
           trunc.set_type(constant::Type::INT);
           trunc.set_value({.i = trunc_val});

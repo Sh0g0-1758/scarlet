@@ -1,4 +1,4 @@
-#include <codegen/codegen.hh>
+#include <codegen/common.hh>
 
 namespace scarlet {
 namespace codegen {
@@ -22,33 +22,29 @@ void Codegen::gen_scar_factor(
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     gen_scar_factor(factor->get_child(), scar_function);
 
-    if (factor->get_child()->get_type() != factor->get_cast_type()) {
+    auto inner_type = factor->get_child()->get_type();
+    if (inner_type != factor->get_cast_type()) {
+      auto typeCast_type = factor->get_cast_type();
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
 
-      if (!constant_buffer.empty()) {
-        scar_val_src->set_type(scar::val_type::CONSTANT);
-        scar_val_src->set_const_val(constant_buffer);
-        constant_buffer.clear();
-      } else if (!variable_buffer.empty()) {
-        scar_val_src->set_type(scar::val_type::VAR);
-        scar_val_src->set_reg_name(variable_buffer);
-        variable_buffer.clear();
-      } else {
-        scar_val_src->set_type(scar::val_type::VAR);
-        scar_val_src->set_reg_name(get_prev_reg_name());
-      }
+      SETVARCONSTANTREG(scar_val_src)
       scar_instruction->set_src1(std::move(scar_val_src));
 
       scar_val_dst->set_type(scar::val_type::VAR);
       scar_val_dst->set_reg_name(get_reg_name(factor->get_cast_type()));
       scar_instruction->set_dst(std::move(scar_val_dst));
 
-      if (factor->get_cast_type() == ast::ElemType::LONG) {
-        scar_instruction->set_type(scar::instruction_type::SIGN_EXTEND);
-      } else if (factor->get_cast_type() == ast::ElemType::INT) {
+      if (getSizeType(typeCast_type) == getSizeType(inner_type)) {
+        scar_instruction->set_type(scar::instruction_type::COPY);
+      } else if (getSizeType(typeCast_type) < getSizeType(inner_type)) {
         scar_instruction->set_type(scar::instruction_type::TRUNCATE);
+      } else if (inner_type == ast::ElemType::INT or
+                 inner_type == ast::ElemType::LONG) {
+        scar_instruction->set_type(scar::instruction_type::SIGN_EXTEND);
+      } else {
+        scar_instruction->set_type(scar::instruction_type::ZERO_EXTEND);
       }
 
       scar_function->add_instruction(std::move(scar_instruction));
@@ -140,18 +136,7 @@ void Codegen::gen_scar_factor(
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
 
-      if (!constant_buffer.empty()) {
-        scar_val_src->set_type(scar::val_type::CONSTANT);
-        scar_val_src->set_const_val(constant_buffer);
-        constant_buffer.clear();
-      } else if (!variable_buffer.empty()) {
-        scar_val_src->set_type(scar::val_type::VAR);
-        scar_val_src->set_reg_name(variable_buffer);
-        variable_buffer.clear();
-      } else {
-        scar_val_src->set_type(scar::val_type::VAR);
-        scar_val_src->set_reg_name(get_prev_reg_name());
-      }
+      SETVARCONSTANTREG(scar_val_src)
       scar_instruction->set_src1(std::move(scar_val_src));
 
       scar_val_dst->set_type(scar::val_type::VAR);

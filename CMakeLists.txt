@@ -47,6 +47,7 @@ add_subdirectory(token)
 add_subdirectory(regex)
 add_subdirectory(unary_operations)
 add_subdirectory(binary_operations)
+add_subdirectory(ast)
 add_subdirectory(scar)
 add_subdirectory(scasm)
 add_subdirectory(lexer)
@@ -73,6 +74,7 @@ target_compile_options(scarlet PRIVATE
 
 add_dependencies(
     scarlet
+    scast
     scar
     scasm
     scarRegex
@@ -88,6 +90,7 @@ target_link_libraries(scarlet scarParser)
 target_link_libraries(scarlet scarCodegen)
 target_link_libraries(scarlet scar)
 target_link_libraries(scarlet scasm)
+target_link_libraries(scarlet scast)
 target_compile_options(scarlet PRIVATE -O3)
 
 add_custom_target(test-scarlet
@@ -97,13 +100,13 @@ add_custom_target(test-scarlet
     COMMAND echo "Running parser test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage parse
     COMMAND echo "Running semantic analysis test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage validate
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage validate
     COMMAND echo "Running scar test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage tacky
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage tacky
     COMMAND echo "Running Codegen test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --stage codegen
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage codegen
     COMMAND echo "Running bitwise, compound, increment/decrement and goto test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11 --extra-credit
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --extra-credit
     COMMAND echo "Running test asm"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 11
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12
 )

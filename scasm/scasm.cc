@@ -40,6 +40,10 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
     return Binop::LEFT_SHIFT;
   case binop::BINOP::RIGHT_SHIFT:
     return Binop::RIGHT_SHIFT;
+  case binop::BINOP::LOGICAL_LEFT_SHIFT:
+    return Binop::LOGICAL_LEFT_SHIFT;
+  case binop::BINOP::LOGICAL_RIGHT_SHIFT:
+    return Binop::LOGICAL_RIGHT_SHIFT;
   case binop::BINOP::LAND:
     return Binop::LAND;
   case binop::BINOP::LOR:
@@ -203,6 +207,14 @@ std::string to_string(cond_code code) {
     return "l";
   case cond_code::LE:
     return "le";
+  case cond_code::A:
+    return "a";
+  case cond_code::AE:
+    return "ae";
+  case cond_code::B:
+    return "b";
+  case cond_code::BE:
+    return "be";
   case cond_code::UNKNOWN:
     UNREACHABLE()
   }
@@ -240,6 +252,10 @@ std::string to_string(Binop binop) {
     return "sal";
   case Binop::RIGHT_SHIFT:
     return "sar";
+  case Binop::LOGICAL_LEFT_SHIFT:
+    return "shl";
+  case Binop::LOGICAL_RIGHT_SHIFT:
+    return "shr";
   case Binop::UNKNOWN:
   // All relational operators are handled by the cmpl instruction using register
   // flags and results are interpreted from the flags using setcc instruction.
