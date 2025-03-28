@@ -87,7 +87,7 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   // assign type to the expression
   assign_type_to_exp(exp);
 
-  // if the left/right shift change to logical left/right shift if the type is
+  // left/right shift changed to logical left/right shift if the type is
   // unsigned
   if (exp->get_binop_node() != nullptr and
       (exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT or
