@@ -181,6 +181,9 @@ public:
   std::vector<std::shared_ptr<AST_exp_Node>> get_arguments() {
     return arguments;
   }
+  void set_arguments(std::vector<std::shared_ptr<AST_exp_Node>> arguments) {
+    this->arguments = arguments;
+  }
   void add_argument(std::shared_ptr<AST_exp_Node> argument) {
     arguments.emplace_back(argument);
   }
