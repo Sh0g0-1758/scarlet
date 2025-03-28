@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     cmd.ver();
     return 0;
   }
-  if (!cmd.has_option("input-file")) {
+  if (cmd.get_input_file().empty()) {
     std::cerr << "[ERROR]: No input file provided\npass --help to know how to "
                  "use scarlet"
               << std::endl;
@@ -136,9 +136,16 @@ int main(int argc, char *argv[]) {
     output_file_name = cmd.get_option<std::string>("output-file");
   }
 
+  std::string linkopts = "";
+  for (auto it : cmd.get_extra_args()) {
+    linkopts = linkopts + it + " ";
+  }
+  if (!linkopts.empty())
+    linkopts = linkopts.substr(0, linkopts.length() - 1);
+
   if (cmd.has_option("-c")) {
-    result = system(std::format("gcc -c {}.s -o {}/{}.o", file_name,
-                                directory_path, output_file_name)
+    result = system(std::format("gcc -c {}.s -o {}/{}.o {}", file_name,
+                                directory_path, output_file_name, linkopts)
                         .c_str());
     if (result != 0) {
       std::cerr << "[ERROR]: Failed to generate the object file" << std::endl;
@@ -146,7 +153,8 @@ int main(int argc, char *argv[]) {
     }
   } else {
     result = system(
-        std::format("gcc {}.s -o {}", file_name, output_file_name).c_str());
+        std::format("gcc {}.s -o {} {}", file_name, output_file_name, linkopts)
+            .c_str());
     if (result != 0) {
       std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
       return 1;

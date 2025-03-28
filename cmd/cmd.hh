@@ -2,6 +2,8 @@
 
 #include <boost/program_options.hpp>
 #include <iostream>
+#include <string>
+#include <vector>
 
 namespace po = boost::program_options;
 
@@ -9,10 +11,10 @@ class scarcmd {
 private:
   po::options_description desc;
   po::options_description hidden;
-  po::positional_options_description pos_desc;
   po::variables_map vm;
   po::options_description all_options;
   std::string input_file;
+  std::vector<std::string> extra_args;
 
 public:
   scarcmd()
@@ -36,18 +38,27 @@ public:
       ("input-file", po::value<std::string>(), "input file");
     // clang-format on
 
-    pos_desc.add("input-file", -1);
     all_options.add(desc).add(hidden);
   }
 
   void parse(int ac, char *av[]) {
     try {
-      po::store(po::command_line_parser(ac, av)
-                    .options(all_options)
-                    .positional(pos_desc)
-                    .run(),
-                vm);
+      po::parsed_options parsed = po::command_line_parser(ac, av)
+                                      .options(all_options)
+                                      .allow_unregistered()
+                                      .run();
+      po::store(parsed, vm);
       po::notify(vm);
+
+      extra_args =
+          po::collect_unrecognized(parsed.options, po::include_positional);
+      for (auto it = extra_args.begin(); it != extra_args.end(); ++it) {
+        if ((*it)[0] != '-') {
+          input_file = *it;
+          extra_args.erase(it);
+          break;
+        }
+      }
 
       if (vm.count("input-file")) {
         input_file = vm["input-file"].as<std::string>();
@@ -76,6 +87,8 @@ public:
   }
 
   const std::string get_input_file() const { return input_file; }
+
+  std::vector<std::string> get_extra_args() const { return extra_args; }
 
   template <typename T> T get_option(const std::string &option) const {
     return vm[option].as<T>();
