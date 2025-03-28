@@ -68,6 +68,9 @@ namespace ast {
 enum class SpecifierType { NONE, STATIC, EXTERN };
 enum class ElemType { NONE, INT, LONG, ULONG, UINT };
 
+ElemType constTypeToElemType(constant::Type t);
+constant::Type elemTypeToConstType(ElemType t);
+
 class AST_const_Node {
 private:
   constant::Constant constant;

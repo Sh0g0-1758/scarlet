@@ -214,20 +214,9 @@ public:
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       return val->get_const_val().get_type();
-      break;
     case scar::val_type::VAR:
-      switch (globalSymbolTable[val->get_reg()].typeDef[0]) {
-      case ast::ElemType::INT:
-        return constant::Type::INT;
-      case ast::ElemType::UINT:
-        return constant::Type::UINT;
-      case ast::ElemType::LONG:
-        return constant::Type::LONG;
-      case ast::ElemType::ULONG:
-        return constant::Type::ULONG;
-      default:
-        return constant::Type::NONE;
-      }
+      return ast::elemTypeToConstType(
+          globalSymbolTable[val->get_reg()].typeDef[0]);
     case scar::val_type::LABEL:
       return constant::Type::NONE;
     }

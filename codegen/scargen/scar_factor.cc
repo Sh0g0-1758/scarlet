@@ -22,9 +22,7 @@ void Codegen::gen_scar_factor(
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     gen_scar_factor(factor->get_child(), scar_function);
 
-    auto inner_type = factor->get_child()->get_exp_node() != nullptr
-                          ? factor->get_child()->get_exp_node()->get_type()
-                          : factor->get_child()->get_type();
+    auto inner_type = factor->get_child()->get_type();
     if (inner_type != factor->get_cast_type()) {
       auto typeCast_type = factor->get_cast_type();
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
