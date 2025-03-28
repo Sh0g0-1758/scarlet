@@ -61,6 +61,9 @@ void parser::analyze_statement(
       analyze_switch_case<unsigned long>(switch_statement,
                                          constant::Type::ULONG);
       break;
+    case ast::ElemType::DOUBLE:
+      analyze_switch_case<double>(switch_statement, constant::Type::DOUBLE);
+      break;
     case ast::ElemType::NONE:
       break;
     }

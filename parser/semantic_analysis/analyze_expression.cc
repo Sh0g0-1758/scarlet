@@ -266,7 +266,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    : exp->get_factor_node()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
 
-      ast::ElemType expType = getParentType(leftType, rightType);
+      ast::ElemType expType = ast::getParentType(leftType, rightType);
       exp->set_type(expType);
 
       // Explicitly add cast operation in case of type mismatch
@@ -295,7 +295,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    : exp->get_factor_node()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
 
-      ast::ElemType expType = getParentType(leftType, rightType);
+      ast::ElemType expType = ast::getParentType(leftType, rightType);
 
       // Explicitly add cast operation in case of type mismatch
       if (expType != rightType) {

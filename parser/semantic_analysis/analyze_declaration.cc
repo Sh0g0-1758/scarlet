@@ -113,11 +113,11 @@ void parser::analyze_global_variable_declaration(
       } else {
         globalSymbolTable[var_name].def = symbolTable::defType::TRUE;
         globalSymbolTable[var_name].value =
-            castConstToVal(varDecl->get_exp()
-                               ->get_factor_node()
-                               ->get_const_node()
-                               ->get_constant(),
-                           varDecl->get_type());
+            ast::castConstToVal(varDecl->get_exp()
+                                    ->get_factor_node()
+                                    ->get_const_node()
+                                    ->get_constant(),
+                                varDecl->get_type());
         symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
         symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
       }
@@ -142,6 +142,10 @@ void parser::analyze_global_variable_declaration(
         case ast::ElemType::ULONG:
           constZero.set_type(constant::Type::ULONG);
           constZero.set_value({.ul = 0});
+          break;
+        case ast::ElemType::DOUBLE:
+          constZero.set_type(constant::Type::DOUBLE);
+          constZero.set_value({.d = 0});
           break;
         case ast::ElemType::NONE:
           UNREACHABLE();
@@ -185,6 +189,10 @@ void parser::analyze_global_variable_declaration(
         constZero.set_type(constant::Type::ULONG);
         constZero.set_value({.ul = 0});
         break;
+      case ast::ElemType::DOUBLE:
+        constZero.set_type(constant::Type::DOUBLE);
+        constZero.set_value({.d = 0});
+        break;
       case ast::ElemType::NONE:
         UNREACHABLE();
       }
@@ -202,11 +210,11 @@ void parser::analyze_global_variable_declaration(
             " is not initialized with a constant integer");
       } else {
         symbol_table[{var_name, 0}].value =
-            castConstToVal(varDecl->get_exp()
-                               ->get_factor_node()
-                               ->get_const_node()
-                               ->get_constant(),
-                           varDecl->get_type());
+            ast::castConstToVal(varDecl->get_exp()
+                                    ->get_factor_node()
+                                    ->get_const_node()
+                                    ->get_constant(),
+                                varDecl->get_type());
       }
     }
     globalSymbolTable[var_name] = symbol_table[{var_name, 0}];
@@ -368,11 +376,11 @@ void parser::analyze_local_variable_declaration(
             " is not initialized with a constant integer");
       } else {
         symbol_table[{var_name, indx}].value =
-            castConstToVal(varDecl->get_exp()
-                               ->get_factor_node()
-                               ->get_const_node()
-                               ->get_constant(),
-                           varDecl->get_type());
+            ast::castConstToVal(varDecl->get_exp()
+                                    ->get_factor_node()
+                                    ->get_const_node()
+                                    ->get_constant(),
+                                varDecl->get_type());
       }
     } else {
       constant::Constant constZero;
@@ -392,6 +400,10 @@ void parser::analyze_local_variable_declaration(
       case ast::ElemType::ULONG:
         constZero.set_type(constant::Type::ULONG);
         constZero.set_value({.ul = 0});
+        break;
+      case ast::ElemType::DOUBLE:
+        constZero.set_type(constant::Type::DOUBLE);
+        constZero.set_value({.d = 0});
         break;
       case ast::ElemType::NONE:
         UNREACHABLE();
