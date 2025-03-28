@@ -20,6 +20,9 @@ void print_token(TOKEN token) {
   case TOKEN::ULONG_CONSTANT:
     std::cerr << "ulong constant ";
     break;
+  case TOKEN::DOUBLE_CONSTANT:
+    std::cerr << "double constant ";
+    break;
   case TOKEN::CHARACTER_CONSTANT:
     std::cerr << "character constant ";
     break;
@@ -79,6 +82,9 @@ void print_token(TOKEN token) {
     break;
   case TOKEN::UNSIGNED:
     std::cerr << "unsigned ";
+    break;
+  case TOKEN::DOUBLE:
+    std::cerr << "double ";
     break;
   case TOKEN::CHAR:
     std::cerr << "char ";
@@ -260,6 +266,8 @@ std::string to_string(TOKEN token) {
     return "long constant";
   case TOKEN::ULONG_CONSTANT:
     return "ulong constant";
+  case TOKEN::DOUBLE_CONSTANT:
+    return "double constant";
   case TOKEN::CHARACTER_CONSTANT:
     return "character constant";
   case TOKEN::CHAR_ARR:
@@ -300,6 +308,8 @@ std::string to_string(TOKEN token) {
     return "signed";
   case TOKEN::UNSIGNED:
     return "unsigned";
+  case TOKEN::DOUBLE:
+    return "double";
   case TOKEN::CHAR:
     return "char";
   case TOKEN::SIZEOF:
@@ -525,7 +535,8 @@ bool is_right_associative(TOKEN token) {
 
 bool is_type_specifier(TOKEN token) {
   return token == TOKEN::INT or token == TOKEN::LONG or
-         token == TOKEN::SIGNED or token == TOKEN::UNSIGNED;
+         token == TOKEN::SIGNED or token == TOKEN::UNSIGNED or
+         token == TOKEN::DOUBLE;
 }
 
 bool is_storage_specifier(TOKEN token) {
