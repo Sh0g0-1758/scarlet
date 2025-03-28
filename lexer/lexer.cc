@@ -341,6 +341,10 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::SIGNED);
       } else if (identifier == "unsigned") {
         tokens.emplace_back(token::TOKEN::UNSIGNED);
+      } else if (identifier == "double") {
+        tokens.emplace_back(token::TOKEN::DOUBLE);
+      } else if (identifier == "char") {
+        tokens.emplace_back(token::TOKEN::CHAR);
       } else if (identifier == "sizeof") {
         tokens.emplace_back(token::TOKEN::SIZEOF);
       } else if (identifier == "struct") {

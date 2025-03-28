@@ -549,6 +549,12 @@ bool is_constant_or_identifier(TOKEN token) {
          token == TOKEN::IDENTIFIER;
 }
 
+bool is_numeric_constant(TOKEN token) {
+  return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
+         token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
+         token == TOKEN::DOUBLE_CONSTANT;
+}
+
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;

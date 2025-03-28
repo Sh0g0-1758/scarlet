@@ -35,10 +35,7 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> &factor) {
-  if (tokens[0].get_token() == token::TOKEN::INT_CONSTANT or
-      tokens[0].get_token() == token::TOKEN::LONG_CONSTANT or
-      tokens[0].get_token() == token::TOKEN::UINT_CONSTANT or
-      tokens[0].get_token() == token::TOKEN::ULONG_CONSTANT) {
+  if (token::is_numeric_constant(tokens[0].get_token())) {
     parse_const(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();
