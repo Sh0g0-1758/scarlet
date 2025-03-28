@@ -322,7 +322,6 @@ void Codegen::gen_scar_exp(
     scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));
     scar_instruction->set_binop(binop);
-
     scar_function->add_instruction(std::move(scar_instruction));
   } else {
     // When we do not have a binary operator, so only parse the factor node

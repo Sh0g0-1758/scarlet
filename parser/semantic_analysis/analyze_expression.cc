@@ -86,6 +86,21 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
   // assign type to the expression
   assign_type_to_exp(exp);
+
+  // left/right shift changed to logical left/right shift if the type is
+  // unsigned
+  if (exp->get_binop_node() != nullptr and
+      (exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT or
+       exp->get_binop_node()->get_op() == binop::BINOP::RIGHT_SHIFT)) {
+    if (exp->get_type() == ast::ElemType::UINT or
+        exp->get_type() == ast::ElemType::ULONG) {
+      if (exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT) {
+        exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
+      } else {
+        exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
+      }
+    }
+  }
 }
 
 void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
@@ -208,7 +223,7 @@ void parser::assign_type_to_factor(
     return;
 
   if (factor->get_const_node() != nullptr) {
-    factor->set_type(constTypeToElemType(
+    factor->set_type(ast::constTypeToElemType(
         factor->get_const_node()->get_constant().get_type()));
   } else if (factor->get_identifier_node() != nullptr) {
     factor->set_type(
@@ -310,9 +325,11 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
     MAKE_SHARED(ast::AST_factor_Node, cast_factor);
     cast_factor->set_cast_type(type);
+    cast_factor->set_type(type);
 
     MAKE_SHARED(ast::AST_factor_Node, child_factor);
     child_factor->set_exp_node(std::move(copy_exp));
+    child_factor->set_type(exp->get_type());
     cast_factor->set_child(std::move(child_factor));
 
     exp->set_factor_node(std::move(cast_factor));
@@ -335,10 +352,12 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
       MAKE_SHARED(ast::AST_factor_Node, cast_factor);
       cast_factor->set_cast_type(type);
+      cast_factor->set_type(type);
 
       MAKE_SHARED(ast::AST_factor_Node, child_factor);
       auto copy_exp = std::static_pointer_cast<ast::AST_exp_Node>(copy_ternary);
       child_factor->set_exp_node(std::move(copy_exp));
+      child_factor->set_type(exp->get_type());
       cast_factor->set_child(std::move(child_factor));
 
       exp->set_factor_node(std::move(cast_factor));
@@ -357,9 +376,11 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
       MAKE_SHARED(ast::AST_factor_Node, cast_factor);
       cast_factor->set_cast_type(type);
+      cast_factor->set_type(type);
 
       MAKE_SHARED(ast::AST_factor_Node, child_factor);
       child_factor->set_exp_node(std::move(copy_exp));
+      child_factor->set_type(exp->get_type());
       cast_factor->set_child(std::move(child_factor));
 
       exp->set_factor_node(std::move(cast_factor));

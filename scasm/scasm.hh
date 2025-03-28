@@ -25,7 +25,7 @@ assembly_type = LongWord | QuadWord
 
 top_level = Function(identifier name, bool global, instruction* instructions) | StaticVariable(identifier name, bool global, int alignment, const init)
 
-instruction = Mov(assembly_type, Operand src, Operand dst) | Movsx(Operand src, Operand dst) | Binary(binary_operator, assembly_type,  Operand src, Operand dst) | Idiv(assembly_type, Operand src) | Cdq(assembly_type) | Ret | Unary(Unary_operator, assembly_type, Operand src/dst) | AllocateStack(Operand) | Cmp(assembly_type, Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label) | Push(Operand) | Call(Identifier) | DeallocateStack(int)
+instruction = Mov(assembly_type, Operand src, Operand dst) | Movsx(Operand src, Operand dst) | MovZeroExtend(Operand src, Operand dst) | Binary(binary_operator, assembly_type,  Operand src, Operand dst) | Idiv(assembly_type, Operand src) | Div(assembly_type, Operand src) | Cdq(assembly_type) | Ret | Unary(Unary_operator, assembly_type, Operand src/dst) | AllocateStack(Operand) | Cmp(assembly_type, Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label) | Push(Operand) | Call(Identifier) | DeallocateStack(int) 
 
 unary_operator = Neg | Not
 
@@ -35,7 +35,7 @@ Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier) | Label(i
 
 cond_code = E | NE | G | GE | L | LE
 
-reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL | SP
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL | SP | B | BE | A | AE
 
 */
 
@@ -58,6 +58,8 @@ enum class Binop {
   XOR,
   LEFT_SHIFT,
   RIGHT_SHIFT,
+  LOGICAL_LEFT_SHIFT,
+  LOGICAL_RIGHT_SHIFT,
   LAND,
   LOR,
   EQUAL,
@@ -73,8 +75,10 @@ enum class instruction_type {
   UNKNOWN,
   MOV,
   MOVSX,
+  MOVZX,
   BINARY,
   IDIV,
+  DIV,
   CDQ,
   RET,
   UNARY,
@@ -104,7 +108,7 @@ enum class register_type {
 // Byte = 8 bits, Word = 16 bits, Lword = 32 bits, Qword = 64 bits
 enum class register_size { BYTE, LWORD, QWORD };
 
-enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE };
+enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE, B, BE, A, AE };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);

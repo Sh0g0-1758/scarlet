@@ -28,7 +28,8 @@ add_dependencies(
     scarUnop
     scarBinop
     scarToken
+    scast
   )
 
 target_include_directories(scarParser PUBLIC ${SCARLET_SOURCE_DIR})
-target_link_libraries(scarParser PUBLIC scarUnop scarToken scarBinop)
+target_link_libraries(scarParser PUBLIC scarUnop scarToken scarBinop scast)

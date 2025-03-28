@@ -27,6 +27,8 @@ std::string to_string(scar::instruction_type type) {
     return "SignExtend";
   case scar::instruction_type::TRUNCATE:
     return "Truncate";
+  case scar::instruction_type::ZERO_EXTEND:
+    return "ZeroExtend";
   }
   UNREACHABLE()
 }

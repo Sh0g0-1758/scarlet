@@ -23,7 +23,8 @@ add_dependencies(
     scar
     scasm
     scarBinop
+    scast
   )
 
 target_include_directories(scarCodegen PUBLIC ${SCARLET_SOURCE_DIR})
-target_link_libraries(scarCodegen PUBLIC scar scasm scarBinop)
+target_link_libraries(scarCodegen PUBLIC scar scasm scarBinop scast)

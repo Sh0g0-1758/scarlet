@@ -73,7 +73,7 @@ Scarlet currently supports the following architectures:
 - [x] Add support for static keyword and global scope
 - [x] Add support for a type system
 - [x] Add support for Long Integers
-- [ ] Add support for Unsigned Integers
+- [x] Add support for Unsigned Integers
 - [ ] Add support for Floating-Point Numbers
 - [ ] Add support for Pointers
 - [ ] Add support for Arrays
