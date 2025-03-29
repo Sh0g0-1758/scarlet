@@ -89,6 +89,16 @@ private:
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_block(std::shared_ptr<ast::AST_Block_Node> block,
                       std::shared_ptr<scar::scar_Function_Node> scar_function);
+
+  void gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
+                      std::shared_ptr<scasm::scasm_function> scasm_func,
+                      scasm::scasm_program &scasm_program);
+  void gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
+                       std::shared_ptr<scasm::scasm_function> scasm_func,
+                       scasm::scasm_program &scasm_program);
+  void gen_funcall_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
+                         std::shared_ptr<scasm::scasm_function> scasm_func,
+                         scasm::scasm_program &scasm_program);
   int fr_label_counter = 1;
   int res_label_counter = 1;
   std::stack<std::string> fr_label_stack;
