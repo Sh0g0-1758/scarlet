@@ -101,6 +101,16 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
       }
     }
   }
+
+  // check that modulus operator is not used on floating point types
+  if (exp->get_binop_node() != nullptr and
+      exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
+    if (exp->get_type() == ast::ElemType::DOUBLE) {
+      success = false;
+      error_messages.emplace_back("Modulus operator not allowed on floating "
+                                  "point types");
+    }
+  }
 }
 
 void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
@@ -215,6 +225,16 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
 
   // assign type to the factor
   assign_type_to_factor(factor);
+
+  // complement operator cannot be used on floating point types
+  if (factor->get_unop_node() != nullptr and
+      factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
+    if (factor->get_type() == ast::ElemType::DOUBLE) {
+      success = false;
+      error_messages.emplace_back("Complement operator not allowed on "
+                                  "floating point types");
+    }
+  }
 }
 
 void parser::assign_type_to_factor(
@@ -266,7 +286,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    : exp->get_factor_node()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
 
-      ast::ElemType expType = getParentType(leftType, rightType);
+      ast::ElemType expType = ast::getParentType(leftType, rightType);
       exp->set_type(expType);
 
       // Explicitly add cast operation in case of type mismatch
@@ -295,7 +315,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    : exp->get_factor_node()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
 
-      ast::ElemType expType = getParentType(leftType, rightType);
+      ast::ElemType expType = ast::getParentType(leftType, rightType);
 
       // Explicitly add cast operation in case of type mismatch
       if (expType != rightType) {
@@ -391,25 +411,50 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
 void parser::add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                                 ast::ElemType type) {
-  MAKE_SHARED(ast::AST_factor_Node, copy_factor);
-  copy_factor->set_const_node(factor->get_const_node());
-  copy_factor->set_identifier_node(factor->get_identifier_node());
-  copy_factor->set_unop_node(factor->get_unop_node());
-  copy_factor->set_exp_node(factor->get_exp_node());
-  copy_factor->set_factor_type(factor->get_factor_type());
-  copy_factor->set_cast_type(factor->get_cast_type());
-  copy_factor->set_child(factor->get_child());
-  copy_factor->set_type(factor->get_type());
+  if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
+    auto funcCall =
+        std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor);
+    MAKE_SHARED(ast::AST_factor_function_call_Node, copy_factor);
+    copy_factor->set_const_node(factor->get_const_node());
+    copy_factor->set_identifier_node(factor->get_identifier_node());
+    copy_factor->set_unop_node(factor->get_unop_node());
+    copy_factor->set_exp_node(factor->get_exp_node());
+    copy_factor->set_factor_type(factor->get_factor_type());
+    copy_factor->set_cast_type(factor->get_cast_type());
+    copy_factor->set_child(factor->get_child());
+    copy_factor->set_type(factor->get_type());
+    copy_factor->set_arguments(funcCall->get_arguments());
 
-  factor->set_const_node(nullptr);
-  factor->set_identifier_node(nullptr);
-  factor->set_unop_node(nullptr);
-  factor->set_exp_node(nullptr);
-  factor->set_factor_type(ast::FactorType::BASIC);
+    factor->set_const_node(nullptr);
+    factor->set_identifier_node(nullptr);
+    factor->set_unop_node(nullptr);
+    factor->set_exp_node(nullptr);
+    factor->set_factor_type(ast::FactorType::BASIC);
 
-  factor->set_cast_type(type);
-  factor->set_type(type);
-  factor->set_child(std::move(copy_factor));
+    factor->set_cast_type(type);
+    factor->set_type(type);
+    factor->set_child(std::move(copy_factor));
+  } else {
+    MAKE_SHARED(ast::AST_factor_Node, copy_factor);
+    copy_factor->set_const_node(factor->get_const_node());
+    copy_factor->set_identifier_node(factor->get_identifier_node());
+    copy_factor->set_unop_node(factor->get_unop_node());
+    copy_factor->set_exp_node(factor->get_exp_node());
+    copy_factor->set_factor_type(factor->get_factor_type());
+    copy_factor->set_cast_type(factor->get_cast_type());
+    copy_factor->set_child(factor->get_child());
+    copy_factor->set_type(factor->get_type());
+
+    factor->set_const_node(nullptr);
+    factor->set_identifier_node(nullptr);
+    factor->set_unop_node(nullptr);
+    factor->set_exp_node(nullptr);
+    factor->set_factor_type(ast::FactorType::BASIC);
+
+    factor->set_cast_type(type);
+    factor->set_type(type);
+    factor->set_child(std::move(copy_factor));
+  }
 }
 
 } // namespace parser

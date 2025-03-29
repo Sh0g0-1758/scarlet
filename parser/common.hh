@@ -49,6 +49,7 @@ namespace parser {
 - Error: Multiple identical type specifiers in the same declaration are invalid
 - Error: Declarations with no type specifiers are considered invalid
 - Error: 'unsigned' and 'signed' qualifiers cannot be used together
+- Error: 'double' cannot occur with any other type specifier
 - Type resolution: When 'unsigned' and 'long' appear together -> ulong
 - Type resolution: When only 'unsigned' appears -> uint
 - Type resolution: When only 'long' appears -> long, otherwise defaults to int
@@ -77,6 +78,11 @@ namespace parser {
     success = false;                                                           \
     error_messages.emplace_back(                                               \
         "Unsigned and signed specifiers found together");                      \
+  } else if (type_specifiers.find(token::TOKEN::DOUBLE) !=                     \
+                 type_specifiers.end() and                                     \
+             type_specifiers.size() > 1) {                                     \
+    success = false;                                                           \
+    error_messages.emplace_back("Double specifier found with other types");    \
   } else {                                                                     \
     if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                        \
             type_specifiers.end() and                                          \
@@ -88,6 +94,9 @@ namespace parser {
     } else if (type_specifiers.find(token::TOKEN::LONG) !=                     \
                type_specifiers.end()) {                                        \
       decl->func(ast::ElemType::LONG);                                         \
+    } else if (type_specifiers.find(token::TOKEN::DOUBLE) !=                   \
+               type_specifiers.end()) {                                        \
+      decl->func(ast::ElemType::DOUBLE);                                       \
     } else {                                                                   \
       decl->func(ast::ElemType::INT);                                          \
     }                                                                          \

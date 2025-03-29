@@ -66,10 +66,15 @@ namespace scarlet {
 namespace ast {
 
 enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { NONE, INT, LONG, ULONG, UINT };
+enum class ElemType { NONE, INT, LONG, ULONG, UINT, DOUBLE };
 
 ElemType constTypeToElemType(constant::Type t);
 constant::Type elemTypeToConstType(ElemType t);
+std::string to_string(ast::ElemType type);
+std::string to_string(ast::SpecifierType type);
+int getSizeType(ast::ElemType type);
+ast::ElemType getParentType(ast::ElemType left, ast::ElemType right);
+constant::Constant castConstToVal(constant::Constant c, ast::ElemType type);
 
 class AST_const_Node {
 private:
@@ -175,6 +180,9 @@ public:
   std::string get_AST_name() { return "FunctionCall"; }
   std::vector<std::shared_ptr<AST_exp_Node>> get_arguments() {
     return arguments;
+  }
+  void set_arguments(std::vector<std::shared_ptr<AST_exp_Node>> arguments) {
+    this->arguments = arguments;
   }
   void add_argument(std::shared_ptr<AST_exp_Node> argument) {
     arguments.emplace_back(argument);

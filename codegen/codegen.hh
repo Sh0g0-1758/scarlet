@@ -138,31 +138,6 @@ public:
     return tmp;
   }
 
-  int getSizeType(ast::ElemType type) {
-    if (type == ast::ElemType::INT || type == ast::ElemType::UINT)
-      return 4;
-    else if (type == ast::ElemType::LONG || type == ast::ElemType::ULONG)
-      return 8;
-    else
-      return -1;
-  }
-
-  std::string to_string(ast::ElemType type) {
-    switch (type) {
-    case ast::ElemType::INT:
-      return "int";
-    case ast::ElemType::LONG:
-      return "long";
-    case ast::ElemType::UINT:
-      return "unsigned int";
-    case ast::ElemType::ULONG:
-      return "unsigned long";
-    case ast::ElemType::NONE:
-      return "";
-    }
-    UNREACHABLE();
-  }
-
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
@@ -204,6 +179,9 @@ public:
       return scasm::AssemblyType::LONG_WORD;
     case ast::ElemType::ULONG:
       return scasm::AssemblyType::QUAD_WORD;
+    case ast::ElemType::DOUBLE:
+      // FIXME
+      return scasm::AssemblyType::NONE;
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
     }

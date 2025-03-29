@@ -36,7 +36,7 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       v.i = val;
     }
   } break;
-  case token::TOKEN::UINT_CONSTANT:
+  case token::TOKEN::UINT_CONSTANT: {
     constant.set_type(constant::Type::UINT);
     try {
       unsigned long ul = std::stoul(tokens[0].get_value().value());
@@ -52,7 +52,7 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       error_messages.emplace_back("Unsigned int constant out of range");
       return;
     }
-    break;
+  } break;
   case token::TOKEN::LONG_CONSTANT: {
     constant.set_type(constant::Type::LONG);
     try {
@@ -63,7 +63,7 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       return;
     }
   } break;
-  case token::TOKEN::ULONG_CONSTANT:
+  case token::TOKEN::ULONG_CONSTANT: {
     constant.set_type(constant::Type::ULONG);
     try {
       v.ul = std::stoul(tokens[0].get_value().value());
@@ -72,7 +72,18 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       error_messages.emplace_back("Unsigned long constant out of range");
       return;
     }
-    break;
+  } break;
+  case token::TOKEN::DOUBLE_CONSTANT: {
+    constant.set_type(constant::Type::DOUBLE);
+    try {
+      char *stopstring;
+      v.d = strtod(tokens[0].get_value().value().c_str(), &stopstring);
+    } catch (std::out_of_range &e) {
+      success = false;
+      error_messages.emplace_back("Double constant out of range");
+      return;
+    }
+  } break;
   default:
     break;
   }

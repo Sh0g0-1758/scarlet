@@ -96,13 +96,13 @@ target_compile_options(scarlet PRIVATE -O3)
 add_custom_target(test-scarlet
     DEPENDS scarlet
     COMMAND echo "Running lexer test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage lex
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 13 --stage lex
     COMMAND echo "Running parser test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage parse
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 13 --stage parse
     COMMAND echo "Running semantic analysis test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage validate
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 13 --stage validate
     COMMAND echo "Running scar test"
-    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage tacky
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 13 --stage tacky
     COMMAND echo "Running Codegen test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 12 --stage codegen
     COMMAND echo "Running bitwise, compound, increment/decrement and goto test"

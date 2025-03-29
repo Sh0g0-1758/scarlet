@@ -341,6 +341,10 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::SIGNED);
       } else if (identifier == "unsigned") {
         tokens.emplace_back(token::TOKEN::UNSIGNED);
+      } else if (identifier == "double") {
+        tokens.emplace_back(token::TOKEN::DOUBLE);
+      } else if (identifier == "char") {
+        tokens.emplace_back(token::TOKEN::CHAR);
       } else if (identifier == "sizeof") {
         tokens.emplace_back(token::TOKEN::SIZEOF);
       } else if (identifier == "struct") {
@@ -376,9 +380,12 @@ void lexer::tokenize() {
           }
         }
       }
+
       // Treat as a float when there is no proceeding l,L,u,U suffix and next
       // token is dot
+      bool isFloat = false;
       if (ch == '.' and literal_suffix.size() == 0) {
+        isFloat = true;
         constant += '.';
         file.get(ch);
         while (regex.matchDigit(ch)) {
@@ -386,7 +393,9 @@ void lexer::tokenize() {
           file.get(ch);
         }
       }
+
       if ((ch == 'e' or ch == 'E') and literal_suffix.size() == 0) {
+        constant += 'e';
         file.get(ch);
         if (ch == '+' or ch == '-') {
           constant += ch;
@@ -429,21 +438,26 @@ void lexer::tokenize() {
         file.seekg(-1, std::ios::cur);
         continue;
       } else {
-        if (literal_suffix == "") {
+        if (isFloat) {
           tokens.emplace_back(
-              token::Token(token::TOKEN::INT_CONSTANT, constant));
-        } else if (literal_suffix == "l" or literal_suffix == "L") {
-          tokens.emplace_back(
-              token::Token(token::TOKEN::LONG_CONSTANT, constant));
-        } else if (literal_suffix == "u" or literal_suffix == "U") {
-          tokens.emplace_back(
-              token::Token(token::TOKEN::UINT_CONSTANT, constant));
-        } else if (literal_suffix == "lu" or literal_suffix == "lU" or
-                   literal_suffix == "Lu" or literal_suffix == "LU" or
-                   literal_suffix == "ul" or literal_suffix == "uL" or
-                   literal_suffix == "Ul" or literal_suffix == "UL") {
-          tokens.emplace_back(
-              token::Token(token::TOKEN::ULONG_CONSTANT, constant));
+              token::Token(token::TOKEN::DOUBLE_CONSTANT, constant));
+        } else {
+          if (literal_suffix == "") {
+            tokens.emplace_back(
+                token::Token(token::TOKEN::INT_CONSTANT, constant));
+          } else if (literal_suffix == "l" or literal_suffix == "L") {
+            tokens.emplace_back(
+                token::Token(token::TOKEN::LONG_CONSTANT, constant));
+          } else if (literal_suffix == "u" or literal_suffix == "U") {
+            tokens.emplace_back(
+                token::Token(token::TOKEN::UINT_CONSTANT, constant));
+          } else if (literal_suffix == "lu" or literal_suffix == "lU" or
+                     literal_suffix == "Lu" or literal_suffix == "LU" or
+                     literal_suffix == "ul" or literal_suffix == "uL" or
+                     literal_suffix == "Ul" or literal_suffix == "UL") {
+            tokens.emplace_back(
+                token::Token(token::TOKEN::ULONG_CONSTANT, constant));
+          }
         }
       }
       file.seekg(-1, std::ios::cur);
