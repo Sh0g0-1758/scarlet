@@ -42,10 +42,15 @@ void Codegen::gen_funcall_scasm(
       scasm_src->set_type(scasm::operand_type::PSEUDO);
       scasm_src->set_identifier_stack(funcCall->get_args()[i]->get_reg());
       break;
-    case scar::val_type::CONSTANT:
-      scasm_src->set_type(scasm::operand_type::IMM);
-      scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
-      break;
+    case scar::val_type::CONSTANT: {
+      if (funcCall->get_args()[i]->get_const_val().get_type() ==
+          constant::Type::DOUBLE) {
+        MAKE_DOUBLE_CONSTANT(scasm_src, 8);
+      } else {
+        scasm_src->set_type(scasm::operand_type::IMM);
+        scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
+      }
+    } break;
     default:
       break;
     }
@@ -66,10 +71,15 @@ void Codegen::gen_funcall_scasm(
         scasm_src->set_type(scasm::operand_type::PSEUDO);
         scasm_src->set_identifier_stack(funcCall->get_args()[i]->get_reg());
         break;
-      case scar::val_type::CONSTANT:
-        scasm_src->set_type(scasm::operand_type::IMM);
-        scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
-        break;
+      case scar::val_type::CONSTANT: {
+        if (funcCall->get_args()[i]->get_const_val().get_type() ==
+            constant::Type::DOUBLE) {
+          MAKE_DOUBLE_CONSTANT(scasm_src, 8);
+        } else {
+          scasm_src->set_type(scasm::operand_type::IMM);
+          scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
+        }
+      } break;
       default:
         break;
       }
