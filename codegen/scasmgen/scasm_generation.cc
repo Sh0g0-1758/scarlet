@@ -36,11 +36,19 @@ void Codegen::gen_scasm() {
       MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
       scasm_var->set_name(var->get_identifier()->get_value());
       switch (var->get_init().get_type()) {
+      case constant::Type::UINT:
       case constant::Type::INT:
         scasm_var->set_alignment(4);
         break;
+      case constant::Type::ULONG:
       case constant::Type::LONG:
         scasm_var->set_alignment(8);
+        break;
+      case constant::Type::DOUBLE:
+        scasm_var->set_alignment(8);
+        break;
+      case constant::Type::NONE:
+        scasm_var->set_alignment(0);
         break;
       default:
         break;
@@ -103,7 +111,32 @@ void Codegen::gen_scasm() {
         scasm_inst->set_asm_type(valToAsmType(inst->get_src1()));
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         SET_MOV_SOURCE();
-        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        /*
+        START
+        */
+        switch (inst->get_src1()->get_type()) {
+        case scar::val_type::VAR: {
+          scasm_src->set_type(scasm::operand_type::PSEUDO);
+          scasm_src->set_identifier_stack(inst->get_src1()->get_reg());
+        } break;
+        case scar::val_type::CONSTANT: {
+          if (inst->get_src1()->get_const_val().get_type() ==
+              constant::Type::DOUBLE) {
+            MAKE_SHARED(scasm::scasm_static_constant, doubleConst);
+            doubleConst->set_type(scasm::scasm_top_level_type::STATIC_CONSTANT);
+          } else {
+            scasm_src->set_type(scasm::operand_type::IMM);
+            scasm_src->set_imm(inst->get_src1()->get_const_val());
+          }
+        } break;
+        default:
+          break;
+        }
+        scasm_inst->set_src(std::move(scasm_src))
+            /*
+            END
+            */
+            MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         scasm_dst->set_type(scasm::operand_type::REG);
         scasm_dst->set_reg(scasm::register_type::AX);
         scasm_inst->set_dst(std::move(scasm_dst));

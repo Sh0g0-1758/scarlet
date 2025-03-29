@@ -237,7 +237,7 @@ public:
   void set_asm_type(AssemblyType asmType) { this->asmType = asmType; }
 };
 
-enum class scasm_top_level_type { FUNCTION, STATIC_VARIABLE };
+enum class scasm_top_level_type { FUNCTION, STATIC_VARIABLE, STATIC_CONSTANT };
 
 class scasm_top_level {
 private:
