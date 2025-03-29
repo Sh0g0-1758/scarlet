@@ -3,47 +3,65 @@
 namespace scarlet {
 namespace codegen {
 
-#define SET_MOV_SOURCE()                                                       \
-  switch (inst->get_src1()->get_type()) {                                      \
-  case scar::val_type::VAR:                                                    \
-    scasm_src->set_type(scasm::operand_type::PSEUDO);                          \
-    scasm_src->set_identifier_stack(inst->get_src1()->get_reg());              \
-    break;                                                                     \
-  case scar::val_type::CONSTANT:                                               \
-    scasm_src->set_type(scasm::operand_type::IMM);                             \
-    scasm_src->set_imm(inst->get_src1()->get_const_val());                     \
-    break;                                                                     \
-  default:                                                                     \
-    break;                                                                     \
-  }                                                                            \
-  scasm_inst->set_src(std::move(scasm_src))
-
-#define SET_DST(dst)                                                           \
-  switch (inst->get_dst()->get_type()) {                                       \
-  case scar::val_type::VAR:                                                    \
-    dst->set_type(scasm::operand_type::PSEUDO);                                \
-    dst->set_identifier_stack(inst->get_dst()->get_reg());                     \
-    break;                                                                     \
-  default:                                                                     \
-    break;                                                                     \
-  }
-
 #define MAKE_DOUBLE_CONSTANT(target, alignment)                                \
-  MAKE_SHARED(scasm::scasm_static_constant, doubleConst);                      \
-  std::string doubleName =  get_const_label_name();                            \
-  doubleConst->set_name(doubleName);                                           \
-  doubleConst->set_type(scasm::scasm_top_level_type::STATIC_CONSTANT);         \
-  doubleConst->set_alignment(alignment);                                       \
-  if (backendSymbolTable.find(doubleName) == backendSymbolTable.end()) {       \
+  if (doubleLabelMap.find(inst->get_src1()->get_const_val().get_value().d) ==  \
+      doubleLabelMap.end()) {                                                  \
+    /* declare a top level constant for the double */                          \
+    std::string doubleName = get_const_label_name();                           \
+    MAKE_SHARED(scasm::scasm_static_constant, doubleConst);                    \
+    doubleConst->set_name(doubleName);                                         \
+    doubleConst->set_init(inst->get_src1()->get_const_val());                  \
+    doubleConst->set_alignment(alignment);                                     \
+    auto top_level_elem =                                                      \
+        std::static_pointer_cast<scasm::scasm_top_level>(doubleConst);         \
+    top_level_elem->set_type(scasm::scasm_top_level_type::STATIC_CONSTANT);    \
+    top_level_elem->set_global(false);                                         \
+    scasm_program.add_elem(std::move(top_level_elem));                         \
+    /* add the constant in the backend symbol table */                         \
     scasm::backendSymbol sym;                                                  \
     sym.type = scasm::backendSymbolType::STATIC_CONSTANT;                      \
     sym.isTopLevel = true;                                                     \
     sym.asmType = scasm::AssemblyType::DOUBLE;                                 \
     backendSymbolTable[doubleName] = sym;                                      \
-    doubleLabelMap[inst->get_src1()->get_const_val().get_value().d] = doubleName; \
+    /* add it to the double map so that it can be used again */                \
+    doubleLabelMap[inst->get_src1()->get_const_val().get_value().d] =          \
+        doubleName;                                                            \
+    /* put the identifier for the constant in target */                        \
+    target->set_type(scasm::operand_type::PSEUDO);                             \
+    target->set_identifier_stack(doubleName);                                  \
+  } else {                                                                     \
+    /* get the identifier from doubleMap and put it in target */               \
+    std::string doubleName =                                                   \
+        doubleLabelMap[inst->get_src1()->get_const_val().get_value().d];       \
+    target->set_type(scasm::operand_type::PSEUDO);                             \
+    target->set_identifier_stack(doubleName);                                  \
+  }
+
+/*
+ * target      - the scasm target operand
+ * set_target  - the scasm target operand setter
+ * get_target  - the scar operand getter
+ * instruction - the scasm instruction
+ */
+#define SET_OPERAND(target, set_target, get_target, instruction)               \
+  switch (inst->get_target()->get_type()) {                                    \
+  case scar::val_type::VAR: {                                                  \
+    target->set_type(scasm::operand_type::PSEUDO);                             \
+    target->set_identifier_stack(inst->get_target()->get_reg());               \
+  } break;                                                                     \
+  case scar::val_type::CONSTANT: {                                             \
+    if (inst->get_target()->get_const_val().get_type() ==                      \
+        constant::Type::DOUBLE) {                                              \
+      MAKE_DOUBLE_CONSTANT(target, 8);                                         \
+    } else {                                                                   \
+      target->set_type(scasm::operand_type::IMM);                              \
+      target->set_imm(inst->get_target()->get_const_val());                    \
+    }                                                                          \
+  } break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
   }                                                                            \
-  scasm_##target->set_type(scasm::operand_type::PSEUDO);                       \
-  scasm_##target->set_identifier_stack(doubleName);
+  instruction->set_target(std::move(target));
 
 void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
@@ -124,38 +142,21 @@ void Codegen::gen_scasm() {
     for (auto inst : func->get_instructions()) {
       if (inst->get_type() == scar::instruction_type::RETURN) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type(valToAsmType(inst->get_src1()));
+
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_MOV_SOURCE();
-        /*
-        START
-        */
-        switch (inst->get_src1()->get_type()) {
-        case scar::val_type::VAR: {
-          scasm_src->set_type(scasm::operand_type::PSEUDO);
-          scasm_src->set_identifier_stack(inst->get_src1()->get_reg());
-        } break;
-        case scar::val_type::CONSTANT: {
-          if (inst->get_src1()->get_const_val().get_type() ==
-              constant::Type::DOUBLE) {
-            MAKE_DOUBLE_CONSTANT(src,8);
-          } else {
-            scasm_src->set_type(scasm::operand_type::IMM);
-            scasm_src->set_imm(inst->get_src1()->get_const_val());
-          }
-        } break;
-        default:
-          break;
-        }
-        scasm_inst->set_src(std::move(scasm_src));
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         scasm_dst->set_type(scasm::operand_type::REG);
-        if(valType(inst->get_src1())==constant::Type::DOUBLE){
+        if (valType(inst->get_src1()) == constant::Type::DOUBLE) {
           scasm_dst->set_reg(scasm::register_type::XMM0);
-        } else{
+        } else {
           scasm_dst->set_reg(scasm::register_type::AX);
         }
+
         scasm_inst->set_dst(std::move(scasm_dst));
         scasm_func->add_instruction(std::move(scasm_inst));
 
@@ -165,13 +166,12 @@ void Codegen::gen_scasm() {
       } else if (inst->get_type() == scar::instruction_type::UNARY) {
         scasm::AssemblyType instType = valToAsmType(inst->get_src1());
 
-        
         if (inst->get_unop() == unop::UNOP::NOT) {
-          if(instType==scasm::AssemblyType::DOUBLE){
-            //Binary(Xor, Double, Reg(<X>), Reg(<X>))
-            // Cmp(Double, src, Reg(<X>))
-            // Mov(<dst type>, Imm(0), dst)
-            // SetCC(E, dst)
+          if (instType == scasm::AssemblyType::DOUBLE) {
+            // Binary(Xor, Double, Reg(<X>), Reg(<X>))
+            //  Cmp(Double, src, Reg(<X>))
+            //  Mov(<dst type>, Imm(0), dst)
+            //  SetCC(E, dst)
 
             MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
             scasm_inst->set_type(scasm::instruction_type::BINARY);
@@ -193,17 +193,17 @@ void Codegen::gen_scasm() {
             MAKE_SHARED(scasm::scasm_operand, scasm_src2);
             scasm_src2->set_type(scasm::operand_type::PSEUDO);
             switch (inst->get_src1()->get_type()) {
-              case scar::val_type::VAR:
-                scasm_src2->set_type(scasm::operand_type::PSEUDO);
-                scasm_src2->set_identifier_stack(inst->get_src1()->get_reg());
-                break;
-              case scar::val_type::CONSTANT:
-                scasm_src2->set_type(scasm::operand_type::IMM);
-                scasm_src2->set_imm(inst->get_src1()->get_const_val());
-                break;
-              default:
-                break;
-              }
+            case scar::val_type::VAR:
+              scasm_src2->set_type(scasm::operand_type::PSEUDO);
+              scasm_src2->set_identifier_stack(inst->get_src1()->get_reg());
+              break;
+            case scar::val_type::CONSTANT:
+              scasm_src2->set_type(scasm::operand_type::IMM);
+              scasm_src2->set_imm(inst->get_src1()->get_const_val());
+              break;
+            default:
+              break;
+            }
             scasm_inst2->set_src(std::move(scasm_src2));
             MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
             scasm_dst2->set_type(scasm::operand_type::REG);
@@ -251,7 +251,6 @@ void Codegen::gen_scasm() {
             }
             scasm_inst4->set_dst(std::move(scasm_dst4));
             scasm_func->add_instruction(std::move(scasm_inst4));
-
           }
           // Cmp(Imm(0), src)
           // Mov(Imm(0), dst)
@@ -291,8 +290,7 @@ void Codegen::gen_scasm() {
           scasm_src2->set_imm(zero);
           scasm_inst2->set_src(std::move(scasm_src2));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
-          SET_DST(scasm_dst2);
-          scasm_inst2->set_dst(std::move(scasm_dst2));
+          SET_OPERAND(scasm_dst2, set_dst, get_dst, scasm_inst2);
           scasm_func->add_instruction(std::move(scasm_inst2));
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
@@ -318,12 +316,10 @@ void Codegen::gen_scasm() {
           scasm_inst->set_type(scasm::instruction_type::MOV);
           scasm_inst->set_asm_type(instType);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          SET_MOV_SOURCE();
+          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
 
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-          SET_DST(scasm_dst);
-
-          scasm_inst->set_dst(scasm_dst);
+          SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
 
           scasm_func->add_instruction(std::move(scasm_inst));
 
@@ -387,8 +383,7 @@ void Codegen::gen_scasm() {
           scasm_src2->set_imm(zero);
           scasm_inst2->set_src(std::move(scasm_src2));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
-          SET_DST(scasm_dst2);
-          scasm_inst2->set_dst(std::move(scasm_dst2));
+          SET_OPERAND(scasm_dst2, set_dst, get_dst, scasm_inst2);
           scasm_func->add_instruction(std::move(scasm_inst2));
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
@@ -446,8 +441,7 @@ void Codegen::gen_scasm() {
           }
           scasm_inst3->set_src(std::move(scasm_src3));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
-          SET_DST(scasm_dst3);
-          scasm_inst3->set_dst(std::move(scasm_dst3));
+          SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst3);
           scasm_func->add_instruction(std::move(scasm_inst3));
         } else if (inst->get_binop() == binop::BINOP::DIV or
                    inst->get_binop() == binop::BINOP::MOD) {
@@ -459,7 +453,7 @@ void Codegen::gen_scasm() {
           scasm_inst->set_type(scasm::instruction_type::MOV);
           scasm_inst->set_asm_type(instType);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          SET_MOV_SOURCE();
+          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           scasm_dst->set_type(scasm::operand_type::REG);
           scasm_dst->set_reg(scasm::register_type::AX);
@@ -515,8 +509,8 @@ void Codegen::gen_scasm() {
           scasm_inst4->set_type(scasm::instruction_type::MOV);
           scasm_inst4->set_asm_type(instType);
           MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
-          SET_DST(scasm_dst3);
-          scasm_inst4->set_dst(std::move(scasm_dst3));
+          SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst4);
+
           MAKE_SHARED(scasm::scasm_operand, scasm_src3);
           scasm_src3->set_type(scasm::operand_type::REG);
           if (inst->get_binop() == binop::BINOP::DIV) {
@@ -538,7 +532,7 @@ void Codegen::gen_scasm() {
           scasm_inst->set_type(scasm::instruction_type::MOV);
           scasm_inst->set_asm_type(instType);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          SET_MOV_SOURCE();
+          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst->set_type(scasm::operand_type::PSEUDO);
@@ -588,7 +582,7 @@ void Codegen::gen_scasm() {
           scasm_inst->set_type(scasm::instruction_type::MOV);
           scasm_inst->set_asm_type(instType);
           MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          SET_MOV_SOURCE();
+          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           if (inst->get_dst()->get_type() == scar::val_type::VAR) {
             scasm_dst->set_type(scasm::operand_type::PSEUDO);
@@ -624,10 +618,9 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type(valToAsmType(inst->get_src1()));
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_MOV_SOURCE();
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        SET_DST(scasm_dst);
-        scasm_inst->set_dst(std::move(scasm_dst));
+        SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::LABEL) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
@@ -829,38 +822,34 @@ void Codegen::gen_scasm() {
         scasm_src3->set_reg(scasm::register_type::AX);
         scasm_inst3->set_src(std::move(scasm_src3));
         MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
-        SET_DST(scasm_dst3);
-        scasm_inst3->set_dst(std::move(scasm_dst3));
+        SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst3);
         scasm_func->add_instruction(std::move(scasm_inst3));
       } else if (inst->get_type() == scar::instruction_type::SIGN_EXTEND) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOVSX);
         scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_MOV_SOURCE();
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        SET_DST(scasm_dst);
-        scasm_inst->set_dst(std::move(scasm_dst));
+        SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::TRUNCATE) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_MOV_SOURCE();
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        SET_DST(scasm_dst);
-        scasm_inst->set_dst(std::move(scasm_dst));
+        SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::ZERO_EXTEND) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOVZX);
         scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_MOV_SOURCE();
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        SET_DST(scasm_dst);
-        scasm_inst->set_dst(std::move(scasm_dst));
+        SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
         scasm_func->add_instruction(std::move(scasm_inst));
       }
     }

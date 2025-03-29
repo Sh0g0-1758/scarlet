@@ -329,9 +329,11 @@ public:
 enum backendSymbolType { FUNCTION, STATIC_VARIABLE, STATIC_CONSTANT };
 
 struct backendSymbol {
+  /* Use for Static Variable and Static Constant */
   backendSymbolType type;
   AssemblyType asmType;
   bool isTopLevel;
+  /* Use for Functions */
   bool isDefined;
 };
 

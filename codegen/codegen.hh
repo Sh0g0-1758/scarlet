@@ -152,9 +152,9 @@ public:
   }
 
   std::string get_const_label_name() {
-    return "C" + std::to_string(doubleLabelCounter);
-    doubleLabelCounter++;
+    return "C." + std::to_string(doubleLabelCounter++);
   }
+
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
