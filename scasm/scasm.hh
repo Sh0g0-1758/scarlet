@@ -170,7 +170,17 @@ enum class register_type {
   R10,
   R11,
   CL,
-  SP
+  SP,
+  XMM0,
+  XMM1,
+  XMM2,
+  XMM3,
+  XMM4,
+  XMM5,
+  XMM6,
+  XMM7,
+  XMM14,
+  XMM15
 };
 // Byte = 8 bits, Word = 16 bits, Lword = 32 bits, Qword = 64 bits
 enum class register_size { BYTE, LWORD, QWORD };
@@ -316,7 +326,7 @@ public:
   }
 };
 
-enum backendSymbolType { FUNCTION, STATIC_VARIABLE };
+enum backendSymbolType { FUNCTION, STATIC_VARIABLE, STATIC_CONSTANT };
 
 struct backendSymbol {
   backendSymbolType type;
