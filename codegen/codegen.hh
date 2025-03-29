@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ast/ast.hh>
+#include <cmath>
 #include <fstream>
 #include <map>
 #include <scar/scar.hh>
@@ -38,6 +39,16 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 namespace scarlet {
 namespace codegen {
 
+// Custom comparator for double values to handle -0.0 and 0.0
+struct DoubleCompare {
+  bool operator()(double a, double b) const {
+    if (a == b) {
+      return std::signbit(a) < std::signbit(b); // Distinguishes 0.0 from -0.0
+    }
+    return a < b;
+  }
+};
+
 class Codegen {
 private:
   ast::AST_Program_Node program;
@@ -53,6 +64,7 @@ private:
   std::map<std::string, std::string> pseduo_registers;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   std::map<std::string, scasm::backendSymbol> backendSymbolTable;
+  std::map<double, std::string, DoubleCompare> doubleLabelMap;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
@@ -139,6 +151,10 @@ public:
     return tmp;
   }
 
+  std::string get_const_label_name() {
+    return "C" + std::to_string(doubleLabelCounter);
+    doubleLabelCounter++;
+  }
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:

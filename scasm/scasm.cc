@@ -187,6 +187,26 @@ std::string to_string(register_type reg, register_size size) {
     return "%rsp";
   case register_type::CL:
     return "%cl";
+  case register_type::XMM0:
+    return "%xmm0";
+  case register_type::XMM1:
+    return "%xmm1";
+  case register_type::XMM2:
+    return "%xmm2";
+  case register_type::XMM3:
+    return "%xmm3";
+  case register_type::XMM4:
+    return "%xmm4";
+  case register_type::XMM5:
+    return "%xmm5";
+  case register_type::XMM6:
+    return "%xmm6";
+  case register_type::XMM7:
+    return "%xmm7";
+  case register_type::XMM14:
+    return "%xmm14";
+  case register_type::XMM15:
+    return "%xmm15";
   case register_type::UNKNOWN:
     UNREACHABLE();
   }
@@ -227,6 +247,8 @@ std::string to_string(Unop unop) {
     return "neg";
   case Unop::ANOT:
     return "not";
+  case Unop::SHR:
+    return "shr";
   case Unop::UNKNOWN:
   case Unop::LNOT:
     UNREACHABLE()
