@@ -227,10 +227,57 @@ public:
     }
     UNREACHABLE();
   }
-  std::vector<scasm::register_type> argReg = {
+
+  void calssify_parameters(
+      std::vector<constant::Type> &param_types,
+      std::vector<std::pair<scasm::AssemblyType, int>> &int_param_indx,
+      std::vector<int> &double_param_indx,
+      std::vector<std::pair<scasm::AssemblyType, int>> &stack_param_indx) {
+    int int_reg_count = 0;
+    int double_reg_count = 0;
+    for (int i = 0; i < param_types.size(); i++) {
+      switch (param_types[i]) {
+      case constant::Type::INT:
+      case constant::Type::UINT: {
+        if (int_reg_count < 6) {
+          int_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
+          int_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
+        }
+      };
+      case constant::Type::LONG:
+      case constant::Type::ULONG: {
+        if (int_reg_count < 6) {
+          int_param_indx.push_back({scasm::AssemblyType::QUAD_WORD, i});
+          int_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::QUAD_WORD, i});
+        }
+      } break;
+      case constant::Type::DOUBLE:
+        if (double_reg_count < 8) {
+          double_param_indx.push_back(i);
+          double_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::DOUBLE, i});
+        }
+        break;
+      case constant::Type::NONE:
+        break;
+      }
+    }
+  }
+
+  std::vector<scasm::register_type> int_argReg = {
       scasm::register_type::DI, scasm::register_type::SI,
       scasm::register_type::DX, scasm::register_type::CX,
       scasm::register_type::R8, scasm::register_type::R9};
+  std::vector<scasm::register_type> double_argReg = {
+      scasm::register_type::XMM0, scasm::register_type::XMM1,
+      scasm::register_type::XMM2, scasm::register_type::XMM3,
+      scasm::register_type::XMM4, scasm::register_type::XMM5,
+      scasm::register_type::XMM6, scasm::register_type::XMM7};
 };
 
 } // namespace codegen
