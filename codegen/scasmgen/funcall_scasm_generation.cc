@@ -44,7 +44,7 @@ void Codegen::gen_funcall_scasm(
     scasm_func->add_instruction(std::move(scasm_inst));
   }
   
-  // convery functions args to reg/stack
+  // convert functions args to reg/stack
   // Move int args
   for(int i=0;i<int_param_indx.size();i++){
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
