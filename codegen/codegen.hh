@@ -236,7 +236,7 @@ public:
       std::vector<std::pair<scasm::AssemblyType, int>> &stack_param_indx) {
     int int_reg_count = 0;
     int double_reg_count = 0;
-    for (int i = 0; i < param_types.size(); i++) {
+    for (int i = 0; i < (int)param_types.size(); i++) {
       switch (param_types[i]) {
       case constant::Type::INT:
       case constant::Type::UINT: {
@@ -246,7 +246,7 @@ public:
         } else {
           stack_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
         }
-      };
+      } break;
       case constant::Type::LONG:
       case constant::Type::ULONG: {
         if (int_reg_count < 6) {

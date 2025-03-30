@@ -58,7 +58,7 @@ void Codegen::gen_scasm() {
                         stack_param_indx);
 
     // Move int args
-    for (int i = 0; i < int_param_indx.size(); i++) {
+    for (int i = 0; i < (int)int_param_indx.size(); i++) {
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::MOV);
       scasm_inst->set_asm_type(int_param_indx[i].first);
@@ -75,7 +75,7 @@ void Codegen::gen_scasm() {
     }
 
     // Move double args
-    for (int i = 0; i < double_param_indx.size(); i++) {
+    for (int i = 0; i < (int)double_param_indx.size(); i++) {
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::MOV);
       scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
@@ -338,13 +338,13 @@ void Codegen::gen_scasm() {
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::CMP);
           scasm_inst->set_asm_type(instType);
-          MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          scasm_src->set_type(scasm::operand_type::IMM);
+          MAKE_SHARED(scasm::scasm_operand, scasm_zero);
+          scasm_zero->set_type(scasm::operand_type::IMM);
           constant::Constant zero;
           zero.set_type(constant::Type::INT);
           zero.set_value({.i = 0});
-          scasm_src->set_imm(zero);
-          scasm_inst->set_src(std::move(scasm_src));
+          scasm_zero->set_imm(zero);
+          scasm_inst->set_src(std::move(scasm_zero));
           scasm_inst->set_dst(scasm_src);
           scasm_func->add_instruction(std::move(scasm_inst));
 
@@ -540,10 +540,10 @@ void Codegen::gen_scasm() {
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::CMP);
           scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
-          MAKE_SHARED(scasm::scasm_operand, scasm_src);
-          scasm_src->set_type(scasm::operand_type::DATA);
-          scasm_src->set_identifier_stack(doubleName);
-          scasm_inst->set_src(std::move(scasm_src));
+          MAKE_SHARED(scasm::scasm_operand, scasm_doubleConst);
+          scasm_doubleConst->set_type(scasm::operand_type::DATA);
+          scasm_doubleConst->set_identifier_stack(doubleName);
+          scasm_inst->set_src(std::move(scasm_doubleConst));
           scasm_inst->set_dst(scasm_src);
           scasm_func->add_instruction(std::move(scasm_inst));
 
@@ -605,7 +605,7 @@ void Codegen::gen_scasm() {
           scasm_src9->set_type(scasm::operand_type::IMM);
           constant::Constant constVal2;
           constVal2.set_type(constant::Type::ULONG);
-          constVal2.set_value({.ul = 9223372036854775808});
+          constVal2.set_value({.ul = 9223372036854775808ul});
           scasm_src9->set_imm(constVal2);
           scasm_inst9->set_src(std::move(scasm_src9));
           scasm_inst9->set_dst(scasm_regr);
@@ -657,6 +657,7 @@ void Codegen::gen_scasm() {
     }
     this->scasm = scasm_program;
   }
+}
 
 } // namespace codegen
 } // namespace scarlet

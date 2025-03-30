@@ -46,7 +46,7 @@ void Codegen::gen_funcall_scasm(
 
   // convert functions args to reg/stack
   // Move int args
-  for (int i = 0; i < int_param_indx.size(); i++) {
+  for (int i = 0; i < (int)int_param_indx.size(); i++) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOV);
     scasm_inst->set_asm_type(int_param_indx[i].first);
@@ -75,7 +75,7 @@ void Codegen::gen_funcall_scasm(
   }
 
   // Move double args
-  for (int i = 0; i < double_param_indx.size(); i++) {
+  for (int i = 0; i < (int)double_param_indx.size(); i++) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOV);
     scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
