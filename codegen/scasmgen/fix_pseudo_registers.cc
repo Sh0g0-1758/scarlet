@@ -22,7 +22,8 @@ namespace codegen {
         inst->get_##target()->set_type(scasm::operand_type::DATA);             \
       } else {                                                                 \
         if (backendSymbolTable[temp].asmType ==                                \
-            scasm::AssemblyType::QUAD_WORD) {                                  \
+                scasm::AssemblyType::QUAD_WORD or                              \
+            backendSymbolTable[temp].asmType == scasm::AssemblyType::DOUBLE) { \
           offset += 8;                                                         \
           MAKE_ALIGNED(offset, 8);                                             \
         } else if (backendSymbolTable[temp].asmType ==                         \
