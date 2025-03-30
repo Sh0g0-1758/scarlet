@@ -47,9 +47,8 @@ void Codegen::gen_scasm() {
     std::vector<constant::Type> param_types;
     for (int i = 0; i < numParams; i++) {
       param_types.push_back(ast::elemTypeToConstType(
-        globalSymbolTable[func->get_identifier()->get_value()]
-                            .typeDef[i + 1]
-      ));
+          globalSymbolTable[func->get_identifier()->get_value()]
+              .typeDef[i + 1]));
     }
 
     std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
@@ -59,7 +58,7 @@ void Codegen::gen_scasm() {
                         stack_param_indx);
 
     // Move int args
-    for(int i=0;i<int_param_indx.size();i++){
+    for (int i = 0; i < int_param_indx.size(); i++) {
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::MOV);
       scasm_inst->set_asm_type(int_param_indx[i].first);
@@ -69,7 +68,8 @@ void Codegen::gen_scasm() {
       scasm_inst->set_src(std::move(scasm_src));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       scasm_dst->set_type(scasm::operand_type::PSEUDO);
-      scasm_dst->set_identifier_stack(func->get_params()[int_param_indx[i].second]->get_value());
+      scasm_dst->set_identifier_stack(
+          func->get_params()[int_param_indx[i].second]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
     }
@@ -85,24 +85,25 @@ void Codegen::gen_scasm() {
       scasm_inst->set_src(std::move(scasm_src));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       scasm_dst->set_type(scasm::operand_type::PSEUDO);
-      scasm_dst->set_identifier_stack(func->get_params()[double_param_indx[i]]->get_value());
+      scasm_dst->set_identifier_stack(
+          func->get_params()[double_param_indx[i]]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
     }
 
     // Move stack args
-    for(int i=stack_param_indx.size()-1;i>=0;i--){
+    for (int i = stack_param_indx.size() - 1; i >= 0; i--) {
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::MOV);
       scasm_inst->set_asm_type(stack_param_indx[i].first);
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
       scasm_src->set_type(scasm::operand_type::STACK);
-      scasm_src->set_identifier_stack(std::to_string(16 + 8 * i) +
-                                        "(%rbp)");
+      scasm_src->set_identifier_stack(std::to_string(16 + 8 * i) + "(%rbp)");
       scasm_inst->set_src(std::move(scasm_src));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       scasm_dst->set_type(scasm::operand_type::PSEUDO);
-      scasm_dst->set_identifier_stack(func->get_params()[stack_param_indx[i].second]->get_value());
+      scasm_dst->set_identifier_stack(
+          func->get_params()[stack_param_indx[i].second]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
     }

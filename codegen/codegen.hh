@@ -227,34 +227,34 @@ public:
     }
     UNREACHABLE();
   }
-  
-  void calssify_parameters(std::vector<constant::Type> &param_types, 
-                            std::vector<std::pair<scasm::AssemblyType, int>> &int_param_indx,
-                          std::vector<int> &double_param_indx,
-                          std::vector<std::pair<scasm::AssemblyType,int>> &stack_param_indx) {
+
+  void calssify_parameters(
+      std::vector<constant::Type> &param_types,
+      std::vector<std::pair<scasm::AssemblyType, int>> &int_param_indx,
+      std::vector<int> &double_param_indx,
+      std::vector<std::pair<scasm::AssemblyType, int>> &stack_param_indx) {
     int int_reg_count = 0;
     int double_reg_count = 0;
     for (int i = 0; i < param_types.size(); i++) {
       switch (param_types[i]) {
       case constant::Type::INT:
-      case constant::Type::UINT:{
-        if(int_reg_count<6){
+      case constant::Type::UINT: {
+        if (int_reg_count < 6) {
           int_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
           int_reg_count++;
-        } else{
+        } else {
           stack_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
-        } 
+        }
       };
       case constant::Type::LONG:
-      case constant::Type::ULONG:  
-      {
-       if(int_reg_count<6){
+      case constant::Type::ULONG: {
+        if (int_reg_count < 6) {
           int_param_indx.push_back({scasm::AssemblyType::QUAD_WORD, i});
           int_reg_count++;
-        } else{
+        } else {
           stack_param_indx.push_back({scasm::AssemblyType::QUAD_WORD, i});
         }
-      }break;
+      } break;
       case constant::Type::DOUBLE:
         if (double_reg_count < 8) {
           double_param_indx.push_back(i);
