@@ -285,6 +285,14 @@ void parser::parse_for_init(
   // for init cannot have storage specifiers
   if (token::is_type_specifier(tokens[0].get_token())) {
     MAKE_SHARED(ast::AST_variable_declaration_Node, varDecl);
+    MAKE_SHARED(ast::AST_declarator_Node, declarator);
+    PARSE_TYPE(varDecl, set_base_type);
+    parse_declarator(tokens, declarator);
+    if(isFuncDecl(declarator)){
+      success = false;
+      error_messages.emplace_back("Function declaration in for init");
+    }
+    varDecl->set_declarator(std::move(declarator));
     parse_variable_declaration(tokens, varDecl);
     auto decl = std::static_pointer_cast<ast::AST_Declaration_Node>(varDecl);
     decl->set_type(ast::DeclarationType::VARIABLE);

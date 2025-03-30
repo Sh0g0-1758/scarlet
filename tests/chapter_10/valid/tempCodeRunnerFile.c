@@ -1,0 +1,1 @@
+int static bar = 4;

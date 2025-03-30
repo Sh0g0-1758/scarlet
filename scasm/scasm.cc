@@ -17,6 +17,8 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   case unop::UNOP::POSTINCREMENT:
   case unop::UNOP::POSTDECREMENT:
   case unop::UNOP::UNKNOWN:
+  case unop::UNOP::DEREFERENCE:
+  case unop::UNOP::ADDRESS:
     UNREACHABLE()
   }
   UNREACHABLE()

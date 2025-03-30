@@ -11,7 +11,9 @@ enum class UNOP {
   PREINCREMENT,
   PREDECREMENT,
   POSTINCREMENT,
-  POSTDECREMENT
+  POSTDECREMENT,
+  DEREFERENCE,
+  ADDRESS
 };
 std::string to_string(UNOP unop);
 bool is_incr_decr(UNOP unop);

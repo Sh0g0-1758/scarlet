@@ -93,12 +93,12 @@ int main(int argc, char *argv[]) {
   }
 
   // SEMANTIC ANALYSIS
-  gnu.semantic_analysis();
-  if (!gnu.is_success()) {
-    gnu.display_errors();
-    std::cerr << "[ERROR]: Semantic analysis failed" << std::endl;
-    return 1;
-  }
+  // gnu.semantic_analysis();
+  // if (!gnu.is_success()) {
+  //   gnu.display_errors();
+  //   std::cerr << "[ERROR]: Semantic analysis failed" << std::endl;
+  //   return 1;
+  // }
 
   if (cmd.has_option("validate")) {
     std::cout << "[LOG]: Semantic analysis done successfully" << std::endl;
@@ -107,67 +107,67 @@ int main(int argc, char *argv[]) {
   }
 
   // CODEGEN
-  scarlet::codegen::Codegen codegen(gnu.get_program(), gnu.get_symbol_counter(),
-                                    gnu.getGlobalSymbolTable());
+  // scarlet::codegen::Codegen codegen(gnu.get_program(), gnu.get_symbol_counter(),
+  //                                   gnu.getGlobalSymbolTable());
 
-  codegen.gen_scar();
+  // codegen.gen_scar();
 
-  if (cmd.has_option("tacky") or cmd.has_option("scar")) {
-    std::cout << "[LOG]: Successfully generated scar" << std::endl;
-    codegen.pretty_print();
-    return 0;
-  }
-  codegen.set_file_name(std::format("{}.s", file_name));
-  codegen.codegen();
+  // if (cmd.has_option("tacky") or cmd.has_option("scar")) {
+  //   std::cout << "[LOG]: Successfully generated scar" << std::endl;
+  //   codegen.pretty_print();
+  //   return 0;
+  // }
+  // codegen.set_file_name(std::format("{}.s", file_name));
+  // codegen.codegen();
 
-  if (!codegen.is_success()) {
-    std::cerr << "[ERROR]: Code generation failed" << std::endl;
-    return 1;
-  }
+  // if (!codegen.is_success()) {
+  //   std::cerr << "[ERROR]: Code generation failed" << std::endl;
+  //   return 1;
+  // }
 
-  if (cmd.has_option("asm") or cmd.has_option("codegen")) {
-    std::cout << "[LOG]: Successfully generated asm" << std::endl;
-    return 0;
-  }
+  // if (cmd.has_option("asm") or cmd.has_option("codegen")) {
+  //   std::cout << "[LOG]: Successfully generated asm" << std::endl;
+  //   return 0;
+  // }
 
-  // convert the assembly file to object file
-  std::string output_file_name = file_name;
-  if (cmd.has_option("output-file")) {
-    output_file_name = cmd.get_option<std::string>("output-file");
-  }
+  // // convert the assembly file to object file
+  // std::string output_file_name = file_name;
+  // if (cmd.has_option("output-file")) {
+  //   output_file_name = cmd.get_option<std::string>("output-file");
+  // }
 
-  std::string linkopts = "";
-  for (auto it : cmd.get_extra_args()) {
-    linkopts = linkopts + it + " ";
-  }
-  if (!linkopts.empty())
-    linkopts = linkopts.substr(0, linkopts.length() - 1);
+  // std::string linkopts = "";
+  // for (auto it : cmd.get_extra_args()) {
+  //   linkopts = linkopts + it + " ";
+  // }
+  // if (!linkopts.empty())
+  //   linkopts = linkopts.substr(0, linkopts.length() - 1);
 
-  if (cmd.has_option("-c")) {
-    result = system(std::format("gcc -c {}.s -o {}/{}.o {}", file_name,
-                                directory_path, output_file_name, linkopts)
-                        .c_str());
-    if (result != 0) {
-      std::cerr << "[ERROR]: Failed to generate the object file" << std::endl;
-      return 1;
-    }
-  } else {
-    result = system(
-        std::format("gcc {}.s -o {} {}", file_name, output_file_name, linkopts)
-            .c_str());
-    if (result != 0) {
-      std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
-      return 1;
-    }
-  }
+  // if (cmd.has_option("-c")) {
+  //   result = system(std::format("gcc -c {}.s -o {}/{}.o {}", file_name,
+  //                               directory_path, output_file_name, linkopts)
+  //                       .c_str());
+  //   if (result != 0) {
+  //     std::cerr << "[ERROR]: Failed to generate the object file" << std::endl;
+  //     return 1;
+  //   }
+  // } else {
+  //   result = system(
+  //       std::format("gcc {}.s -o {} {}", file_name, output_file_name, linkopts)
+  //           .c_str());
+  //   if (result != 0) {
+  //     std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
+  //     return 1;
+  //   }
+  // }
 
-  // delete the intermediate assembly file
-  result = system(std::format("rm {}.s", file_name).c_str());
-  if (result != 0) {
-    std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
-              << std::endl;
-    return 1;
-  }
+  // // delete the intermediate assembly file
+  // result = system(std::format("rm {}.s", file_name).c_str());
+  // if (result != 0) {
+  //   std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
+  //             << std::endl;
+  //   return 1;
+  // }
 
   std::cout << "[LOG]: Scarlet ran Successfully" << std::endl;
 
