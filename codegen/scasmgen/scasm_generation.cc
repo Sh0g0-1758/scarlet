@@ -309,8 +309,8 @@ void Codegen::gen_scasm() {
           // Label(<label2>)
 
           /* SETUP */
-          std::string label1 = "UL2D" + std::to_string(doubleCastCounter++);
-          std::string label2 = "UL2D" + std::to_string(doubleCastCounter++);
+          std::string label1 = "UL2D." + std::to_string(doubleCastCounter++);
+          std::string label2 = "UL2D." + std::to_string(doubleCastCounter++);
 
           MAKE_SHARED(scasm::scasm_operand, scasm_reg1);
           scasm_reg1->set_type(scasm::operand_type::REG);
@@ -446,7 +446,183 @@ void Codegen::gen_scasm() {
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::CVTTS2DI);
           scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+          MAKE_SHARED(scasm::scasm_operand, scasm_reg);
+          scasm_reg->set_type(scasm::operand_type::REG);
+          scasm_reg->set_reg(scasm::register_type::AX);
+          scasm_inst->set_dst(scasm_reg);
+          scasm_func->add_instruction(std::move(scasm_inst));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::MOV);
+          scasm_inst2->set_asm_type(instType);
+          scasm_inst2->set_src(std::move(scasm_reg));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst2);
+          scasm_inst2->set_dst(std::move(scasm_dst));
+          scasm_func->add_instruction(std::move(scasm_inst2));
         } else {
+          // StaticConstant(<upper-bound>, 8, DoubleInit(9223372036854775808.0))
+          //
+          // Cmp(Double, Data(<upper-bound>), src)
+          // JmpCC(AE, <label1>)
+          // Cvttsd2si(Quadword, src, dst)
+          // Jmp(<label2>)
+          // Label(<label1>)
+          // Mov(Double, src, Reg(<X>))
+          // Binary(Sub, Double, Data(<upper-bound>), Reg(<X>))
+          // Cvttsd2si(Quadword, Reg(<X>), dst)
+          // Mov(Quadword, Imm(9223372036854775808), Reg(<R>))
+          // Binary(Add, Quadword, Reg(<R>), dst)
+          // Label(<label2>)
+
+          /* SETUP */
+          std::string label1 = "D2UL." + std::to_string(doubleCastCounter++);
+          std::string label2 = "D2UL." + std::to_string(doubleCastCounter++);
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_regx);
+          scasm_regx->set_type(scasm::operand_type::REG);
+          scasm_regx->set_reg(scasm::register_type::XMM0);
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_regr);
+          scasm_regr->set_type(scasm::operand_type::REG);
+          scasm_regr->set_reg(scasm::register_type::AX);
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          SETVAL_OPERAND(scasm_src, get_src1);
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          SETVAL_OPERAND(scasm_dst, get_dst);
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_label1);
+          scasm_label1->set_type(scasm::operand_type::LABEL);
+          scasm_label1->set_identifier_stack(label1);
+
+          MAKE_SHARED(scasm::scasm_operand, scasm_label2);
+          scasm_label2->set_type(scasm::operand_type::LABEL);
+          scasm_label2->set_identifier_stack(label2);
+
+          constant::Constant constVal;
+          constVal.set_type(constant::Type::DOUBLE);
+          constVal.set_value({.d = 9223372036854775808.0});
+          std::string doubleName;
+
+          if (doubleLabelMap.find(constVal.get_value().d) ==
+              doubleLabelMap.end()) {
+            /* declare a top level constant for the double */
+            doubleName = get_const_label_name();
+            MAKE_SHARED(scasm::scasm_static_constant, doubleConst);
+            doubleConst->set_name(doubleName);
+            doubleConst->set_init(constVal);
+            doubleConst->set_alignment(8);
+            auto top_level_elem =
+                std::static_pointer_cast<scasm::scasm_top_level>(doubleConst);
+            top_level_elem->set_type(
+                scasm::scasm_top_level_type::STATIC_CONSTANT);
+            top_level_elem->set_global(false);
+            scasm_program.add_elem(std::move(top_level_elem));
+            /* add the constant in the backend symbol table */
+            scasm::backendSymbol sym;
+            sym.type = scasm::backendSymbolType::STATIC_CONSTANT;
+            sym.isTopLevel = true;
+            sym.asmType = scasm::AssemblyType::DOUBLE;
+            backendSymbolTable[doubleName] = sym;
+            /* add it to the double map so that it can be used again */
+            doubleLabelMap[constVal.get_value().d] = doubleName;
+          } else {
+            /* get the identifier from doubleMap and put it in target */
+            doubleName = doubleLabelMap[constVal.get_value().d];
+          }
+
+          /* SCASM GEN */
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::CMP);
+          scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          scasm_src->set_type(scasm::operand_type::DATA);
+          scasm_src->set_identifier_stack(doubleName);
+          scasm_inst->set_src(std::move(scasm_src));
+          scasm_inst->set_dst(scasm_src);
+          scasm_func->add_instruction(std::move(scasm_inst));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::JMPCC);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+          scasm_src2->set_type(scasm::operand_type::COND);
+          scasm_src2->set_cond(scasm::cond_code::AE);
+          scasm_inst2->set_src(std::move(scasm_src2));
+          scasm_inst2->set_dst(scasm_label1);
+          scasm_func->add_instruction(std::move(scasm_inst2));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
+          scasm_inst3->set_type(scasm::instruction_type::CVTTS2DI);
+          scasm_inst3->set_asm_type(instType);
+          scasm_inst3->set_src(scasm_src);
+          scasm_inst3->set_dst(scasm_dst);
+          scasm_func->add_instruction(std::move(scasm_inst3));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst4);
+          scasm_inst4->set_type(scasm::instruction_type::JMP);
+          scasm_inst4->set_src(scasm_label2);
+          scasm_func->add_instruction(std::move(scasm_inst4));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst5);
+          scasm_inst5->set_type(scasm::instruction_type::LABEL);
+          scasm_inst5->set_src(scasm_label1);
+          scasm_func->add_instruction(std::move(scasm_inst5));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst6);
+          scasm_inst6->set_type(scasm::instruction_type::MOV);
+          scasm_inst6->set_asm_type(scasm::AssemblyType::DOUBLE);
+          scasm_inst6->set_src(scasm_src);
+          scasm_inst6->set_dst(scasm_regx);
+          scasm_func->add_instruction(std::move(scasm_inst6));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst7);
+          scasm_inst7->set_type(scasm::instruction_type::BINARY);
+          scasm_inst7->set_asm_type(scasm::AssemblyType::DOUBLE);
+          scasm_inst7->set_binop(scasm::Binop::SUB);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src7);
+          scasm_src7->set_type(scasm::operand_type::DATA);
+          scasm_src7->set_identifier_stack(doubleName);
+          scasm_inst7->set_src(std::move(scasm_src7));
+          scasm_inst7->set_dst(scasm_regx);
+          scasm_func->add_instruction(std::move(scasm_inst7));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst8);
+          scasm_inst8->set_type(scasm::instruction_type::CVTTS2DI);
+          scasm_inst8->set_asm_type(instType);
+          scasm_inst8->set_src(scasm_regx);
+          scasm_inst8->set_dst(scasm_dst);
+          scasm_func->add_instruction(std::move(scasm_inst8));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst9);
+          scasm_inst9->set_type(scasm::instruction_type::MOV);
+          scasm_inst9->set_asm_type(instType);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src9);
+          scasm_src9->set_type(scasm::operand_type::IMM);
+          constant::Constant constVal2;
+          constVal2.set_type(constant::Type::ULONG);
+          constVal2.set_value({.ul = 9223372036854775808});
+          scasm_src9->set_imm(constVal2);
+          scasm_inst9->set_src(std::move(scasm_src9));
+          scasm_inst9->set_dst(scasm_regr);
+          scasm_func->add_instruction(std::move(scasm_inst9));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst10);
+          scasm_inst10->set_type(scasm::instruction_type::BINARY);
+          scasm_inst10->set_asm_type(instType);
+          scasm_inst10->set_binop(scasm::Binop::ADD);
+          scasm_inst10->set_src(scasm_regr);
+          scasm_inst10->set_dst(scasm_dst);
+          scasm_func->add_instruction(std::move(scasm_inst10));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst11);
+          scasm_inst11->set_type(scasm::instruction_type::LABEL);
+          scasm_inst11->set_src(scasm_label2);
+          scasm_func->add_instruction(std::move(scasm_inst11));
         }
       }
       MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
