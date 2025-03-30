@@ -44,40 +44,67 @@ void Codegen::gen_scasm() {
 
     // Move function args from registers and stack to the callee stack frame
     int numParams = func->get_params().size();
-    for (int i = 0; i < std::min(6, numParams); i++) {
+    std::vector<constant::Type> param_types;
+    for (int i = 0; i < numParams; i++) {
+      param_types.push_back(ast::elemTypeToConstType(
+        globalSymbolTable[func->get_identifier()->get_value()]
+                            .typeDef[i + 1]
+      ));
+    }
+
+    std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
+    std::vector<int> double_param_indx;
+    std::vector<std::pair<scasm::AssemblyType, int>> stack_param_indx;
+    calssify_parameters(param_types, int_param_indx, double_param_indx,
+                        stack_param_indx);
+
+    // Move int args
+    for(int i=0;i<int_param_indx.size();i++){
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::MOV);
-      scasm_inst->set_asm_type(
-          elemToAsmType(globalSymbolTable[func->get_identifier()->get_value()]
-                            .typeDef[i + 1]));
+      scasm_inst->set_asm_type(int_param_indx[i].first);
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
       scasm_src->set_type(scasm::operand_type::REG);
-      scasm_src->set_reg(argReg[i]);
+      scasm_src->set_reg(int_argReg[i]);
       scasm_inst->set_src(std::move(scasm_src));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       scasm_dst->set_type(scasm::operand_type::PSEUDO);
-      scasm_dst->set_identifier_stack(func->get_params()[i]->get_value());
+      scasm_dst->set_identifier_stack(func->get_params()[int_param_indx[i].second]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
     }
-    if (numParams > 6) {
-      for (int i = 6; i < numParams; i++) {
-        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-        scasm_inst->set_type(scasm::instruction_type::MOV);
-        scasm_inst->set_asm_type(
-            elemToAsmType(globalSymbolTable[func->get_identifier()->get_value()]
-                              .typeDef[i + 1]));
-        MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        scasm_src->set_type(scasm::operand_type::STACK);
-        scasm_src->set_identifier_stack(std::to_string(16 + 8 * (i - 6)) +
+
+    // Move double args
+    for (int i = 0; i < double_param_indx.size(); i++) {
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+      scasm_inst->set_type(scasm::instruction_type::MOV);
+      scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
+      MAKE_SHARED(scasm::scasm_operand, scasm_src);
+      scasm_src->set_type(scasm::operand_type::REG);
+      scasm_src->set_reg(double_argReg[i]);
+      scasm_inst->set_src(std::move(scasm_src));
+      MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+      scasm_dst->set_type(scasm::operand_type::PSEUDO);
+      scasm_dst->set_identifier_stack(func->get_params()[double_param_indx[i]]->get_value());
+      scasm_inst->set_dst(std::move(scasm_dst));
+      scasm_func->add_instruction(std::move(scasm_inst));
+    }
+
+    // Move stack args
+    for(int i=stack_param_indx.size()-1;i>=0;i--){
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+      scasm_inst->set_type(scasm::instruction_type::MOV);
+      scasm_inst->set_asm_type(stack_param_indx[i].first);
+      MAKE_SHARED(scasm::scasm_operand, scasm_src);
+      scasm_src->set_type(scasm::operand_type::STACK);
+      scasm_src->set_identifier_stack(std::to_string(16 + 8 * i) +
                                         "(%rbp)");
-        scasm_inst->set_src(std::move(scasm_src));
-        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        scasm_dst->set_type(scasm::operand_type::PSEUDO);
-        scasm_dst->set_identifier_stack(func->get_params()[i]->get_value());
-        scasm_inst->set_dst(std::move(scasm_dst));
-        scasm_func->add_instruction(std::move(scasm_inst));
-      }
+      scasm_inst->set_src(std::move(scasm_src));
+      MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+      scasm_dst->set_type(scasm::operand_type::PSEUDO);
+      scasm_dst->set_identifier_stack(func->get_params()[stack_param_indx[i].second]->get_value());
+      scasm_inst->set_dst(std::move(scasm_dst));
+      scasm_func->add_instruction(std::move(scasm_inst));
     }
     for (auto inst : func->get_instructions()) {
       scasm::AssemblyType instType = valToAsmType(inst->get_src1());
