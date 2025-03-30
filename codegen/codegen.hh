@@ -60,6 +60,7 @@ private:
   bool success = true;
   int curr_regNum;
   int doubleLabelCounter = 0;
+  int doubleCastCounter = 0;
   std::string reg_name;
   std::map<std::string, std::string> pseduo_registers;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;

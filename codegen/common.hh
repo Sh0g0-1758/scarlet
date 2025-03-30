@@ -80,5 +80,24 @@ namespace codegen {
   }                                                                            \
   instruction->set_target(std::move(target));
 
+#define SETVAL_OPERAND(target, get_target)                                     \
+  switch (inst->get_target()->get_type()) {                                    \
+  case scar::val_type::VAR: {                                                  \
+    target->set_type(scasm::operand_type::PSEUDO);                             \
+    target->set_identifier_stack(inst->get_target()->get_reg());               \
+  } break;                                                                     \
+  case scar::val_type::CONSTANT: {                                             \
+    if (inst->get_target()->get_const_val().get_type() ==                      \
+        constant::Type::DOUBLE) {                                              \
+      MAKE_DOUBLE_CONSTANT(target, inst->get_target()->get_const_val(), 8);    \
+    } else {                                                                   \
+      target->set_type(scasm::operand_type::IMM);                              \
+      target->set_imm(inst->get_target()->get_const_val());                    \
+    }                                                                          \
+  } break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
 } // namespace codegen
 } // namespace scarlet

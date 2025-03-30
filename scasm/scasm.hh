@@ -235,6 +235,7 @@ public:
   void set_type(instruction_type type) { this->type = type; }
   Unop get_unop() { return unop; }
   void set_unop(unop::UNOP op) { this->unop = scar_unop_to_scasm_unop(op); }
+  void set_unop(Unop op) { this->unop = op; }
   Binop get_binop() { return binop; }
   void set_binop(Binop op) { this->binop = op; }
   std::shared_ptr<scasm_operand> get_src() { return src; }

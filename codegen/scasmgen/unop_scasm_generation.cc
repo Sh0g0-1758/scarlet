@@ -115,7 +115,8 @@ void Codegen::gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
 
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-    SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
+    SETVAL_OPERAND(scasm_dst, get_dst);
+    scasm_inst->set_dst(scasm_dst);
 
     scasm_func->add_instruction(std::move(scasm_inst));
 
