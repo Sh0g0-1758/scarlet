@@ -62,6 +62,9 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
     return Binop::GREATERTHANEQUAL;
   case binop::BINOP::ASSIGN:
     return Binop::ASSIGN;
+  /* This case will only be called when its a double division */
+  case binop::BINOP::DIV:
+    return Binop::DIV_DOUBLE;
   case binop::BINOP::COMPOUND_DIFFERENCE:
   case binop::BINOP::COMPOUND_DIVISION:
   case binop::BINOP::COMPOUND_PRODUCT:
@@ -72,7 +75,6 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::COMPOUND_XOR:
   case binop::BINOP::COMPOUND_LEFTSHIFT:
   case binop::BINOP::COMPOUND_RIGHTSHIFT:
-  case binop::BINOP::DIV:
   case binop::BINOP::MOD:
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::TERNARY:
@@ -278,6 +280,9 @@ std::string to_string(Binop binop) {
     return "shl";
   case Binop::LOGICAL_RIGHT_SHIFT:
     return "shr";
+  // FIX ME
+  case Binop::DIV_DOUBLE:
+    return "div";
   case Binop::UNKNOWN:
   // All relational operators are handled by the cmpl instruction using register
   // flags and results are interpreted from the flags using setcc instruction.

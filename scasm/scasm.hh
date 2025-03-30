@@ -118,6 +118,8 @@ enum class Binop {
   ADD,
   SUB,
   MUL,
+  /* division for double emits the same instructions as integer mul|add|sub */
+  DIV_DOUBLE,
   AAND,
   AOR,
   XOR,

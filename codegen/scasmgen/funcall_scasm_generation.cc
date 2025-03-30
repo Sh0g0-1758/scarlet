@@ -45,7 +45,8 @@ void Codegen::gen_funcall_scasm(
     case scar::val_type::CONSTANT: {
       if (funcCall->get_args()[i]->get_const_val().get_type() ==
           constant::Type::DOUBLE) {
-        MAKE_DOUBLE_CONSTANT(scasm_src, 8);
+        MAKE_DOUBLE_CONSTANT(scasm_src,
+                             funcCall->get_args()[i]->get_const_val(), 8);
       } else {
         scasm_src->set_type(scasm::operand_type::IMM);
         scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
@@ -74,7 +75,8 @@ void Codegen::gen_funcall_scasm(
       case scar::val_type::CONSTANT: {
         if (funcCall->get_args()[i]->get_const_val().get_type() ==
             constant::Type::DOUBLE) {
-          MAKE_DOUBLE_CONSTANT(scasm_src, 8);
+          MAKE_DOUBLE_CONSTANT(scasm_src,
+                               funcCall->get_args()[i]->get_const_val(), 8);
         } else {
           scasm_src->set_type(scasm::operand_type::IMM);
           scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());

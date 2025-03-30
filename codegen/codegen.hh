@@ -215,7 +215,7 @@ public:
     UNREACHABLE();
   }
 
-  constant::Type valType(std::shared_ptr<scar::scar_Val_Node> val) {
+  constant::Type valToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       return val->get_const_val().get_type();

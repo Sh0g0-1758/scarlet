@@ -40,8 +40,9 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     scasm_inst3->set_asm_type(scasm::AssemblyType::BYTE);
     MAKE_SHARED(scasm::scasm_operand, scasm_src3);
     scasm_src3->set_type(scasm::operand_type::COND);
-    if (valType(inst->get_src1()) == constant::Type::UINT or
-        valType(inst->get_src1()) == constant::Type::ULONG) {
+    if (valToConstType(inst->get_src1()) == constant::Type::UINT or
+        valToConstType(inst->get_src1()) == constant::Type::ULONG or
+        valToConstType(inst->get_src1()) == constant::Type::DOUBLE) {
       switch (inst->get_binop()) {
       case binop::BINOP::EQUAL:
         scasm_src3->set_cond(scasm::cond_code::E);
@@ -92,12 +93,15 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
     SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst3);
     scasm_func->add_instruction(std::move(scasm_inst3));
-  } else if (inst->get_binop() == binop::BINOP::DIV or
-             inst->get_binop() == binop::BINOP::MOD) {
+  } else if ((inst->get_binop() == binop::BINOP::DIV or
+              inst->get_binop() == binop::BINOP::MOD) and
+             instType !=
+                 scasm::AssemblyType::DOUBLE) { /* double division is handled
+                                                   like integer mul|add|sub */
     // Mov(<src1 type>, src1, Reg(AX))
-    // unsigned: Mov(<src1 type>, Imm(0), Reg(DX))| signed: Cdq
-    // unsigned: Div(<src1 type>, src2)|signed: Idiv(<src1 type>, src2)
-    // Mov(<src1 type>, Reg(AX), dst)|Mov(<src1 type>, Reg(DX), dst)
+    // unsigned: Mov(<src1 type>, Imm(0), Reg(DX)) | signed: Cdq
+    // unsigned: Div(<src1 type>, src2) | signed: Idiv(<src1 type>, src2)
+    // Mov(<src1 type>, Reg(AX), dst) | Mov(<src1 type>, Reg(DX), dst)
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOV);
     scasm_inst->set_asm_type(instType);
@@ -109,8 +113,8 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
 
-    if (valType(inst->get_src1()) == constant::Type::UINT or
-        valType(inst->get_src1()) == constant::Type::ULONG) {
+    if (valToConstType(inst->get_src1()) == constant::Type::UINT or
+        valToConstType(inst->get_src1()) == constant::Type::ULONG) {
       // Mov(<src1 type>, Imm(0), Reg(DX))
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
       scasm_inst2->set_type(scasm::instruction_type::MOV);
@@ -136,8 +140,8 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     }
 
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
-    if (valType(inst->get_src1()) == constant::Type::UINT or
-        valType(inst->get_src1()) == constant::Type::ULONG) {
+    if (valToConstType(inst->get_src1()) == constant::Type::UINT or
+        valToConstType(inst->get_src1()) == constant::Type::ULONG) {
       scasm_inst3->set_type(scasm::instruction_type::DIV);
     } else {
       scasm_inst3->set_type(scasm::instruction_type::IDIV);

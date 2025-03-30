@@ -23,14 +23,13 @@ namespace codegen {
 
 /* COMMON MACROS FOR SCASM GENERATION */
 
-#define MAKE_DOUBLE_CONSTANT(target, alignment)                                \
-  if (doubleLabelMap.find(inst->get_src1()->get_const_val().get_value().d) ==  \
-      doubleLabelMap.end()) {                                                  \
+#define MAKE_DOUBLE_CONSTANT(target, constVal, alignment)                      \
+  if (doubleLabelMap.find(constVal.get_value().d) == doubleLabelMap.end()) {   \
     /* declare a top level constant for the double */                          \
     std::string doubleName = get_const_label_name();                           \
     MAKE_SHARED(scasm::scasm_static_constant, doubleConst);                    \
     doubleConst->set_name(doubleName);                                         \
-    doubleConst->set_init(inst->get_src1()->get_const_val());                  \
+    doubleConst->set_init(constVal);                                           \
     doubleConst->set_alignment(alignment);                                     \
     auto top_level_elem =                                                      \
         std::static_pointer_cast<scasm::scasm_top_level>(doubleConst);         \
@@ -44,15 +43,13 @@ namespace codegen {
     sym.asmType = scasm::AssemblyType::DOUBLE;                                 \
     backendSymbolTable[doubleName] = sym;                                      \
     /* add it to the double map so that it can be used again */                \
-    doubleLabelMap[inst->get_src1()->get_const_val().get_value().d] =          \
-        doubleName;                                                            \
+    doubleLabelMap[constVal.get_value().d] = doubleName;                       \
     /* put the identifier for the constant in target */                        \
     target->set_type(scasm::operand_type::PSEUDO);                             \
     target->set_identifier_stack(doubleName);                                  \
   } else {                                                                     \
     /* get the identifier from doubleMap and put it in target */               \
-    std::string doubleName =                                                   \
-        doubleLabelMap[inst->get_src1()->get_const_val().get_value().d];       \
+    std::string doubleName = doubleLabelMap[constVal.get_value().d];           \
     target->set_type(scasm::operand_type::PSEUDO);                             \
     target->set_identifier_stack(doubleName);                                  \
   }
@@ -72,7 +69,7 @@ namespace codegen {
   case scar::val_type::CONSTANT: {                                             \
     if (inst->get_target()->get_const_val().get_type() ==                      \
         constant::Type::DOUBLE) {                                              \
-      MAKE_DOUBLE_CONSTANT(target, 8);                                         \
+      MAKE_DOUBLE_CONSTANT(target, inst->get_target()->get_const_val(), 8);    \
     } else {                                                                   \
       target->set_type(scasm::operand_type::IMM);                              \
       target->set_imm(inst->get_target()->get_const_val());                    \
