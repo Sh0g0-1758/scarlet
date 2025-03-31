@@ -116,10 +116,10 @@ void Codegen::gen_funcall_scasm(
       if (funcCall->get_args()[i]->get_const_val().get_type() ==
           constant::Type::DOUBLE) {
         MAKE_DOUBLE_CONSTANT(scasm_src,
-                             funcCall->get_args()[i]->get_const_val(), 8);
+                             funcCall->get_args()[stack_param_indx[i].second]->get_const_val(), 8);
       } else {
         scasm_src->set_type(scasm::operand_type::IMM);
-        scasm_src->set_imm(funcCall->get_args()[i]->get_const_val());
+        scasm_src->set_imm(funcCall->get_args()[stack_param_indx[i].second]->get_const_val());
       }
     } break;
     default:

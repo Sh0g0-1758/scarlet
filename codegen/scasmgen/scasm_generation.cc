@@ -107,7 +107,8 @@ void Codegen::gen_scasm() {
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
     }
-    for (auto inst : func->get_instructions()) {
+
+    for (auto inst : func->get_instructions()) {      
       scasm::AssemblyType instType = valToAsmType(inst->get_src1());
       if (inst->get_type() == scar::instruction_type::RETURN) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
@@ -625,38 +626,39 @@ void Codegen::gen_scasm() {
           scasm_func->add_instruction(std::move(scasm_inst11));
         }
       }
+    }
       MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
       top_level_elem =
           std::static_pointer_cast<scasm::scasm_top_level>(scasm_func);
       top_level_elem->set_type(scasm::scasm_top_level_type::FUNCTION);
       scasm_program.add_elem(std::move(top_level_elem));
-    }
-
-    // Make the backend symbol table
-    for (auto it : globalSymbolTable) {
-      if (it.second.type == symbolTable::symbolType::VARIABLE) {
-        scasm::backendSymbol sym;
-        sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
-        sym.asmType = elemToAsmType(it.second.typeDef[0]);
-        if (it.second.link != symbolTable::linkage::NONE) {
-          sym.isTopLevel = true;
-        } else {
-          sym.isTopLevel = false;
-        }
-        backendSymbolTable[it.first] = sym;
-      } else {
-        scasm::backendSymbol sym;
-        sym.type = scasm::backendSymbolType::FUNCTION;
-        if (globalSymbolTable[it.first].def == symbolTable::defType::TRUE) {
-          sym.isDefined = true;
-        } else {
-          sym.isDefined = false;
-        }
-        backendSymbolTable[it.first] = sym;
-      }
-    }
-    this->scasm = scasm_program;
+    
   }
+
+  // Make the backend symbol table
+  for (auto it : globalSymbolTable) {
+    if (it.second.type == symbolTable::symbolType::VARIABLE) {
+      scasm::backendSymbol sym;
+      sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
+      sym.asmType = elemToAsmType(it.second.typeDef[0]);
+      if (it.second.link != symbolTable::linkage::NONE) {
+        sym.isTopLevel = true;
+      } else {
+        sym.isTopLevel = false;
+      }
+      backendSymbolTable[it.first] = sym;
+    } else {
+      scasm::backendSymbol sym;
+      sym.type = scasm::backendSymbolType::FUNCTION;
+      if (globalSymbolTable[it.first].def == symbolTable::defType::TRUE) {
+        sym.isDefined = true;
+      } else {
+        sym.isDefined = false;
+      }
+      backendSymbolTable[it.first] = sym;
+    }
+  }
+  this->scasm = scasm_program;
 }
 
 } // namespace codegen
