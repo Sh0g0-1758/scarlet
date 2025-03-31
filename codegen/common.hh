@@ -75,7 +75,7 @@ namespace codegen {
       target->set_imm(inst->get_target()->get_const_val());                    \
     }                                                                          \
   } break;                                                                     \
-  default:                                                                     \
+  case scar::val_type::LABEL:                                                  \
     break;                                                                     \
   }                                                                            \
   instruction->set_target(std::move(target));
@@ -95,7 +95,7 @@ namespace codegen {
       target->set_imm(inst->get_target()->get_const_val());                    \
     }                                                                          \
   } break;                                                                     \
-  default:                                                                     \
+  case scar::val_type::LABEL:                                                  \
     break;                                                                     \
   }
 

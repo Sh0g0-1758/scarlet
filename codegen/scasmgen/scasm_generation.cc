@@ -25,8 +25,6 @@ void Codegen::gen_scasm() {
       case constant::Type::NONE:
         scasm_var->set_alignment(0);
         break;
-      default:
-        break;
       }
       scasm_var->set_init(var->get_init());
       scasm_var->set_global(elem->is_global());

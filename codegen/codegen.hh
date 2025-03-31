@@ -185,10 +185,12 @@ public:
       case constant::Type::LONG:
       case constant::Type::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
-
-      default:
+      case constant::Type::DOUBLE:
+        return scasm::AssemblyType::DOUBLE;
+      case constant::Type::NONE:
         return scasm::AssemblyType::NONE;
       }
+      break;
     case scar::val_type::VAR:
       switch (globalSymbolTable[val->get_reg()].typeDef[0]) {
       case ast::ElemType::INT:
@@ -197,9 +199,12 @@ public:
       case ast::ElemType::LONG:
       case ast::ElemType::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
-      default:
+      case ast::ElemType::DOUBLE:
+        return scasm::AssemblyType::DOUBLE;
+      case ast::ElemType::NONE:
         return scasm::AssemblyType::NONE;
       }
+      break;
     case scar::val_type::LABEL:
       return scasm::AssemblyType::NONE;
     }
@@ -217,8 +222,7 @@ public:
     case ast::ElemType::ULONG:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
-      // FIXME
-      return scasm::AssemblyType::NONE;
+      return scasm::AssemblyType::DOUBLE;
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
     }

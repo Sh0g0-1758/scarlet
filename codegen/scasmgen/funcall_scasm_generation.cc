@@ -68,7 +68,7 @@ void Codegen::gen_funcall_scasm(
       scasm_src->set_type(scasm::operand_type::IMM);
       scasm_src->set_imm(funcArg->get_const_val());
       break;
-    default:
+    case scar::val_type::LABEL:
       break;
     }
     scasm_inst->set_src(std::move(scasm_src));
@@ -94,7 +94,7 @@ void Codegen::gen_funcall_scasm(
     case scar::val_type::CONSTANT: {
       MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val(), 8);
     } break;
-    default:
+    case scar::val_type::LABEL:
       break;
     }
     scasm_inst->set_src(std::move(scasm_src));
@@ -125,7 +125,7 @@ void Codegen::gen_funcall_scasm(
         scasm_src->set_imm(funcArg->get_const_val());
       }
     } break;
-    default:
+    case scar::val_type::LABEL:
       break;
     }
 

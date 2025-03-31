@@ -174,7 +174,7 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
 #endif
     } else if (instr->get_type() == scasm::instruction_type::CMP) {
       if (instr->get_asm_type() == scasm::AssemblyType::DOUBLE) {
-        assembly << "\tcomisd";
+        assembly << "\tcomi";
       } else {
         assembly << "\tcmp";
       }
