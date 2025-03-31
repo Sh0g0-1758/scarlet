@@ -167,6 +167,9 @@ public:
   }
 
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
+    if(val==nullptr){
+      return scasm::AssemblyType::NONE;
+    }
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       switch (val->get_const_val().get_type()) {
