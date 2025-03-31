@@ -53,7 +53,7 @@ void Codegen::fix_instructions() {
         MAKE_SHARED(scasm::scasm_operand, dst);
         dst->set_type(scasm::operand_type::REG);
         if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE) {
-          dst->set_reg(scasm::register_type::XMM15);
+          dst->set_reg(scasm::register_type::XMM14);
         } else {
           dst->set_reg(scasm::register_type::R10);
         }
@@ -115,15 +115,15 @@ void Codegen::fix_instructions() {
         // idivl $3
         //   |
         //   v
-        // movl $3, %r10d
-        // idivl %r10d
+        // movl $3, %r11d
+        // idivl %r11d
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type((*it)->get_asm_type());
         scasm_inst->set_src((*it)->get_src());
         MAKE_SHARED(scasm::scasm_operand, dst);
         dst->set_type(scasm::operand_type::REG);
-        dst->set_reg(scasm::register_type::R10);
+        dst->set_reg(scasm::register_type::R11);
         scasm_inst->set_dst(dst);
         (*it)->set_src(std::move(dst));
         it = funcs->get_instructions().insert(it, std::move(scasm_inst));
@@ -185,8 +185,8 @@ void Codegen::fix_instructions() {
         // Movsx $10, STACK/DATA
         //       |
         //       v
-        // <<LONGWORD>>  movl $10, %r10l
-        //               movsx %r10l, %r11d
+        // <<LONGWORD>>  movl $10, %r11l
+        //               movsx %r11l, %r11d
         // <<QUADWORD>>  movq %r11d, STACK/DATA
         if ((*it)->get_src()->get_type() == scasm::operand_type::IMM) {
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
@@ -195,7 +195,7 @@ void Codegen::fix_instructions() {
 
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
-          dst->set_reg(scasm::register_type::R10);
+          dst->set_reg(scasm::register_type::R11);
 
           scasm_inst->set_src((*it)->get_src());
           scasm_inst->set_dst(dst);
@@ -204,53 +204,7 @@ void Codegen::fix_instructions() {
 
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
-        } else if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE and
-                   (*it)->get_type() == scasm::instruction_type::BINARY and
-                   (*it)->get_dst()->get_type() != scasm::operand_type::REG) {
-          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-          scasm_inst->set_type(scasm::instruction_type::MOV);
-          scasm_inst->set_asm_type((*it)->get_asm_type());
-          scasm_inst->set_src((*it)->get_src());
-
-          MAKE_SHARED(scasm::scasm_operand, dst);
-          dst->set_type(scasm::operand_type::REG);
-          dst->set_reg(scasm::register_type::XMM15);
-          scasm_inst->set_dst(dst);
-
-          (*it)->set_src(std::move(dst));
-          it = funcs->get_instructions().insert(it, std::move(scasm_inst));
-          it++;
-        } else if ((*it)->get_type() == scasm::instruction_type::CVTSI2SD) {
-          if ((*it)->get_src()->get_type() == scasm::operand_type::IMM) {
-            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-            scasm_inst->set_type(scasm::instruction_type::MOV);
-            scasm_inst->set_asm_type((*it)->get_asm_type());
-            scasm_inst->set_src((*it)->get_src());
-            MAKE_SHARED(scasm::scasm_operand, dst);
-            dst->set_type(scasm::operand_type::REG);
-            dst->set_reg(scasm::register_type::R10);
-            scasm_inst->set_dst(dst);
-            (*it)->set_dst(std::move(dst));
-            it = funcs->get_instructions().insert(it, std::move(scasm_inst));
-            it++;
-            (*it)->set_src(std::move(dst)); // change the src to r10
-          }
-
-          if ((*it)->get_dst()->get_type() != scasm::operand_type::REG) {
-            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-            scasm_inst->set_type(scasm::instruction_type::MOV);
-            scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
-            MAKE_SHARED(scasm::scasm_operand, src);
-            src->set_type(scasm::operand_type::REG);
-            src->set_reg(scasm::register_type::XMM15);
-            scasm_inst->set_src(src);
-            scasm_inst->set_dst((*it)->get_dst());
-            (*it)->set_dst(std::move(src)); // change the dst to xmm15
-            it =
-                funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
-            it++;
-          }
-        }
+        } 
         if ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
             (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
           MAKE_SHARED(scasm::scasm_operand, src);
@@ -268,12 +222,87 @@ void Codegen::fix_instructions() {
           it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
         }
       }
+      else if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE and
+                   (*it)->get_type() == scasm::instruction_type::BINARY and
+                   (*it)->get_dst()->get_type() != scasm::operand_type::REG) {
+          // subsd/addsd/mulsd/divsd/xorpd satck/reg/imm, stack/data
+          //        |
+          //        v
+          // movsd stack/reg/imm, %xmm15
+          // subsd/addsd/mulsd/divsd %xmm15, stack/data
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          scasm_inst->set_asm_type((*it)->get_asm_type());
+          scasm_inst->set_src((*it)->get_src());
+
+          MAKE_SHARED(scasm::scasm_operand, dst);
+          dst->set_type(scasm::operand_type::REG);
+          dst->set_reg(scasm::register_type::XMM15);
+          scasm_inst->set_dst(dst);
+
+          (*it)->set_src(std::move(dst));
+          it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+          it++;
+        } else if ((*it)->get_type() == scasm::instruction_type::CVTSI2SD) {
+          // cvtsi2sd imm, stack/data
+          //        |
+          //        v
+          // movsd imm, %R11
+          // cvtsi2sd %R11, %XMM15
+          // movsd %XMM15, stack/data
+          if ((*it)->get_src()->get_type() == scasm::operand_type::IMM) {
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+            scasm_inst->set_type(scasm::instruction_type::MOV);
+            scasm_inst->set_asm_type((*it)->get_asm_type());
+            scasm_inst->set_src((*it)->get_src());
+            MAKE_SHARED(scasm::scasm_operand, dst);
+            dst->set_type(scasm::operand_type::REG);
+            dst->set_reg(scasm::register_type::R11);
+            scasm_inst->set_dst(dst);
+            it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+            it++;
+            (*it)->set_src(std::move(dst)); // change the src to r11
+          }
+
+          if ((*it)->get_dst()->get_type() != scasm::operand_type::REG) {
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+            scasm_inst->set_type(scasm::instruction_type::MOV);
+            scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
+            MAKE_SHARED(scasm::scasm_operand, src);
+            src->set_type(scasm::operand_type::REG);
+            src->set_reg(scasm::register_type::XMM15);
+            scasm_inst->set_src(src);
+            scasm_inst->set_dst((*it)->get_dst());
+            (*it)->set_dst(std::move(src)); // change the dst to xmm15
+            it =
+                funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
+            it++;
+          }
+        } else if ((*it)->get_type() == scasm::instruction_type::CVTTS2DI and
+        (*it)->get_dst()->get_type() != scasm::operand_type::REG){
+          // cvttsd2si stack/reg/imm, stack/data
+          //        |
+          //        v
+          // movsd stack/reg/imm, %r11
+          // cvttsd2si %r11, %xmm15
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          scasm_inst->set_asm_type((*it)->get_asm_type());
+          MAKE_SHARED(scasm::scasm_operand, src);
+          src->set_type(scasm::operand_type::REG);
+          src->set_reg(scasm::register_type::R11);
+          scasm_inst->set_src(src);
+          scasm_inst->set_dst((*it)->get_dst());
+          (*it)->set_dst(std::move(src)); // change the dst to xmm15
+          it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
+          it++;
+        }
     }
 
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
       // If the Immediate value cannot be represented as a signed 32 bit,
-      // then it is moved to a register(r10) and then used.
+      // then it is moved to a register(r11) and then used.
       if (NOTNULL((*it)->get_src()) and
           (*it)->get_asm_type() == scasm::AssemblyType::QUAD_WORD and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
@@ -281,7 +310,7 @@ void Codegen::fix_instructions() {
             (*it)->get_src()->get_imm().get_value().l > INT32_MAX) {
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
-          dst->set_reg(scasm::register_type::R10);
+          dst->set_reg(scasm::register_type::R11);
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
@@ -298,7 +327,7 @@ void Codegen::fix_instructions() {
                    (*it)->get_src()->get_imm().get_value().ui > INT32_MAX) {
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
-          dst->set_reg(scasm::register_type::R10);
+          dst->set_reg(scasm::register_type::R11);
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
@@ -315,7 +344,7 @@ void Codegen::fix_instructions() {
                    (*it)->get_src()->get_imm().get_value().ul > INT32_MAX) {
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
-          dst->set_reg(scasm::register_type::R10);
+          dst->set_reg(scasm::register_type::R11);
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
