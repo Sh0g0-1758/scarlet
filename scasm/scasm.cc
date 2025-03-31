@@ -280,7 +280,6 @@ std::string to_string(Binop binop) {
     return "shl";
   case Binop::LOGICAL_RIGHT_SHIFT:
     return "shr";
-  // FIX ME
   case Binop::DIV_DOUBLE:
     return "div";
   case Binop::UNKNOWN:

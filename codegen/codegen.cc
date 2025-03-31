@@ -19,6 +19,7 @@ namespace codegen {
              << "(%rip)";                                                      \
   } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {       \
     switch (instr->get_asm_type()) {                                           \
+    case scasm::AssemblyType::DOUBLE:                                          \
     case scasm::AssemblyType::QUAD_WORD:                                       \
       assembly << scasm::to_string(instr->get_src()->get_reg(),                \
                                    scasm::register_size::QWORD);               \
@@ -40,6 +41,7 @@ namespace codegen {
              << "(%rip)";                                                      \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {       \
     switch (instr->get_asm_type()) {                                           \
+    case scasm::AssemblyType::DOUBLE:                                          \
     case scasm::AssemblyType::QUAD_WORD:                                       \
       assembly << scasm::to_string(instr->get_dst()->get_reg(),                \
                                    scasm::register_size::QWORD);               \
@@ -66,9 +68,216 @@ namespace codegen {
   case scasm::AssemblyType::LONG_WORD:                                         \
     assembly << "l";                                                           \
     break;                                                                     \
+  case scasm::AssemblyType::DOUBLE:                                            \
+    assembly << "sd";                                                          \
+    break;                                                                     \
   default:                                                                     \
     break;                                                                     \
   }
+
+void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
+                           std::stringstream &assembly) {
+  auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
+  if (funcs->is_global()) {
+    assembly << "\t.globl ";
+    assembly << ARCHPREFIX << funcs->get_name() << "\n";
+  }
+
+  assembly << "\t.text\n";
+  assembly << ARCHPREFIX << funcs->get_name() << ":\n";
+  assembly << "\tpushq %rbp\n";
+  assembly << "\tmovq %rsp, %rbp\n";
+  for (auto instr : funcs->get_instructions()) {
+    if (instr->get_type() == scasm::instruction_type::CALL) {
+      std::string funcName = instr->get_src()->get_identifier_stack();
+#ifdef __APPLE__
+      assembly << "\tcall " << "_" << funcName << "\n";
+#else
+      if (backendSymbolTable[funcName].isDefined) {
+        assembly << "\tcall " << funcName << "\n";
+      } else {
+        assembly << "\tcall " << funcName << "@PLT" << "\n";
+      }
+#endif
+    } else if (instr->get_type() == scasm::instruction_type::PUSH) {
+      assembly << "\tpush";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::RET) {
+      assembly << "\tmovq %rbp, %rsp\n";
+      assembly << "\tpopq %rbp\n";
+      assembly << "\tret\n";
+    } else if (instr->get_type() == scasm::instruction_type::MOV) {
+      assembly << "\tmov";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::UNARY) {
+      assembly << "\t";
+      assembly << scasm::to_string(instr->get_unop());
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::CDQ) {
+      switch (instr->get_asm_type()) {
+      case scasm::AssemblyType::QUAD_WORD:
+        assembly << "\tcqo\n";
+        break;
+      case scasm::AssemblyType::LONG_WORD:
+        assembly << "\tcdq\n";
+        break;
+      default:
+        break;
+      }
+    } else if (instr->get_type() == scasm::instruction_type::IDIV) {
+      assembly << "\tidiv";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::DIV) {
+      assembly << "\tdiv";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::BINARY) {
+      assembly << "\t";
+      assembly << scasm::to_string(instr->get_binop());
+      // Xor with double is the only vector instruction we need in scarlet
+      if (instr->get_asm_type() == scasm::AssemblyType::DOUBLE and
+          instr->get_binop() == scasm::Binop::XOR) {
+        assembly << "pd";
+      } else {
+        POSTFIX_ASM_TYPE();
+      }
+      assembly << " ";
+      CODEGEN_SRC_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::JMP) {
+#ifdef __APPLE__
+      assembly << "\tjmp " << "L" << instr->get_src()->get_identifier_stack()
+               << "\n";
+#else
+      assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier_stack()
+               << "\n";
+#endif
+    } else if (instr->get_type() == scasm::instruction_type::LABEL) {
+#ifdef __APPLE__
+      assembly << "L" << instr->get_src()->get_identifier_stack() << ":\n";
+#else
+      assembly << ".L" << instr->get_src()->get_identifier_stack() << ":\n";
+#endif
+    } else if (instr->get_type() == scasm::instruction_type::CMP) {
+      if (instr->get_asm_type() == scasm::AssemblyType::DOUBLE) {
+        assembly << "\tcomisd";
+      } else {
+        assembly << "\tcmp";
+      }
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::JMPCC) {
+      assembly << "\tj";
+      assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
+#ifdef __APPLE__
+      assembly << "L" << instr->get_dst()->get_identifier_stack() << "\n";
+#else
+      assembly << ".L" << instr->get_dst()->get_identifier_stack() << "\n";
+#endif
+    } else if (instr->get_type() == scasm::instruction_type::SETCC) {
+      assembly << "\tset";
+      assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
+      CODEGEN_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::MOVSX) {
+      assembly << "\tmovslq ";
+      CODEGEN_SRC();
+      assembly << ", ";
+      instr->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+      CODEGEN_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::CVTSI2SD) {
+      assembly << "\tcvtsi2sd";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::CVTTS2DI) {
+      assembly << "\tcvttsd2si";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC_DST();
+      assembly << "\n";
+    }
+  }
+}
+
+void Codegen::asm_gen_static_variable(
+    std::shared_ptr<scasm::scasm_top_level> elem, std::stringstream &assembly) {
+  auto vars = std::static_pointer_cast<scasm::scasm_static_variable>(elem);
+  auto varType = backendSymbolTable[vars->get_name()].asmType;
+  if (vars->is_global()) {
+    assembly << "\t.globl ";
+    assembly << ARCHPREFIX << vars->get_name() << "\n";
+  }
+  bool InDataSection =
+      ((!vars->get_init().empty()) or (varType == scasm::AssemblyType::DOUBLE));
+  if (InDataSection) {
+    assembly << "\t.data\n";
+  } else {
+    assembly << "\t.bss\n";
+  }
+#ifdef __APPLE__
+  assembly << "\t.balign " + std::to_string(vars->get_alignment()) + '\n';
+#else
+  assembly << "\t.align " + std::to_string(vars->get_alignment()) + '\n';
+#endif
+  assembly << ARCHPREFIX << vars->get_name() << ":\n";
+  if (InDataSection) {
+    if (varType == scasm::AssemblyType::QUAD_WORD) {
+      assembly << "\t.quad ";
+      assembly << vars->get_init() << "\n";
+    } else if (varType == scasm::AssemblyType::LONG_WORD) {
+      assembly << "\t.long ";
+      assembly << vars->get_init() << "\n";
+    } else if (varType == scasm::AssemblyType::DOUBLE) {
+      assembly << "\t.quad ";
+      assembly << vars->get_init().get_value().l << "\n";
+    }
+  } else {
+    assembly << "\t.zero " + std::to_string(vars->get_alignment()) + '\n';
+  }
+}
+
+void Codegen::asm_gen_static_constant(
+    std::shared_ptr<scasm::scasm_top_level> elem, std::stringstream &assembly) {
+  auto vars = std::static_pointer_cast<scasm::scasm_static_constant>(elem);
+  auto varType = backendSymbolTable[vars->get_name()].asmType;
+#ifdef __APPLE__
+  assembly << "\t.literal" + std::to_string(vars->get_alignment()) + '\n';
+  assembly << "\t.balign " + std::to_string(vars->get_alignment()) + '\n';
+#else
+  assembly << "\t.section .rodata\n";
+  assembly << "\t.align " + std::to_string(vars->get_alignment()) + '\n';
+#endif
+  assembly << ARCHPREFIX << vars->get_name() << ":\n";
+  if (varType == scasm::AssemblyType::QUAD_WORD) {
+    assembly << "\t.quad ";
+    assembly << vars->get_init() << "\n";
+  } else if (varType == scasm::AssemblyType::LONG_WORD) {
+    assembly << "\t.long ";
+    assembly << vars->get_init() << "\n";
+  } else if (varType == scasm::AssemblyType::DOUBLE) {
+    assembly << "\t.quad ";
+    assembly << vars->get_init().get_value().l << "\n";
+  }
+}
 
 void Codegen::codegen() {
   // ###########################
@@ -80,154 +289,15 @@ void Codegen::codegen() {
 
   for (auto elem : scasm.get_elems()) {
     if (elem->get_type() == scasm::scasm_top_level_type::STATIC_VARIABLE) {
-      auto vars = std::static_pointer_cast<scasm::scasm_static_variable>(elem);
-      if (vars->is_global()) {
-        assembly << "\t.globl ";
-        assembly << ARCHPREFIX << vars->get_name() << "\n";
-      }
-      if (vars->get_init().empty()) {
-        assembly << "\t.bss\n";
-      } else {
-        assembly << "\t.data\n";
-      }
-#ifdef __APPLE__
-      assembly << "\t.balign " + std::to_string(vars->get_alignment()) + '\n';
-#else
-      assembly << "\t.align " + std::to_string(vars->get_alignment()) + '\n';
-#endif
-      assembly << ARCHPREFIX << vars->get_name() << ":\n";
-      if (!vars->get_init().empty()) {
-        if (backendSymbolTable[vars->get_name()].asmType ==
-            scasm::AssemblyType::QUAD_WORD) {
-          assembly << "\t.quad ";
-        } else {
-          assembly << "\t.long ";
-        }
-        assembly << vars->get_init() << "\n";
-      } else {
-        assembly << "\t.zero " + std::to_string(vars->get_alignment()) + '\n';
-      }
-      continue;
-    } // STATIC_VARIABLE
-
-    auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
-    if (funcs->is_global()) {
-      assembly << "\t.globl ";
-      assembly << ARCHPREFIX << funcs->get_name() << "\n";
-    }
-
-    assembly << "\t.text\n";
-    assembly << ARCHPREFIX << funcs->get_name() << ":\n";
-    assembly << "\tpushq %rbp\n";
-    assembly << "\tmovq %rsp, %rbp\n";
-    for (auto instr : funcs->get_instructions()) {
-      if (instr->get_type() == scasm::instruction_type::CALL) {
-        std::string funcName = instr->get_src()->get_identifier_stack();
-#ifdef __APPLE__
-        assembly << "\tcall " << "_" << funcName << "\n";
-#else
-        if (backendSymbolTable[funcName].isDefined) {
-          assembly << "\tcall " << funcName << "\n";
-        } else {
-          assembly << "\tcall " << funcName << "@PLT" << "\n";
-        }
-#endif
-      } else if (instr->get_type() == scasm::instruction_type::PUSH) {
-        assembly << "\tpush";
-        POSTFIX_ASM_TYPE();
-        assembly << " ";
-        CODEGEN_SRC();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::RET) {
-        assembly << "\tmovq %rbp, %rsp\n";
-        assembly << "\tpopq %rbp\n";
-        assembly << "\tret\n";
-      } else if (instr->get_type() == scasm::instruction_type::MOV) {
-        assembly << "\tmov";
-        POSTFIX_ASM_TYPE();
-        assembly << " ";
-        CODEGEN_SRC_DST();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::UNARY) {
-        assembly << "\t";
-        assembly << scasm::to_string(instr->get_unop());
-        POSTFIX_ASM_TYPE();
-        assembly << " ";
-        CODEGEN_DST();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::CDQ) {
-        switch (instr->get_asm_type()) {
-        case scasm::AssemblyType::QUAD_WORD:
-          assembly << "\tcqo\n";
-          break;
-        case scasm::AssemblyType::LONG_WORD:
-          assembly << "\tcdq\n";
-          break;
-        default:
-          break;
-        }
-      } else if (instr->get_type() == scasm::instruction_type::IDIV) {
-        assembly << "\tidiv";
-        POSTFIX_ASM_TYPE();
-        assembly << " ";
-        CODEGEN_SRC();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::DIV) {
-        assembly << "\tdiv";
-        POSTFIX_ASM_TYPE();
-        assembly << " ";
-        CODEGEN_SRC();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::BINARY) {
-        assembly << "\t";
-        assembly << scasm::to_string(instr->get_binop());
-        POSTFIX_ASM_TYPE();
-        assembly << " ";
-        CODEGEN_SRC_DST();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::JMP) {
-#ifdef __APPLE__
-        assembly << "\tjmp " << "L" << instr->get_src()->get_identifier_stack()
-                 << "\n";
-#else
-        assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier_stack()
-                 << "\n";
-#endif
-      } else if (instr->get_type() == scasm::instruction_type::LABEL) {
-#ifdef __APPLE__
-        assembly << "L" << instr->get_src()->get_identifier_stack() << ":\n";
-#else
-        assembly << ".L" << instr->get_src()->get_identifier_stack() << ":\n";
-#endif
-      } else if (instr->get_type() == scasm::instruction_type::CMP) {
-        assembly << "\tcmp";
-        POSTFIX_ASM_TYPE();
-        assembly << " ";
-        CODEGEN_SRC_DST();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::JMPCC) {
-        assembly << "\tj";
-        assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
-#ifdef __APPLE__
-        assembly << "L" << instr->get_dst()->get_identifier_stack() << "\n";
-#else
-        assembly << ".L" << instr->get_dst()->get_identifier_stack() << "\n";
-#endif
-      } else if (instr->get_type() == scasm::instruction_type::SETCC) {
-        assembly << "\tset";
-        assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
-        CODEGEN_DST();
-        assembly << "\n";
-      } else if (instr->get_type() == scasm::instruction_type::MOVSX) {
-        assembly << "\tmovslq ";
-        CODEGEN_SRC();
-        assembly << ", ";
-        instr->set_asm_type(scasm::AssemblyType::QUAD_WORD);
-        CODEGEN_DST();
-        assembly << "\n";
-      }
+      asm_gen_static_variable(elem, assembly);
+    } else if (elem->get_type() ==
+               scasm::scasm_top_level_type::STATIC_CONSTANT) {
+      asm_gen_static_constant(elem, assembly);
+    } else if (elem->get_type() == scasm::scasm_top_level_type::FUNCTION) {
+      asm_gen_func(elem, assembly);
     }
   }
+
 #ifndef __APPLE__
   assembly << "\t.section    .note.GNU-stack,\"\",@progbits\n";
 #endif

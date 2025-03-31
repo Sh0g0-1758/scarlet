@@ -118,6 +118,12 @@ public:
   void gen_scar();
   // ASM PASS
   void gen_scasm();
+  void asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
+                    std::stringstream &assembly);
+  void asm_gen_static_variable(std::shared_ptr<scasm::scasm_top_level> elem,
+                               std::stringstream &assembly);
+  void asm_gen_static_constant(std::shared_ptr<scasm::scasm_top_level> elem,
+                               std::stringstream &assembly);
   // STACK ALLOCATION PASS
   void fix_pseudo_registers();
   // FIXING INSTRUCTIONS PASS
@@ -167,7 +173,7 @@ public:
   }
 
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
-    if(val==nullptr){
+    if (val == nullptr) {
       return scasm::AssemblyType::NONE;
     }
     switch (val->get_type()) {
