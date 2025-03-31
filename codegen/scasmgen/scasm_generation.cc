@@ -37,6 +37,7 @@ void Codegen::gen_scasm() {
       scasm_program.add_elem(std::move(top_level_elem));
       continue;
     }
+
     auto func = std::static_pointer_cast<scar::scar_Function_Node>(elem);
     MAKE_SHARED(scasm::scasm_function, scasm_func);
     scasm_func->set_name(func->get_identifier()->get_value());
@@ -52,8 +53,11 @@ void Codegen::gen_scasm() {
     }
 
     std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
+
     std::vector<int> double_param_indx;
+
     std::vector<std::pair<scasm::AssemblyType, int>> stack_param_indx;
+
     calssify_parameters(param_types, int_param_indx, double_param_indx,
                         stack_param_indx);
 
@@ -92,7 +96,7 @@ void Codegen::gen_scasm() {
     }
 
     // Move stack args
-    for (int i = stack_param_indx.size() - 1; i >= 0; i--) {
+    for (int i = 0; i < (int)stack_param_indx.size(); i++) {
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::MOV);
       scasm_inst->set_asm_type(stack_param_indx[i].first);
@@ -108,7 +112,7 @@ void Codegen::gen_scasm() {
       scasm_func->add_instruction(std::move(scasm_inst));
     }
 
-    for (auto inst : func->get_instructions()) {      
+    for (auto inst : func->get_instructions()) {
       scasm::AssemblyType instType = valToAsmType(inst->get_src1());
       if (inst->get_type() == scar::instruction_type::RETURN) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
@@ -627,12 +631,11 @@ void Codegen::gen_scasm() {
         }
       }
     }
-      MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
-      top_level_elem =
-          std::static_pointer_cast<scasm::scasm_top_level>(scasm_func);
-      top_level_elem->set_type(scasm::scasm_top_level_type::FUNCTION);
-      scasm_program.add_elem(std::move(top_level_elem));
-    
+    MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
+    top_level_elem =
+        std::static_pointer_cast<scasm::scasm_top_level>(scasm_func);
+    top_level_elem->set_type(scasm::scasm_top_level_type::FUNCTION);
+    scasm_program.add_elem(std::move(top_level_elem));
   }
 
   // Make the backend symbol table

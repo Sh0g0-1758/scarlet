@@ -55,7 +55,7 @@ void Codegen::fix_instructions() {
         if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE) {
           dst->set_reg(scasm::register_type::XMM15);
         } else {
-          dst->set_reg(scasm::register_type::R11);
+          dst->set_reg(scasm::register_type::R10);
         }
         scasm_inst->set_dst(dst);
 

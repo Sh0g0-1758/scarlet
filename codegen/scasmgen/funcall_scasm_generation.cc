@@ -10,18 +10,24 @@ void Codegen::gen_funcall_scasm(
   auto funcCall =
       std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(inst);
   int numArgs = funcCall->get_args().size();
+
   std::vector<constant::Type> param_types;
+
   for (int i = 0; i < numArgs; i++) {
     param_types.push_back(valToConstType(funcCall->get_args()[i]));
   }
 
   std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
+
   std::vector<int> double_param_indx;
+
   std::vector<std::pair<scasm::AssemblyType, int>> stack_param_indx;
+
   calssify_parameters(param_types, int_param_indx, double_param_indx,
                       stack_param_indx);
 
   bool stack_padding = stack_param_indx.size() % 2;
+
   if (stack_padding) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::BINARY);
@@ -45,23 +51,22 @@ void Codegen::gen_funcall_scasm(
   }
 
   // convert functions args to reg/stack
+
   // Move int args
   for (int i = 0; i < (int)int_param_indx.size(); i++) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOV);
     scasm_inst->set_asm_type(int_param_indx[i].first);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
-    switch (funcCall->get_args()[int_param_indx[i].second]->get_type()) {
+    auto funcArg = funcCall->get_args()[int_param_indx[i].second];
+    switch (funcArg->get_type()) {
     case scar::val_type::VAR:
       scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier_stack(
-          funcCall->get_args()[int_param_indx[i].second]->get_reg());
+      scasm_src->set_identifier_stack(funcArg->get_reg());
       break;
     case scar::val_type::CONSTANT:
-      // only quad word and long word are allowed
       scasm_src->set_type(scasm::operand_type::IMM);
-      scasm_src->set_imm(
-          funcCall->get_args()[int_param_indx[i].second]->get_const_val());
+      scasm_src->set_imm(funcArg->get_const_val());
       break;
     default:
       break;
@@ -80,16 +85,14 @@ void Codegen::gen_funcall_scasm(
     scasm_inst->set_type(scasm::instruction_type::MOV);
     scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
-    switch (funcCall->get_args()[double_param_indx[i]]->get_type()) {
+    auto funcArg = funcCall->get_args()[double_param_indx[i]];
+    switch (funcArg->get_type()) {
     case scar::val_type::VAR:
       scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier_stack(
-          funcCall->get_args()[double_param_indx[i]]->get_reg());
+      scasm_src->set_identifier_stack(funcArg->get_reg());
       break;
     case scar::val_type::CONSTANT: {
-      MAKE_DOUBLE_CONSTANT(
-          scasm_src,
-          funcCall->get_args()[double_param_indx[i]]->get_const_val(), 8);
+      MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val(), 8);
     } break;
     default:
       break;
@@ -107,19 +110,19 @@ void Codegen::gen_funcall_scasm(
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     scasm_inst->set_asm_type(stack_param_indx[i].first);
-    switch (funcCall->get_args()[stack_param_indx[i].second]->get_type()) {
+    auto funcArg = funcCall->get_args()[stack_param_indx[i].second];
+
+    switch (funcArg->get_type()) {
     case scar::val_type::VAR:
       scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier_stack(funcCall->get_args()[i]->get_reg());
+      scasm_src->set_identifier_stack(funcArg->get_reg());
       break;
     case scar::val_type::CONSTANT: {
-      if (funcCall->get_args()[i]->get_const_val().get_type() ==
-          constant::Type::DOUBLE) {
-        MAKE_DOUBLE_CONSTANT(scasm_src,
-                             funcCall->get_args()[stack_param_indx[i].second]->get_const_val(), 8);
+      if (funcArg->get_const_val().get_type() == constant::Type::DOUBLE) {
+        MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val(), 8);
       } else {
         scasm_src->set_type(scasm::operand_type::IMM);
-        scasm_src->set_imm(funcCall->get_args()[stack_param_indx[i].second]->get_const_val());
+        scasm_src->set_imm(funcArg->get_const_val());
       }
     } break;
     default:
