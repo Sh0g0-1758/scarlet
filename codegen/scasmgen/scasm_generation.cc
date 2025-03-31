@@ -294,7 +294,6 @@ void Codegen::gen_scasm() {
           scasm_inst2->set_src(scasm_reg);
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst2);
-          scasm_inst2->set_dst(std::move(scasm_dst));
           scasm_func->add_instruction(std::move(scasm_inst2));
         } else {
           // Cmp(Quadword, Imm(0), src)
@@ -463,7 +462,6 @@ void Codegen::gen_scasm() {
           scasm_inst2->set_src(std::move(scasm_reg));
           MAKE_SHARED(scasm::scasm_operand, scasm_dst);
           SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst2);
-          scasm_inst2->set_dst(std::move(scasm_dst));
           scasm_func->add_instruction(std::move(scasm_inst2));
         } else {
           // StaticConstant(<upper-bound>, 8, DoubleInit(9223372036854775808.0))

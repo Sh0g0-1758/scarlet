@@ -79,7 +79,13 @@ void Codegen::pretty_print_function(
       std::cout << statement->get_dst()->get_label() << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::SIGN_EXTEND or
                statement->get_type() == scar::instruction_type::TRUNCATE or
-               statement->get_type() == scar::instruction_type::ZERO_EXTEND) {
+               statement->get_type() == scar::instruction_type::ZERO_EXTEND or
+               statement->get_type() == scar::instruction_type::DOUBLE_TO_INT or
+               statement->get_type() == scar::instruction_type::INT_TO_DOUBLE or
+               statement->get_type() ==
+                   scar::instruction_type::DOUBLE_TO_UINT or
+               statement->get_type() ==
+                   scar::instruction_type::UINT_TO_DOUBLE) {
       PRINT_VAR_CONST(statement->get_src1());
       std::cout << ", ";
       PRINT_VAR_CONST(statement->get_dst());

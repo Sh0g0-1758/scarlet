@@ -147,7 +147,6 @@ void Codegen::fix_instructions() {
         } else {
           (*it)->set_type(scasm::instruction_type::MOV);
           (*it)->set_asm_type(scasm::AssemblyType::LONG_WORD);
-          it++;
         }
       } else if ((*it)->get_type() == scasm::instruction_type::BINARY and
                  (*it)->get_binop() == scasm::Binop::MUL and

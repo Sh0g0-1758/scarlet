@@ -102,6 +102,7 @@ void Codegen::gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     negzero.set_type(constant::Type::DOUBLE);
     negzero.set_value({.d = -0.0});
     MAKE_DOUBLE_CONSTANT(scasm_src2, negzero, 16);
+    scasm_inst2->set_src(std::move(scasm_src2));
 
     MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
     SET_OPERAND(scasm_dst2, set_dst, get_dst, scasm_inst2);
