@@ -32,40 +32,6 @@ void Codegen::fix_instructions() {
                                      std::move(scasm_inst));
   }
 
-  // Fixing up instructions in which both src and dst are Stack/Data
-  for (auto &elem : scasm.get_elems()) {
-    if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
-      continue;
-    }
-    auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
-    for (auto it = funcs->get_instructions().begin();
-         it != funcs->get_instructions().end(); it++) {
-      if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
-          ((*it)->get_src()->get_type() == scasm::operand_type::STACK or
-           (*it)->get_src()->get_type() == scasm::operand_type::DATA) &&
-          ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
-           (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
-        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-        scasm_inst->set_type(scasm::instruction_type::MOV);
-        scasm_inst->set_asm_type((*it)->get_asm_type());
-        scasm_inst->set_src((*it)->get_src());
-
-        MAKE_SHARED(scasm::scasm_operand, dst);
-        dst->set_type(scasm::operand_type::REG);
-        if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE) {
-          dst->set_reg(scasm::register_type::XMM14);
-        } else {
-          dst->set_reg(scasm::register_type::R10);
-        }
-        scasm_inst->set_dst(dst);
-
-        (*it)->set_src(std::move(dst));
-        it = funcs->get_instructions().insert(it, std::move(scasm_inst));
-        it++;
-      }
-    }
-  }
-
   // FIXES SPECIFIC TO X86_64
   for (auto &elem : scasm.get_elems()) {
     if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
@@ -300,6 +266,34 @@ void Codegen::fix_instructions() {
 
           it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
         }
+      }
+    }
+
+    // Fixing up instructions in which both src and dst are Stack/Data
+    for (auto it = funcs->get_instructions().begin();
+         it != funcs->get_instructions().end(); it++) {
+      if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
+          ((*it)->get_src()->get_type() == scasm::operand_type::STACK or
+           (*it)->get_src()->get_type() == scasm::operand_type::DATA) &&
+          ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+           (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_asm_type((*it)->get_asm_type());
+        scasm_inst->set_src((*it)->get_src());
+
+        MAKE_SHARED(scasm::scasm_operand, dst);
+        dst->set_type(scasm::operand_type::REG);
+        if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE) {
+          dst->set_reg(scasm::register_type::XMM14);
+        } else {
+          dst->set_reg(scasm::register_type::R10);
+        }
+        scasm_inst->set_dst(dst);
+
+        (*it)->set_src(std::move(dst));
+        it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+        it++;
       }
     }
 
