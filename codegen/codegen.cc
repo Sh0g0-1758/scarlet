@@ -152,6 +152,9 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
           assembly << "xorpd";
         } else if (instr->get_binop() == scasm::Binop::MUL) {
           assembly << "mulsd";
+        } else {
+          assembly << scasm::to_string(instr->get_binop());
+          POSTFIX_ASM_TYPE();
         }
       } else {
         assembly << scasm::to_string(instr->get_binop());
