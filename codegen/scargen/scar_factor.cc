@@ -93,8 +93,15 @@ void Codegen::gen_scar_factor(
 
       scar_val_src2->set_type(scar::val_type::CONSTANT);
       constant::Constant one;
-      one.set_type(constant::Type::INT);
-      one.set_value({.i = 1});
+      // constant should be double for a double increment but
+      // can be a signed int for all integer types (int/long/uint/ulong)
+      if (factor->get_type() == ast::ElemType::DOUBLE) {
+        one.set_type(constant::Type::DOUBLE);
+        one.set_value({.d = 1.0});
+      } else {
+        one.set_type(constant::Type::INT);
+        one.set_value({.i = 1});
+      }
       scar_val_src2->set_const_val(one);
       scar_instruction->set_src2(std::move(scar_val_src2));
 
@@ -139,8 +146,15 @@ void Codegen::gen_scar_factor(
 
       scar_val_src3->set_type(scar::val_type::CONSTANT);
       constant::Constant one;
-      one.set_type(constant::Type::INT);
-      one.set_value({.i = 1});
+      // constant should be double for a double increment but
+      // can be a signed int for all integer types (int/long/uint/ulong)
+      if (factor->get_type() == ast::ElemType::DOUBLE) {
+        one.set_type(constant::Type::DOUBLE);
+        one.set_value({.d = 1.0});
+      } else {
+        one.set_type(constant::Type::INT);
+        one.set_value({.i = 1});
+      }
       scar_val_src3->set_const_val(one);
       scar_instruction2->set_src2(std::move(scar_val_src3));
 

@@ -232,13 +232,13 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   // assign type to the factor
   assign_type_to_factor(factor);
 
-  // complement operator cannot be used on floating point types
+  // complement operator cannot be used on double precision
   if (factor->get_unop_node() != nullptr and
       factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
     if (factor->get_type() == ast::ElemType::DOUBLE) {
       success = false;
-      error_messages.emplace_back("Complement operator not allowed on "
-                                  "floating point types");
+      error_messages.emplace_back(
+          "Complement operator not allowed on double precision");
     }
   }
 }
