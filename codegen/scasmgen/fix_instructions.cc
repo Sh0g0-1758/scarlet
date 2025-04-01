@@ -180,8 +180,15 @@ void Codegen::fix_instructions() {
         it = funcs->get_instructions().insert(it, std::move(scasm_inst));
         it++;
       } else if ((*it)->get_type() == scasm::instruction_type::MOVZX) {
+        // NOTE: MovZeroExtend simply uses movl because movl zeroes out the
+        // upper 32 bits of the register
         if ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
             (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
+          // MovZeroExtend(Stack/Data/Reg , Stack/Data)
+          //      |
+          //      v
+          // movl Stack/Data/Reg, %r10d
+          // movq %r10d, Stack/Data
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
           scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
@@ -196,6 +203,10 @@ void Codegen::fix_instructions() {
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
         } else {
+          // MovZeroExtend(Stack/Data/Reg , Reg)
+          //     |
+          //     v
+          // movl Stack/Data/Reg, Reg
           (*it)->set_type(scasm::instruction_type::MOV);
           (*it)->set_asm_type(scasm::AssemblyType::LONG_WORD);
         }
