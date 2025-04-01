@@ -37,8 +37,10 @@ void parser::parse_abstract_declarator(
     std::shared_ptr<ast::AST_abstract_declarator_Node> &abstract_declarator) {
   if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
     tokens.erase(tokens.begin());
-    if(tokens[0].get_token() == token::TOKEN::ASTERISK || tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
-      MAKE_SHARED(ast::AST_abstract_declarator_Node, nested_abstract_declarator);
+    if (tokens[0].get_token() == token::TOKEN::ASTERISK ||
+        tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      MAKE_SHARED(ast::AST_abstract_declarator_Node,
+                  nested_abstract_declarator);
       parse_abstract_declarator(tokens, nested_abstract_declarator);
       abstract_declarator->set_child(std::move(nested_abstract_declarator));
     }
@@ -119,7 +121,8 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       tokens.erase(tokens.begin());
       if (!tokens.empty() and token::is_type_specifier(tokens[0].get_token())) {
         PARSE_TYPE(factor, set_cast_type);
-        if(tokens[0].get_token() == token::TOKEN::ASTERISK || tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+        if (tokens[0].get_token() == token::TOKEN::ASTERISK ||
+            tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
           MAKE_SHARED(ast::AST_abstract_declarator_Node, abstract_declarator);
           parse_abstract_declarator(tokens, abstract_declarator);
           factor->set_abstract_declarator(std::move(abstract_declarator));
