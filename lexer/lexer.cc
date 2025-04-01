@@ -395,6 +395,7 @@ void lexer::tokenize() {
       }
 
       if ((ch == 'e' or ch == 'E') and literal_suffix.size() == 0) {
+        isFloat = true;
         constant += 'e';
         file.get(ch);
         if (ch == '+' or ch == '-') {

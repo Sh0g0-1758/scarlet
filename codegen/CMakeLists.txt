@@ -12,6 +12,9 @@ add_library(scarCodegen STATIC
     scargen/pretty_print.cc
 
     scasmgen/scasm_generation.cc
+    scasmgen/binop_scasm_generation.cc
+    scasmgen/unop_scasm_generation.cc
+    scasmgen/funcall_scasm_generation.cc
     scasmgen/fix_pseudo_registers.cc
     scasmgen/fix_instructions.cc
 )

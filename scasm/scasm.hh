@@ -21,21 +21,86 @@ Grammar:
 
 program = Program(top_level*)
 
-assembly_type = LongWord | QuadWord
+assembly_type = LongWord 
+              | QuadWord
+              | Double
 
-top_level = Function(identifier name, bool global, instruction* instructions) | StaticVariable(identifier name, bool global, int alignment, const init)
+top_level = Function(identifier name, bool global, instruction* instructions) 
+          | StaticVariable(identifier name, bool global, int alignment, const init)
 
-instruction = Mov(assembly_type, Operand src, Operand dst) | Movsx(Operand src, Operand dst) | MovZeroExtend(Operand src, Operand dst) | Binary(binary_operator, assembly_type,  Operand src, Operand dst) | Idiv(assembly_type, Operand src) | Div(assembly_type, Operand src) | Cdq(assembly_type) | Ret | Unary(Unary_operator, assembly_type, Operand src/dst) | AllocateStack(Operand) | Cmp(assembly_type, Operand, Operand) | Jmp(Identifier) | JmpCC(cond_code, label) | SetCC(cond_code, operand) | Label(label) | Push(Operand) | Call(Identifier) | DeallocateStack(int) 
+instruction = Mov(assembly_type, Operand src, Operand dst)
+            | Movsx(Operand src, Operand dst)
+            | MovZeroExtend(Operand src, Operand dst)
+            | Binary(binary_operator, assembly_type,  Operand src, Operand dst)
+            | Idiv(assembly_type, Operand src)
+            | Div(assembly_type, Operand src)
+            | Cdq(assembly_type)
+            | Ret
+            | Unary(Unary_operator, assembly_type, Operand src/dst)
+            | Cmp(assembly_type, Operand, Operand)
+            | Jmp(Identifier)
+            | JmpCC(cond_code, label)
+            | SetCC(cond_code, operand)
+            | Label(label)
+            | Push(Operand)
+            | Call(Identifier)
+            | Cvtts2di(assembly_type, Operand src, Operand dst)
+            | Cvtsi2sd(assembly_type, Operand src, Operand dst)
 
-unary_operator = Neg | Not
+unary_operator = Neg 
+               | Not
+               | Shr
 
-binary_operator = Add | Sub | Mul | And | Or | Xor | LeftShift | RightShift
+binary_operator = Add 
+                | Sub 
+                | Mul 
+                | And 
+                | Or 
+                | Xor 
+                | LeftShift 
+                | RightShift
+                | DivDouble
 
-Operand = Imm(int) | Reg(reg) | Pseudo(Identifier) | stack(identifier) | Label(identifier) | Data(Identifier)
+Operand = Imm(int) 
+        | Reg(reg) 
+        | Pseudo(Identifier) 
+        | stack(identifier) 
+        | Label(identifier) 
+        | Data(Identifier)
 
 cond_code = E | NE | G | GE | L | LE
 
-reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | CL | SP | B | BE | A | AE
+reg = AX
+    | CX 
+    | DX 
+    | DI 
+    | SI 
+    | R8 
+    | R9 
+    | R10 
+    | R11 
+    | CL 
+    | SP 
+    | B 
+    | BE 
+    | A 
+    | AE
+    | XMM0
+    | XMM1
+    | XMM2
+    | XMM3
+    | XMM4
+    | XMM5
+    | XMM6
+    | XMM7
+    | XMM8
+    | XMM9
+    | XMM10
+    | XMM11
+    | XMM12
+    | XMM13
+    | XMM14
+    | XMM15
 
 */
 
@@ -44,15 +109,17 @@ namespace scarlet {
 namespace scasm {
 
 // BYTE = 8 bits, LONG WORD = 32 bits, QUAD WORD = 64 bits
-enum class AssemblyType { NONE, BYTE, LONG_WORD, QUAD_WORD };
+enum class AssemblyType { NONE, BYTE, LONG_WORD, QUAD_WORD, DOUBLE };
 // NOTE: Every Pseudo Operand gets converted into a stack operand
 enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK, LABEL, COND, DATA };
-enum class Unop { UNKNOWN, NEG, ANOT, LNOT };
+enum class Unop { UNKNOWN, NEG, ANOT, LNOT, SHR };
 enum class Binop {
   UNKNOWN,
   ADD,
   SUB,
   MUL,
+  /* division for double emits the same instructions as integer mul|add|sub */
+  DIV_DOUBLE,
   AAND,
   AOR,
   XOR,
@@ -89,6 +156,8 @@ enum class instruction_type {
   LABEL,
   PUSH,
   CALL,
+  CVTTS2DI,
+  CVTSI2SD,
 };
 
 enum class register_type {
@@ -103,7 +172,17 @@ enum class register_type {
   R10,
   R11,
   CL,
-  SP
+  SP,
+  XMM0,
+  XMM1,
+  XMM2,
+  XMM3,
+  XMM4,
+  XMM5,
+  XMM6,
+  XMM7,
+  XMM14,
+  XMM15
 };
 // Byte = 8 bits, Word = 16 bits, Lword = 32 bits, Qword = 64 bits
 enum class register_size { BYTE, LWORD, QWORD };
@@ -156,6 +235,7 @@ public:
   void set_type(instruction_type type) { this->type = type; }
   Unop get_unop() { return unop; }
   void set_unop(unop::UNOP op) { this->unop = scar_unop_to_scasm_unop(op); }
+  void set_unop(Unop op) { this->unop = op; }
   Binop get_binop() { return binop; }
   void set_binop(Binop op) { this->binop = op; }
   std::shared_ptr<scasm_operand> get_src() { return src; }
@@ -170,7 +250,7 @@ public:
   void set_asm_type(AssemblyType asmType) { this->asmType = asmType; }
 };
 
-enum class scasm_top_level_type { FUNCTION, STATIC_VARIABLE };
+enum class scasm_top_level_type { FUNCTION, STATIC_VARIABLE, STATIC_CONSTANT };
 
 class scasm_top_level {
 private:
@@ -221,6 +301,22 @@ public:
   void set_alignment(int alignment) { this->alignment = alignment; }
 };
 
+class scasm_static_constant : public scasm_top_level {
+private:
+  std::string name;
+  constant::Constant init;
+  int alignment;
+
+public:
+  std::string get_scasm_name() { return "StaticConstant"; }
+  std::string get_name() { return name; }
+  void set_name(std::string name) { this->name = std::move(name); }
+  constant::Constant get_init() { return init; }
+  void set_init(constant::Constant init) { this->init = init; }
+  int get_alignment() { return alignment; }
+  void set_alignment(int alignment) { this->alignment = alignment; }
+};
+
 class scasm_program {
 private:
   std::vector<std::shared_ptr<scasm_top_level>> elems;
@@ -233,12 +329,14 @@ public:
   }
 };
 
-enum backendSymbolType { FUNCTION, STATIC_VARIABLE };
+enum backendSymbolType { FUNCTION, STATIC_VARIABLE, STATIC_CONSTANT };
 
 struct backendSymbol {
+  /* Use for Static Variable and Static Constant */
   backendSymbolType type;
   AssemblyType asmType;
   bool isTopLevel;
+  /* Use for Functions */
   bool isDefined;
 };
 

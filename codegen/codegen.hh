@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ast/ast.hh>
+#include <cmath>
 #include <fstream>
 #include <map>
 #include <scar/scar.hh>
@@ -38,6 +39,16 @@ Epilogue:   movq  %rbp, %rsp    # Restores the stack pointer to the base pointer
 namespace scarlet {
 namespace codegen {
 
+// Custom comparator for double values to handle -0.0 and 0.0
+struct DoubleCompare {
+  bool operator()(double a, double b) const {
+    if (a == b) {
+      return std::signbit(a) < std::signbit(b); // Distinguishes 0.0 from -0.0
+    }
+    return a < b;
+  }
+};
+
 class Codegen {
 private:
   ast::AST_Program_Node program;
@@ -48,10 +59,13 @@ private:
   std::string variable_buffer;
   bool success = true;
   int curr_regNum;
+  int doubleLabelCounter = 0;
+  int doubleCastCounter = 0;
   std::string reg_name;
   std::map<std::string, std::string> pseduo_registers;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   std::map<std::string, scasm::backendSymbol> backendSymbolTable;
+  std::map<double, std::string, DoubleCompare> doubleLabelMap;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
@@ -76,6 +90,16 @@ private:
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_block(std::shared_ptr<ast::AST_Block_Node> block,
                       std::shared_ptr<scar::scar_Function_Node> scar_function);
+
+  void gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
+                      std::shared_ptr<scasm::scasm_function> scasm_func,
+                      scasm::scasm_program &scasm_program);
+  void gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
+                       std::shared_ptr<scasm::scasm_function> scasm_func,
+                       scasm::scasm_program &scasm_program);
+  void gen_funcall_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
+                         std::shared_ptr<scasm::scasm_function> scasm_func,
+                         scasm::scasm_program &scasm_program);
   int fr_label_counter = 1;
   int res_label_counter = 1;
   std::stack<std::string> fr_label_stack;
@@ -94,6 +118,12 @@ public:
   void gen_scar();
   // ASM PASS
   void gen_scasm();
+  void asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
+                    std::stringstream &assembly);
+  void asm_gen_static_variable(std::shared_ptr<scasm::scasm_top_level> elem,
+                               std::stringstream &assembly);
+  void asm_gen_static_constant(std::shared_ptr<scasm::scasm_top_level> elem,
+                               std::stringstream &assembly);
   // STACK ALLOCATION PASS
   void fix_pseudo_registers();
   // FIXING INSTRUCTIONS PASS
@@ -138,7 +168,14 @@ public:
     return tmp;
   }
 
+  std::string get_const_label_name() {
+    return "C." + std::to_string(doubleLabelCounter++);
+  }
+
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
+    if (val == nullptr) {
+      return scasm::AssemblyType::NONE;
+    }
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       switch (val->get_const_val().get_type()) {
@@ -148,10 +185,12 @@ public:
       case constant::Type::LONG:
       case constant::Type::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
-
-      default:
+      case constant::Type::DOUBLE:
+        return scasm::AssemblyType::DOUBLE;
+      case constant::Type::NONE:
         return scasm::AssemblyType::NONE;
       }
+      break;
     case scar::val_type::VAR:
       switch (globalSymbolTable[val->get_reg()].typeDef[0]) {
       case ast::ElemType::INT:
@@ -160,9 +199,12 @@ public:
       case ast::ElemType::LONG:
       case ast::ElemType::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
-      default:
+      case ast::ElemType::DOUBLE:
+        return scasm::AssemblyType::DOUBLE;
+      case ast::ElemType::NONE:
         return scasm::AssemblyType::NONE;
       }
+      break;
     case scar::val_type::LABEL:
       return scasm::AssemblyType::NONE;
     }
@@ -180,15 +222,14 @@ public:
     case ast::ElemType::ULONG:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
-      // FIXME
-      return scasm::AssemblyType::NONE;
+      return scasm::AssemblyType::DOUBLE;
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
     }
     UNREACHABLE();
   }
 
-  constant::Type valType(std::shared_ptr<scar::scar_Val_Node> val) {
+  constant::Type valToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       return val->get_const_val().get_type();
@@ -200,10 +241,57 @@ public:
     }
     UNREACHABLE();
   }
-  std::vector<scasm::register_type> argReg = {
+
+  void calssify_parameters(
+      std::vector<constant::Type> &param_types,
+      std::vector<std::pair<scasm::AssemblyType, int>> &int_param_indx,
+      std::vector<int> &double_param_indx,
+      std::vector<std::pair<scasm::AssemblyType, int>> &stack_param_indx) {
+    int int_reg_count = 0;
+    int double_reg_count = 0;
+    for (int i = 0; i < (int)param_types.size(); i++) {
+      switch (param_types[i]) {
+      case constant::Type::INT:
+      case constant::Type::UINT: {
+        if (int_reg_count < 6) {
+          int_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
+          int_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
+        }
+      } break;
+      case constant::Type::LONG:
+      case constant::Type::ULONG: {
+        if (int_reg_count < 6) {
+          int_param_indx.push_back({scasm::AssemblyType::QUAD_WORD, i});
+          int_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::QUAD_WORD, i});
+        }
+      } break;
+      case constant::Type::DOUBLE:
+        if (double_reg_count < 8) {
+          double_param_indx.push_back(i);
+          double_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::DOUBLE, i});
+        }
+        break;
+      case constant::Type::NONE:
+        break;
+      }
+    }
+  }
+
+  std::vector<scasm::register_type> int_argReg = {
       scasm::register_type::DI, scasm::register_type::SI,
       scasm::register_type::DX, scasm::register_type::CX,
       scasm::register_type::R8, scasm::register_type::R9};
+  std::vector<scasm::register_type> double_argReg = {
+      scasm::register_type::XMM0, scasm::register_type::XMM1,
+      scasm::register_type::XMM2, scasm::register_type::XMM3,
+      scasm::register_type::XMM4, scasm::register_type::XMM5,
+      scasm::register_type::XMM6, scasm::register_type::XMM7};
 };
 
 } // namespace codegen

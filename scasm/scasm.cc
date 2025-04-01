@@ -62,6 +62,9 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
     return Binop::GREATERTHANEQUAL;
   case binop::BINOP::ASSIGN:
     return Binop::ASSIGN;
+  /* This case will only be called when its a double division */
+  case binop::BINOP::DIV:
+    return Binop::DIV_DOUBLE;
   case binop::BINOP::COMPOUND_DIFFERENCE:
   case binop::BINOP::COMPOUND_DIVISION:
   case binop::BINOP::COMPOUND_PRODUCT:
@@ -72,7 +75,6 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::COMPOUND_XOR:
   case binop::BINOP::COMPOUND_LEFTSHIFT:
   case binop::BINOP::COMPOUND_RIGHTSHIFT:
-  case binop::BINOP::DIV:
   case binop::BINOP::MOD:
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::TERNARY:
@@ -187,6 +189,26 @@ std::string to_string(register_type reg, register_size size) {
     return "%rsp";
   case register_type::CL:
     return "%cl";
+  case register_type::XMM0:
+    return "%xmm0";
+  case register_type::XMM1:
+    return "%xmm1";
+  case register_type::XMM2:
+    return "%xmm2";
+  case register_type::XMM3:
+    return "%xmm3";
+  case register_type::XMM4:
+    return "%xmm4";
+  case register_type::XMM5:
+    return "%xmm5";
+  case register_type::XMM6:
+    return "%xmm6";
+  case register_type::XMM7:
+    return "%xmm7";
+  case register_type::XMM14:
+    return "%xmm14";
+  case register_type::XMM15:
+    return "%xmm15";
   case register_type::UNKNOWN:
     UNREACHABLE();
   }
@@ -227,6 +249,8 @@ std::string to_string(Unop unop) {
     return "neg";
   case Unop::ANOT:
     return "not";
+  case Unop::SHR:
+    return "shr";
   case Unop::UNKNOWN:
   case Unop::LNOT:
     UNREACHABLE()
@@ -256,6 +280,8 @@ std::string to_string(Binop binop) {
     return "shl";
   case Binop::LOGICAL_RIGHT_SHIFT:
     return "shr";
+  case Binop::DIV_DOUBLE:
+    return "div";
   case Binop::UNKNOWN:
   // All relational operators are handled by the cmpl instruction using register
   // flags and results are interpreted from the flags using setcc instruction.

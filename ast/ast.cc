@@ -112,7 +112,7 @@ ast::ElemType getParentType(ast::ElemType left, ast::ElemType right) {
   case constant::Type::DOUBLE:                                                 \
     ret.set_value({.t = static_cast<T>(c.get_value().d)});                     \
     break;                                                                     \
-  default:                                                                     \
+  case constant::Type::NONE:                                                   \
     break;                                                                     \
   }
 
@@ -144,7 +144,7 @@ constant::Constant castConstToVal(constant::Constant c, ast::ElemType type) {
     ret.set_type(constant::Type::DOUBLE);
     CASTCONST(c, ret, d, double);
   } break;
-  default:
+  case ast::ElemType::NONE:
     UNREACHABLE();
   }
 

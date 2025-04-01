@@ -37,21 +37,8 @@ void Codegen::gen_scar() {
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       scar_val_src->set_type(scar::val_type::CONSTANT);
       constant::Constant ret_0;
-      switch (globalSymbolTable[funDecl->get_identifier()->get_value()]
-                  .typeDef[0]) {
-      case ast::ElemType::INT:
-        ret_0.set_type(constant::Type::INT);
-        ret_0.set_value({.i = 0});
-        break;
-      case ast::ElemType::LONG:
-        ret_0.set_type(constant::Type::LONG);
-        ret_0.set_value({.l = 0});
-        break;
-      default:
-        ret_0.set_type(constant::Type::INT);
-        ret_0.set_value({.i = 0});
-        break;
-      }
+      ret_0.set_type(constant::Type::INT);
+      ret_0.set_value({.i = 0});
       scar_val_src->set_const_val(ret_0);
       scar_instruction->set_src1(scar_val_src);
       scar_function->add_instruction(scar_instruction);
