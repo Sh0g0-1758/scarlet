@@ -282,6 +282,10 @@ void Codegen::asm_gen_static_constant(
     assembly << "\t.quad ";
     assembly << vars->get_init().get_value().l << "\n";
   }
+#ifdef __APPLE__
+  if (vars->get_alignment() == 16)
+    assembly << "\t.quad 0\n";
+#endif
 }
 
 void Codegen::codegen() {
