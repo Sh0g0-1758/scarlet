@@ -102,13 +102,19 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
     }
   }
 
-  // check that modulus operator is not used on floating point types
+  // check that modulus | Xor is not used on double precision
   if (exp->get_binop_node() != nullptr and
-      exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
-    if (exp->get_type() == ast::ElemType::DOUBLE) {
+      exp->get_type() == ast::ElemType::DOUBLE) {
+    if (exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
       success = false;
-      error_messages.emplace_back("Modulus operator not allowed on floating "
-                                  "point types");
+      error_messages.emplace_back(
+          "Modulus operator not allowed on double precision");
+    }
+
+    if (exp->get_binop_node()->get_op() == binop::BINOP::XOR) {
+      success = false;
+      error_messages.emplace_back(
+          "XOR operator not allowed on double precision");
     }
   }
 }
@@ -304,6 +310,12 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    ? exp->get_left()->get_type()
                                    : exp->get_factor_node()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
+      if (leftType == ast::ElemType::DOUBLE or
+          rightType == ast::ElemType::DOUBLE) {
+        success = false;
+        error_messages.emplace_back(
+            "Shift operator is not allowed on double precision");
+      }
       ast::ElemType expType = leftType;
       if (expType != rightType) {
         add_cast_to_exp(exp->get_right(), expType);

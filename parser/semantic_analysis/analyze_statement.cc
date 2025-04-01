@@ -61,9 +61,11 @@ void parser::analyze_statement(
       analyze_switch_case<unsigned long>(switch_statement,
                                          constant::Type::ULONG);
       break;
-    case ast::ElemType::DOUBLE:
-      analyze_switch_case<double>(switch_statement, constant::Type::DOUBLE);
-      break;
+    case ast::ElemType::DOUBLE: {
+      success = false;
+      error_messages.emplace_back(
+          "Switch expression cannot be a double precision");
+    } break;
     case ast::ElemType::NONE:
       break;
     }
@@ -196,9 +198,11 @@ void parser::analyze_switch_case(
       case constant::Type::LONG:
         val = static_cast<T>(constVal.get_value().l);
         break;
-      case constant::Type::DOUBLE:
-        val = static_cast<T>(constVal.get_value().d);
-        break;
+      case constant::Type::DOUBLE: {
+        success = false;
+        error_messages.emplace_back(
+            "Case expression cannot be a double precision");
+      } break;
       case constant::Type::UINT:
         val = static_cast<T>(constVal.get_value().ui);
         break;
@@ -217,9 +221,11 @@ void parser::analyze_switch_case(
       case constant::Type::LONG:
         newConst.set_value({.l = static_cast<long>(val)});
         break;
-      case constant::Type::DOUBLE:
-        newConst.set_value({.d = static_cast<double>(val)});
-        break;
+      case constant::Type::DOUBLE: {
+        success = false;
+        error_messages.emplace_back(
+            "Case expression cannot be a double precision");
+      } break;
       case constant::Type::UINT:
         newConst.set_value({.ui = static_cast<unsigned int>(val)});
         break;
