@@ -39,9 +39,23 @@ private:
   std::stack<std::string> loop_switch_end_labels;
   std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
-  void
-  parse_param_list(std::vector<token::Token> &tokens,
-                   std::shared_ptr<ast::AST_function_declaration_Node> decl);
+
+  bool isFuncDecl(std::shared_ptr<ast::AST_declarator_Node> decl);
+  void parse_abstract_declarator(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_abstract_declarator_Node> &abstract_declarator);
+  void parse_declarator(std::vector<token::Token> &tokens,
+                        std::shared_ptr<ast::AST_declarator_Node> &declarator);
+  void parse_direct_declarator(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_direct_declarator_Node> &direct_declarator);
+  void parse_simple_declarator(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_simple_declarator_Node> &simple_declarator);
+  
+  void parse_param_list(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_param_list_Node> &param_list);
   void parse_function_declaration(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_function_declaration_Node> decl,

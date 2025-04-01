@@ -20,6 +20,10 @@ std::string to_string(UNOP unop) {
     return "Not";
   case UNOP::UNKNOWN:
     return "";
+  case UNOP::DEREFERENCE:
+    return "Dereference";
+  case UNOP::ADDRESS:
+    return "Address";
   }
   return "";
 }

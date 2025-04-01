@@ -19,11 +19,19 @@ Grammar:
 
 <declaration> ::= <variable-declaration> | <function-declaration>
 
-<variable-declaration> ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
+<variable-declaration> ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
 
-<function-declaration> ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
+<function-declaration> ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
 
-<param-list> ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
+<declarator> ::= "*" <declarator> | <direct-declarator>
+
+<direct-declarator> ::= <simple-declarator> [ <param-list> ]
+
+<param-list> ::= "(" "void" ")" | "(" <param> { "," <param> } ")"
+
+<param> ::= { <type-specifier> }+ <declarator>
+
+<simple-declarator> ::= <identifier> | "(" <declarator> ")"
 
 <type-specifier> ::= "int" | "long" |"unsigned" | "signed" 
 
@@ -39,11 +47,14 @@ Grammar:
 
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 
-<factor> ::= <const> | <identifier> | "(" { <type-specifier> }+ ")" <factor> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+<factor> ::= <const> | <identifier> | "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <factor> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
 
+<abstract-declarator> ::= "*" [ <abstract-declarator> ] | <direct-abstract-declarator>
+
+<direct-abstract-declarator> ::= "(" <abstract-declarator> ")" 
 <argument-list> ::= <exp> { "," <exp> }
 
-<unop> ::= "~" | "-" | "!" | "--" | "++"
+<unop> ::= "~" | "-" | "!" | "--" | "++" | "*" | "&"
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
@@ -95,6 +106,108 @@ public:
   std::string get_value() { return value; }
   void set_identifier(std::string value) { this->value = std::move(value); }
 };
+class AST_param_list_Node;
+class AST_simple_declarator_Node;
+class AST_direct_declarator_Node {
+  private:
+    std::shared_ptr<AST_simple_declarator_Node> simple_declarator;
+    std::shared_ptr<AST_param_list_Node> param_list;
+  public:
+    std::string get_AST_name() { return "DirectDeclarator"; }
+    std::shared_ptr<AST_simple_declarator_Node> get_simple_declarator() { return simple_declarator; }
+    void set_simple_declarator(std::shared_ptr<AST_simple_declarator_Node> simple_declarator) {
+      this->simple_declarator = std::move(simple_declarator);
+    }
+    std::shared_ptr<AST_param_list_Node> get_param_list() { return param_list; }
+    void set_param_list(std::shared_ptr<AST_param_list_Node> param_list) {
+      this->param_list = std::move(param_list);
+    }
+};
+class AST_declarator_Node;
+class AST_simple_declarator_Node {
+  private:
+    std::shared_ptr<AST_identifier_Node> identifier;
+    std::shared_ptr<AST_declarator_Node> declarator;
+  public:
+    std::string get_AST_name() { return "SimpleDeclarator"; }
+    std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+    void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+      this->identifier = std::move(identifier);
+    }
+    std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
+    void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
+      this->declarator = std::move(declarator);
+    }
+};
+class AST_declarator_Node {
+private:
+  std::shared_ptr<AST_declarator_Node> child;
+  std::shared_ptr<AST_direct_declarator_Node> direct_declarator;
+  std::string decl_type;  
+public:
+  std::string get_AST_name() { return "Declarator"; }
+  std::shared_ptr<AST_declarator_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_declarator_Node> child) {
+    this->child = std::move(child);
+  }
+  std::shared_ptr<AST_direct_declarator_Node> get_direct_declarator() { return direct_declarator; }
+  void set_direct_declarator(std::shared_ptr<AST_direct_declarator_Node> direct_declarator) {
+    this->direct_declarator = std::move(direct_declarator);
+  }
+  std::string get_decl_type() { return decl_type; }
+  void set_decl_type(std::string decl_type) { this->decl_type = std::move(decl_type); }
+};
+
+
+class AST_direct_abstract_declarator_Node;
+class AST_abstract_declarator_Node {
+  private:
+    std::shared_ptr<AST_abstract_declarator_Node> child;
+    std::shared_ptr<AST_direct_abstract_declarator_Node> direct_abstract_declarator;
+  public:
+    std::string get_AST_name() { return "AbstractDeclarator"; }
+    std::shared_ptr<AST_abstract_declarator_Node> get_child() { return child; }
+    void set_child(std::shared_ptr<AST_abstract_declarator_Node> child) {
+      this->child = std::move(child);
+    }
+    std::shared_ptr<AST_direct_abstract_declarator_Node> get_direct_abstract_declarator() { return direct_abstract_declarator; }
+    void set_direct_abstract_declarator(std::shared_ptr<AST_direct_abstract_declarator_Node> direct_abstract_declarator) {
+      this->direct_abstract_declarator = std::move(direct_abstract_declarator);
+    }
+};
+
+class AST_direct_abstract_declarator_Node {
+  private:
+    std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator;
+  public:
+    std::string get_AST_name() { return "DirectAbstractDeclarator"; }
+    std::shared_ptr<AST_abstract_declarator_Node> get_abstract_declarator() { return abstract_declarator; }
+    void set_abstract_declarator(std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator) {
+      this->abstract_declarator = std::move(abstract_declarator);
+    }
+};
+
+struct Param {
+  ElemType type;
+  std::shared_ptr<AST_declarator_Node> declarator;
+  void set_type(ElemType type) { this->type = type; }
+  ElemType get_type() { return type; }
+  void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
+    this->declarator = std::move(declarator);
+  }
+  std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
+};
+
+class AST_param_list_Node {
+  private:
+    std::vector<std::shared_ptr<Param>> params;
+  public:
+    std::string get_AST_name() { return "ParamList"; }
+    std::vector<std::shared_ptr<Param>> get_params() { return params; }
+    void add_param(std::shared_ptr<Param> param) {
+      params.emplace_back(std::move(param));
+    }
+};
 
 class AST_unop_Node {
 private:
@@ -134,6 +247,7 @@ private:
   ElemType castType;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
+  std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator;
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -167,7 +281,12 @@ public:
   void set_child(std::shared_ptr<AST_factor_Node> child) {
     this->child = std::move(child);
   }
-
+  std::shared_ptr<AST_abstract_declarator_Node> get_abstract_declarator() {
+    return abstract_declarator;
+  }
+  void set_abstract_declarator(std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator) {
+    this->abstract_declarator = std::move(abstract_declarator);
+  }
   ElemType get_type() { return type; }
   void set_type(ElemType type) { this->type = type; }
 };
@@ -294,6 +413,7 @@ enum class statementType {
   DO_WHILE
 };
 
+
 class AST_Statement_Node {
 private:
   std::shared_ptr<AST_exp_Node> exps;
@@ -381,19 +501,21 @@ enum class DeclarationType { VARIABLE, FUNCTION };
 
 class AST_Declaration_Node {
 private:
-  std::shared_ptr<AST_identifier_Node> identifier;
+  std::shared_ptr<AST_declarator_Node> declarator;
   DeclarationType type;
   SpecifierType specifier;
+  ElemType base_type;
 
 public:
   std::string get_AST_name() { return "Declaration"; }
-  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
-    this->identifier = std::move(identifier);
+  std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
+  void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
+    this->declarator = std::move(declarator);
   }
   DeclarationType get_type() { return type; }
   void set_type(DeclarationType type) { this->type = type; }
-
+  ElemType get_base_type() { return base_type; }
+  void set_base_type(ElemType base_type) { this->base_type = base_type; }
   SpecifierType get_specifier() { return specifier; }
   void set_specifier(SpecifierType specifier) { this->specifier = specifier; }
 };
@@ -413,12 +535,6 @@ public:
   ElemType get_type() { return type; }
 };
 
-struct Param {
-  ElemType type;
-  std::shared_ptr<AST_identifier_Node> identifier;
-
-  void set_type(ElemType type) { this->type = type; }
-};
 
 class AST_Block_Node;
 

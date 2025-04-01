@@ -14,6 +14,7 @@ void Codegen::gen_scar() {
         continue;
 
       MAKE_SHARED(scar::scar_Function_Node, scar_function);
+
       if (globalSymbolTable[funDecl->get_identifier()->get_value()].link ==
           symbolTable::linkage::INTERNAL) {
         scar_function->set_global(false);
@@ -24,7 +25,7 @@ void Codegen::gen_scar() {
 
       for (auto param : funDecl->get_params()) {
         MAKE_SHARED(scar::scar_Identifier_Node, param_id);
-        param_id->set_value(param->identifier->get_value());
+        //param_id->set_value(param->identifier->get_value());
         scar_function->add_param(param_id);
       }
 

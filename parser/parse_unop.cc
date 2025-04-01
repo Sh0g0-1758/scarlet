@@ -22,6 +22,12 @@ void parser::parse_unary_op(std::vector<token::Token> &tokens,
   case token::TOKEN::DECREMENT_OPERATOR:
     unop->set_op(unop::UNOP::PREDECREMENT);
     break;
+  case token::TOKEN::AAND:
+    unop->set_op(unop::UNOP::ADDRESS);
+    break;
+  case token::TOKEN::ASTERISK:
+    unop->set_op(unop::UNOP::DEREFERENCE);
+    break;
   default:
     UNREACHABLE()
   }
