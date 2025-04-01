@@ -55,7 +55,7 @@ void Codegen::gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
 
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
     scasm_inst2->set_type(scasm::instruction_type::MOV);
-    scasm_inst2->set_asm_type(instType);
+    scasm_inst2->set_asm_type(valToAsmType(inst->get_dst()));
     MAKE_SHARED(scasm::scasm_operand, scasm_src2);
     scasm_src2->set_type(scasm::operand_type::IMM);
     constant::Constant zero;

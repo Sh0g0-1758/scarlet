@@ -75,7 +75,29 @@ void Codegen::fix_instructions() {
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
 
-      if ((*it)->get_type() == scasm::instruction_type::CMP) {
+      if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE and
+          (*it)->get_type() == scasm::instruction_type::BINARY and
+          (*it)->get_dst()->get_type() != scasm::operand_type::REG) {
+        // subsd/addsd/mulsd/divsd/xorpd stack/reg/imm, stack/data
+        //        |
+        //        v
+        // movsd stack/data, %xmm15
+        // subsd/addsd/mulsd/divsd stack/reg/imm , %xmm15
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_asm_type((*it)->get_asm_type());
+        scasm_inst->set_src((*it)->get_dst());
+
+        MAKE_SHARED(scasm::scasm_operand, dst);
+        dst->set_type(scasm::operand_type::REG);
+        dst->set_reg(scasm::register_type::XMM15);
+        scasm_inst->set_dst(dst);
+
+        (*it)->set_dst(std::move(dst));
+        it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+        it++;
+
+      } else if ((*it)->get_type() == scasm::instruction_type::CMP) {
         // cmpl stack/reg, $5
         //       |
         //       v
@@ -220,27 +242,6 @@ void Codegen::fix_instructions() {
 
           it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
         }
-      } else if ((*it)->get_asm_type() == scasm::AssemblyType::DOUBLE and
-                 (*it)->get_type() == scasm::instruction_type::BINARY and
-                 (*it)->get_dst()->get_type() != scasm::operand_type::REG) {
-        // subsd/addsd/mulsd/divsd/xorpd stack/reg/imm, stack/data
-        //        |
-        //        v
-        // movsd stack/data, %xmm15
-        // subsd/addsd/mulsd/divsd stack/reg/imm , %xmm15
-        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-        scasm_inst->set_type(scasm::instruction_type::MOV);
-        scasm_inst->set_asm_type((*it)->get_asm_type());
-        scasm_inst->set_src((*it)->get_dst());
-
-        MAKE_SHARED(scasm::scasm_operand, dst);
-        dst->set_type(scasm::operand_type::REG);
-        dst->set_reg(scasm::register_type::XMM15);
-        scasm_inst->set_dst(dst);
-
-        (*it)->set_dst(std::move(dst));
-        it = funcs->get_instructions().insert(it, std::move(scasm_inst));
-        it++;
       } else if ((*it)->get_type() == scasm::instruction_type::CVTSI2SD) {
         // cvtsi2sd imm, stack/data
         //        |

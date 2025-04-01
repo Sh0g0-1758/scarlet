@@ -147,12 +147,14 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::BINARY) {
       assembly << "\t";
-      assembly << scasm::to_string(instr->get_binop());
-      // Xor with double is the only vector instruction we need in scarlet
-      if (instr->get_asm_type() == scasm::AssemblyType::DOUBLE and
-          instr->get_binop() == scasm::Binop::XOR) {
-        assembly << "pd";
+      if (instr->get_asm_type() == scasm::AssemblyType::DOUBLE) {
+        if (instr->get_binop() == scasm::Binop::XOR) {
+          assembly << "xorpd";
+        } else if (instr->get_binop() == scasm::Binop::MUL) {
+          assembly << "mulsd";
+        }
       } else {
+        assembly << scasm::to_string(instr->get_binop());
         POSTFIX_ASM_TYPE();
       }
       assembly << " ";
