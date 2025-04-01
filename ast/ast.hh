@@ -78,6 +78,8 @@ namespace ast {
 
 enum class SpecifierType { NONE, STATIC, EXTERN };
 enum class ElemType { NONE, INT, LONG, ULONG, UINT, DOUBLE };
+enum class FactorType { BASIC, FUNCTION_CALL };
+enum class DeclarationType { VARIABLE, FUNCTION, POINTER };
 
 ElemType constTypeToElemType(constant::Type t);
 constant::Type elemTypeToConstType(ElemType t);
@@ -112,6 +114,8 @@ class AST_direct_declarator_Node {
   private:
     std::shared_ptr<AST_simple_declarator_Node> simple_declarator;
     std::shared_ptr<AST_param_list_Node> param_list;
+    std::vector<DeclarationType> derived_type = {};
+
   public:
     std::string get_AST_name() { return "DirectDeclarator"; }
     std::shared_ptr<AST_simple_declarator_Node> get_simple_declarator() { return simple_declarator; }
@@ -122,58 +126,122 @@ class AST_direct_declarator_Node {
     void set_param_list(std::shared_ptr<AST_param_list_Node> param_list) {
       this->param_list = std::move(param_list);
     }
+    std::vector<DeclarationType> get_derived_type() { return derived_type; }
+    void add_derived_type(DeclarationType type) {
+      this->derived_type.emplace_back(type);
+    }
+    void concatenate_derived_type(std::vector<DeclarationType> types) {
+      this->derived_type.insert(this->derived_type.end(), types.begin(),
+                                types.end());
+    }
 };
 class AST_declarator_Node;
 class AST_simple_declarator_Node {
-  private:
-    std::shared_ptr<AST_identifier_Node> identifier;
-    std::shared_ptr<AST_declarator_Node> declarator;
-  public:
-    std::string get_AST_name() { return "SimpleDeclarator"; }
-    std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-    void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
-      this->identifier = std::move(identifier);
-    }
-    std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
-    void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
-      this->declarator = std::move(declarator);
-    }
+private:
+  std::shared_ptr<AST_identifier_Node> identifier;
+  std::shared_ptr<AST_declarator_Node> declarator;
+  std::vector<DeclarationType> derived_type = {};
+
+public:
+  std::string get_AST_name() { return "SimpleDeclarator"; }
+  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->identifier = std::move(identifier);
+  }
+  std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
+  void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
+    this->declarator = std::move(declarator);
+  }
+  std::vector<DeclarationType> get_derived_type() { return derived_type; }
+  void add_derived_type(DeclarationType type) {
+    this->derived_type.emplace_back(type);
+  }
+  void concatenate_derived_type(std::vector<DeclarationType> types) {
+    this->derived_type.insert(this->derived_type.end(), types.begin(),
+                              types.end());
+  }
 };
 class AST_declarator_Node {
 private:
   std::shared_ptr<AST_declarator_Node> child;
   std::shared_ptr<AST_direct_declarator_Node> direct_declarator;
-  std::string decl_type;  
+  std::vector<DeclarationType> derived_type = {};
+
 public:
   std::string get_AST_name() { return "Declarator"; }
   std::shared_ptr<AST_declarator_Node> get_child() { return child; }
   void set_child(std::shared_ptr<AST_declarator_Node> child) {
     this->child = std::move(child);
   }
-  std::shared_ptr<AST_direct_declarator_Node> get_direct_declarator() { return direct_declarator; }
-  void set_direct_declarator(std::shared_ptr<AST_direct_declarator_Node> direct_declarator) {
+  std::shared_ptr<AST_direct_declarator_Node> get_direct_declarator() {
+    return direct_declarator;
+  }
+  void set_direct_declarator(
+      std::shared_ptr<AST_direct_declarator_Node> direct_declarator) {
     this->direct_declarator = std::move(direct_declarator);
   }
-  std::string get_decl_type() { return decl_type; }
-  void set_decl_type(std::string decl_type) { this->decl_type = std::move(decl_type); }
+  std::vector<DeclarationType> get_derived_type() { return derived_type; }
+  void add_derived_type(DeclarationType type) {
+    this->derived_type.emplace_back(type);
+  }
+  void concatenate_derived_type(std::vector<DeclarationType> types) {
+    this->derived_type.insert(this->derived_type.end(), types.begin(),
+                              types.end());
+  }
+  void set_derived_type(std::vector<DeclarationType> types) {
+    this->derived_type = std::move(types);
+  }
+  std::shared_ptr<AST_identifier_Node> get_identifier() {
+    if (child == nullptr && !(direct_declarator == nullptr)) {
+      return direct_declarator->get_simple_declarator()->get_identifier();
+    }
+    while (child->get_child() != nullptr) {
+      child = child->get_child();
+    }
+    return child->get_direct_declarator()
+        ->get_simple_declarator()
+        ->get_identifier();
+  }
+  void set_identifier(std::string identifier) {
+    if (child == nullptr && !(direct_declarator == nullptr)) {
+      std::shared_ptr<AST_identifier_Node> identifier_Node =
+          direct_declarator->get_simple_declarator()->get_identifier();
+      identifier_Node->set_identifier(identifier);
+      return;
+    }
+    while (child->get_child() != nullptr) {
+      child = child->get_child();
+    }
+    std::shared_ptr<AST_identifier_Node> identifier_Node =
+        child->direct_declarator->get_simple_declarator()->get_identifier();
+    identifier_Node->set_identifier(identifier);
+    return;
+  }
 };
 
 
 class AST_direct_abstract_declarator_Node;
 class AST_abstract_declarator_Node {
-  private:
-    std::shared_ptr<AST_abstract_declarator_Node> child;
-    std::shared_ptr<AST_direct_abstract_declarator_Node> direct_abstract_declarator;
-  public:
-    std::string get_AST_name() { return "AbstractDeclarator"; }
-    std::shared_ptr<AST_abstract_declarator_Node> get_child() { return child; }
-    void set_child(std::shared_ptr<AST_abstract_declarator_Node> child) {
-      this->child = std::move(child);
-    }
-    std::shared_ptr<AST_direct_abstract_declarator_Node> get_direct_abstract_declarator() { return direct_abstract_declarator; }
-    void set_direct_abstract_declarator(std::shared_ptr<AST_direct_abstract_declarator_Node> direct_abstract_declarator) {
-      this->direct_abstract_declarator = std::move(direct_abstract_declarator);
-    }
+private:
+  std::shared_ptr<AST_abstract_declarator_Node> child;
+  std::shared_ptr<AST_direct_abstract_declarator_Node>
+      direct_abstract_declarator;
+
+public:
+  std::string get_AST_name() { return "AbstractDeclarator"; }
+  std::shared_ptr<AST_abstract_declarator_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_abstract_declarator_Node> child) {
+    this->child = std::move(child);
+  }
+  std::shared_ptr<AST_direct_abstract_declarator_Node>
+  get_direct_abstract_declarator() {
+    return direct_abstract_declarator;
+  }
+  void set_direct_abstract_declarator(
+      std::shared_ptr<AST_direct_abstract_declarator_Node>
+          direct_abstract_declarator) {
+    this->direct_abstract_declarator = std::move(direct_abstract_declarator);
+  }
 };
 
 class AST_direct_abstract_declarator_Node {
@@ -230,8 +298,6 @@ public:
 };
 
 class AST_exp_Node;
-
-enum class FactorType { BASIC, FUNCTION_CALL };
 
 class AST_factor_Node {
 private:
@@ -497,14 +563,13 @@ public:
   }
 };
 
-enum class DeclarationType { VARIABLE, FUNCTION };
-
 class AST_Declaration_Node {
 private:
   std::shared_ptr<AST_declarator_Node> declarator;
   DeclarationType type;
   SpecifierType specifier;
   ElemType base_type;
+  std::vector<DeclarationType> derived_type = {};
 
 public:
   std::string get_AST_name() { return "Declaration"; }
@@ -518,6 +583,10 @@ public:
   void set_base_type(ElemType base_type) { this->base_type = base_type; }
   SpecifierType get_specifier() { return specifier; }
   void set_specifier(SpecifierType specifier) { this->specifier = specifier; }
+  void add_derived_type(DeclarationType type) {
+    derived_type.emplace_back(type);
+  }
+  std::vector<DeclarationType> get_derived_type() { return derived_type; }
 };
 
 class AST_variable_declaration_Node : public AST_Declaration_Node {

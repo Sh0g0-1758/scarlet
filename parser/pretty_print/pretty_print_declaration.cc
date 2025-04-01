@@ -9,17 +9,17 @@ void parser::pretty_print_declaration(
     return;
   if (declaration->get_type() == ast::DeclarationType::VARIABLE) {
     std::cout << "\tVariable Declaration=(" << std::endl;
-    std::cout << "\t\tidentifier=\""
-              << declaration->get_identifier()->get_value() << "\","
-              << std::endl;
+    // std::cout << "\t\tidentifier=\""
+    //           << declaration->get_declarator()->get_identifier()->get_value() << "\","
+    //           << std::endl;
     pretty_print_variable_declaration(
         std::static_pointer_cast<ast::AST_variable_declaration_Node>(
             declaration));
   } else {
     std::cout << "\tFunction Declaration=(" << std::endl;
-    std::cout << "\t\tidentifier=\""
-              << declaration->get_identifier()->get_value() << "\","
-              << std::endl;
+    // std::cout << "\t\tidentifier=\""
+    //           << declaration->get_declarator()->get_identifier()->get_value() << "\","
+    //           << std::endl;
     pretty_print_function_declaration(
         std::static_pointer_cast<ast::AST_function_declaration_Node>(
             declaration));
@@ -49,8 +49,8 @@ void parser::pretty_print_function_declaration(
     std::cout << "\t\t\tParam=(" << std::endl;
     std::cout << "\t\t\t\ttype=" << ast::to_string(param->type) << ","
               << std::endl;
-    std::cout << "\t\t\t\tidentifier=\"" << param->identifier->get_value()
-              << "\"" << std::endl;
+    // std::cout << "\t\t\t\tidentifier=\"" << param->get_declarator()->get_identifier()->get_value()
+    //           << "\"" << std::endl;
     std::cout << "\t\t\t)," << std::endl;
   }
   std::cout << "\t\t]," << std::endl;
