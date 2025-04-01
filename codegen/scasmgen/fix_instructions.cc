@@ -137,7 +137,6 @@ void Codegen::fix_instructions() {
           scasm_inst->set_dst((*it)->get_dst());
           (*it)->set_dst(std::move(src));
           it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
-          it++;
         }
       } else if ((*it)->get_type() == scasm::instruction_type::CVTTS2DI and
                  (*it)->get_dst()->get_type() != scasm::operand_type::REG) {
@@ -145,7 +144,7 @@ void Codegen::fix_instructions() {
         //        |
         //        v
         // cvttsd2si stack/reg/imm, %R11
-        // movsd %r11, stack/data
+        // mov %r11, stack/data
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type((*it)->get_asm_type());
@@ -156,7 +155,6 @@ void Codegen::fix_instructions() {
         scasm_inst->set_dst((*it)->get_dst());
         (*it)->set_dst(std::move(src));
         it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
-        it++;
       } else if ((*it)->get_type() == scasm::instruction_type::CMP) {
         // cmpl stack/reg, $5
         //       |
