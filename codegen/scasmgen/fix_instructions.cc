@@ -33,6 +33,11 @@ void Codegen::fix_instructions() {
   }
 
   // FIXES SPECIFIC TO X86_64
+  /* **NOTE**
+   * For this pass, use only R10 register because we use R11 for another pass
+   * and the fixes required for some intruction can require both these passes.
+   * As such the registers can coalesce
+   */
   for (auto &elem : scasm.get_elems()) {
     if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
       continue;
@@ -270,6 +275,11 @@ void Codegen::fix_instructions() {
     }
 
     // Fixing up instructions in which both src and dst are Stack/Data
+    /* **NOTE**
+     * For this pass, use only R10 register because we use R11 for another pass
+     * and the fixes required for some intruction can require both these passes.
+     * As such the registers can coalesce
+     */
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
       if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
@@ -297,6 +307,11 @@ void Codegen::fix_instructions() {
       }
     }
 
+    /* **NOTE**
+     * For this pass, use only R11 register because we use R10 for another pass
+     * and the fixes required for some intruction can require both these passes.
+     * As such the registers can coalesce
+     */
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
       // If the Immediate value cannot be represented as a signed 32 bit,
