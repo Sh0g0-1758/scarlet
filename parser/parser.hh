@@ -50,7 +50,8 @@ private:
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_variable_declaration_Node> decl);
   void parse_declarator(std::vector<token::Token> &tokens,
-                        std::shared_ptr<ast::AST_declarator_Node> decl);
+                        std::shared_ptr<ast::AST_declarator_Node> &decl,
+                        std::shared_ptr<ast::AST_identifier_Node> &identifier);
   void parse_block(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_Block_Node> block);
   void parse_block_item(std::vector<token::Token> &tokens,
@@ -67,7 +68,7 @@ private:
                     std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_abstract_declarator(
       std::vector<token::Token> &tokens,
-      std::shared_ptr<ast::AST_abstract_declarator_Node> &declarator);
+      std::shared_ptr<ast::AST_declarator_Node> &declarator);
   void parse_exp(std::vector<token::Token> &tokens,
                  std::shared_ptr<ast::AST_exp_Node> &exp, int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,

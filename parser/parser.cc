@@ -31,7 +31,7 @@ void parser::semantic_analysis() {
     } else if (decls->get_type() == ast::DeclarationType::FUNCTION) {
       auto funcs =
           std::static_pointer_cast<ast::AST_function_declaration_Node>(decls);
-      currFuncName = funcs->get_declarator()->get_identifier()->get_value();
+      currFuncName = funcs->get_identifier()->get_value();
       analyze_global_function_declaration(funcs, symbol_table);
 
       // Each function has its own set of goto labels

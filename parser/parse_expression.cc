@@ -35,10 +35,10 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 
 void parser::parse_abstract_declarator(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_abstract_declarator_Node> &declarator) {
+    std::shared_ptr<ast::AST_declarator_Node> &declarator) {
   if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
-    MAKE_SHARED(ast::AST_abstract_declarator_Node, child);
+    MAKE_SHARED(ast::AST_declarator_Node, child);
     parse_abstract_declarator(tokens, child);
     declarator->set_child(std::move(child));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
@@ -47,7 +47,7 @@ void parser::parse_abstract_declarator(
     declarator->set_pointer(true);
     if (!tokens.empty() and
         tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
-      MAKE_SHARED(ast::AST_abstract_declarator_Node, child);
+      MAKE_SHARED(ast::AST_declarator_Node, child);
       parse_abstract_declarator(tokens, child);
       declarator->set_child(std::move(child));
     }
@@ -125,7 +125,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
         PARSE_TYPE(factor, set_cast_type);
         if (!tokens.empty() and
             tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
-          MAKE_SHARED(ast::AST_abstract_declarator_Node, cast_declarator);
+          MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);
           parse_abstract_declarator(tokens, cast_declarator);
           factor->set_cast_declarator(std::move(cast_declarator));
         }

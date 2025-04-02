@@ -55,23 +55,22 @@ void parser::parse_declaration(
 
 void parser::parse_declarator(
     std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_declarator_Node> declarator) {
+    std::shared_ptr<ast::AST_declarator_Node> &declarator,
+    std::shared_ptr<ast::AST_identifier_Node> &identifier) {
   if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
-    MAKE_SHARED(ast::AST_identifier_Node, identifier);
     identifier->set_identifier(tokens[0].get_value().value());
-    declarator->set_identifier(std::move(identifier));
     tokens.erase(tokens.begin());
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_declarator_Node, child);
-    parse_declarator(tokens, child);
+    parse_declarator(tokens, child, identifier);
     declarator->set_child(std::move(child));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
   } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
     tokens.erase(tokens.begin());
     declarator->set_pointer(true);
     MAKE_SHARED(ast::AST_declarator_Node, child);
-    parse_declarator(tokens, child);
+    parse_declarator(tokens, child, identifier);
     declarator->set_child(std::move(child));
   }
 }
@@ -83,7 +82,14 @@ void parser::parse_variable_declaration(
   if (decl->get_specifier() == ast::SpecifierType::NONE)
     PARSE_SPECIFIER(decl);
   MAKE_SHARED(ast::AST_declarator_Node, declarator);
-  parse_declarator(tokens, declarator);
+  MAKE_SHARED(ast::AST_identifier_Node, identifier);
+  parse_declarator(tokens, declarator, identifier);
+  if (identifier->get_value().empty()) {
+    success = false;
+    error_messages.emplace_back(
+        "Identifier is necessary to declare a variable");
+  }
+  decl->set_identifier(std::move(identifier));
   decl->set_declarator(std::move(declarator));
   if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     tokens.erase(tokens.begin());
@@ -104,7 +110,14 @@ void parser::parse_function_declaration(
   if (decl->get_specifier() == ast::SpecifierType::NONE)
     PARSE_SPECIFIER(decl);
   MAKE_SHARED(ast::AST_declarator_Node, declarator);
-  parse_declarator(tokens, declarator);
+  MAKE_SHARED(ast::AST_identifier_Node, identifier);
+  parse_declarator(tokens, declarator, identifier);
+  if (identifier->get_value().empty()) {
+    success = false;
+    error_messages.emplace_back(
+        "Identifier is necessary to declare a variable");
+  }
+  decl->set_identifier(std::move(identifier));
   decl->set_declarator(std::move(declarator));
   EXPECT(token::TOKEN::OPEN_PARANTHESES);
   parse_param_list(tokens, decl);
@@ -114,7 +127,7 @@ void parser::parse_function_declaration(
     return;
   } else if (atGlobalLevel) {
     MAKE_SHARED(ast::AST_Block_Node, block);
-    currFuncName = decl->get_declarator()->get_identifier()->get_value();
+    currFuncName = decl->get_identifier()->get_value();
     parse_block(tokens, block);
     decl->set_block(std::move(block));
   } else {
@@ -134,7 +147,14 @@ void parser::parse_param_list(
   PARSE_TYPE(param, set_type);
 
   MAKE_SHARED(ast::AST_declarator_Node, declarator);
-  parse_declarator(tokens, declarator);
+  MAKE_SHARED(ast::AST_identifier_Node, identifier);
+  parse_declarator(tokens, declarator, identifier);
+  if (identifier->get_value().empty()) {
+    success = false;
+    error_messages.emplace_back(
+        "Identifier is necessary to declare a variable");
+  }
+  param->identifier = std::move(identifier);
   param->declarator = std::move(declarator);
 
   decl->add_param(std::move(param));
@@ -144,7 +164,14 @@ void parser::parse_param_list(
     MAKE_SHARED(ast::Param, param);
     PARSE_TYPE(param, set_type);
     MAKE_SHARED(ast::AST_declarator_Node, declarator);
-    parse_declarator(tokens, declarator);
+    MAKE_SHARED(ast::AST_identifier_Node, identifier);
+    parse_declarator(tokens, declarator, identifier);
+    if (identifier->get_value().empty()) {
+      success = false;
+      error_messages.emplace_back(
+          "Identifier is necessary to declare a variable");
+    }
+    param->identifier = std::move(identifier);
     param->declarator = std::move(declarator);
     decl->add_param(std::move(param));
   }

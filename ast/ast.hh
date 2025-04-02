@@ -148,17 +148,17 @@ class AST_exp_Node;
 
 enum class FactorType { BASIC, FUNCTION_CALL };
 
-class AST_abstract_declarator_Node {
+class AST_declarator_Node {
 private:
   bool pointer = false;
-  std::shared_ptr<AST_abstract_declarator_Node> child;
+  std::shared_ptr<AST_declarator_Node> child;
 
 public:
   std::string get_AST_name() { return "Declarator"; }
   bool is_pointer() { return pointer; }
   void set_pointer(bool pointer) { this->pointer = pointer; }
-  std::shared_ptr<AST_abstract_declarator_Node> get_child() { return child; }
-  void set_child(std::shared_ptr<AST_abstract_declarator_Node> child) {
+  std::shared_ptr<AST_declarator_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_declarator_Node> child) {
     this->child = std::move(child);
   }
 };
@@ -175,7 +175,7 @@ private:
   std::shared_ptr<AST_exp_Node> exp_node;
   FactorType factorType = FactorType::BASIC;
   ElemType castType;
-  std::shared_ptr<AST_abstract_declarator_Node> castDeclarator;
+  std::shared_ptr<AST_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
 
@@ -207,11 +207,11 @@ public:
   ElemType get_cast_type() { return castType; }
   void set_cast_type(ElemType castType) { this->castType = castType; }
 
-  std::shared_ptr<AST_abstract_declarator_Node> get_cast_declarator() {
+  std::shared_ptr<AST_declarator_Node> get_cast_declarator() {
     return castDeclarator;
   }
-  void set_cast_declarator(
-      std::shared_ptr<AST_abstract_declarator_Node> castDeclarator) {
+  void
+  set_cast_declarator(std::shared_ptr<AST_declarator_Node> castDeclarator) {
     this->castDeclarator = std::move(castDeclarator);
   }
 
@@ -429,31 +429,12 @@ public:
   }
 };
 
-class AST_declarator_Node {
-private:
-  bool pointer = false;
-  std::shared_ptr<AST_identifier_Node> identifier;
-  std::shared_ptr<AST_declarator_Node> child;
-
-public:
-  std::string get_AST_name() { return "Declarator"; }
-  bool is_pointer() { return pointer; }
-  void set_pointer(bool pointer) { this->pointer = pointer; }
-  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
-    this->identifier = std::move(identifier);
-  }
-  std::shared_ptr<AST_declarator_Node> get_child() { return child; }
-  void set_child(std::shared_ptr<AST_declarator_Node> child) {
-    this->child = std::move(child);
-  }
-};
-
 enum class DeclarationType { VARIABLE, FUNCTION };
 
 class AST_Declaration_Node {
 private:
   std::shared_ptr<AST_declarator_Node> declarator;
+  std::shared_ptr<AST_identifier_Node> identifier;
   DeclarationType type;
   SpecifierType specifier;
 
@@ -463,6 +444,12 @@ public:
   void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
     this->declarator = std::move(declarator);
   }
+
+  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->identifier = std::move(identifier);
+  }
+
   DeclarationType get_type() { return type; }
   void set_type(DeclarationType type) { this->type = type; }
 
@@ -488,6 +475,7 @@ public:
 struct Param {
   ElemType type;
   std::shared_ptr<AST_declarator_Node> declarator;
+  std::shared_ptr<AST_identifier_Node> identifier;
 
   // This lets us use a macro which simplifies function params parsing
   void set_type(ElemType type) { this->type = type; }
