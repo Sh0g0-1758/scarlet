@@ -287,6 +287,7 @@ void parser::parse_for_init(
     MAKE_SHARED(ast::AST_variable_declaration_Node, varDecl);
     MAKE_SHARED(ast::AST_declarator_Node, declarator);
     PARSE_TYPE(varDecl, set_base_type);
+    varDecl->set_type(varDecl->get_base_type());
     parse_declarator(tokens, declarator);
     if (isFuncDecl(declarator)) {
       success = false;
