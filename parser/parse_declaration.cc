@@ -25,16 +25,22 @@ void parser::parse_declaration(
     bool atGlobalLevel) {
   bool isFuncDecl = false;
   int iter = 0;
+  int num_identifiers = 0;
   while (tokens[iter].get_token() != token::TOKEN::SEMICOLON and
          iter < (int)tokens.size()) {
     // If we find an assignment token, then this is a variable declaration
     if (tokens[iter].get_token() == token::TOKEN::ASSIGNMENT) {
       break;
     }
-    // If we find an open parantheses, then this is a function declaration
-    if (tokens[iter].get_token() == token::TOKEN::OPEN_PARANTHESES) {
-      isFuncDecl = true;
-      break;
+
+    // If we find more than one identifier, then this is a function declaration
+    if (tokens[iter].get_token() == token::TOKEN::IDENTIFIER or
+        tokens[iter].get_token() == token::TOKEN::VOID) {
+      num_identifiers++;
+      if (num_identifiers > 1) {
+        isFuncDecl = true;
+        break;
+      }
     }
     iter++;
   }
