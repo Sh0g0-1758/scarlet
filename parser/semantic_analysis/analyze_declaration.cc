@@ -5,6 +5,7 @@ namespace parser {
 
 #define INITZERO()                                                             \
   constant::Constant constZero;                                                \
+                                                                               \
   switch (varDecl->get_type()) {                                               \
   case ast::ElemType::INT:                                                     \
     constZero.set_type(constant::Type::INT);                                   \
@@ -35,7 +36,8 @@ void parser::analyze_declaration(
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
         &symbol_table,
     int indx) {
-  std::string var_name = declaration->get_declarator()->get_identifier()->get_value();
+  std::string var_name =
+      declaration->get_declarator()->get_identifier()->get_value();
   if (declaration->get_type() == ast::DeclarationType::VARIABLE) {
     if (symbol_table.find({var_name, indx}) != symbol_table.end()) {
       // the symbol has been declared twice which is illegal
@@ -80,7 +82,8 @@ void parser::analyze_global_variable_declaration(
     std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
         &symbol_table) {
-  std::string var_name = varDecl->get_declarator()->get_identifier()->get_value();
+  std::string var_name =
+      varDecl->get_declarator()->get_identifier()->get_value();
 
   // Check if the symbol has been declared before
   if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
@@ -219,14 +222,16 @@ void parser::analyze_global_function_declaration(
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
         proxy_symbol_table(symbol_table);
     for (auto param : funcDecl->get_params()) {
-      std::string temp_name = get_temp_name(param->get_declarator()->get_identifier()->get_value());
-      proxy_symbol_table[{param->get_declarator()->get_identifier()->get_value(), 1}] = {
+      std::string temp_name =
+          get_temp_name(param->get_declarator()->get_identifier()->get_value());
+      proxy_symbol_table[{
+          param->get_declarator()->get_identifier()->get_value(), 1}] = {
           temp_name,
           symbolTable::linkage::NONE,
           symbolTable::symbolType::VARIABLE,
           {param->type}};
-      globalSymbolTable[temp_name] =
-          proxy_symbol_table[{param->get_declarator()->get_identifier()->get_value(), 1}];
+      globalSymbolTable[temp_name] = proxy_symbol_table[{
+          param->get_declarator()->get_identifier()->get_value(), 1}];
       param->get_declarator()->get_identifier()->set_identifier(temp_name);
     }
     analyze_block(funcDecl->get_block(), proxy_symbol_table, 1);
@@ -240,13 +245,18 @@ void parser::analyze_function_declaration(
     std::string &var_name, int indx) {
   // Check that the function parameters always have different names.
   std::set<std::string> param_names;
+
   for (auto param : funcDecl->get_params()) {
-    if (param_names.find(param->get_declarator()->get_identifier()->get_value()) != param_names.end()) {
+    if (param_names.find(
+            param->get_declarator()->get_identifier()->get_value()) !=
+        param_names.end()) {
       success = false;
-      error_messages.emplace_back("Variable " + param->get_declarator()->get_identifier()->get_value() +
-                                  " already declared");
+      error_messages.emplace_back(
+          "Variable " + param->get_declarator()->get_identifier()->get_value() +
+          " already declared");
     } else {
-      param_names.insert(param->get_declarator()->get_identifier()->get_value());
+      param_names.insert(
+          param->get_declarator()->get_identifier()->get_value());
     }
   }
 
@@ -273,6 +283,7 @@ void parser::analyze_function_declaration(
   if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
     if (globalSymbolTable[var_name].typeDef != funcType or
         globalSymbolTable[var_name].type == symbolTable::symbolType::VARIABLE) {
+
       success = false;
       error_messages.emplace_back(var_name +
                                   " redeclared with different signature");

@@ -56,6 +56,18 @@ std::string to_string(ast::ElemType type) {
   UNREACHABLE();
 }
 
+std::string to_string(ast::DeclarationType type) {
+  switch (type) {
+  case ast::DeclarationType::VARIABLE:
+    return "Variable";
+  case ast::DeclarationType::FUNCTION:
+    return "Function";
+  case ast::DeclarationType::POINTER:
+    return "Pointer";
+  }
+  UNREACHABLE();
+}
+
 std::string to_string(ast::SpecifierType type) {
   switch (type) {
   case ast::SpecifierType::STATIC:

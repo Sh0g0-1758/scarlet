@@ -26,8 +26,9 @@ void Codegen::gen_scar_declaration(
         scar_instruction->set_src1(scar_val_src);
         MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
         scar_val_dst->set_type(scar::val_type::VAR);
-        scar_val_dst->set_reg_name(
-            variable_declaration->get_declarator()->get_identifier()->get_value());
+        scar_val_dst->set_reg_name(variable_declaration->get_declarator()
+                                       ->get_identifier()
+                                       ->get_value());
         scar_instruction->set_dst(scar_val_dst);
         scar_function->add_instruction(scar_instruction);
       }

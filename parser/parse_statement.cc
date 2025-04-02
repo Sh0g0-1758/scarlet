@@ -288,7 +288,7 @@ void parser::parse_for_init(
     MAKE_SHARED(ast::AST_declarator_Node, declarator);
     PARSE_TYPE(varDecl, set_base_type);
     parse_declarator(tokens, declarator);
-    if(isFuncDecl(declarator)){
+    if (isFuncDecl(declarator)) {
       success = false;
       error_messages.emplace_back("Function declaration in for init");
     }

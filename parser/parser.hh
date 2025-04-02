@@ -42,8 +42,8 @@ private:
 
   bool isFuncDecl(std::shared_ptr<ast::AST_declarator_Node> decl);
   void parse_abstract_declarator(
-    std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_abstract_declarator_Node> &abstract_declarator);
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_abstract_declarator_Node> &abstract_declarator);
   void parse_declarator(std::vector<token::Token> &tokens,
                         std::shared_ptr<ast::AST_declarator_Node> &declarator);
   void parse_direct_declarator(
@@ -52,10 +52,9 @@ private:
   void parse_simple_declarator(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_simple_declarator_Node> &simple_declarator);
-  
-  void parse_param_list(
-    std::vector<token::Token> &tokens,
-    std::shared_ptr<ast::AST_param_list_Node> &param_list);
+
+  void parse_param_list(std::vector<token::Token> &tokens,
+                        std::shared_ptr<ast::AST_param_list_Node> &param_list);
   void parse_function_declaration(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_function_declaration_Node> decl,

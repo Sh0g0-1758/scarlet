@@ -17,8 +17,12 @@ namespace codegen {
 void Codegen::pretty_print_function(
     std::shared_ptr<scar::scar_Function_Node> function) {
   std::cout << "\tFunction(" << std::endl;
-  std::cout << "\t\tname=\"" << function->get_identifier()->get_value() << "\","
-            << std::endl;
+  if (function->get_identifier() == nullptr) {
+    std::cout << "\t\tname=\"NULL\"," << std::endl;
+  } else {
+    std::cout << "\t\tname=\"" << function->get_identifier()->get_value()
+              << "\"," << std::endl;
+  }
   std::cout << "\t\tglobal=" << (function->is_global() ? "True" : "False")
             << "," << std::endl;
   std::cout << "\t\tparams=[";
@@ -99,8 +103,12 @@ void Codegen::pretty_print_function(
 void Codegen::pretty_print_static_variable(
     std::shared_ptr<scar::scar_StaticVariable_Node> static_variable) {
   std::cout << "\tStaticVariable(" << std::endl;
-  std::cout << "\t\tname=\"" << static_variable->get_identifier()->get_value()
-            << "\"," << std::endl;
+  if (static_variable->get_identifier() == nullptr) {
+    std::cout << "\t\tname=\"NULL\"," << std::endl;
+  } else {
+    std::cout << "\t\tname=\"" << static_variable->get_identifier()->get_value()
+              << "\"," << std::endl;
+  }
   std::cout << "\t\tglobal="
             << (static_variable->is_global() ? "True" : "False") << ","
             << std::endl;

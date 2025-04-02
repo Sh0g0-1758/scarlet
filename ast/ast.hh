@@ -85,6 +85,7 @@ ElemType constTypeToElemType(constant::Type t);
 constant::Type elemTypeToConstType(ElemType t);
 std::string to_string(ast::ElemType type);
 std::string to_string(ast::SpecifierType type);
+std::string to_string(ast::DeclarationType type);
 int getSizeType(ast::ElemType type);
 ast::ElemType getParentType(ast::ElemType left, ast::ElemType right);
 constant::Constant castConstToVal(constant::Constant c, ast::ElemType type);
@@ -111,29 +112,32 @@ public:
 class AST_param_list_Node;
 class AST_simple_declarator_Node;
 class AST_direct_declarator_Node {
-  private:
-    std::shared_ptr<AST_simple_declarator_Node> simple_declarator;
-    std::shared_ptr<AST_param_list_Node> param_list;
-    std::vector<DeclarationType> derived_type = {};
+private:
+  std::shared_ptr<AST_simple_declarator_Node> simple_declarator;
+  std::shared_ptr<AST_param_list_Node> param_list;
+  std::vector<DeclarationType> derived_type = {};
 
-  public:
-    std::string get_AST_name() { return "DirectDeclarator"; }
-    std::shared_ptr<AST_simple_declarator_Node> get_simple_declarator() { return simple_declarator; }
-    void set_simple_declarator(std::shared_ptr<AST_simple_declarator_Node> simple_declarator) {
-      this->simple_declarator = std::move(simple_declarator);
-    }
-    std::shared_ptr<AST_param_list_Node> get_param_list() { return param_list; }
-    void set_param_list(std::shared_ptr<AST_param_list_Node> param_list) {
-      this->param_list = std::move(param_list);
-    }
-    std::vector<DeclarationType> get_derived_type() { return derived_type; }
-    void add_derived_type(DeclarationType type) {
-      this->derived_type.emplace_back(type);
-    }
-    void concatenate_derived_type(std::vector<DeclarationType> types) {
-      this->derived_type.insert(this->derived_type.end(), types.begin(),
-                                types.end());
-    }
+public:
+  std::string get_AST_name() { return "DirectDeclarator"; }
+  std::shared_ptr<AST_simple_declarator_Node> get_simple_declarator() {
+    return simple_declarator;
+  }
+  void set_simple_declarator(
+      std::shared_ptr<AST_simple_declarator_Node> simple_declarator) {
+    this->simple_declarator = std::move(simple_declarator);
+  }
+  std::shared_ptr<AST_param_list_Node> get_param_list() { return param_list; }
+  void set_param_list(std::shared_ptr<AST_param_list_Node> param_list) {
+    this->param_list = std::move(param_list);
+  }
+  std::vector<DeclarationType> get_derived_type() { return derived_type; }
+  void add_derived_type(DeclarationType type) {
+    this->derived_type.emplace_back(type);
+  }
+  void concatenate_derived_type(std::vector<DeclarationType> types) {
+    this->derived_type.insert(this->derived_type.end(), types.begin(),
+                              types.end());
+  }
 };
 class AST_declarator_Node;
 class AST_simple_declarator_Node {
@@ -161,7 +165,8 @@ public:
                               types.end());
   }
 };
-class AST_declarator_Node {
+class AST_declarator_Node
+    : public std::enable_shared_from_this<AST_declarator_Node> {
 private:
   std::shared_ptr<AST_declarator_Node> child;
   std::shared_ptr<AST_direct_declarator_Node> direct_declarator;
@@ -191,34 +196,71 @@ public:
   void set_derived_type(std::vector<DeclarationType> types) {
     this->derived_type = std::move(types);
   }
+
   std::shared_ptr<AST_identifier_Node> get_identifier() {
-    if (child == nullptr && !(direct_declarator == nullptr)) {
-      return direct_declarator->get_simple_declarator()->get_identifier();
+    // This overall code traverses the AST tree to find the identifier node
+    std::shared_ptr<AST_declarator_Node> Dummy_Dec_Node = shared_from_this();
+    std::shared_ptr<AST_direct_declarator_Node> Dummy_Direct_Dec_Node = nullptr;
+    std::shared_ptr<AST_simple_declarator_Node> Dummy_Simple_Dec_Node = nullptr;
+    while (Dummy_Dec_Node || Dummy_Direct_Dec_Node || Dummy_Simple_Dec_Node) {
+      if (Dummy_Dec_Node) {
+        if (Dummy_Dec_Node->get_child()) {
+          Dummy_Dec_Node = Dummy_Dec_Node->get_child();
+        } else {
+          Dummy_Direct_Dec_Node = Dummy_Dec_Node->get_direct_declarator();
+          Dummy_Dec_Node = nullptr;
+        }
+      } else if (Dummy_Direct_Dec_Node) {
+        if (Dummy_Direct_Dec_Node->get_simple_declarator()) {
+          Dummy_Simple_Dec_Node =
+              Dummy_Direct_Dec_Node->get_simple_declarator();
+          Dummy_Direct_Dec_Node = nullptr;
+        }
+      } else {
+        if (Dummy_Simple_Dec_Node->get_identifier()) {
+          return Dummy_Simple_Dec_Node->get_identifier();
+        } else {
+          Dummy_Dec_Node = Dummy_Simple_Dec_Node->get_declarator();
+          Dummy_Simple_Dec_Node = nullptr;
+        }
+      }
     }
-    while (child->get_child() != nullptr) {
-      child = child->get_child();
-    }
-    return child->get_direct_declarator()
-        ->get_simple_declarator()
-        ->get_identifier();
+    return nullptr;
   }
+
   void set_identifier(std::string identifier) {
-    if (child == nullptr && !(direct_declarator == nullptr)) {
-      std::shared_ptr<AST_identifier_Node> identifier_Node =
-          direct_declarator->get_simple_declarator()->get_identifier();
-      identifier_Node->set_identifier(identifier);
-      return;
+    // This overall code traverses the AST tree to find the identifier node and
+    // set the identifier value
+    std::shared_ptr<AST_declarator_Node> Dummy_Dec_Node = shared_from_this();
+    std::shared_ptr<AST_direct_declarator_Node> Dummy_Direct_Dec_Node = nullptr;
+    std::shared_ptr<AST_simple_declarator_Node> Dummy_Simple_Dec_Node = nullptr;
+    while (Dummy_Dec_Node || Dummy_Direct_Dec_Node || Dummy_Simple_Dec_Node) {
+      if (Dummy_Dec_Node) {
+        if (Dummy_Dec_Node->get_child()) {
+          Dummy_Dec_Node = Dummy_Dec_Node->get_child();
+        } else {
+          Dummy_Direct_Dec_Node = Dummy_Dec_Node->get_direct_declarator();
+          Dummy_Dec_Node = nullptr;
+        }
+      } else if (Dummy_Direct_Dec_Node) {
+        if (Dummy_Direct_Dec_Node->get_simple_declarator()) {
+          Dummy_Simple_Dec_Node =
+              Dummy_Direct_Dec_Node->get_simple_declarator();
+          Dummy_Direct_Dec_Node = nullptr;
+        }
+      } else {
+        if (Dummy_Simple_Dec_Node->get_identifier()) {
+          Dummy_Simple_Dec_Node->get_identifier()->set_identifier(identifier);
+          return;
+        } else {
+          Dummy_Dec_Node = Dummy_Simple_Dec_Node->get_declarator();
+          Dummy_Simple_Dec_Node = nullptr;
+        }
+      }
     }
-    while (child->get_child() != nullptr) {
-      child = child->get_child();
-    }
-    std::shared_ptr<AST_identifier_Node> identifier_Node =
-        child->direct_declarator->get_simple_declarator()->get_identifier();
-    identifier_Node->set_identifier(identifier);
     return;
   }
 };
-
 
 class AST_direct_abstract_declarator_Node;
 class AST_abstract_declarator_Node {
@@ -245,14 +287,18 @@ public:
 };
 
 class AST_direct_abstract_declarator_Node {
-  private:
-    std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator;
-  public:
-    std::string get_AST_name() { return "DirectAbstractDeclarator"; }
-    std::shared_ptr<AST_abstract_declarator_Node> get_abstract_declarator() { return abstract_declarator; }
-    void set_abstract_declarator(std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator) {
-      this->abstract_declarator = std::move(abstract_declarator);
-    }
+private:
+  std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator;
+
+public:
+  std::string get_AST_name() { return "DirectAbstractDeclarator"; }
+  std::shared_ptr<AST_abstract_declarator_Node> get_abstract_declarator() {
+    return abstract_declarator;
+  }
+  void set_abstract_declarator(
+      std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator) {
+    this->abstract_declarator = std::move(abstract_declarator);
+  }
 };
 
 struct Param {
@@ -267,14 +313,15 @@ struct Param {
 };
 
 class AST_param_list_Node {
-  private:
-    std::vector<std::shared_ptr<Param>> params;
-  public:
-    std::string get_AST_name() { return "ParamList"; }
-    std::vector<std::shared_ptr<Param>> get_params() { return params; }
-    void add_param(std::shared_ptr<Param> param) {
-      params.emplace_back(std::move(param));
-    }
+private:
+  std::vector<std::shared_ptr<Param>> params;
+
+public:
+  std::string get_AST_name() { return "ParamList"; }
+  std::vector<std::shared_ptr<Param>> get_params() { return params; }
+  void add_param(std::shared_ptr<Param> param) {
+    params.emplace_back(std::move(param));
+  }
 };
 
 class AST_unop_Node {
@@ -350,7 +397,8 @@ public:
   std::shared_ptr<AST_abstract_declarator_Node> get_abstract_declarator() {
     return abstract_declarator;
   }
-  void set_abstract_declarator(std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator) {
+  void set_abstract_declarator(
+      std::shared_ptr<AST_abstract_declarator_Node> abstract_declarator) {
     this->abstract_declarator = std::move(abstract_declarator);
   }
   ElemType get_type() { return type; }
@@ -479,7 +527,6 @@ enum class statementType {
   DO_WHILE
 };
 
-
 class AST_Statement_Node {
 private:
   std::shared_ptr<AST_exp_Node> exps;
@@ -604,20 +651,49 @@ public:
   ElemType get_type() { return type; }
 };
 
-
 class AST_Block_Node;
 
 class AST_function_declaration_Node : public AST_Declaration_Node {
 private:
-  std::vector<std::shared_ptr<Param>> params;
   ElemType return_type;
   std::shared_ptr<AST_Block_Node> block;
 
 public:
   std::string get_AST_name() { return "FunctionDeclaration"; }
-  std::vector<std::shared_ptr<Param>> get_params() { return params; }
-  void add_param(std::shared_ptr<Param> param) {
-    params.emplace_back(std::move(param));
+  std::vector<std::shared_ptr<Param>> get_params() {
+    // This overall code traverses the AST tree to find the parameter list node
+    // and return the parameters
+    std::shared_ptr<AST_declarator_Node> Dummy_Dec_Node =
+        this->get_declarator();
+    std::shared_ptr<AST_direct_declarator_Node> Dummy_Direct_Dec_Node = nullptr;
+    std::shared_ptr<AST_simple_declarator_Node> Dummy_Simple_Dec_Node = nullptr;
+    while (Dummy_Dec_Node || Dummy_Direct_Dec_Node || Dummy_Simple_Dec_Node) {
+      if (Dummy_Dec_Node) {
+        if (Dummy_Dec_Node->get_child()) {
+          Dummy_Dec_Node = Dummy_Dec_Node->get_child();
+        } else {
+          Dummy_Direct_Dec_Node = Dummy_Dec_Node->get_direct_declarator();
+          Dummy_Dec_Node = nullptr;
+        }
+      } else if (Dummy_Direct_Dec_Node) {
+        if (Dummy_Direct_Dec_Node->get_simple_declarator()) {
+          Dummy_Simple_Dec_Node =
+              Dummy_Direct_Dec_Node->get_simple_declarator();
+        }
+        if (Dummy_Direct_Dec_Node->get_param_list()) {
+          return Dummy_Direct_Dec_Node->get_param_list()->get_params();
+        }
+        Dummy_Direct_Dec_Node = nullptr;
+      } else {
+        if (Dummy_Simple_Dec_Node->get_identifier()) {
+          return {};
+        } else {
+          Dummy_Dec_Node = Dummy_Simple_Dec_Node->get_declarator();
+          Dummy_Simple_Dec_Node = nullptr;
+        }
+      }
+    }
+    return {};
   }
   std::shared_ptr<AST_Block_Node> get_block() { return block; }
   void set_block(std::shared_ptr<AST_Block_Node> block) {
