@@ -87,6 +87,8 @@ private:
   void pretty_print_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration);
   void
+  pretty_print_declarator(std::shared_ptr<ast::AST_declarator_Node> declarator);
+  void
   pretty_print_statement(std::shared_ptr<ast::AST_Statement_Node> statement);
   void pretty_print_variable_declaration(
       std::shared_ptr<ast::AST_variable_declaration_Node> declaration);

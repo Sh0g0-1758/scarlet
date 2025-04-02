@@ -13,7 +13,9 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
     pretty_print_factor(factor->get_child());
     std::cout << "))";
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
-    std::cout << "Cast(" << ast::to_string(factor->get_cast_type()) << "(";
+    std::cout << "Cast(" << ast::to_string(factor->get_cast_type());
+    pretty_print_declarator(factor->get_cast_declarator());
+    std::cout << "(";
     pretty_print_factor(factor->get_child());
     std::cout << "))";
   } else if (factor->get_exp_node() != nullptr) {
