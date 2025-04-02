@@ -19,11 +19,17 @@ Grammar:
 
 <declaration> ::= <variable-declaration> | <function-declaration>
 
-<variable-declaration> ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
+<variable-declaration> ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
 
-<function-declaration> ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
+<function-declaration> ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
 
-<param-list> ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
+<declarator> ::= "*" <declarator>
+               | <identifier> 
+               | "(" <declarator> ")"
+
+<param-list> ::= "void" | <param> { "," <param> }
+
+<param> ::= { <type-specifier> }+ <declarator>
 
 <type-specifier> ::= "int" | "long" |"unsigned" | "signed" 
 
@@ -35,15 +41,37 @@ Grammar:
 
 <for-init> ::= <variable-declaration> | [ <exp> ]
 
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";" | switch "("<exp>")" <statement> | case <exp> ":" { <statement> }
+<statement> ::= 
+              | "return" <exp> ";" 
+              | <exp> ";" | ";" 
+              | "if" "(" <exp> ")" <statement> [ "else" <statement> ] 
+              | "goto" <identifier> ";" 
+              | <identifier> ":" 
+              | <block> 
+              | "break" ";" 
+              | "continue" ";" 
+              | "while" "(" <exp> ")" <statement> 
+              | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> 
+              | "do" <statement> "while" "(" <exp> ")" ";" 
+              | switch "("<exp>")" <statement> 
+              | case <exp> ":" { <statement> }
 
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 
-<factor> ::= <const> | <identifier> | "(" { <type-specifier> }+ ")" <factor> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+<factor> ::= <const> 
+           | <identifier> 
+           | "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <factor> 
+           | <unop> <factor> 
+           | "(" <exp> ")" 
+           | <identifier> "(" [ <argument-list> ] ")"
+
+<abstract-declarator> ::= "*"
+                        | "*" <abstract-declarator> 
+                        | "(" <abstract-declarator> ")"
 
 <argument-list> ::= <exp> { "," <exp> }
 
-<unop> ::= "~" | "-" | "!" | "--" | "++"
+<unop> ::= "~" | "-" | "!" | "--" | "++" | "*" | "&"
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
