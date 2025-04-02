@@ -148,6 +148,21 @@ class AST_exp_Node;
 
 enum class FactorType { BASIC, FUNCTION_CALL };
 
+class AST_abstract_declarator_Node {
+private:
+  bool pointer = false;
+  std::shared_ptr<AST_abstract_declarator_Node> child;
+
+public:
+  std::string get_AST_name() { return "Declarator"; }
+  bool is_pointer() { return pointer; }
+  void set_pointer(bool pointer) { this->pointer = pointer; }
+  std::shared_ptr<AST_abstract_declarator_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_abstract_declarator_Node> child) {
+    this->child = std::move(child);
+  }
+};
+
 class AST_factor_Node {
 private:
   std::shared_ptr<AST_const_Node> const_node;
@@ -160,6 +175,7 @@ private:
   std::shared_ptr<AST_exp_Node> exp_node;
   FactorType factorType = FactorType::BASIC;
   ElemType castType;
+  std::shared_ptr<AST_abstract_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
 
@@ -190,6 +206,14 @@ public:
 
   ElemType get_cast_type() { return castType; }
   void set_cast_type(ElemType castType) { this->castType = castType; }
+
+  std::shared_ptr<AST_abstract_declarator_Node> get_cast_declarator() {
+    return castDeclarator;
+  }
+  void set_cast_declarator(
+      std::shared_ptr<AST_abstract_declarator_Node> castDeclarator) {
+    this->castDeclarator = std::move(castDeclarator);
+  }
 
   std::shared_ptr<AST_factor_Node> get_child() { return child; }
   void set_child(std::shared_ptr<AST_factor_Node> child) {
