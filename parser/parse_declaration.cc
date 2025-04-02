@@ -53,14 +53,38 @@ void parser::parse_declaration(
   }
 }
 
+void parser::parse_declarator(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_declarator_Node> declarator) {
+  if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+    MAKE_SHARED(ast::AST_identifier_Node, identifier);
+    identifier->set_identifier(tokens[0].get_value().value());
+    declarator->set_identifier(std::move(identifier));
+    tokens.erase(tokens.begin());
+  } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+    tokens.erase(tokens.begin());
+    MAKE_SHARED(ast::AST_declarator_Node, child);
+    parse_declarator(tokens, child);
+    declarator->set_child(std::move(child));
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+  } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
+    tokens.erase(tokens.begin());
+    declarator->set_pointer(true);
+    MAKE_SHARED(ast::AST_declarator_Node, child);
+    parse_declarator(tokens, child);
+    declarator->set_child(std::move(child));
+  }
+}
+
 void parser::parse_variable_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_variable_declaration_Node> decl) {
   PARSE_TYPE(decl, set_type);
   if (decl->get_specifier() == ast::SpecifierType::NONE)
     PARSE_SPECIFIER(decl);
-  EXPECT_IDENTIFIER();
-  decl->set_identifier(std::move(identifier));
+  MAKE_SHARED(ast::AST_declarator_Node, declarator);
+  parse_declarator(tokens, declarator);
+  decl->set_declarator(std::move(declarator));
   if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     tokens.erase(tokens.begin());
     return;
@@ -79,8 +103,9 @@ void parser::parse_function_declaration(
   PARSE_TYPE(decl, set_return_type);
   if (decl->get_specifier() == ast::SpecifierType::NONE)
     PARSE_SPECIFIER(decl);
-  EXPECT_IDENTIFIER();
-  decl->set_identifier(std::move(identifier));
+  MAKE_SHARED(ast::AST_declarator_Node, declarator);
+  parse_declarator(tokens, declarator);
+  decl->set_declarator(std::move(declarator));
   EXPECT(token::TOKEN::OPEN_PARANTHESES);
   parse_param_list(tokens, decl);
   EXPECT(token::TOKEN::CLOSE_PARANTHESES);
@@ -89,7 +114,7 @@ void parser::parse_function_declaration(
     return;
   } else if (atGlobalLevel) {
     MAKE_SHARED(ast::AST_Block_Node, block);
-    currFuncName = decl->get_identifier()->get_value();
+    currFuncName = decl->get_declarator()->get_identifier()->get_value();
     parse_block(tokens, block);
     decl->set_block(std::move(block));
   } else {
@@ -108,16 +133,19 @@ void parser::parse_param_list(
 
   PARSE_TYPE(param, set_type);
 
-  EXPECT_IDENTIFIER();
-  param->identifier = std::move(identifier);
+  MAKE_SHARED(ast::AST_declarator_Node, declarator);
+  parse_declarator(tokens, declarator);
+  param->declarator = std::move(declarator);
+
   decl->add_param(std::move(param));
 
   while (tokens[0].get_token() == token::TOKEN::COMMA) {
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::Param, param);
     PARSE_TYPE(param, set_type);
-    EXPECT_IDENTIFIER();
-    param->identifier = std::move(identifier);
+    MAKE_SHARED(ast::AST_declarator_Node, declarator);
+    parse_declarator(tokens, declarator);
+    param->declarator = std::move(declarator);
     decl->add_param(std::move(param));
   }
 }

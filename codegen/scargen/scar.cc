@@ -14,17 +14,19 @@ void Codegen::gen_scar() {
         continue;
 
       MAKE_SHARED(scar::scar_Function_Node, scar_function);
-      if (globalSymbolTable[funDecl->get_identifier()->get_value()].link ==
-          symbolTable::linkage::INTERNAL) {
+      if (globalSymbolTable
+              [funDecl->get_declarator()->get_identifier()->get_value()]
+                  .link == symbolTable::linkage::INTERNAL) {
         scar_function->set_global(false);
       }
       MAKE_SHARED(scar::scar_Identifier_Node, identifier);
-      identifier->set_value(funDecl->get_identifier()->get_value());
+      identifier->set_value(
+          funDecl->get_declarator()->get_identifier()->get_value());
       scar_function->set_identifier(identifier);
 
       for (auto param : funDecl->get_params()) {
         MAKE_SHARED(scar::scar_Identifier_Node, param_id);
-        param_id->set_value(param->identifier->get_value());
+        param_id->set_value(param->declarator->get_identifier()->get_value());
         scar_function->add_param(param_id);
       }
 

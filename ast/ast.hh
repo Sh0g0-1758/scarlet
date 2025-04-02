@@ -405,19 +405,39 @@ public:
   }
 };
 
+class AST_declarator_Node {
+private:
+  bool pointer = false;
+  std::shared_ptr<AST_identifier_Node> identifier;
+  std::shared_ptr<AST_declarator_Node> child;
+
+public:
+  std::string get_AST_name() { return "Declarator"; }
+  bool is_pointer() { return pointer; }
+  void set_pointer(bool pointer) { this->pointer = pointer; }
+  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->identifier = std::move(identifier);
+  }
+  std::shared_ptr<AST_declarator_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_declarator_Node> child) {
+    this->child = std::move(child);
+  }
+};
+
 enum class DeclarationType { VARIABLE, FUNCTION };
 
 class AST_Declaration_Node {
 private:
-  std::shared_ptr<AST_identifier_Node> identifier;
+  std::shared_ptr<AST_declarator_Node> declarator;
   DeclarationType type;
   SpecifierType specifier;
 
 public:
   std::string get_AST_name() { return "Declaration"; }
-  std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
-  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
-    this->identifier = std::move(identifier);
+  std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
+  void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
+    this->declarator = std::move(declarator);
   }
   DeclarationType get_type() { return type; }
   void set_type(DeclarationType type) { this->type = type; }
@@ -443,8 +463,9 @@ public:
 
 struct Param {
   ElemType type;
-  std::shared_ptr<AST_identifier_Node> identifier;
+  std::shared_ptr<AST_declarator_Node> declarator;
 
+  // This lets us use a macro which simplifies function params parsing
   void set_type(ElemType type) { this->type = type; }
 };
 
