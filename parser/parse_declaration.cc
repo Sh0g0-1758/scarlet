@@ -81,6 +81,62 @@ void parser::parse_declarator(
   }
 }
 
+void parser::parse_function_declarator(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_declarator_Node> &declarator,
+    std::shared_ptr<ast::AST_identifier_Node> &identifier,
+    std::shared_ptr<ast::AST_function_declaration_Node> &funcDecl,
+    bool &haveParams) {
+  if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+    identifier->set_identifier(tokens[0].get_value().value());
+    tokens.erase(tokens.begin());
+    // A function declarator will have an open paranthesis after an identifier
+    // only when function parameters are part of the declarator
+    if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      tokens.erase(tokens.begin());
+      // Check that the parameters have valid types
+      if (tokens[0].get_token() == token::TOKEN::VOID or
+          token::is_type_specifier(tokens[0].get_token())) {
+        parse_param_list(tokens, funcDecl);
+        haveParams = true;
+      } else {
+        success = false;
+        error_messages.emplace_back(
+            "Expected void or a type specifier for function parameter");
+      }
+      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    }
+  } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+    tokens.erase(tokens.begin());
+    MAKE_SHARED(ast::AST_declarator_Node, child);
+    parse_function_declarator(tokens, child, identifier, funcDecl, haveParams);
+    declarator->set_child(std::move(child));
+    // A function declarator will have an open paranthesis after an identifier
+    // only when function parameters are part of the declarator
+    if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      tokens.erase(tokens.begin());
+      // Check that the parameters have valid types
+      if (tokens[0].get_token() == token::TOKEN::VOID or
+          token::is_type_specifier(tokens[0].get_token())) {
+        parse_param_list(tokens, funcDecl);
+        haveParams = true;
+      } else {
+        success = false;
+        error_messages.emplace_back(
+            "Expected void or a type specifier for function parameter");
+      }
+      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    }
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+  } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
+    tokens.erase(tokens.begin());
+    declarator->set_pointer(true);
+    MAKE_SHARED(ast::AST_declarator_Node, child);
+    parse_function_declarator(tokens, child, identifier, funcDecl, haveParams);
+    declarator->set_child(std::move(child));
+  }
+}
+
 void parser::parse_variable_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_variable_declaration_Node> decl) {
@@ -115,9 +171,10 @@ void parser::parse_function_declaration(
   PARSE_TYPE(decl, set_return_type);
   if (decl->get_specifier() == ast::SpecifierType::NONE)
     PARSE_SPECIFIER(decl);
+  bool haveParams = false;
   MAKE_SHARED(ast::AST_declarator_Node, declarator);
   MAKE_SHARED(ast::AST_identifier_Node, identifier);
-  parse_declarator(tokens, declarator, identifier);
+  parse_function_declarator(tokens, declarator, identifier, decl, haveParams);
   if (identifier->get_value().empty()) {
     success = false;
     error_messages.emplace_back(
@@ -125,9 +182,15 @@ void parser::parse_function_declaration(
   }
   decl->set_identifier(std::move(identifier));
   decl->set_declarator(std::move(declarator));
-  EXPECT(token::TOKEN::OPEN_PARANTHESES);
-  parse_param_list(tokens, decl);
-  EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+
+  // It is possible that we parsed the function parameters as part of the
+  // function declarator
+  if (!haveParams) {
+    EXPECT(token::TOKEN::OPEN_PARANTHESES);
+    parse_param_list(tokens, decl);
+    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+  }
+
   if (tokens[0].get_token() == token::TOKEN::SEMICOLON) {
     tokens.erase(tokens.begin());
     return;
