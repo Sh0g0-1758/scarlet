@@ -432,7 +432,8 @@ std::string to_string(TOKEN token) {
 bool is_unary_op(TOKEN token) {
   return token == TOKEN::TILDE or token == TOKEN::HYPHEN or
          token == TOKEN::NOT or token == TOKEN::DECREMENT_OPERATOR or
-         token == TOKEN::INCREMENT_OPERATOR;
+         token == TOKEN::INCREMENT_OPERATOR or token == TOKEN::AAND or
+         token == TOKEN::ASTERISK;
 }
 
 bool is_binary_op(TOKEN token) {
