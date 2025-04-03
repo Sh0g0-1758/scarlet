@@ -556,6 +556,10 @@ bool is_numeric_constant(TOKEN token) {
          token == TOKEN::DOUBLE_CONSTANT;
 }
 
+bool is_integer_constant(TOKEN token) {
+  return is_numeric_constant(token) and !(token == TOKEN::DOUBLE_CONSTANT);
+}
+
 int get_binop_prec(TOKEN token) {
   if (token == TOKEN::COMMA) {
     return 0;

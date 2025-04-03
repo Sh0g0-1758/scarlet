@@ -154,6 +154,7 @@ enum class FactorType { BASIC, FUNCTION_CALL };
 class AST_declarator_Node {
 private:
   bool pointer = false;
+  std::vector<long> arrDim;
   std::shared_ptr<AST_declarator_Node> child;
 
 public:
@@ -164,6 +165,8 @@ public:
   void set_child(std::shared_ptr<AST_declarator_Node> child) {
     this->child = std::move(child);
   }
+  std::vector<long> get_arrDim() { return arrDim; }
+  void add_dim(long dim) { arrDim.emplace_back(dim); }
 };
 
 class AST_factor_Node {

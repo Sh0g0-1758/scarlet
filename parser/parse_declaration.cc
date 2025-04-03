@@ -59,6 +59,31 @@ void parser::parse_declaration(
   }
 }
 
+void parser::parse_variable_declarator_suffix(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_declarator_Node> &declarator) {
+  while (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+    tokens.erase(tokens.begin());
+    if (token::is_integer_constant(tokens[0].get_token())) {
+      try {
+        long dim = std::stol(tokens[0].get_value().value());
+        declarator->add_dim(dim);
+      } catch (std::out_of_range &e) {
+        success = false;
+        error_messages.emplace_back(
+            "size of array exceeds maximum object size '9223372036854775807'");
+        return;
+      }
+      tokens.erase(tokens.begin());
+    } else {
+      success = false;
+      error_messages.emplace_back(
+          "Expected an integer constant for array size");
+    }
+    EXPECT(token::TOKEN::CLOSE_BRACKET);
+  }
+}
+
 void parser::parse_declarator(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_declarator_Node> &declarator,
@@ -66,12 +91,14 @@ void parser::parse_declarator(
   if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     identifier->set_identifier(tokens[0].get_value().value());
     tokens.erase(tokens.begin());
+    parse_variable_declarator_suffix(tokens, declarator);
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_declarator_Node, child);
     parse_declarator(tokens, child, identifier);
     declarator->set_child(std::move(child));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    parse_variable_declarator_suffix(tokens, declarator);
   } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
     tokens.erase(tokens.begin());
     declarator->set_pointer(true);
@@ -79,11 +106,6 @@ void parser::parse_declarator(
     parse_declarator(tokens, child, identifier);
     declarator->set_child(std::move(child));
   }
-  // else if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
-  //   tokens.erase(tokens.begin());
-  //   // expect a constant
-  //   EXPECT(token::TOKEN::CLOSE_BRACKET);
-  // }
 }
 
 void parser::parse_function_declarator_suffix(

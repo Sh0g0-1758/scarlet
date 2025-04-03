@@ -52,6 +52,9 @@ private:
   void parse_declarator(std::vector<token::Token> &tokens,
                         std::shared_ptr<ast::AST_declarator_Node> &decl,
                         std::shared_ptr<ast::AST_identifier_Node> &identifier);
+  void parse_variable_declarator_suffix(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_declarator_Node> &declarator);
   void parse_function_declarator(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_declarator_Node> &decl,
