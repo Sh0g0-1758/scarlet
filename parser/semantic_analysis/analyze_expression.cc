@@ -243,12 +243,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
-int parser::get_ptr_level(std::shared_ptr<ast::AST_declarator_Node> decl) {
-  if (decl == nullptr)
-    return 0;
-  return (decl->is_pointer() ? 1 : 0) + get_ptr_level(decl->get_child());
-}
-
 void parser::assign_type_to_factor(
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!success)
@@ -271,7 +265,6 @@ void parser::assign_type_to_factor(
     }
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     factor->set_type(factor->get_cast_type());
-    factor->set_ptr_level(get_ptr_level(factor->get_cast_declarator()));
   }
 }
 

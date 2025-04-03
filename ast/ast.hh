@@ -94,7 +94,7 @@ namespace scarlet {
 namespace ast {
 
 enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { NONE, INT, LONG, ULONG, UINT, DOUBLE, DERIVED };
+enum class ElemType { NONE, INT, LONG, ULONG, UINT, DOUBLE };
 
 ElemType constTypeToElemType(constant::Type t);
 constant::Type elemTypeToConstType(ElemType t);
@@ -176,8 +176,6 @@ private:
   FactorType factorType = FactorType::BASIC;
   ElemType castType;
   std::shared_ptr<AST_declarator_Node> castDeclarator;
-  // the factor can be a multi-level pointer
-  int ptr_level = 0;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
 
@@ -216,8 +214,6 @@ public:
   set_cast_declarator(std::shared_ptr<AST_declarator_Node> castDeclarator) {
     this->castDeclarator = std::move(castDeclarator);
   }
-  int get_ptr_level() { return ptr_level; }
-  void set_ptr_level(int ptr_level) { this->ptr_level = ptr_level; }
 
   std::shared_ptr<AST_factor_Node> get_child() { return child; }
   void set_child(std::shared_ptr<AST_factor_Node> child) {
