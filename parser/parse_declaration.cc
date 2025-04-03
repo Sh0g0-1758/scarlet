@@ -72,6 +72,7 @@ void parser::parse_declarator(
     parse_declarator(tokens, child, identifier);
     declarator->set_child(std::move(child));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    declarator
   } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
     tokens.erase(tokens.begin());
     declarator->set_pointer(true);
