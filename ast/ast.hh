@@ -21,11 +21,14 @@ Grammar:
 
 <variable-declaration> ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
 
-<function-declaration> ::= { <specifier> }+ <declarator> "(" <param-list> ")" ( <block> | ";" )
+<function-declaration> ::= { <specifier> }+ <declarator> ( <block> | ";" )
 
 <declarator> ::= "*" <declarator>
-               | <identifier> 
-               | "(" <declarator> ")"
+               | <identifier> [ <declarator-suffix> ]
+               | "(" <declarator> ")" [ <declarator-suffix> ]
+
+<declarator-suffix> ::= { "[" <const> "]" }+
+                      | "(" <param-list> ")"
 
 <param-list> ::= "void" | <param> { "," <param> }
 

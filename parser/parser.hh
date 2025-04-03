@@ -58,6 +58,10 @@ private:
       std::shared_ptr<ast::AST_identifier_Node> &identifier,
       std::shared_ptr<ast::AST_function_declaration_Node> &funcDecl,
       bool &haveParams);
+  void parse_function_declarator_suffix(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_function_declaration_Node> &funcDecl,
+      bool &haveParams);
   void parse_block(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_Block_Node> block);
   void parse_block_item(std::vector<token::Token> &tokens,
