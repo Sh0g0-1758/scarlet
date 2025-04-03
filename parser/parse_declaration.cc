@@ -112,6 +112,8 @@ void parser::parse_function_declarator_suffix(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_function_declaration_Node> &funcDecl,
     bool &haveParams) {
+  if (haveParams)
+    return;
   if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     // Check that the parameters have valid types
