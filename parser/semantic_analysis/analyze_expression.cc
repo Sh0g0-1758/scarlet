@@ -230,11 +230,23 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       // check that the function is being called with the correct type of
       //  arguments. If not we cast the arguments to the correct type
       for (int i = 0; i < (int)func_call->get_arguments().size(); i++) {
-        if (func_call->get_arguments()[i]->get_type() != gstTypeDef[i + 1] or
-            func_call->get_arguments()[i]->get_derived_type() !=
-                gstDerivedTypeDef[i + 1]) {
-          add_cast_to_exp(func_call->get_arguments()[i], gstTypeDef[i + 1],
-                          gstDerivedTypeDef[i + 1]);
+        auto funcArgType = func_call->get_arguments()[i]->get_type();
+        auto funcArgDerivedType =
+            func_call->get_arguments()[i]->get_derived_type();
+        auto [castType, castDerivedType] = ast::getAssignType(
+            gstTypeDef[i + 1], gstDerivedTypeDef[i + 1], funcArgType,
+            funcArgDerivedType, func_call->get_arguments()[i]);
+        if (castType == ast::ElemType::NONE) {
+          success = false;
+          error_messages.emplace_back(
+              "Function " + func_call->get_identifier_node()->get_value() +
+              " called with wrong type of arguments");
+        } else {
+          if (castType != funcArgType or
+              castDerivedType != funcArgDerivedType) {
+            add_cast_to_exp(func_call->get_arguments()[i], castType,
+                            castDerivedType);
+          }
         }
       }
     }
