@@ -99,12 +99,16 @@ bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
   if (factor == nullptr)
     return false;
-  if (factor->get_identifier_node() != nullptr and
-      factor->get_factor_type() == FactorType::BASIC)
+  if (factor->get_identifier_node() != nullptr) {
+    if (factor->get_factor_type() == FactorType::FUNCTION_CALL) {
+      return false;
+    }
     return true;
-  if (factor->get_unop_node() != nullptr and
-      factor->get_unop_node()->get_op() != unop::UNOP::DEREFERENCE)
+  }
+  if (factor->get_const_node() != nullptr)
     return false;
+  if (factor->get_unop_node() != nullptr)
+    return factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE;
   if (factor->get_exp_node() != nullptr and
       factor->get_exp_node()->get_binop_node() != nullptr)
     return false;
