@@ -171,6 +171,21 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       factor->set_unop_node(std::move(unop));
     }
   }
+  if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+    if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL or factor->get_const_node()!=nullptr){
+      success = false;
+      error_messages.emplace_back(
+          "Expected an lvalue for the array index operator");
+    } else{
+        while(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET){
+          tokens.erase(tokens.begin());
+          MAKE_SHARED(ast::AST_exp_Node, exp);
+          parse_exp(tokens, exp);
+          factor->add_arrIdx(exp);
+          EXPECT(token::TOKEN::CLOSE_BRACKET);
+        }
+    }
+  }
 }
 
 void parser::parse_exp(std::vector<token::Token> &tokens,

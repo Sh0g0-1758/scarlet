@@ -67,6 +67,10 @@ Grammar:
            | <unop> <factor> 
            | "(" <exp> ")" 
            | <identifier> "(" [ <argument-list> ] ")"
+           | <postfix-exp>
+
+<postfix-exp> ::= <identifier> { "[" <const> "]" }+
+                | "(" <exp> ")" { "[" <const> "]" }+
 
 <abstract-declarator> ::= "*"
                         | "*" <abstract-declarator> 
@@ -196,6 +200,7 @@ private:
   std::shared_ptr<AST_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
+  std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx;
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -240,6 +245,13 @@ public:
 
   ElemType get_type() { return type; }
   void set_type(ElemType type) { this->type = type; }
+
+  std::vector<std::shared_ptr<ast::AST_exp_Node>> get_arrIdx() {
+    return arrIdx;
+  }
+  void add_arrIdx(std::shared_ptr<ast::AST_exp_Node> arrIdx) {
+    this->arrIdx.emplace_back(arrIdx);
+  }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {
