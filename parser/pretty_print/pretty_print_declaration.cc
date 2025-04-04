@@ -48,7 +48,7 @@ void parser::pretty_print_variable_declaration(
             << ast::to_string(declaration->get_specifier()) << "," << std::endl;
   std::cout << "\t\ttype=";
   pretty_print_declarator(declaration->get_declarator());
-  std::cout << ast::to_string(declaration->get_type());
+  std::cout << ast::to_string(declaration->get_base_type());
   std::cout << "," << std::endl;
   std::cout << "\t\texp=(" << std::endl;
   pretty_print_exp(declaration->get_exp());
@@ -69,7 +69,7 @@ void parser::pretty_print_function_declaration(
     std::cout << "\t\t\tParam=(" << std::endl;
     std::cout << "\t\t\t\ttype=";
     pretty_print_declarator(param->declarator);
-    std::cout << ast::to_string(param->type);
+    std::cout << ast::to_string(param->base_type);
     std::cout << "," << std::endl;
     std::cout << "\t\t\t\tidentifier=\"" << param->identifier->get_value()
               << "\"" << std::endl;

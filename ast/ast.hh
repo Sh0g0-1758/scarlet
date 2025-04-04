@@ -97,7 +97,18 @@ namespace scarlet {
 namespace ast {
 
 enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { NONE, INT, LONG, ULONG, UINT, DOUBLE };
+// Assignment to these values help us store the derived type as a flat vector in
+// the global symbol table
+enum class ElemType {
+  NONE = 0,
+  INT = -1,
+  LONG = -2,
+  ULONG = -3,
+  UINT = -4,
+  DOUBLE = -5,
+  DERIVED = -6,
+  POINTER = -7
+};
 
 ElemType constTypeToElemType(constant::Type t);
 constant::Type elemTypeToConstType(ElemType t);
@@ -466,7 +477,7 @@ public:
 class AST_variable_declaration_Node : public AST_Declaration_Node {
 private:
   std::shared_ptr<AST_exp_Node> exp;
-  ElemType type;
+  ElemType base_type;
 
 public:
   std::string get_AST_name() { return "VariableDeclaration"; }
@@ -474,17 +485,17 @@ public:
     this->exp = std::move(exp);
   }
   std::shared_ptr<AST_exp_Node> get_exp() { return exp; }
-  void set_type(ElemType type) { this->type = type; }
-  ElemType get_type() { return type; }
+  void set_base_type(ElemType type) { this->base_type = type; }
+  ElemType get_base_type() { return base_type; }
 };
 
 struct Param {
-  ElemType type;
+  ElemType base_type;
   std::shared_ptr<AST_declarator_Node> declarator;
   std::shared_ptr<AST_identifier_Node> identifier;
 
   // This lets us use a macro which simplifies function params parsing
-  void set_type(ElemType type) { this->type = type; }
+  void set_type(ElemType type) { this->base_type = type; }
 };
 
 class AST_Block_Node;

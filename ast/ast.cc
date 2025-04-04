@@ -32,6 +32,10 @@ constant::Type elemTypeToConstType(ast::ElemType t) {
     return constant::Type::ULONG;
   case ast::ElemType::DOUBLE:
     return constant::Type::DOUBLE;
+  // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
+  // be something different ?
+  case ast::ElemType::DERIVED:
+  case ast::ElemType::POINTER:
   case ast::ElemType::NONE:
     return constant::Type::NONE;
   }
@@ -50,6 +54,10 @@ std::string to_string(ast::ElemType type) {
     return "unsigned long";
   case ast::ElemType::DOUBLE:
     return "double";
+  case ast::ElemType::DERIVED:
+    return "derived";
+  case ast::ElemType::POINTER:
+    return "pointer";
   case ast::ElemType::NONE:
     return "";
   }
@@ -144,6 +152,9 @@ constant::Constant castConstToVal(constant::Constant c, ast::ElemType type) {
     ret.set_type(constant::Type::DOUBLE);
     CASTCONST(c, ret, d, double);
   } break;
+  // TODO: FIXME
+  case ast::ElemType::DERIVED:
+  case ast::ElemType::POINTER:
   case ast::ElemType::NONE:
     UNREACHABLE();
   }

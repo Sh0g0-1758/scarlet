@@ -159,7 +159,7 @@ void parser::parse_function_declarator(
 void parser::parse_variable_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_variable_declaration_Node> decl) {
-  PARSE_TYPE(decl, set_type);
+  PARSE_TYPE(decl, set_base_type);
   if (decl->get_specifier() == ast::SpecifierType::NONE)
     PARSE_SPECIFIER(decl);
   MAKE_SHARED(ast::AST_declarator_Node, declarator);

@@ -3,6 +3,7 @@
 #include <ast/ast.hh>
 #include <string>
 #include <tools/constant/constant.hh>
+#include <variant>
 #include <vector>
 
 namespace scarlet {
@@ -29,9 +30,13 @@ struct symbolInfo {
   std::string name;
   linkage link;
   symbolType type;
-  std::vector<ast::ElemType> typeDef;
+  std::vector<ast::ElemType> typeDef{};
   defType def = defType::FALSE;
   constant::Constant value{};
+  // Here <= 0 corresponds to an ElemType and > 0 corrresponds to an array
+  // dimension
+  std::map<int, std::vector<long>> derivedTypeMap{};
 };
+
 } // namespace symbolTable
 } // namespace scarlet

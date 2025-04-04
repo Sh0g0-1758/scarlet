@@ -5,7 +5,7 @@ namespace parser {
 
 #define INITZERO()                                                             \
   constant::Constant constZero;                                                \
-  switch (varDecl->get_type()) {                                               \
+  switch (varDecl->get_base_type()) {                                          \
   case ast::ElemType::INT:                                                     \
     constZero.set_type(constant::Type::INT);                                   \
     constZero.set_value({.i = 0});                                             \
@@ -26,6 +26,9 @@ namespace parser {
     constZero.set_type(constant::Type::DOUBLE);                                \
     constZero.set_value({.d = 0});                                             \
     break;                                                                     \
+  /* TODO: FIX ME */                                                           \
+  case ast::ElemType::DERIVED:                                                 \
+  case ast::ElemType::POINTER:                                                 \
   case ast::ElemType::NONE:                                                    \
     UNREACHABLE();                                                             \
   }
@@ -86,7 +89,7 @@ void parser::analyze_global_variable_declaration(
   if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
     // Ensure that the previous declaration has the same type
     if (globalSymbolTable[var_name].type != symbolTable::symbolType::VARIABLE or
-        globalSymbolTable[var_name].typeDef[0] != varDecl->get_type()) {
+        globalSymbolTable[var_name].typeDef[0] != varDecl->get_base_type()) {
       success = false;
       error_messages.emplace_back(var_name +
                                   " redeclared as a different kind of symbol");
@@ -144,7 +147,7 @@ void parser::analyze_global_variable_declaration(
                                     ->get_factor_node()
                                     ->get_const_node()
                                     ->get_constant(),
-                                varDecl->get_type());
+                                varDecl->get_base_type());
         symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
         symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
       }
@@ -164,7 +167,7 @@ void parser::analyze_global_variable_declaration(
     symbol_table[{var_name, 0}] = {var_name,
                                    symbolTable::linkage::EXTERNAL,
                                    symbolTable::symbolType::VARIABLE,
-                                   {varDecl->get_type()},
+                                   {varDecl->get_base_type()},
                                    symbolTable::defType::TENTATIVE};
     if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
       symbol_table[{var_name, 0}].link = symbolTable::linkage::INTERNAL;
@@ -193,7 +196,7 @@ void parser::analyze_global_variable_declaration(
                                     ->get_factor_node()
                                     ->get_const_node()
                                     ->get_constant(),
-                                varDecl->get_type());
+                                varDecl->get_base_type());
       }
     }
     globalSymbolTable[var_name] = symbol_table[{var_name, 0}];
@@ -224,7 +227,7 @@ void parser::analyze_global_function_declaration(
       proxy_symbol_table[{paramName, 1}] = {temp_name,
                                             symbolTable::linkage::NONE,
                                             symbolTable::symbolType::VARIABLE,
-                                            {param->type}};
+                                            {param->base_type}};
       globalSymbolTable[temp_name] = proxy_symbol_table[{paramName, 1}];
       param->identifier->set_identifier(temp_name);
     }
@@ -265,7 +268,7 @@ void parser::analyze_function_declaration(
   std::vector<ast::ElemType> funcType;
   funcType.emplace_back(funcDecl->get_return_type());
   for (auto param : funcDecl->get_params()) {
-    funcType.emplace_back(param->type);
+    funcType.emplace_back(param->base_type);
   }
 
   // If the function has already been declared, make sure that it has the
@@ -325,7 +328,7 @@ void parser::analyze_local_variable_declaration(
       // same type
       if (globalSymbolTable[var_name].type !=
               symbolTable::symbolType::VARIABLE or
-          globalSymbolTable[var_name].typeDef[0] != varDecl->get_type()) {
+          globalSymbolTable[var_name].typeDef[0] != varDecl->get_base_type()) {
         success = false;
         error_messages.emplace_back(
             var_name + " redeclared as a different kind of symbol");
@@ -336,7 +339,7 @@ void parser::analyze_local_variable_declaration(
       symbol_table[{var_name, indx}] = {var_name,
                                         symbolTable::linkage::EXTERNAL,
                                         symbolTable::symbolType::VARIABLE,
-                                        {varDecl->get_type()}};
+                                        {varDecl->get_base_type()}};
       globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
     }
   } else if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
@@ -345,7 +348,7 @@ void parser::analyze_local_variable_declaration(
     symbol_table[{var_name, indx}] = {temp_name,
                                       symbolTable::linkage::INTERNAL,
                                       symbolTable::symbolType::VARIABLE,
-                                      {varDecl->get_type()}};
+                                      {varDecl->get_base_type()}};
     symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
     if (varDecl->get_exp() != nullptr) {
       if (!EXPISCONSTANT(varDecl->get_exp())) {
@@ -359,7 +362,7 @@ void parser::analyze_local_variable_declaration(
                                     ->get_factor_node()
                                     ->get_const_node()
                                     ->get_constant(),
-                                varDecl->get_type());
+                                varDecl->get_base_type());
       }
     } else {
       INITZERO();
@@ -372,15 +375,15 @@ void parser::analyze_local_variable_declaration(
     symbol_table[{var_name, indx}] = {temp_name,
                                       symbolTable::linkage::NONE,
                                       symbolTable::symbolType::VARIABLE,
-                                      {varDecl->get_type()}};
+                                      {varDecl->get_base_type()}};
 
     globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
     if (varDecl->get_exp() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
-      if (varDecl->get_exp()->get_type() != varDecl->get_type()) {
-        add_cast_to_exp(varDecl->get_exp(), varDecl->get_type());
+      if (varDecl->get_exp()->get_type() != varDecl->get_base_type()) {
+        add_cast_to_exp(varDecl->get_exp(), varDecl->get_base_type());
       }
     }
   }

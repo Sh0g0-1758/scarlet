@@ -61,6 +61,9 @@ void parser::analyze_statement(
       analyze_switch_case<unsigned long>(switch_statement,
                                          constant::Type::ULONG);
       break;
+    // TODO: FIXME
+    case ast::ElemType::DERIVED:
+    case ast::ElemType::POINTER:
     case ast::ElemType::DOUBLE: {
       success = false;
       error_messages.emplace_back(
