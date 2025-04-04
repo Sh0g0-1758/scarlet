@@ -556,7 +556,7 @@ void parser::analyze_local_variable_declaration(
                                     var_name);
       } else {
         if (castType != expType or castDerivedType != expDerivedType) {
-          add_cast_to_exp(varDecl->get_exp(), varDecl->get_base_type(),
+          add_cast_to_exp(varDecl->get_exp(), varInfo.typeDef[0],
                           varInfo.derivedTypeMap[0]);
         }
       }

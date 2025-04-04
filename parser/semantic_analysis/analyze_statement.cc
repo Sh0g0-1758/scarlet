@@ -21,9 +21,19 @@ void parser::analyze_statement(
     analyze_exp(statement->get_exps(), symbol_table, indx);
     auto funcType = globalSymbolTable[currFuncName].typeDef[0];
     auto funcDerivedType = globalSymbolTable[currFuncName].derivedTypeMap[0];
-    if (statement->get_exps()->get_type() != funcType or
-        statement->get_exps()->get_derived_type() != funcDerivedType) {
-      add_cast_to_exp(statement->get_exps(), funcType, funcDerivedType);
+    auto expType = statement->get_exps()->get_type();
+    auto expDerivedType = statement->get_exps()->get_derived_type();
+    auto [castType, castDerivedType] =
+        ast::getAssignType(funcType, funcDerivedType, expType, expDerivedType,
+                           statement->get_exps());
+    if (castType == ast::ElemType::NONE) {
+      success = false;
+      error_messages.emplace_back("Invalid return value of function " +
+                                  currFuncName);
+    } else {
+      if (castType != expType or castDerivedType != expDerivedType) {
+        add_cast_to_exp(statement->get_exps(), funcType, funcDerivedType);
+      }
     }
   } break;
   case ast::statementType::CASE:
