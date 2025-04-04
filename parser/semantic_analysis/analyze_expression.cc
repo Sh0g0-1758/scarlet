@@ -90,7 +90,7 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   assign_type_to_exp(exp);
 
   if (exp->get_binop_node() != nullptr) {
-    if (exp->get_left()->get_type() == ast::ElemType::DERIVED) {
+    if (exp->get_right()->get_type() == ast::ElemType::DERIVED) {
       if (exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
         success = false;
         error_messages.emplace_back(
