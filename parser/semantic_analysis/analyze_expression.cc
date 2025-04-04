@@ -421,13 +421,9 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       exp->set_derived_type(expDerivedType);
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
       auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
-      ast::ElemType leftType = (ternary->get_middle() != nullptr)
-                                   ? ternary->get_middle()->get_type()
-                                   : exp->get_factor_node()->get_type();
+      ast::ElemType leftType = ternary->get_middle()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
-      auto leftDerivedType = (ternary->get_middle() != nullptr)
-                                 ? ternary->get_middle()->get_derived_type()
-                                 : exp->get_factor_node()->get_derived_type();
+      auto leftDerivedType = ternary->get_middle()->get_derived_type();
       auto rightDerivedType = exp->get_right()->get_derived_type();
       auto [expType, expDerivedType] = ast::getParentType(
           leftType, rightType, leftDerivedType, rightDerivedType, exp);
@@ -441,10 +437,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       }
 
       if (expType != leftType or expDerivedType != leftDerivedType) {
-        (ternary->get_middle() != nullptr)
-            ? add_cast_to_exp(ternary->get_middle(), expType, expDerivedType)
-            : add_cast_to_factor(exp->get_factor_node(), expType,
-                                 expDerivedType);
+        add_cast_to_exp(ternary->get_middle(), expType, expDerivedType);
       }
 
       exp->set_type(expType);

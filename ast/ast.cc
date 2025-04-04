@@ -122,7 +122,17 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
     if (leftDerivedType == rightDerivedType) {
       return {left, leftDerivedType};
     } else {
-      if (is_const_zero(exp->get_factor_node())) {
+      std::shared_ptr<AST_factor_Node> leftFactor{};
+      bool isTernary =
+          (exp->get_binop_node() != nullptr and
+           exp->get_binop_node()->get_op() == binop::BINOP::TERNARY);
+      if (isTernary)
+        leftFactor = (std::static_pointer_cast<AST_ternary_exp_Node>(exp))
+                         ->get_middle()
+                         ->get_factor_node();
+      else
+        leftFactor = exp->get_factor_node();
+      if (is_const_zero(leftFactor)) {
         return {right, rightDerivedType};
       } else if (is_const_zero(exp->get_right()->get_factor_node())) {
         return {left, leftDerivedType};
