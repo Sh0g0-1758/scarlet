@@ -53,8 +53,16 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
     MAKE_SHARED(ast::AST_factor_Node, rightFactor);
     rightFactor->set_factor_type(ast::FactorType::BASIC);
     MAKE_SHARED(ast::AST_identifier_Node, rightIdentifier);
-    rightIdentifier->set_identifier(
-        exp->get_factor_node()->get_identifier_node()->get_value());
+
+    // remove after . from the identifier name
+    std::string identifierName =
+        exp->get_factor_node()->get_identifier_node()->get_value();
+    auto dotPos = identifierName.find('.');
+    if (dotPos != std::string::npos) {
+      identifierName = identifierName.substr(0, dotPos);
+    }
+
+    rightIdentifier->set_identifier(identifierName);
     rightFactor->set_identifier_node(std::move(rightIdentifier));
 
     rightChild->set_factor_node(std::move(rightFactor));
