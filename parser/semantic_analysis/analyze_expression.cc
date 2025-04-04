@@ -89,6 +89,27 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   // assign type to the expression
   assign_type_to_exp(exp);
 
+  if (exp->get_binop_node() != nullptr) {
+    if (exp->get_left()->get_type() == ast::ElemType::DERIVED) {
+      if (exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
+        success = false;
+        error_messages.emplace_back(
+            "Modulus, division and multiplication operator not allowed on "
+            "derived types");
+      } else if (exp->get_binop_node()->get_op() == binop::BINOP::DIV) {
+        success = false;
+        error_messages.emplace_back(
+            "Modulus, division and multiplication operator not allowed on "
+            "derived types");
+      } else if (exp->get_binop_node()->get_op() == binop::BINOP::MUL) {
+        success = false;
+        error_messages.emplace_back(
+            "Modulus, division and multiplication operator not allowed on "
+            "derived types");
+      }
+    }
+  }
+
   // left/right shift changed to logical left/right shift if the type is
   // unsigned
   if (exp->get_binop_node() != nullptr and
@@ -251,12 +272,28 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   assign_type_to_factor(factor);
 
   // complement operator cannot be used on double precision
-  if (factor->get_unop_node() != nullptr and
-      factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
+  if (factor->get_unop_node() != nullptr) {
     if (factor->get_type() == ast::ElemType::DOUBLE) {
-      success = false;
-      error_messages.emplace_back(
-          "Complement operator not allowed on double precision");
+      if (factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
+        success = false;
+        error_messages.emplace_back(
+            "Complement operator not allowed on double precision");
+      }
+    }
+    if (factor->get_type() == ast::ElemType::DERIVED) {
+      if (factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
+        // FIXME : include case for array
+        success = false;
+        error_messages.emplace_back(
+            "Complement operator not allowed on pointer types");
+      }
+
+      if (factor->get_unop_node()->get_op() == unop::UNOP::NEGATE) {
+
+        // FIXME : include case for array
+        success = false;
+        error_messages.emplace_back("negation not allowed on pointer types");
+      }
     }
   }
 }
@@ -318,10 +355,24 @@ void parser::assign_type_to_factor(
     std::vector<long> derivedType;
     unroll_derived_type(factor->get_cast_declarator(), derivedType);
     if (!derivedType.empty()) {
+      if (factor->get_type() == ast::ElemType::DOUBLE and
+          derivedType.size() > 0) {
+        // FIXME : include case for array
+        success = false;
+        error_messages.emplace_back(
+            "Cannot cast double precision to pointer type");
+      }
       derivedType.push_back((long)factor->get_cast_type());
       factor->set_derived_type(derivedType);
       factor->set_type(ast::ElemType::DERIVED);
     } else {
+      if (factor->get_cast_type() == ast::ElemType::DOUBLE and
+          factor->get_type() == ast::ElemType::DERIVED) {
+        // FIXME : include case for array
+        success = false;
+        error_messages.emplace_back(
+            "Cannot cast pointer type to double precision");
+      }
       factor->set_type(factor->get_cast_type());
     }
   }
