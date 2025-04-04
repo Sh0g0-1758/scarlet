@@ -26,8 +26,10 @@ namespace parser {
     constZero.set_type(constant::Type::DOUBLE);                                \
     constZero.set_value({.d = 0});                                             \
     break;                                                                     \
-  /* TODO: FIXME */                                                            \
   case ast::ElemType::DERIVED:                                                 \
+    constZero.set_type(constant::Type::ULONG);                                 \
+    constZero.set_value({.ul = 0});                                            \
+    break;                                                                     \
   case ast::ElemType::POINTER:                                                 \
   case ast::ElemType::NONE:                                                    \
     UNREACHABLE();                                                             \
@@ -518,9 +520,20 @@ void parser::analyze_local_variable_declaration(
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
-      if (varDecl->get_exp()->get_type() != varInfo.typeDef[0]) {
-        add_cast_to_exp(varDecl->get_exp(), varDecl->get_base_type(),
-                        varInfo.derivedTypeMap[0]);
+      auto expType = varDecl->get_exp()->get_type();
+      auto expDerivedType = varDecl->get_exp()->get_derived_type();
+      auto [castType, castDerivedType] =
+          ast::getAssignType(varInfo.typeDef[0], varInfo.derivedTypeMap[0],
+                             expType, expDerivedType, varDecl->get_exp());
+      if (castType == ast::ElemType::NONE) {
+        success = false;
+        error_messages.emplace_back("Invalid assignment to variable " +
+                                    var_name);
+      } else {
+        if (castType != expType or castDerivedType != expDerivedType) {
+          add_cast_to_exp(varDecl->get_exp(), varDecl->get_base_type(),
+                          varInfo.derivedTypeMap[0]);
+        }
       }
     }
   }

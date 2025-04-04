@@ -201,7 +201,9 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       // check that the function is being called with the correct type of
       //  arguments. If not we cast the arguments to the correct type
       for (int i = 0; i < (int)func_call->get_arguments().size(); i++) {
-        if (func_call->get_arguments()[i]->get_type() != gstTypeDef[i + 1]) {
+        if (func_call->get_arguments()[i]->get_type() != gstTypeDef[i + 1] or
+            func_call->get_arguments()[i]->get_derived_type() !=
+                gstDerivedTypeDef[i + 1]) {
           add_cast_to_exp(func_call->get_arguments()[i], gstTypeDef[i + 1],
                           gstDerivedTypeDef[i + 1]);
         }
@@ -331,8 +333,21 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       exp->set_type(ast::ElemType::INT);
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
                binop::is_compound(exp->get_binop_node()->get_op())) {
-      exp->set_type(exp->get_factor_node()->get_type());
-      exp->set_derived_type(exp->get_factor_node()->get_derived_type());
+      auto [expType, expDerivedType] = ast::getAssignType(
+          exp->get_factor_node()->get_type(),
+          exp->get_factor_node()->get_derived_type(),
+          exp->get_right()->get_type(), exp->get_right()->get_derived_type(),
+          exp->get_right());
+      if (expType == ast::ElemType::NONE) {
+        success = false;
+        error_messages.emplace_back("Incompatible types in expression");
+      }
+      if (expType != exp->get_right()->get_type() or
+          expDerivedType != exp->get_right()->get_derived_type()) {
+        add_cast_to_exp(exp->get_right(), expType, expDerivedType);
+      }
+      exp->set_type(expType);
+      exp->set_derived_type(expDerivedType);
       if (exp->get_factor_node()->get_type() != exp->get_right()->get_type()) {
         add_cast_to_exp(exp->get_right(), exp->get_type(),
                         exp->get_derived_type());

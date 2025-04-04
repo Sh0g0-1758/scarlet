@@ -702,6 +702,10 @@ std::pair<ElemType, std::vector<long>>
 getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
               std::vector<long> &rightDerivedType,
               std::shared_ptr<AST_exp_Node> exp);
+std::pair<ElemType, std::vector<long>>
+getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
+              std::vector<long> srcDerived,
+              std::shared_ptr<AST_exp_Node> srcExp);
 constant::Constant castConstToElemType(constant::Constant c, ElemType type);
 bool isComplexType(ElemType type);
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);

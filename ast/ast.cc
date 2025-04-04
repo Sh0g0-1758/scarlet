@@ -89,7 +89,9 @@ int getSizeType(ElemType type) {
 
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
   if (factor != nullptr and factor->get_const_node() != nullptr and
-      factor->get_const_node()->get_constant().get_value().i == 0)
+      factor->get_const_node()->get_constant().get_value().i == 0 and
+      factor->get_const_node()->get_constant().get_type() !=
+          constant::Type::DOUBLE)
     return true;
   return false;
 }
@@ -114,7 +116,7 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
               std::vector<long> &rightDerivedType,
               std::shared_ptr<AST_exp_Node> exp) {
   if (left == ElemType::DERIVED or right == ElemType::DERIVED) {
-    if (left == right) {
+    if (leftDerivedType == rightDerivedType) {
       return {left, leftDerivedType};
     } else {
       if (is_const_zero(exp->get_factor_node())) {
@@ -139,6 +141,23 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
       return {left, {}};
     else
       return {right, {}};
+  }
+}
+
+std::pair<ElemType, std::vector<long>>
+getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
+              std::vector<long> srcDerived,
+              std::shared_ptr<AST_exp_Node> srcExp) {
+  if (target == ElemType::DERIVED or src == ElemType::DERIVED) {
+    if (targetDerived == srcDerived) {
+      return {target, targetDerived};
+    } else if (is_const_zero(srcExp->get_factor_node())) {
+      return {target, targetDerived};
+    } else {
+      return {ElemType::NONE, {}};
+    }
+  } else {
+    return {target, targetDerived};
   }
 }
 
