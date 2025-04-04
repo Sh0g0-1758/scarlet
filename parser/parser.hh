@@ -125,9 +125,12 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
-  void assign_derived_type_to_symbol(
-      std::shared_ptr<ast::AST_declarator_Node> declarator,
-      symbolTable::symbolInfo &varInfo, int indx);
+  void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
+                           std::vector<long> &derivedType);
+  bool previous_declaration_has_same_type(
+      ast::ElemType prev_base_type, std::vector<long> prev_derived_type,
+      std::shared_ptr<ast::AST_declarator_Node> curr_declarator,
+      ast::ElemType curr_base_type);
   void analyze_global_variable_declaration(
       std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>

@@ -79,21 +79,39 @@ void parser::analyze_declaration(
   }
 }
 
-void parser::assign_derived_type_to_symbol(
+void parser::unroll_derived_type(
     std::shared_ptr<ast::AST_declarator_Node> declarator,
-    symbolTable::symbolInfo &varInfo, int indx) {
+    std::vector<long> &derivedType) {
   if (declarator == nullptr)
     return;
 
+  unroll_derived_type(declarator->get_child(), derivedType);
+
   if (declarator->is_pointer()) {
-    varInfo.derivedTypeMap[indx].push_back((long)ast::ElemType::POINTER);
+    derivedType.push_back((long)ast::ElemType::POINTER);
   }
+
   if (!declarator->get_arrDim().empty()) {
     for (auto dim : declarator->get_arrDim()) {
-      varInfo.derivedTypeMap[indx].push_back(dim);
+      derivedType.push_back(dim);
     }
   }
-  assign_derived_type_to_symbol(declarator->get_child(), varInfo, indx);
+}
+
+bool parser::previous_declaration_has_same_type(
+    ast::ElemType prev_base_type, std::vector<long> prev_derived_type,
+    std::shared_ptr<ast::AST_declarator_Node> curr_declarator,
+    ast::ElemType curr_base_type) {
+  std::vector<long> derivedType;
+  unroll_derived_type(curr_declarator, derivedType);
+  if (!derivedType.empty()) {
+    derivedType.push_back((long)curr_base_type);
+    curr_base_type = ast::ElemType::DERIVED;
+  }
+
+  if ((prev_base_type != curr_base_type) or (prev_derived_type != derivedType))
+    return false;
+  return true;
 }
 
 void parser::analyze_global_variable_declaration(
@@ -105,11 +123,20 @@ void parser::analyze_global_variable_declaration(
   // Check if the symbol has been declared before
   if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
     // Ensure that the previous declaration has the same type
-    if (globalSymbolTable[var_name].type != symbolTable::symbolType::VARIABLE or
-        globalSymbolTable[var_name].typeDef[0] != varDecl->get_base_type()) {
+    if (globalSymbolTable[var_name].type != symbolTable::symbolType::VARIABLE) {
       success = false;
       error_messages.emplace_back(var_name +
                                   " redeclared as a different kind of symbol");
+    } else {
+      bool same_type = previous_declaration_has_same_type(
+          globalSymbolTable[var_name].typeDef[0],
+          globalSymbolTable[var_name].derivedTypeMap[0],
+          varDecl->get_declarator(), varDecl->get_base_type());
+      if (!same_type) {
+        success = false;
+        error_messages.emplace_back(
+            var_name + " redeclared as a different kind of symbol");
+      }
     }
 
     // If the symbol has been redefined, throw an error
@@ -185,10 +212,12 @@ void parser::analyze_global_variable_declaration(
     varInfo.link = symbolTable::linkage::EXTERNAL;
     varInfo.type = symbolTable::symbolType::VARIABLE;
     varInfo.def = symbolTable::defType::TENTATIVE;
-    assign_derived_type_to_symbol(varDecl->get_declarator(), varInfo, 0);
-    if (!varInfo.derivedTypeMap[0].empty()) {
+    std::vector<long> derivedType;
+    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    if (!derivedType.empty()) {
+      derivedType.push_back((long)varDecl->get_base_type());
       varInfo.typeDef.push_back(ast::ElemType::DERIVED);
-      varInfo.derivedTypeMap[0].push_back((long)varDecl->get_base_type());
+      varInfo.derivedTypeMap[0] = derivedType;
     } else {
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
