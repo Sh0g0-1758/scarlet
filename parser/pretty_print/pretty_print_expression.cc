@@ -37,12 +37,12 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
     } else {
       std::cout << factor->get_identifier_node()->get_AST_name() << "("
                 << factor->get_identifier_node()->get_value() << ")";
-    } 
-    if(factor->get_arrIdx().size() > 0) {
+    }
+    if (factor->get_arrIdx().size() > 0) {
       for (auto arrIdx : factor->get_arrIdx()) {
-      std::cout << " [";
+        std::cout << " [";
         pretty_print_exp(arrIdx);
-      std::cout << "]";
+        std::cout << "]";
       }
     }
   }

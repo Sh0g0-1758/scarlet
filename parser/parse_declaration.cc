@@ -140,17 +140,16 @@ void parser::parse_function_declarator(
     identifier->set_identifier(tokens[0].get_value().value());
     tokens.erase(tokens.begin());
     parse_function_declarator_suffix(tokens, funcDecl, haveParams);
-    if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
-      if(!haveParams){
+    if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+      if (!haveParams) {
         success = false;
         error_messages.emplace_back(
             "cannot have an array of functions/function pointers");
-      }
-      else{
+      } else {
         parse_variable_declarator_suffix(tokens, declarator);
       }
     }
-    
+
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_declarator_Node, child);
@@ -159,13 +158,12 @@ void parser::parse_function_declarator(
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
     parse_function_declarator_suffix(tokens, funcDecl, haveParams);
 
-    if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
-      if(!haveParams){
+    if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+      if (!haveParams) {
         success = false;
         error_messages.emplace_back(
             "cannot have an array of functions/function pointers");
-      }
-      else{
+      } else {
         parse_variable_declarator_suffix(tokens, declarator);
       }
     }
@@ -199,11 +197,11 @@ void parser::parse_variable_declaration(
     return;
   }
   EXPECT(token::TOKEN::ASSIGNMENT);
-  if(tokens[0].get_token() == token::TOKEN::OPEN_BRACE){
+  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
     MAKE_SHARED(ast::initializer, init);
     parse_initializer(tokens, init);
-    decl->set_initializer(std::move(init)); 
-  } else{
+    decl->set_initializer(std::move(init));
+  } else {
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
     decl->set_exp(std::move(exp));
@@ -211,32 +209,33 @@ void parser::parse_variable_declaration(
   EXPECT(token::TOKEN::SEMICOLON);
 }
 
-void parser::parse_initializer(std::vector<token::Token> &tokens, std::shared_ptr<ast::initializer> &init){
-    tokens.erase(tokens.begin());
-    while(tokens[0].get_token() != token::TOKEN::CLOSE_BRACE){
-    if(tokens[0].get_token() == token::TOKEN::OPEN_BRACE){
-      //parse all nested initializers
-        MAKE_SHARED(ast::initializer, child);
-        parse_initializer(tokens, child);
-        init->initializer_list.emplace_back(std::move(child));
-      } else{
-        //parse a single expression
-        MAKE_SHARED(ast::AST_exp_Node, exp);
-        parse_exp(tokens, exp);
-        init->exp_list.emplace_back(std::move(exp));
-      }
-      if(tokens[0].get_token() == token::TOKEN::COMMA){
-        tokens.erase(tokens.begin());
-      } else{
-        break;
-      }
+void parser::parse_initializer(std::vector<token::Token> &tokens,
+                               std::shared_ptr<ast::initializer> &init) {
+  tokens.erase(tokens.begin());
+  while (tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
+    if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
+      // parse all nested initializers
+      MAKE_SHARED(ast::initializer, child);
+      parse_initializer(tokens, child);
+      init->initializer_list.emplace_back(std::move(child));
+    } else {
+      // parse a single expression
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      init->exp_list.emplace_back(std::move(exp));
     }
-    if(tokens[0].get_token() == token::TOKEN::CLOSE_BRACE){
+    if (tokens[0].get_token() == token::TOKEN::COMMA) {
       tokens.erase(tokens.begin());
-    } else{
-      success = false;
-      error_messages.emplace_back("Expected a closing brace for initializer");
-    } 
+    } else {
+      break;
+    }
+  }
+  if (tokens[0].get_token() == token::TOKEN::CLOSE_BRACE) {
+    tokens.erase(tokens.begin());
+  } else {
+    success = false;
+    error_messages.emplace_back("Expected a closing brace for initializer");
+  }
 }
 
 void parser::parse_function_declaration(
