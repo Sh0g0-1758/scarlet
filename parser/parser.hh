@@ -125,6 +125,9 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
+  void assign_derived_type_to_symbol(
+      std::shared_ptr<ast::AST_declarator_Node> declarator,
+      symbolTable::symbolInfo &varInfo, int indx);
   void analyze_global_variable_declaration(
       std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>

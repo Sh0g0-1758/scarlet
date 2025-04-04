@@ -79,6 +79,23 @@ void parser::analyze_declaration(
   }
 }
 
+void parser::assign_derived_type_to_symbol(
+    std::shared_ptr<ast::AST_declarator_Node> declarator,
+    symbolTable::symbolInfo &varInfo, int indx) {
+  if (declarator == nullptr)
+    return;
+
+  if (declarator->is_pointer()) {
+    varInfo.derivedTypeMap[indx].push_back((long)ast::ElemType::POINTER);
+  }
+  if (!declarator->get_arrDim().empty()) {
+    for (auto dim : declarator->get_arrDim()) {
+      varInfo.derivedTypeMap[indx].push_back(dim);
+    }
+  }
+  assign_derived_type_to_symbol(declarator->get_child(), varInfo, indx);
+}
+
 void parser::analyze_global_variable_declaration(
     std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -163,43 +180,49 @@ void parser::analyze_global_variable_declaration(
       }
     }
   } else { // symbol has not been declared before
-    // Give appropriate linkage to the variable
-    symbol_table[{var_name, 0}] = {var_name,
-                                   symbolTable::linkage::EXTERNAL,
-                                   symbolTable::symbolType::VARIABLE,
-                                   {varDecl->get_base_type()},
-                                   symbolTable::defType::TENTATIVE};
+    symbolTable::symbolInfo varInfo;
+    varInfo.name = var_name;
+    varInfo.link = symbolTable::linkage::EXTERNAL;
+    varInfo.type = symbolTable::symbolType::VARIABLE;
+    varInfo.def = symbolTable::defType::TENTATIVE;
+    assign_derived_type_to_symbol(varDecl->get_declarator(), varInfo, 0);
+    if (!varInfo.derivedTypeMap[0].empty()) {
+      varInfo.typeDef.push_back(ast::ElemType::DERIVED);
+      varInfo.derivedTypeMap[0].push_back((long)varDecl->get_base_type());
+    } else {
+      varInfo.typeDef.push_back(varDecl->get_base_type());
+    }
     if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
-      symbol_table[{var_name, 0}].link = symbolTable::linkage::INTERNAL;
+      varInfo.link = symbolTable::linkage::INTERNAL;
     } else if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
-      symbol_table[{var_name, 0}].def = symbolTable::defType::FALSE;
+      varInfo.def = symbolTable::defType::FALSE;
     }
 
     // If storage specifier is not extern, set the tentative value to zero
     if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
       INITZERO();
-      symbol_table[{var_name, 0}].value = constZero;
+      varInfo.value = constZero;
     }
 
     // Make sure that global variables are initialized only with
     // constant integers
     if (varDecl->get_exp() != nullptr) {
-      symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
+      varInfo.def = symbolTable::defType::TRUE;
       if (!EXPISCONSTANT(varDecl->get_exp())) {
         success = false;
         error_messages.emplace_back(
             "Global variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        symbol_table[{var_name, 0}].value =
-            ast::castConstToVal(varDecl->get_exp()
-                                    ->get_factor_node()
-                                    ->get_const_node()
-                                    ->get_constant(),
-                                varDecl->get_base_type());
+        varInfo.value = ast::castConstToVal(varDecl->get_exp()
+                                                ->get_factor_node()
+                                                ->get_const_node()
+                                                ->get_constant(),
+                                            varDecl->get_base_type());
       }
     }
-    globalSymbolTable[var_name] = symbol_table[{var_name, 0}];
+    symbol_table[{var_name, 0}] = varInfo;
+    globalSymbolTable[var_name] = varInfo;
   }
 }
 
