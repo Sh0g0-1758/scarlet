@@ -6,7 +6,23 @@ namespace parser {
 void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
   if (factor == nullptr)
     return;
-  std::cout << "<<" << ast::to_string(factor->get_type()) << ">>";
+
+  if (factor->get_type() == ast::ElemType::DERIVED) {
+    std::cout << "<<";
+    for (auto it : factor->get_derived_type()) {
+      if (it > 0) {
+        std::cout << "[" << it << "]->";
+      } else if (it == -1) {
+        std::cout << "*->";
+      } else {
+        std::cout << ast::to_string(static_cast<ast::ElemType>(it));
+      }
+    }
+    std::cout << ">>";
+  } else {
+    std::cout << "<<" << ast::to_string(factor->get_type()) << ">>";
+  }
+
   if (factor->get_unop_node() != nullptr) {
     std::cout << "Unop(" << unop::to_string(factor->get_unop_node()->get_op())
               << "(";
@@ -54,8 +70,22 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   if (exp->get_binop_node() != nullptr and
       exp->get_binop_node()->get_op() != binop::BINOP::UNKNOWN) {
     pretty_print_exp(exp->get_left());
-
-    std::cout << "\t\t\t<<" << ast::to_string(exp->get_type()) << ">>";
+    std::cout << "\t\t\t";
+    if (exp->get_type() == ast::ElemType::DERIVED) {
+      std::cout << "<<";
+      for (auto it : exp->get_derived_type()) {
+        if (it > 0) {
+          std::cout << "[" << it << "]->";
+        } else if (it == -1) {
+          std::cout << "*->";
+        } else {
+          std::cout << ast::to_string(static_cast<ast::ElemType>(it));
+        }
+      }
+      std::cout << ">>";
+    } else {
+      std::cout << "<<" << ast::to_string(exp->get_type()) << ">>";
+    }
     std::cout << "Binop(" << binop::to_string(exp->get_binop_node()->get_op())
               << " ,";
     if (exp->get_left() == nullptr) {
