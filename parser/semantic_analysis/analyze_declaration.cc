@@ -3,9 +3,9 @@
 namespace scarlet {
 namespace parser {
 
-#define INITZERO()                                                             \
+#define INITZERO(type)                                                         \
   constant::Constant constZero;                                                \
-  switch (varDecl->get_base_type()) {                                          \
+  switch (type) {                                                              \
   case ast::ElemType::INT:                                                     \
     constZero.set_type(constant::Type::INT);                                   \
     constZero.set_value({.i = 0});                                             \
@@ -35,7 +35,6 @@ namespace parser {
     UNREACHABLE();                                                             \
   }
 
-// TODO: FIXME castConstToElemType
 void parser::analyze_declaration(
     std::shared_ptr<ast::AST_Declaration_Node> declaration,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -194,7 +193,13 @@ void parser::analyze_global_variable_declaration(
                                          ->get_factor_node()
                                          ->get_const_node()
                                          ->get_constant(),
-                                     varDecl->get_base_type());
+                                     globalSymbolTable[var_name].typeDef[0]);
+        if (globalSymbolTable[var_name].typeDef[0] == ast::ElemType::DERIVED and
+            globalSymbolTable[var_name].value.get_value().i != 0) {
+          success = false;
+          error_messages.emplace_back(
+              "Invalid initialization of derived type " + var_name);
+        }
         symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
         symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
       }
@@ -202,7 +207,7 @@ void parser::analyze_global_variable_declaration(
       // If the variable has not been defined and is not extern,
       // mark it as a tentative definition
       if (globalSymbolTable[var_name].def == symbolTable::defType::FALSE) {
-        INITZERO();
+        INITZERO(globalSymbolTable[var_name].typeDef[0]);
         symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
         globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
         symbol_table[{var_name, 0}].value = constZero;
@@ -232,7 +237,7 @@ void parser::analyze_global_variable_declaration(
 
     // If storage specifier is not extern, set the tentative value to zero
     if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
-      INITZERO();
+      INITZERO(varInfo.typeDef[0]);
       varInfo.value = constZero;
     }
 
@@ -250,7 +255,13 @@ void parser::analyze_global_variable_declaration(
                                                      ->get_factor_node()
                                                      ->get_const_node()
                                                      ->get_constant(),
-                                                 varDecl->get_base_type());
+                                                 varInfo.typeDef[0]);
+        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+            varInfo.value.get_value().i != 0) {
+          success = false;
+          error_messages.emplace_back(
+              "Invalid initialization of derived type " + var_name);
+        }
       }
     }
     symbol_table[{var_name, 0}] = varInfo;
@@ -489,10 +500,16 @@ void parser::analyze_local_variable_declaration(
                                                      ->get_factor_node()
                                                      ->get_const_node()
                                                      ->get_constant(),
-                                                 varDecl->get_base_type());
+                                                 varInfo.typeDef[0]);
+        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+            varInfo.value.get_value().i != 0) {
+          success = false;
+          error_messages.emplace_back(
+              "Invalid initialization of derived type " + var_name);
+        }
       }
     } else {
-      INITZERO();
+      INITZERO(varInfo.typeDef[0]);
       varInfo.value = constZero;
     }
     symbol_table[{var_name, indx}] = varInfo;

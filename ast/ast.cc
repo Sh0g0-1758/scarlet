@@ -210,8 +210,10 @@ constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
     ret.set_type(constant::Type::DOUBLE);
     CASTCONST(c, ret, d, double);
   } break;
-  // TODO: FIXME
-  case ElemType::DERIVED:
+  case ElemType::DERIVED: {
+    ret.set_type(constant::Type::ULONG);
+    CASTCONST(c, ret, ul, unsigned long);
+  } break;
   case ElemType::POINTER:
   case ElemType::NONE:
     UNREACHABLE();

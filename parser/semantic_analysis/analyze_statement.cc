@@ -62,14 +62,16 @@ void parser::analyze_statement(
       analyze_switch_case<unsigned long>(switch_statement,
                                          constant::Type::ULONG);
       break;
-    // TODO: FIXME
-    case ast::ElemType::DERIVED:
-    case ast::ElemType::POINTER:
     case ast::ElemType::DOUBLE: {
       success = false;
       error_messages.emplace_back(
           "Switch expression cannot be a double precision");
     } break;
+    case ast::ElemType::DERIVED: {
+      success = false;
+      error_messages.emplace_back("Switch expression cannot be a derived type");
+    }
+    case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       break;
     }
