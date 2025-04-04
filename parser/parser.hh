@@ -157,9 +157,9 @@ private:
   void assign_type_to_factor(std::shared_ptr<ast::AST_factor_Node> factor);
   void assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-                       ast::ElemType type);
+                       ast::ElemType type, std::vector<long> derivedType);
   void add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
-                          ast::ElemType type);
+                          ast::ElemType type, std::vector<long> derivedType);
   void analyze_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
                          std::map<std::pair<std::string, int>,
                                   symbolTable::symbolInfo> &symbol_table,

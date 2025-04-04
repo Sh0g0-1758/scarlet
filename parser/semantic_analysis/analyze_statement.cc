@@ -17,14 +17,15 @@ void parser::analyze_statement(
   // duplicate labels
 
   switch (statement->get_type()) {
-  case ast::statementType::RETURN:
+  case ast::statementType::RETURN: {
     analyze_exp(statement->get_exps(), symbol_table, indx);
-    if (statement->get_exps()->get_type() !=
-        globalSymbolTable[currFuncName].typeDef[0]) {
-      add_cast_to_exp(statement->get_exps(),
-                      globalSymbolTable[currFuncName].typeDef[0]);
+    auto funcType = globalSymbolTable[currFuncName].typeDef[0];
+    auto funcDerivedType = globalSymbolTable[currFuncName].derivedTypeMap[0];
+    if (statement->get_exps()->get_type() != funcType or
+        statement->get_exps()->get_derived_type() != funcDerivedType) {
+      add_cast_to_exp(statement->get_exps(), funcType, funcDerivedType);
     }
-    break;
+  } break;
   case ast::statementType::CASE:
   case ast::statementType::DEFAULT_CASE:
     break;

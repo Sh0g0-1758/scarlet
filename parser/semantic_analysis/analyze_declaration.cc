@@ -33,6 +33,7 @@ namespace parser {
     UNREACHABLE();                                                             \
   }
 
+// TODO: FIXME castConstToElemType
 void parser::analyze_declaration(
     std::shared_ptr<ast::AST_Declaration_Node> declaration,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -517,8 +518,9 @@ void parser::analyze_local_variable_declaration(
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
-      if (varDecl->get_exp()->get_type() != varDecl->get_base_type()) {
-        add_cast_to_exp(varDecl->get_exp(), varDecl->get_base_type());
+      if (varDecl->get_exp()->get_type() != varInfo.typeDef[0]) {
+        add_cast_to_exp(varDecl->get_exp(), varDecl->get_base_type(),
+                        varInfo.derivedTypeMap[0]);
       }
     }
   }

@@ -5,102 +5,141 @@ namespace ast {
 ElemType constTypeToElemType(constant::Type t) {
   switch (t) {
   case constant::Type::INT:
-    return ast::ElemType::INT;
+    return ElemType::INT;
   case constant::Type::LONG:
-    return ast::ElemType::LONG;
+    return ElemType::LONG;
   case constant::Type::UINT:
-    return ast::ElemType::UINT;
+    return ElemType::UINT;
   case constant::Type::ULONG:
-    return ast::ElemType::ULONG;
+    return ElemType::ULONG;
   case constant::Type::DOUBLE:
-    return ast::ElemType::DOUBLE;
+    return ElemType::DOUBLE;
   case constant::Type::NONE:
-    return ast::ElemType::NONE;
+    return ElemType::NONE;
   }
-  return ast::ElemType::NONE;
+  return ElemType::NONE;
 }
 
-constant::Type elemTypeToConstType(ast::ElemType t) {
+constant::Type elemTypeToConstType(ElemType t) {
   switch (t) {
-  case ast::ElemType::INT:
+  case ElemType::INT:
     return constant::Type::INT;
-  case ast::ElemType::LONG:
+  case ElemType::LONG:
     return constant::Type::LONG;
-  case ast::ElemType::UINT:
+  case ElemType::UINT:
     return constant::Type::UINT;
-  case ast::ElemType::ULONG:
+  case ElemType::ULONG:
     return constant::Type::ULONG;
-  case ast::ElemType::DOUBLE:
+  case ElemType::DOUBLE:
     return constant::Type::DOUBLE;
   // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
   // be something different ?
-  case ast::ElemType::DERIVED:
-  case ast::ElemType::POINTER:
-  case ast::ElemType::NONE:
+  case ElemType::DERIVED:
+  case ElemType::POINTER:
+  case ElemType::NONE:
     return constant::Type::NONE;
   }
   return constant::Type::NONE;
 }
 
-std::string to_string(ast::ElemType type) {
+std::string to_string(ElemType type) {
   switch (type) {
-  case ast::ElemType::INT:
+  case ElemType::INT:
     return "int";
-  case ast::ElemType::LONG:
+  case ElemType::LONG:
     return "long";
-  case ast::ElemType::UINT:
+  case ElemType::UINT:
     return "unsigned int";
-  case ast::ElemType::ULONG:
+  case ElemType::ULONG:
     return "unsigned long";
-  case ast::ElemType::DOUBLE:
+  case ElemType::DOUBLE:
     return "double";
-  case ast::ElemType::DERIVED:
+  case ElemType::DERIVED:
     return "derived";
-  case ast::ElemType::POINTER:
+  case ElemType::POINTER:
     return "pointer";
-  case ast::ElemType::NONE:
+  case ElemType::NONE:
     return "";
   }
   UNREACHABLE();
 }
 
-std::string to_string(ast::SpecifierType type) {
+std::string to_string(SpecifierType type) {
   switch (type) {
-  case ast::SpecifierType::STATIC:
+  case SpecifierType::STATIC:
     return "static";
-  case ast::SpecifierType::EXTERN:
+  case SpecifierType::EXTERN:
     return "extern";
-  case ast::SpecifierType::NONE:
+  case SpecifierType::NONE:
     return "none";
   }
   UNREACHABLE();
 }
 
-int getSizeType(ast::ElemType type) {
-  if (type == ast::ElemType::INT || type == ast::ElemType::UINT)
+int getSizeType(ElemType type) {
+  if (type == ElemType::INT || type == ElemType::UINT)
     return 4;
-  else if (type == ast::ElemType::LONG || type == ast::ElemType::ULONG)
+  else if (type == ElemType::LONG || type == ElemType::ULONG)
     return 8;
-  else if (type == ast::ElemType::DOUBLE)
+  else if (type == ElemType::DOUBLE)
     return 8;
   else
     return -1;
 }
 
-ast::ElemType getParentType(ast::ElemType left, ast::ElemType right) {
-  if (left == right)
-    return left;
-  else if (left == ast::ElemType::DOUBLE or right == ast::ElemType::DOUBLE)
-    return ast::ElemType::DOUBLE;
-  else if (getSizeType(left) == getSizeType(right)) {
-    if (left == ast::ElemType::UINT || left == ast::ElemType::ULONG)
-      return left;
+bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor != nullptr and factor->get_const_node() != nullptr and
+      factor->get_const_node()->get_constant().get_value().i == 0)
+    return true;
+  return false;
+}
+
+bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
+  // To be an lvalue, it can be either be an identifier or a dereference result.
+  // A dereference result will be an lvalue if its a basic type. We also need to
+  // take care when the identifier node is present because its a function call
+  if (factor == nullptr)
+    return false;
+  if (factor->get_type() == ElemType::DERIVED)
+    return false;
+  if (factor->get_identifier_node() == nullptr)
+    return false;
+  if (factor->get_factor_type() != FactorType::BASIC)
+    return false;
+  return true;
+}
+
+std::pair<ElemType, std::vector<long>>
+getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
+              std::vector<long> &rightDerivedType,
+              std::shared_ptr<AST_exp_Node> exp) {
+  if (left == ElemType::DERIVED or right == ElemType::DERIVED) {
+    if (left == right) {
+      return {left, leftDerivedType};
+    } else {
+      if (is_const_zero(exp->get_factor_node())) {
+        return {right, rightDerivedType};
+      } else if (is_const_zero(exp->get_right()->get_factor_node())) {
+        return {left, leftDerivedType};
+      } else {
+        return {ElemType::NONE, {}};
+      }
+    }
+  } else {
+    if (left == right)
+      return {left, {}};
+    else if (left == ElemType::DOUBLE or right == ElemType::DOUBLE)
+      return {ElemType::DOUBLE, {}};
+    else if (getSizeType(left) == getSizeType(right)) {
+      if (left == ElemType::UINT || left == ElemType::ULONG)
+        return {left, {}};
+      else
+        return {right, {}};
+    } else if (getSizeType(left) > getSizeType(right))
+      return {left, {}};
     else
-      return right;
-  } else if (getSizeType(left) > getSizeType(right))
-    return left;
-  else
-    return right;
+      return {right, {}};
+  }
 }
 
 #define CASTCONST(c, ret, t, T)                                                \
@@ -124,43 +163,48 @@ ast::ElemType getParentType(ast::ElemType left, ast::ElemType right) {
     break;                                                                     \
   }
 
-constant::Constant castConstToElemType(constant::Constant c,
-                                       ast::ElemType type) {
-  if (ast::constTypeToElemType(c.get_type()) == type) {
+constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
+  if (constTypeToElemType(c.get_type()) == type) {
     return c;
   }
 
   constant::Constant ret;
 
   switch (type) {
-  case ast::ElemType::INT: {
+  case ElemType::INT: {
     ret.set_type(constant::Type::INT);
     CASTCONST(c, ret, i, int);
   } break;
-  case ast::ElemType::LONG: {
+  case ElemType::LONG: {
     ret.set_type(constant::Type::LONG);
     CASTCONST(c, ret, l, long);
   } break;
-  case ast::ElemType::UINT: {
+  case ElemType::UINT: {
     ret.set_type(constant::Type::UINT);
     CASTCONST(c, ret, ui, unsigned int);
   } break;
-  case ast::ElemType::ULONG: {
+  case ElemType::ULONG: {
     ret.set_type(constant::Type::ULONG);
     CASTCONST(c, ret, ul, unsigned long);
   } break;
-  case ast::ElemType::DOUBLE: {
+  case ElemType::DOUBLE: {
     ret.set_type(constant::Type::DOUBLE);
     CASTCONST(c, ret, d, double);
   } break;
   // TODO: FIXME
-  case ast::ElemType::DERIVED:
-  case ast::ElemType::POINTER:
-  case ast::ElemType::NONE:
+  case ElemType::DERIVED:
+  case ElemType::POINTER:
+  case ElemType::NONE:
     UNREACHABLE();
   }
 
   return ret;
+}
+
+bool isComplexType(ElemType type) {
+  if (type == ElemType::DERIVED || type == ElemType::POINTER)
+    return true;
+  return false;
 }
 } // namespace ast
 } // namespace scarlet

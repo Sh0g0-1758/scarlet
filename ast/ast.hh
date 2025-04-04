@@ -105,23 +105,14 @@ enum class SpecifierType { NONE, STATIC, EXTERN };
 // the global symbol table
 enum class ElemType {
   NONE = 0,
-  INT = -1,
-  LONG = -2,
-  ULONG = -3,
-  UINT = -4,
-  DOUBLE = -5,
-  DERIVED = -6,
-  POINTER = -7
+  DERIVED = -1,
+  POINTER = -2,
+  INT = -3,
+  LONG = -4,
+  ULONG = -5,
+  UINT = -6,
+  DOUBLE = -7
 };
-
-ElemType constTypeToElemType(constant::Type t);
-constant::Type elemTypeToConstType(ElemType t);
-std::string to_string(ast::ElemType type);
-std::string to_string(ast::SpecifierType type);
-int getSizeType(ast::ElemType type);
-ast::ElemType getParentType(ast::ElemType left, ast::ElemType right);
-constant::Constant castConstToElemType(constant::Constant c,
-                                       ast::ElemType type);
 
 class AST_const_Node {
 private:
@@ -184,6 +175,7 @@ private:
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
   std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx;
+  std::vector<long> derivedType{};
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -234,6 +226,9 @@ public:
   }
   void add_arrIdx(std::shared_ptr<ast::AST_exp_Node> arrIdx) {
     this->arrIdx.emplace_back(arrIdx);
+  std::vector<long> get_derived_type() { return derivedType; }
+  void set_derived_type(std::vector<long> derivedType) {
+    this->derivedType = std::move(derivedType);
   }
 };
 
@@ -287,6 +282,7 @@ private:
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
   ElemType type = ElemType::NONE;
+  std::vector<long> derivedType{};
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -296,7 +292,7 @@ public:
     this->binop = std::move(binop);
   }
 
-  const std::shared_ptr<AST_factor_Node> get_factor_node() { return factor; }
+  std::shared_ptr<AST_factor_Node> get_factor_node() { return factor; }
   void set_factor_node(std::shared_ptr<AST_factor_Node> factor) {
     this->factor = std::move(factor);
   }
@@ -313,6 +309,11 @@ public:
 
   ElemType get_type() { return type; }
   void set_type(ElemType type) { this->type = type; }
+
+  std::vector<long> get_derived_type() { return derivedType; }
+  void set_derived_type(std::vector<long> derivedType) {
+    this->derivedType = std::move(derivedType);
+  }
 };
 
 class AST_ternary_exp_Node : public AST_exp_Node {
@@ -652,8 +653,8 @@ public:
 class AST_switch_statement_Node : public AST_Statement_Node {
 private:
   std::shared_ptr<AST_Statement_Node> stmt;
-  std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
-                        std::shared_ptr<ast::AST_identifier_Node>>>
+  std::vector<std::pair<std::shared_ptr<AST_exp_Node>,
+                        std::shared_ptr<AST_identifier_Node>>>
       case_exp_label;
   bool has_default_case = false;
 
@@ -663,13 +664,13 @@ public:
   void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
     this->stmt = std::move(stmt);
   }
-  void set_case_exp_label(std::shared_ptr<ast::AST_exp_Node> exp,
-                          std::shared_ptr<ast::AST_identifier_Node> label) {
+  void set_case_exp_label(std::shared_ptr<AST_exp_Node> exp,
+                          std::shared_ptr<AST_identifier_Node> label) {
     this->case_exp_label.push_back(
         std::make_pair(std::move(exp), std::move(label)));
   }
-  std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
-                        std::shared_ptr<ast::AST_identifier_Node>>>
+  std::vector<std::pair<std::shared_ptr<AST_exp_Node>,
+                        std::shared_ptr<AST_identifier_Node>>>
   get_case_exp_label() {
     return case_exp_label;
   }
@@ -690,5 +691,20 @@ public:
     this->case_label = std::move(case_label);
   }
 };
+
+ElemType constTypeToElemType(constant::Type t);
+constant::Type elemTypeToConstType(ElemType t);
+std::string to_string(ElemType type);
+std::string to_string(SpecifierType type);
+int getSizeType(ElemType type);
+std::pair<ElemType, std::vector<long>>
+getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
+              std::vector<long> &rightDerivedType,
+              std::shared_ptr<AST_exp_Node> exp);
+constant::Constant castConstToElemType(constant::Constant c, ElemType type);
+bool isComplexType(ElemType type);
+bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
+bool is_const_zero(std::shared_ptr<AST_factor_Node> factor);
+bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 } // namespace ast
 } // namespace scarlet
