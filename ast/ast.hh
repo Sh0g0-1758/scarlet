@@ -67,6 +67,10 @@ Grammar:
            | <unop> <factor> 
            | "(" <exp> ")" 
            | <identifier> "(" [ <argument-list> ] ")"
+           | <postfix-exp>
+
+<postfix-exp> ::= <identifier> { "[" <const> "]" }+
+                | "(" <exp> ")" { "[" <const> "]" }+
 
 <abstract-declarator> ::= "*"
                         | "*" <abstract-declarator> 
@@ -162,24 +166,7 @@ public:
 class AST_exp_Node;
 
 enum class FactorType { BASIC, FUNCTION_CALL };
-
-class AST_declarator_Node {
-private:
-  bool pointer = false;
-  std::vector<long> arrDim;
-  std::shared_ptr<AST_declarator_Node> child;
-
-public:
-  std::string get_AST_name() { return "Declarator"; }
-  bool is_pointer() { return pointer; }
-  void set_pointer(bool pointer) { this->pointer = pointer; }
-  std::shared_ptr<AST_declarator_Node> get_child() { return child; }
-  void set_child(std::shared_ptr<AST_declarator_Node> child) {
-    this->child = std::move(child);
-  }
-  std::vector<long> get_arrDim() { return arrDim; }
-  void add_dim(long dim) { arrDim.emplace_back(dim); }
-};
+class AST_declarator_Node;
 
 class AST_factor_Node {
 private:
@@ -196,6 +183,7 @@ private:
   std::shared_ptr<AST_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
+  std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx;
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -240,6 +228,13 @@ public:
 
   ElemType get_type() { return type; }
   void set_type(ElemType type) { this->type = type; }
+
+  std::vector<std::shared_ptr<ast::AST_exp_Node>> get_arrIdx() {
+    return arrIdx;
+  }
+  void add_arrIdx(std::shared_ptr<ast::AST_exp_Node> arrIdx) {
+    this->arrIdx.emplace_back(arrIdx);
+  }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {
@@ -449,6 +444,24 @@ public:
 
 enum class DeclarationType { VARIABLE, FUNCTION };
 
+class AST_declarator_Node {
+  private:
+    bool pointer = false;
+    std::vector<long> arrDim;
+    std::shared_ptr<AST_declarator_Node> child;
+  
+  public:
+    std::string get_AST_name() { return "Declarator"; }
+    bool is_pointer() { return pointer; }
+    void set_pointer(bool pointer) { this->pointer = pointer; }
+    std::shared_ptr<AST_declarator_Node> get_child() { return child; }
+    void set_child(std::shared_ptr<AST_declarator_Node> child) {
+      this->child = std::move(child);
+    }
+    std::vector<long> get_arrDim() { return arrDim; }
+    void add_dim(long dim) { arrDim.emplace_back(dim); }
+  };
+
 class AST_Declaration_Node {
 private:
   std::shared_ptr<AST_declarator_Node> declarator;
@@ -475,9 +488,15 @@ public:
   void set_specifier(SpecifierType specifier) { this->specifier = specifier; }
 };
 
+struct initializer{
+  std::vector<std::shared_ptr<initializer>> initializer_list;
+  std::vector<std::shared_ptr<AST_exp_Node>> exp_list;
+};
+
 class AST_variable_declaration_Node : public AST_Declaration_Node {
 private:
   std::shared_ptr<AST_exp_Node> exp;
+  std::shared_ptr<initializer> init;
   ElemType base_type;
 
 public:
@@ -488,6 +507,10 @@ public:
   std::shared_ptr<AST_exp_Node> get_exp() { return exp; }
   void set_base_type(ElemType type) { this->base_type = type; }
   ElemType get_base_type() { return base_type; }
+  void set_initializer(std::shared_ptr<initializer> init) {
+    this->init = std::move(init);
+  }
+  std::shared_ptr<initializer> get_initializer() { return init; }
 };
 
 struct Param {

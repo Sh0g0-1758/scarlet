@@ -49,6 +49,7 @@ private:
   void parse_variable_declaration(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_variable_declaration_Node> decl);
+  void parse_initializer(std::vector<token::Token> &tokens, std::shared_ptr<ast::initializer> &init);
   void parse_declarator(std::vector<token::Token> &tokens,
                         std::shared_ptr<ast::AST_declarator_Node> &decl,
                         std::shared_ptr<ast::AST_identifier_Node> &identifier);

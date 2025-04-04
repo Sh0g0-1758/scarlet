@@ -36,22 +36,22 @@ parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
 void parser::parse_abstract_declarator(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_declarator_Node> &declarator) {
-  if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
-    tokens.erase(tokens.begin());
-    MAKE_SHARED(ast::AST_declarator_Node, child);
-    parse_abstract_declarator(tokens, child);
-    declarator->set_child(std::move(child));
-    EXPECT(token::TOKEN::CLOSE_PARANTHESES);
-  } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
-    tokens.erase(tokens.begin());
-    declarator->set_pointer(true);
-    if (!tokens.empty() and
-        tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
-      MAKE_SHARED(ast::AST_declarator_Node, child);
-      parse_abstract_declarator(tokens, child);
-      declarator->set_child(std::move(child));
-    }
-  }
+      if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+        parse_variable_declarator_suffix(tokens, declarator);
+      } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+        tokens.erase(tokens.begin());
+        MAKE_SHARED(ast::AST_declarator_Node, child);
+        parse_abstract_declarator(tokens, child);
+        declarator->set_child(std::move(child));
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+        parse_variable_declarator_suffix(tokens, declarator);
+      } else if (tokens[0].get_token() == token::TOKEN::ASTERISK) {
+        tokens.erase(tokens.begin());
+        declarator->set_pointer(true);
+        MAKE_SHARED(ast::AST_declarator_Node, child);
+        parse_abstract_declarator(tokens, child);
+        declarator->set_child(std::move(child));
+      }
 }
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
@@ -170,6 +170,21 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       tokens.erase(tokens.begin());
       factor->set_unop_node(std::move(unop));
     }
+  }
+  if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+    // if (factor->get_const_node()!=nullptr){
+    //   success = false;
+    //   error_messages.emplace_back(
+    //       "Expected an lvalue for the array index operator");
+    // } else{
+        while(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET){
+          tokens.erase(tokens.begin());
+          MAKE_SHARED(ast::AST_exp_Node, exp);
+          parse_exp(tokens, exp);
+          factor->add_arrIdx(exp);
+          EXPECT(token::TOKEN::CLOSE_BRACKET);
+        }
+    // }
   }
 }
 
