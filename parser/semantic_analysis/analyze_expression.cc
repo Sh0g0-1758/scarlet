@@ -407,10 +407,6 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       }
       exp->set_type(expType);
       exp->set_derived_type(expDerivedType);
-      if (exp->get_factor_node()->get_type() != exp->get_right()->get_type()) {
-        add_cast_to_exp(exp->get_right(), exp->get_type(),
-                        exp->get_derived_type());
-      }
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
       auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
       ast::ElemType leftType = (ternary->get_middle() != nullptr)
@@ -428,9 +424,11 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         error_messages.emplace_back("Incompatible types in expression");
       }
 
-      if (expType == leftType and expDerivedType == leftDerivedType) {
+      if (expType != rightType or expDerivedType != rightDerivedType) {
         add_cast_to_exp(exp->get_right(), expType, expDerivedType);
-      } else if (expType == rightType and expDerivedType == rightDerivedType) {
+      }
+
+      if (expType != leftType or expDerivedType != leftDerivedType) {
         (ternary->get_middle() != nullptr)
             ? add_cast_to_exp(ternary->get_middle(), expType, expDerivedType)
             : add_cast_to_factor(exp->get_factor_node(), expType,
@@ -478,9 +476,11 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         error_messages.emplace_back("Incompatible types in expression");
       }
 
-      if (expType == leftType and expDerivedType == leftDerivedType) {
+      if (expType != rightType or expDerivedType != rightDerivedType) {
         add_cast_to_exp(exp->get_right(), expType, expDerivedType);
-      } else if (expType == rightType and expDerivedType == rightDerivedType) {
+      }
+
+      if (expType != leftType or expDerivedType != leftDerivedType) {
         (exp->get_left() != nullptr)
             ? add_cast_to_exp(exp->get_left(), expType, expDerivedType)
             : add_cast_to_factor(exp->get_factor_node(), expType,

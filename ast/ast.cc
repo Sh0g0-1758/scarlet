@@ -97,18 +97,19 @@ bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
 }
 
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
-  // To be an lvalue, it can be either be an identifier or a dereference result.
-  // A dereference result will be an lvalue if its a basic type. We also need to
-  // take care when the identifier node is present because its a function call
   if (factor == nullptr)
     return false;
-  if (factor->get_type() == ElemType::DERIVED)
+  if (factor->get_identifier_node() != nullptr and
+      factor->get_factor_type() == FactorType::BASIC)
+    return true;
+  if (factor->get_unop_node() != nullptr and
+      factor->get_unop_node()->get_op() != unop::UNOP::DEREFERENCE)
     return false;
-  if (factor->get_identifier_node() == nullptr)
+  if (factor->get_exp_node() != nullptr and
+      factor->get_exp_node()->get_binop_node() != nullptr)
     return false;
-  if (factor->get_factor_type() != FactorType::BASIC)
-    return false;
-  return true;
+  return is_lvalue(factor->get_child()) or
+         is_lvalue(factor->get_exp_node()->get_factor_node());
 }
 
 std::pair<ElemType, std::vector<long>>

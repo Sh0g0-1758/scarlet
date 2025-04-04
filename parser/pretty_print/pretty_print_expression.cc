@@ -12,7 +12,7 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
     for (auto it : factor->get_derived_type()) {
       if (it > 0) {
         std::cout << "[" << it << "]->";
-      } else if (it == -1) {
+      } else if (it == -2) {
         std::cout << "*->";
       } else {
         std::cout << ast::to_string(static_cast<ast::ElemType>(it));
@@ -29,11 +29,9 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
     pretty_print_factor(factor->get_child());
     std::cout << "))";
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
-    std::cout << "Cast(" << ast::to_string(factor->get_cast_type());
-    pretty_print_declarator(factor->get_cast_declarator());
-    std::cout << "(";
+    std::cout << "Cast(";
     pretty_print_factor(factor->get_child());
-    std::cout << "))";
+    std::cout << ")";
   } else if (factor->get_exp_node() != nullptr) {
     pretty_print_exp(factor->get_exp_node());
   } else if (factor->get_const_node() != nullptr) {
@@ -76,7 +74,7 @@ void parser::pretty_print_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       for (auto it : exp->get_derived_type()) {
         if (it > 0) {
           std::cout << "[" << it << "]->";
-        } else if (it == -1) {
+        } else if (it == -2) {
           std::cout << "*->";
         } else {
           std::cout << ast::to_string(static_cast<ast::ElemType>(it));
