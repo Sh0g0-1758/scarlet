@@ -116,7 +116,8 @@ std::string to_string(ast::ElemType type);
 std::string to_string(ast::SpecifierType type);
 int getSizeType(ast::ElemType type);
 ast::ElemType getParentType(ast::ElemType left, ast::ElemType right);
-constant::Constant castConstToVal(constant::Constant c, ast::ElemType type);
+constant::Constant castConstToElemType(constant::Constant c,
+                                       ast::ElemType type);
 
 class AST_const_Node {
 private:

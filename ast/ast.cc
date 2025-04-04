@@ -124,7 +124,8 @@ ast::ElemType getParentType(ast::ElemType left, ast::ElemType right) {
     break;                                                                     \
   }
 
-constant::Constant castConstToVal(constant::Constant c, ast::ElemType type) {
+constant::Constant castConstToElemType(constant::Constant c,
+                                       ast::ElemType type) {
   if (ast::constTypeToElemType(c.get_type()) == type) {
     return c;
   }

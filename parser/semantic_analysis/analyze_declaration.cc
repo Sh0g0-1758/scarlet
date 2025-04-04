@@ -26,7 +26,7 @@ namespace parser {
     constZero.set_type(constant::Type::DOUBLE);                                \
     constZero.set_value({.d = 0});                                             \
     break;                                                                     \
-  /* TODO: FIX ME */                                                           \
+  /* TODO: FIXME */                                                            \
   case ast::ElemType::DERIVED:                                                 \
   case ast::ElemType::POINTER:                                                 \
   case ast::ElemType::NONE:                                                    \
@@ -187,11 +187,11 @@ void parser::analyze_global_variable_declaration(
       } else {
         globalSymbolTable[var_name].def = symbolTable::defType::TRUE;
         globalSymbolTable[var_name].value =
-            ast::castConstToVal(varDecl->get_exp()
-                                    ->get_factor_node()
-                                    ->get_const_node()
-                                    ->get_constant(),
-                                varDecl->get_base_type());
+            ast::castConstToElemType(varDecl->get_exp()
+                                         ->get_factor_node()
+                                         ->get_const_node()
+                                         ->get_constant(),
+                                     varDecl->get_base_type());
         symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
         symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
       }
@@ -243,11 +243,11 @@ void parser::analyze_global_variable_declaration(
             "Global variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        varInfo.value = ast::castConstToVal(varDecl->get_exp()
-                                                ->get_factor_node()
-                                                ->get_const_node()
-                                                ->get_constant(),
-                                            varDecl->get_base_type());
+        varInfo.value = ast::castConstToElemType(varDecl->get_exp()
+                                                     ->get_factor_node()
+                                                     ->get_const_node()
+                                                     ->get_constant(),
+                                                 varDecl->get_base_type());
       }
     }
     symbol_table[{var_name, 0}] = varInfo;
@@ -423,29 +423,58 @@ void parser::analyze_local_variable_declaration(
       // If the variable has already been declared, then it should have the
       // same type
       if (globalSymbolTable[var_name].type !=
-              symbolTable::symbolType::VARIABLE or
-          globalSymbolTable[var_name].typeDef[0] != varDecl->get_base_type()) {
+          symbolTable::symbolType::VARIABLE) {
         success = false;
         error_messages.emplace_back(
             var_name + " redeclared as a different kind of symbol");
+      } else {
+        bool same_type = previous_declaration_has_same_type(
+            globalSymbolTable[var_name].typeDef[0],
+            globalSymbolTable[var_name].derivedTypeMap[0],
+            varDecl->get_declarator(), varDecl->get_base_type());
+        if (!same_type) {
+          success = false;
+          error_messages.emplace_back(
+              var_name + " redeclared as a different kind of symbol");
+        }
       }
       // do nothing as the variable has already been declared
       symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
     } else {
-      symbol_table[{var_name, indx}] = {var_name,
-                                        symbolTable::linkage::EXTERNAL,
-                                        symbolTable::symbolType::VARIABLE,
-                                        {varDecl->get_base_type()}};
-      globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
+      symbolTable::symbolInfo varInfo;
+      varInfo.name = var_name;
+      varInfo.link = symbolTable::linkage::EXTERNAL;
+      varInfo.type = symbolTable::symbolType::VARIABLE;
+      std::vector<long> derivedType;
+      unroll_derived_type(varDecl->get_declarator(), derivedType);
+      if (!derivedType.empty()) {
+        derivedType.push_back((long)varDecl->get_base_type());
+        varInfo.typeDef.push_back(ast::ElemType::DERIVED);
+        varInfo.derivedTypeMap[0] = derivedType;
+      } else {
+        varInfo.typeDef.push_back(varDecl->get_base_type());
+      }
+      symbol_table[{var_name, indx}] = varInfo;
+      globalSymbolTable[var_name] = varInfo;
     }
   } else if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
     std::string temp_name = get_temp_name(var_name);
     varDecl->get_identifier()->set_identifier(temp_name);
-    symbol_table[{var_name, indx}] = {temp_name,
-                                      symbolTable::linkage::INTERNAL,
-                                      symbolTable::symbolType::VARIABLE,
-                                      {varDecl->get_base_type()}};
-    symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
+
+    symbolTable::symbolInfo varInfo;
+    varInfo.name = temp_name;
+    varInfo.link = symbolTable::linkage::INTERNAL;
+    varInfo.type = symbolTable::symbolType::VARIABLE;
+    std::vector<long> derivedType;
+    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    if (!derivedType.empty()) {
+      derivedType.push_back((long)varDecl->get_base_type());
+      varInfo.typeDef.push_back(ast::ElemType::DERIVED);
+      varInfo.derivedTypeMap[0] = derivedType;
+    } else {
+      varInfo.typeDef.push_back(varDecl->get_base_type());
+    }
+    varInfo.def = symbolTable::defType::TRUE;
     if (varDecl->get_exp() != nullptr) {
       if (!EXPISCONSTANT(varDecl->get_exp())) {
         success = false;
@@ -453,27 +482,37 @@ void parser::analyze_local_variable_declaration(
             "Global variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        symbol_table[{var_name, indx}].value =
-            ast::castConstToVal(varDecl->get_exp()
-                                    ->get_factor_node()
-                                    ->get_const_node()
-                                    ->get_constant(),
-                                varDecl->get_base_type());
+        varInfo.value = ast::castConstToElemType(varDecl->get_exp()
+                                                     ->get_factor_node()
+                                                     ->get_const_node()
+                                                     ->get_constant(),
+                                                 varDecl->get_base_type());
       }
     } else {
       INITZERO();
-      symbol_table[{var_name, indx}].value = constZero;
+      varInfo.value = constZero;
     }
-    globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
+    symbol_table[{var_name, indx}] = varInfo;
+    globalSymbolTable[temp_name] = varInfo;
   } else {
     std::string temp_name = get_temp_name(var_name);
     varDecl->get_identifier()->set_identifier(temp_name);
-    symbol_table[{var_name, indx}] = {temp_name,
-                                      symbolTable::linkage::NONE,
-                                      symbolTable::symbolType::VARIABLE,
-                                      {varDecl->get_base_type()}};
 
-    globalSymbolTable[temp_name] = symbol_table[{var_name, indx}];
+    symbolTable::symbolInfo varInfo;
+    varInfo.name = temp_name;
+    varInfo.link = symbolTable::linkage::NONE;
+    varInfo.type = symbolTable::symbolType::VARIABLE;
+    std::vector<long> derivedType;
+    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    if (!derivedType.empty()) {
+      derivedType.push_back((long)varDecl->get_base_type());
+      varInfo.typeDef.push_back(ast::ElemType::DERIVED);
+      varInfo.derivedTypeMap[0] = derivedType;
+    } else {
+      varInfo.typeDef.push_back(varDecl->get_base_type());
+    }
+    symbol_table[{var_name, indx}] = varInfo;
+    globalSymbolTable[temp_name] = varInfo;
     if (varDecl->get_exp() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
