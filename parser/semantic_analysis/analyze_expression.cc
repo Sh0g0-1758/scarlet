@@ -325,6 +325,7 @@ void parser::assign_type_to_factor(
               (long)ast::ElemType::POINTER) {
         auto parentType = factor->get_child()->get_derived_type();
         parentType.erase(parentType.begin());
+        // parentType is {u}int/{u}long/double
         if (parentType[0] <= -3) {
           factor->set_type((ast::ElemType)parentType[0]);
         } else {
@@ -355,8 +356,7 @@ void parser::assign_type_to_factor(
     std::vector<long> derivedType;
     unroll_derived_type(factor->get_cast_declarator(), derivedType);
     if (!derivedType.empty()) {
-      if (factor->get_type() == ast::ElemType::DOUBLE and
-          derivedType.size() > 0) {
+      if (factor->get_child()->get_type() == ast::ElemType::DOUBLE) {
         // FIXME : include case for array
         success = false;
         error_messages.emplace_back(
@@ -367,7 +367,7 @@ void parser::assign_type_to_factor(
       factor->set_type(ast::ElemType::DERIVED);
     } else {
       if (factor->get_cast_type() == ast::ElemType::DOUBLE and
-          factor->get_type() == ast::ElemType::DERIVED) {
+          factor->get_child()->get_type() == ast::ElemType::DERIVED) {
         // FIXME : include case for array
         success = false;
         error_messages.emplace_back(

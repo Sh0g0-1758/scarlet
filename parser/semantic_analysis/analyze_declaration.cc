@@ -287,14 +287,22 @@ void parser::analyze_global_function_declaration(
     globalSymbolTable[currFuncName].def = symbolTable::defType::TRUE;
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
         proxy_symbol_table(symbol_table);
-    for (auto param : funcDecl->get_params()) {
+    for (int i = 0; i < (int)funcDecl->get_params().size(); i++) {
+      auto param = funcDecl->get_params()[i];
+      auto paramType = globalSymbolTable[currFuncName].typeDef[i + 1];
+      auto paramDerivedType =
+          globalSymbolTable[currFuncName].derivedTypeMap[i + 1];
       std::string paramName = param->identifier->get_value();
       std::string temp_name = get_temp_name(paramName);
-      proxy_symbol_table[{paramName, 1}] = {temp_name,
-                                            symbolTable::linkage::NONE,
-                                            symbolTable::symbolType::VARIABLE,
-                                            {param->base_type}};
-      globalSymbolTable[temp_name] = proxy_symbol_table[{paramName, 1}];
+
+      symbolTable::symbolInfo paramInfo;
+      paramInfo.name = temp_name;
+      paramInfo.link = symbolTable::linkage::NONE;
+      paramInfo.type = symbolTable::symbolType::VARIABLE;
+      paramInfo.typeDef.push_back(paramType);
+      paramInfo.derivedTypeMap[0] = paramDerivedType;
+      proxy_symbol_table[{paramName, 1}] = paramInfo;
+      globalSymbolTable[temp_name] = paramInfo;
       param->identifier->set_identifier(temp_name);
     }
     analyze_block(funcDecl->get_block(), proxy_symbol_table, 1);

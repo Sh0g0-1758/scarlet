@@ -108,6 +108,8 @@ bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
   if (factor->get_exp_node() != nullptr and
       factor->get_exp_node()->get_binop_node() != nullptr)
     return false;
+  if (factor->get_cast_type() != ElemType::NONE)
+    return false;
   return is_lvalue(factor->get_child()) or
          is_lvalue(factor->get_exp_node()->get_factor_node());
 }
