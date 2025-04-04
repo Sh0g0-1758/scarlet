@@ -226,6 +226,7 @@ public:
   }
   void add_arrIdx(std::shared_ptr<ast::AST_exp_Node> arrIdx) {
     this->arrIdx.emplace_back(arrIdx);
+  }
   std::vector<long> get_derived_type() { return derivedType; }
   void set_derived_type(std::vector<long> derivedType) {
     this->derivedType = std::move(derivedType);
@@ -446,22 +447,22 @@ public:
 enum class DeclarationType { VARIABLE, FUNCTION };
 
 class AST_declarator_Node {
-  private:
-    bool pointer = false;
-    std::vector<long> arrDim;
-    std::shared_ptr<AST_declarator_Node> child;
-  
-  public:
-    std::string get_AST_name() { return "Declarator"; }
-    bool is_pointer() { return pointer; }
-    void set_pointer(bool pointer) { this->pointer = pointer; }
-    std::shared_ptr<AST_declarator_Node> get_child() { return child; }
-    void set_child(std::shared_ptr<AST_declarator_Node> child) {
-      this->child = std::move(child);
-    }
-    std::vector<long> get_arrDim() { return arrDim; }
-    void add_dim(long dim) { arrDim.emplace_back(dim); }
-  };
+private:
+  bool pointer = false;
+  std::vector<long> arrDim;
+  std::shared_ptr<AST_declarator_Node> child;
+
+public:
+  std::string get_AST_name() { return "Declarator"; }
+  bool is_pointer() { return pointer; }
+  void set_pointer(bool pointer) { this->pointer = pointer; }
+  std::shared_ptr<AST_declarator_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_declarator_Node> child) {
+    this->child = std::move(child);
+  }
+  std::vector<long> get_arrDim() { return arrDim; }
+  void add_dim(long dim) { arrDim.emplace_back(dim); }
+};
 
 class AST_Declaration_Node {
 private:
@@ -489,7 +490,7 @@ public:
   void set_specifier(SpecifierType specifier) { this->specifier = specifier; }
 };
 
-struct initializer{
+struct initializer {
   std::vector<std::shared_ptr<initializer>> initializer_list;
   std::vector<std::shared_ptr<AST_exp_Node>> exp_list;
 };
