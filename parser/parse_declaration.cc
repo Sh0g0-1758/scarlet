@@ -139,7 +139,10 @@ void parser::parse_function_declarator(
   if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     identifier->set_identifier(tokens[0].get_value().value());
     tokens.erase(tokens.begin());
+    //beacuse function declaration has higher precedence, parse first
     parse_function_declarator_suffix(tokens, funcDecl, haveParams);
+    // If we get an array suffix, we need to check if function params have been
+    // parsed before, otherwise we have an array of functions/function pointers
     if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
       if (!haveParams) {
         success = false;
@@ -156,8 +159,11 @@ void parser::parse_function_declarator(
     parse_function_declarator(tokens, child, identifier, funcDecl, haveParams);
     declarator->set_child(std::move(child));
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+    //beacuse function declaration has higher precedence, parse first
     parse_function_declarator_suffix(tokens, funcDecl, haveParams);
 
+    // If we get an array suffix, we need to check if function params have been
+    // parsed before, otherwise we have an array of functions/function pointers
     if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
       if (!haveParams) {
         success = false;
@@ -172,6 +178,13 @@ void parser::parse_function_declarator(
     declarator->set_pointer(true);
     MAKE_SHARED(ast::AST_declarator_Node, child);
     parse_function_declarator(tokens, child, identifier, funcDecl, haveParams);
+    // If we do not get parameters at a lower level, then we have a function
+    // pointer
+    if(!haveParams) {
+      success = false;
+      error_messages.emplace_back(
+          "cannot have a function pointer");
+    }
     declarator->set_child(std::move(child));
   }
 }
