@@ -318,48 +318,92 @@ void parser::analyze_function_declaration(
 
   // create the function type (return_type ++ arg_types)
   std::vector<ast::ElemType> funcType;
-  funcType.emplace_back(funcDecl->get_return_type());
-  for (auto param : funcDecl->get_params()) {
-    funcType.emplace_back(param->base_type);
+  std::map<int, std::vector<long>> funcDerivedTypeMap;
+  for (int i = 0; i <= (int)funcDecl->get_params().size(); i++) {
+    if (i == 0) {
+      std::vector<long> derivedType;
+      unroll_derived_type(funcDecl->get_declarator(), derivedType);
+      if (!derivedType.empty()) {
+        derivedType.push_back((long)funcDecl->get_return_type());
+        funcType.push_back(ast::ElemType::DERIVED);
+        funcDerivedTypeMap[i] = derivedType;
+      } else {
+        funcType.push_back(funcDecl->get_return_type());
+      }
+    } else {
+      std::vector<long> derivedType;
+      auto param = funcDecl->get_params()[i - 1];
+      unroll_derived_type(param->declarator, derivedType);
+      if (!derivedType.empty()) {
+        derivedType.push_back((long)param->base_type);
+        funcType.push_back(ast::ElemType::DERIVED);
+        funcDerivedTypeMap[i] = derivedType;
+      } else {
+        funcType.push_back(param->base_type);
+      }
+    }
   }
 
   // If the function has already been declared, make sure that it has the
   // same type as the current declaration and has an acceptable linkage.
   if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
-    if (globalSymbolTable[var_name].typeDef != funcType or
-        globalSymbolTable[var_name].type == symbolTable::symbolType::VARIABLE) {
+    if (globalSymbolTable[var_name].type != symbolTable::symbolType::FUNCTION or
+        globalSymbolTable[var_name].typeDef.size() != funcType.size()) {
       success = false;
       error_messages.emplace_back(var_name +
-                                  " redeclared with different signature");
+                                  " redeclared as a different kind of symbol");
     } else {
-      symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
-      if (funcDecl->get_specifier() == ast::SpecifierType::EXTERN or
-          funcDecl->get_specifier() == ast::SpecifierType::NONE) {
-        // This function declaration will have the same linkage as the earlier
-        // function declaration. Hence we don't need to do anything.
-      } else if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
-        if (globalSymbolTable[var_name].link ==
-            symbolTable::linkage::EXTERNAL) {
-          // Two declarations of the same identifier with different linkages
-          // is illegal
-          success = false;
-          error_messages.emplace_back(
-              "Function " + var_name +
-              " declared with static storage specifier after being declared "
-              "with external linkage");
+      bool same_type = true;
+      for (int i = 0; i <= (int)funcDecl->get_params().size(); i++) {
+        if (globalSymbolTable[var_name].typeDef[i] != funcType[i]) {
+          same_type = false;
+          break;
+        } else if (funcType[i] == ast::ElemType::DERIVED) {
+          if (globalSymbolTable[var_name].derivedTypeMap[i] !=
+              funcDerivedTypeMap[i]) {
+            same_type = false;
+            break;
+          }
         }
+      }
+      if (same_type) {
+        symbol_table[{var_name, indx}] = globalSymbolTable[var_name];
+        if (funcDecl->get_specifier() == ast::SpecifierType::EXTERN or
+            funcDecl->get_specifier() == ast::SpecifierType::NONE) {
+          // This function declaration will have the same linkage as the earlier
+          // function declaration. Hence we don't need to do anything.
+        } else if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
+          if (globalSymbolTable[var_name].link ==
+              symbolTable::linkage::EXTERNAL) {
+            // Two declarations of the same identifier with different linkages
+            // is illegal
+            success = false;
+            error_messages.emplace_back(
+                "Function " + var_name +
+                " declared with static storage specifier after being declared "
+                "with external linkage");
+          }
+        }
+      } else {
+        success = false;
+        error_messages.emplace_back(
+            var_name + " redeclared as a different kind of symbol");
       }
     }
   } else {
     // Add the function declaration with the correct function type
     // and linkage into the symbol table
-    symbol_table[{var_name, indx}] = {var_name, symbolTable::linkage::EXTERNAL,
-                                      symbolTable::symbolType::FUNCTION,
-                                      funcType};
+    symbolTable::symbolInfo funcInfo;
+    funcInfo.name = var_name;
+    funcInfo.link = symbolTable::linkage::EXTERNAL;
+    funcInfo.type = symbolTable::symbolType::FUNCTION;
+    funcInfo.typeDef = funcType;
+    funcInfo.derivedTypeMap = funcDerivedTypeMap;
     if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
-      symbol_table[{var_name, indx}].link = symbolTable::linkage::INTERNAL;
+      funcInfo.link = symbolTable::linkage::INTERNAL;
     }
-    globalSymbolTable[var_name] = symbol_table[{var_name, indx}];
+    symbol_table[{var_name, indx}] = funcInfo;
+    globalSymbolTable[var_name] = funcInfo;
   }
 }
 
