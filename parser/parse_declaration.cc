@@ -140,6 +140,17 @@ void parser::parse_function_declarator(
     identifier->set_identifier(tokens[0].get_value().value());
     tokens.erase(tokens.begin());
     parse_function_declarator_suffix(tokens, funcDecl, haveParams);
+    if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+      if(!haveParams){
+        success = false;
+        error_messages.emplace_back(
+            "cannot have an array of functions/function pointers");
+      }
+      else{
+        parse_variable_declarator_suffix(tokens, declarator);
+      }
+    }
+    
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     MAKE_SHARED(ast::AST_declarator_Node, child);
@@ -152,7 +163,7 @@ void parser::parse_function_declarator(
       if(!haveParams){
         success = false;
         error_messages.emplace_back(
-            "cannot have an array of functions");
+            "cannot have an array of functions/function pointers");
       }
       else{
         parse_variable_declarator_suffix(tokens, declarator);

@@ -39,7 +39,6 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
                 << factor->get_identifier_node()->get_value() << ")";
     } 
     if(factor->get_arrIdx().size() > 0) {
-      std::cout << "Array Indexes: ";
       for (auto arrIdx : factor->get_arrIdx()) {
       std::cout << " [";
         pretty_print_exp(arrIdx);
