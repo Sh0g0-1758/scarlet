@@ -50,10 +50,35 @@ void parser::pretty_print_variable_declaration(
   pretty_print_declarator(declaration->get_declarator());
   std::cout << ast::to_string(declaration->get_base_type());
   std::cout << "," << std::endl;
-  std::cout << "\t\texp=(" << std::endl;
-  pretty_print_exp(declaration->get_exp());
-  std::cout << "\t\t)" << std::endl;
+  if (declaration->get_exp() != nullptr) {
+    std::cout << "\t\texp=(" << std::endl;
+    pretty_print_exp(declaration->get_exp());
+    std::cout << "\t\t)" << std::endl;
+  }
+  if (declaration->get_initializer() != nullptr) {
+    std::cout << "\t\tArrayInit=(" << std::endl;
+    pretty_print_initializer(declaration->get_initializer());
+    std::cout << "\t\t)" << std::endl;
+  }
   std::cout << "\t)," << std::endl;
+}
+
+void parser::pretty_print_initializer(std::shared_ptr<ast::initializer> init) {
+  if (init == nullptr)
+    return;
+  if (!(init->initializer_list.empty())) {
+    std::cout << "\t\t\tInitializerList=[" << std::endl;
+    for (auto child : init->initializer_list) {
+      pretty_print_initializer(child);
+    }
+    std::cout << "\t\t\t]," << std::endl;
+  } else if (!(init->exp_list.empty())) {
+    std::cout << "\t\t\tExpList=[" << std::endl;
+    for (auto child : init->exp_list) {
+      pretty_print_exp(child);
+    }
+    std::cout << "\t\t\t]," << std::endl;
+  }
 }
 
 void parser::pretty_print_function_declaration(

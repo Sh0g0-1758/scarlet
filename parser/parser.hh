@@ -109,6 +109,7 @@ private:
       std::shared_ptr<ast::AST_variable_declaration_Node> declaration);
   void pretty_print_function_declaration(
       std::shared_ptr<ast::AST_function_declaration_Node> declaration);
+  void pretty_print_initializer(std::shared_ptr<ast::initializer> init);
   void analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                    std::map<std::pair<std::string, int>,
                             symbolTable::symbolInfo> &symbol_table,
