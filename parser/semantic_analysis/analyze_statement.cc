@@ -17,14 +17,25 @@ void parser::analyze_statement(
   // duplicate labels
 
   switch (statement->get_type()) {
-  case ast::statementType::RETURN:
+  case ast::statementType::RETURN: {
     analyze_exp(statement->get_exps(), symbol_table, indx);
-    if (statement->get_exps()->get_type() !=
-        globalSymbolTable[currFuncName].typeDef[0]) {
-      add_cast_to_exp(statement->get_exps(),
-                      globalSymbolTable[currFuncName].typeDef[0]);
+    auto funcType = globalSymbolTable[currFuncName].typeDef[0];
+    auto funcDerivedType = globalSymbolTable[currFuncName].derivedTypeMap[0];
+    auto expType = statement->get_exps()->get_type();
+    auto expDerivedType = statement->get_exps()->get_derived_type();
+    auto [castType, castDerivedType] =
+        ast::getAssignType(funcType, funcDerivedType, expType, expDerivedType,
+                           statement->get_exps());
+    if (castType == ast::ElemType::NONE) {
+      success = false;
+      error_messages.emplace_back("Invalid return value of function " +
+                                  currFuncName);
+    } else {
+      if (castType != expType or castDerivedType != expDerivedType) {
+        add_cast_to_exp(statement->get_exps(), funcType, funcDerivedType);
+      }
     }
-    break;
+  } break;
   case ast::statementType::CASE:
   case ast::statementType::DEFAULT_CASE:
     break;
@@ -66,6 +77,11 @@ void parser::analyze_statement(
       error_messages.emplace_back(
           "Switch expression cannot be a double precision");
     } break;
+    case ast::ElemType::DERIVED: {
+      success = false;
+      error_messages.emplace_back("Switch expression cannot be a derived type");
+    }
+    case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       break;
     }

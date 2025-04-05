@@ -4,6 +4,10 @@ namespace unop {
 
 std::string to_string(UNOP unop) {
   switch (unop) {
+  case UNOP::DEREFERENCE:
+    return "Dereference";
+  case UNOP::ADDROF:
+    return "AddressOf";
   case UNOP::PREINCREMENT:
     return "PreIncrement";
   case UNOP::PREDECREMENT:

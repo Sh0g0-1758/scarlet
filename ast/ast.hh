@@ -19,11 +19,20 @@ Grammar:
 
 <declaration> ::= <variable-declaration> | <function-declaration>
 
-<variable-declaration> ::= { <specifier> }+ <identifier> [ "=" <exp> ] ";"
+<variable-declaration> ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
 
-<function-declaration> ::= { <specifier> }+ <identifier> "(" <param-list> ")" ( <block> | ";" )
+<function-declaration> ::= { <specifier> }+ <declarator> ( <block> | ";" )
 
-<param-list> ::= "void" | { <type-specifier> }+ <identifier> { "," { <type-specifier> }+ <identifier> }
+<declarator> ::= "*" <declarator>
+               | <identifier> [ <declarator-suffix> ]
+               | "(" <declarator> ")" [ <declarator-suffix> ]
+
+<declarator-suffix> ::= { "[" <const> "]" }+
+                      | "(" <param-list> ")"
+
+<param-list> ::= "void" | <param> { "," <param> }
+
+<param> ::= { <type-specifier> }+ <declarator>
 
 <type-specifier> ::= "int" | "long" |"unsigned" | "signed" 
 
@@ -35,15 +44,41 @@ Grammar:
 
 <for-init> ::= <variable-declaration> | [ <exp> ]
 
-<statement> ::= "return" <exp> ";" | <exp> ";" | ";" | "if" "(" <exp> ")" <statement> [ "else" <statement> ] | "goto" <identifier> ";" | <identifier> ":" | <block> | "break" ";" | "continue" ";" | "while" "(" <exp> ")" <statement> | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> | "do" <statement> "while" "(" <exp> ")" ";" | switch "("<exp>")" <statement> | case <exp> ":" { <statement> }
+<statement> ::= 
+              | "return" <exp> ";" 
+              | <exp> ";" | ";" 
+              | "if" "(" <exp> ")" <statement> [ "else" <statement> ] 
+              | "goto" <identifier> ";" 
+              | <identifier> ":" 
+              | <block> 
+              | "break" ";" 
+              | "continue" ";" 
+              | "while" "(" <exp> ")" <statement> 
+              | "for" "(" <for-init> ";" [ <exp> ] ";" [ <exp> ] ")" <statement> 
+              | "do" <statement> "while" "(" <exp> ")" ";" 
+              | switch "("<exp>")" <statement> 
+              | case <exp> ":" { <statement> }
 
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 
-<factor> ::= <const> | <identifier> | "(" { <type-specifier> }+ ")" <factor> | <unop> <factor> | "(" <exp> ")" | <identifier> "(" [ <argument-list> ] ")"
+<factor> ::= <const> 
+           | <identifier> 
+           | "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <factor> 
+           | <unop> <factor> 
+           | "(" <exp> ")" 
+           | <identifier> "(" [ <argument-list> ] ")"
+           | <postfix-exp>
+
+<postfix-exp> ::= <identifier> { "[" <const> "]" }+
+                | "(" <exp> ")" { "[" <const> "]" }+
+
+<abstract-declarator> ::= "*"
+                        | "*" <abstract-declarator> 
+                        | "(" <abstract-declarator> ")"
 
 <argument-list> ::= <exp> { "," <exp> }
 
-<unop> ::= "~" | "-" | "!" | "--" | "++"
+<unop> ::= "~" | "-" | "!" | "--" | "++" | "*" | "&"
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
@@ -66,15 +101,18 @@ namespace scarlet {
 namespace ast {
 
 enum class SpecifierType { NONE, STATIC, EXTERN };
-enum class ElemType { NONE, INT, LONG, ULONG, UINT, DOUBLE };
-
-ElemType constTypeToElemType(constant::Type t);
-constant::Type elemTypeToConstType(ElemType t);
-std::string to_string(ast::ElemType type);
-std::string to_string(ast::SpecifierType type);
-int getSizeType(ast::ElemType type);
-ast::ElemType getParentType(ast::ElemType left, ast::ElemType right);
-constant::Constant castConstToVal(constant::Constant c, ast::ElemType type);
+// Assignment to these values help us store the derived type as a flat vector in
+// the global symbol table
+enum class ElemType {
+  NONE = 0,
+  DERIVED = -1,
+  POINTER = -2,
+  INT = -3,
+  LONG = -4,
+  ULONG = -5,
+  UINT = -6,
+  DOUBLE = -7
+};
 
 class AST_const_Node {
 private:
@@ -119,6 +157,7 @@ public:
 class AST_exp_Node;
 
 enum class FactorType { BASIC, FUNCTION_CALL };
+class AST_declarator_Node;
 
 class AST_factor_Node {
 private:
@@ -132,8 +171,11 @@ private:
   std::shared_ptr<AST_exp_Node> exp_node;
   FactorType factorType = FactorType::BASIC;
   ElemType castType;
+  std::shared_ptr<AST_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
+  std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx;
+  std::vector<long> derivedType{};
 
 public:
   std::string get_AST_name() { return "Factor"; }
@@ -163,6 +205,14 @@ public:
   ElemType get_cast_type() { return castType; }
   void set_cast_type(ElemType castType) { this->castType = castType; }
 
+  std::shared_ptr<AST_declarator_Node> get_cast_declarator() {
+    return castDeclarator;
+  }
+  void
+  set_cast_declarator(std::shared_ptr<AST_declarator_Node> castDeclarator) {
+    this->castDeclarator = std::move(castDeclarator);
+  }
+
   std::shared_ptr<AST_factor_Node> get_child() { return child; }
   void set_child(std::shared_ptr<AST_factor_Node> child) {
     this->child = std::move(child);
@@ -170,6 +220,17 @@ public:
 
   ElemType get_type() { return type; }
   void set_type(ElemType type) { this->type = type; }
+
+  std::vector<std::shared_ptr<ast::AST_exp_Node>> get_arrIdx() {
+    return arrIdx;
+  }
+  void add_arrIdx(std::shared_ptr<ast::AST_exp_Node> arrIdx) {
+    this->arrIdx.emplace_back(arrIdx);
+  }
+  std::vector<long> get_derived_type() { return derivedType; }
+  void set_derived_type(std::vector<long> derivedType) {
+    this->derivedType = std::move(derivedType);
+  }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {
@@ -222,6 +283,7 @@ private:
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
   ElemType type = ElemType::NONE;
+  std::vector<long> derivedType{};
 
 public:
   std::string get_AST_name() { return "Exp"; }
@@ -231,7 +293,7 @@ public:
     this->binop = std::move(binop);
   }
 
-  const std::shared_ptr<AST_factor_Node> get_factor_node() { return factor; }
+  std::shared_ptr<AST_factor_Node> get_factor_node() { return factor; }
   void set_factor_node(std::shared_ptr<AST_factor_Node> factor) {
     this->factor = std::move(factor);
   }
@@ -248,6 +310,11 @@ public:
 
   ElemType get_type() { return type; }
   void set_type(ElemType type) { this->type = type; }
+
+  std::vector<long> get_derived_type() { return derivedType; }
+  void set_derived_type(std::vector<long> derivedType) {
+    this->derivedType = std::move(derivedType);
+  }
 };
 
 class AST_ternary_exp_Node : public AST_exp_Node {
@@ -379,18 +446,43 @@ public:
 
 enum class DeclarationType { VARIABLE, FUNCTION };
 
+class AST_declarator_Node {
+private:
+  bool pointer = false;
+  std::vector<long> arrDim;
+  std::shared_ptr<AST_declarator_Node> child;
+
+public:
+  std::string get_AST_name() { return "Declarator"; }
+  bool is_pointer() { return pointer; }
+  void set_pointer(bool pointer) { this->pointer = pointer; }
+  std::shared_ptr<AST_declarator_Node> get_child() { return child; }
+  void set_child(std::shared_ptr<AST_declarator_Node> child) {
+    this->child = std::move(child);
+  }
+  std::vector<long> get_arrDim() { return arrDim; }
+  void add_dim(long dim) { arrDim.emplace_back(dim); }
+};
+
 class AST_Declaration_Node {
 private:
+  std::shared_ptr<AST_declarator_Node> declarator;
   std::shared_ptr<AST_identifier_Node> identifier;
   DeclarationType type;
   SpecifierType specifier;
 
 public:
   std::string get_AST_name() { return "Declaration"; }
+  std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
+  void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
+    this->declarator = std::move(declarator);
+  }
+
   std::shared_ptr<AST_identifier_Node> get_identifier() { return identifier; }
   void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
+
   DeclarationType get_type() { return type; }
   void set_type(DeclarationType type) { this->type = type; }
 
@@ -398,10 +490,16 @@ public:
   void set_specifier(SpecifierType specifier) { this->specifier = specifier; }
 };
 
+struct initializer {
+  std::vector<std::shared_ptr<initializer>> initializer_list;
+  std::vector<std::shared_ptr<AST_exp_Node>> exp_list;
+};
+
 class AST_variable_declaration_Node : public AST_Declaration_Node {
 private:
   std::shared_ptr<AST_exp_Node> exp;
-  ElemType type;
+  std::shared_ptr<initializer> init;
+  ElemType base_type;
 
 public:
   std::string get_AST_name() { return "VariableDeclaration"; }
@@ -409,15 +507,21 @@ public:
     this->exp = std::move(exp);
   }
   std::shared_ptr<AST_exp_Node> get_exp() { return exp; }
-  void set_type(ElemType type) { this->type = type; }
-  ElemType get_type() { return type; }
+  void set_base_type(ElemType type) { this->base_type = type; }
+  ElemType get_base_type() { return base_type; }
+  void set_initializer(std::shared_ptr<initializer> init) {
+    this->init = std::move(init);
+  }
+  std::shared_ptr<initializer> get_initializer() { return init; }
 };
 
 struct Param {
-  ElemType type;
+  ElemType base_type;
+  std::shared_ptr<AST_declarator_Node> declarator;
   std::shared_ptr<AST_identifier_Node> identifier;
 
-  void set_type(ElemType type) { this->type = type; }
+  // This lets us use a macro which simplifies function params parsing
+  void set_type(ElemType type) { this->base_type = type; }
 };
 
 class AST_Block_Node;
@@ -550,8 +654,8 @@ public:
 class AST_switch_statement_Node : public AST_Statement_Node {
 private:
   std::shared_ptr<AST_Statement_Node> stmt;
-  std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
-                        std::shared_ptr<ast::AST_identifier_Node>>>
+  std::vector<std::pair<std::shared_ptr<AST_exp_Node>,
+                        std::shared_ptr<AST_identifier_Node>>>
       case_exp_label;
   bool has_default_case = false;
 
@@ -561,13 +665,13 @@ public:
   void set_stmt(std::shared_ptr<AST_Statement_Node> stmt) {
     this->stmt = std::move(stmt);
   }
-  void set_case_exp_label(std::shared_ptr<ast::AST_exp_Node> exp,
-                          std::shared_ptr<ast::AST_identifier_Node> label) {
+  void set_case_exp_label(std::shared_ptr<AST_exp_Node> exp,
+                          std::shared_ptr<AST_identifier_Node> label) {
     this->case_exp_label.push_back(
         std::make_pair(std::move(exp), std::move(label)));
   }
-  std::vector<std::pair<std::shared_ptr<ast::AST_exp_Node>,
-                        std::shared_ptr<ast::AST_identifier_Node>>>
+  std::vector<std::pair<std::shared_ptr<AST_exp_Node>,
+                        std::shared_ptr<AST_identifier_Node>>>
   get_case_exp_label() {
     return case_exp_label;
   }
@@ -588,5 +692,24 @@ public:
     this->case_label = std::move(case_label);
   }
 };
+
+ElemType constTypeToElemType(constant::Type t);
+constant::Type elemTypeToConstType(ElemType t);
+std::string to_string(ElemType type);
+std::string to_string(SpecifierType type);
+int getSizeType(ElemType type);
+std::pair<ElemType, std::vector<long>>
+getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
+              std::vector<long> &rightDerivedType,
+              std::shared_ptr<AST_exp_Node> exp);
+std::pair<ElemType, std::vector<long>>
+getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
+              std::vector<long> srcDerived,
+              std::shared_ptr<AST_exp_Node> srcExp);
+constant::Constant castConstToElemType(constant::Constant c, ElemType type);
+bool isComplexType(ElemType type);
+bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
+bool is_const_zero(std::shared_ptr<AST_factor_Node> factor);
+bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 } // namespace ast
 } // namespace scarlet

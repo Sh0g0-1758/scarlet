@@ -11,11 +11,14 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
     return Unop::ANOT;
   case unop::UNOP::NOT:
     return Unop::LNOT;
-    // INCREMENT AND DECREMENT ARE HANDLED IN SCAR AS A BINOP
+  // INCREMENT AND DECREMENT ARE HANDLED IN SCAR AS A BINOP
   case unop::UNOP::PREINCREMENT:
   case unop::UNOP::PREDECREMENT:
   case unop::UNOP::POSTINCREMENT:
   case unop::UNOP::POSTDECREMENT:
+  // TODO: Handle ADDROF and DEREFERENCE
+  case unop::UNOP::ADDROF:
+  case unop::UNOP::DEREFERENCE:
   case unop::UNOP::UNKNOWN:
     UNREACHABLE()
   }

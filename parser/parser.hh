@@ -49,6 +49,24 @@ private:
   void parse_variable_declaration(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_variable_declaration_Node> decl);
+  void parse_initializer(std::vector<token::Token> &tokens,
+                         std::shared_ptr<ast::initializer> &init);
+  void parse_declarator(std::vector<token::Token> &tokens,
+                        std::shared_ptr<ast::AST_declarator_Node> &decl,
+                        std::shared_ptr<ast::AST_identifier_Node> &identifier);
+  void parse_variable_declarator_suffix(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_declarator_Node> &declarator);
+  void parse_function_declarator(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_declarator_Node> &decl,
+      std::shared_ptr<ast::AST_identifier_Node> &identifier,
+      std::shared_ptr<ast::AST_function_declaration_Node> &funcDecl,
+      bool &haveParams);
+  void parse_function_declarator_suffix(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_function_declaration_Node> &funcDecl,
+      bool &haveParams);
   void parse_block(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_Block_Node> block);
   void parse_block_item(std::vector<token::Token> &tokens,
@@ -63,6 +81,9 @@ private:
                       std::shared_ptr<ast::AST_For_Statement_Node> &forstmt);
   void parse_factor(std::vector<token::Token> &tokens,
                     std::shared_ptr<ast::AST_factor_Node> &factor);
+  void parse_abstract_declarator(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_declarator_Node> &declarator);
   void parse_exp(std::vector<token::Token> &tokens,
                  std::shared_ptr<ast::AST_exp_Node> &exp, int prec = 0);
   void parse_unary_op(std::vector<token::Token> &tokens,
@@ -80,6 +101,8 @@ private:
   void pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block);
   void pretty_print_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration);
+  void
+  pretty_print_declarator(std::shared_ptr<ast::AST_declarator_Node> declarator);
   void
   pretty_print_statement(std::shared_ptr<ast::AST_Statement_Node> statement);
   void pretty_print_variable_declaration(
@@ -104,6 +127,12 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
+  void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
+                           std::vector<long> &derivedType);
+  bool previous_declaration_has_same_type(
+      ast::ElemType prev_base_type, std::vector<long> prev_derived_type,
+      std::shared_ptr<ast::AST_declarator_Node> curr_declarator,
+      ast::ElemType curr_base_type);
   void analyze_global_variable_declaration(
       std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -129,9 +158,9 @@ private:
   void assign_type_to_factor(std::shared_ptr<ast::AST_factor_Node> factor);
   void assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-                       ast::ElemType type);
+                       ast::ElemType type, std::vector<long> derivedType);
   void add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
-                          ast::ElemType type);
+                          ast::ElemType type, std::vector<long> derivedType);
   void analyze_statement(std::shared_ptr<ast::AST_Statement_Node> statement,
                          std::map<std::pair<std::string, int>,
                                   symbolTable::symbolInfo> &symbol_table,

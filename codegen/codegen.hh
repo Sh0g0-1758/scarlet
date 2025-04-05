@@ -201,6 +201,9 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
+      // TODO: FIXME
+      case ast::ElemType::DERIVED:
+      case ast::ElemType::POINTER:
       case ast::ElemType::NONE:
         return scasm::AssemblyType::NONE;
       }
@@ -223,6 +226,9 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
+    // TODO: FIXME
+    case ast::ElemType::DERIVED:
+    case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
     }

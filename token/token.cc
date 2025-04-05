@@ -432,7 +432,8 @@ std::string to_string(TOKEN token) {
 bool is_unary_op(TOKEN token) {
   return token == TOKEN::TILDE or token == TOKEN::HYPHEN or
          token == TOKEN::NOT or token == TOKEN::DECREMENT_OPERATOR or
-         token == TOKEN::INCREMENT_OPERATOR;
+         token == TOKEN::INCREMENT_OPERATOR or token == TOKEN::AAND or
+         token == TOKEN::ASTERISK;
 }
 
 bool is_binary_op(TOKEN token) {
@@ -553,6 +554,10 @@ bool is_numeric_constant(TOKEN token) {
   return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
          token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
          token == TOKEN::DOUBLE_CONSTANT;
+}
+
+bool is_integer_constant(TOKEN token) {
+  return is_numeric_constant(token) and !(token == TOKEN::DOUBLE_CONSTANT);
 }
 
 int get_binop_prec(TOKEN token) {
