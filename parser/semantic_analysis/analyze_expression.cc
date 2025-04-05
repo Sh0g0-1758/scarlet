@@ -334,7 +334,7 @@ void parser::assign_type_to_subscript(
     scarlet::ast::ElemType TypeDef, std::vector<long> &derivedType,
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (TypeDef == ast::ElemType::DERIVED) {
-    for (int i = 0; i < factor->get_arrIdx().size(); i++) {
+    for (int i = 0; i < (long)factor->get_arrIdx().size(); i++) {
       if (derivedType[i] > 0 or
           derivedType[i] == (long)ast::ElemType::POINTER) {
         derivedType.erase(derivedType.begin());
