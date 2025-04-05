@@ -564,7 +564,10 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                    leftType != ast::ElemType::DERIVED and
                    leftType != ast::ElemType::DOUBLE) {
           if (leftType != ast::ElemType::LONG) {
-            add_cast_to_exp(exp->get_left(), ast::ElemType::LONG, {});
+            exp->get_left() == nullptr
+                ? add_cast_to_factor(exp->get_factor_node(),
+                                     ast::ElemType::LONG, {})
+                : add_cast_to_exp(exp->get_left(), ast::ElemType::LONG, {});
           }
           exp->set_type(rightType);
           exp->set_derived_type(rightDerivedType);
