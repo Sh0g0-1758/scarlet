@@ -433,21 +433,29 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       exp->set_type(ast::ElemType::INT);
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
                binop::is_compound(exp->get_binop_node()->get_op())) {
-      auto [expType, expDerivedType] = ast::getAssignType(
-          exp->get_factor_node()->get_type(),
-          exp->get_factor_node()->get_derived_type(),
-          exp->get_right()->get_type(), exp->get_right()->get_derived_type(),
-          exp->get_right());
-      if (expType == ast::ElemType::NONE) {
+      auto leftType = exp->get_factor_node()->get_type();
+      auto leftDerivedType = exp->get_factor_node()->get_derived_type();
+      auto rightType = exp->get_right()->get_type();
+      auto rightDerivedType = exp->get_right()->get_derived_type();
+      if (leftType == ast::ElemType::DERIVED and leftDerivedType[0] > 0) {
         success = false;
-        error_messages.emplace_back("Incompatible types in expression");
+        error_messages.emplace_back(
+            "Assignment operator not allowed on array type");
+      } else {
+        auto [expType, expDerivedType] =
+            ast::getAssignType(leftType, leftDerivedType, rightType,
+                               rightDerivedType, exp->get_right());
+        if (expType == ast::ElemType::NONE) {
+          success = false;
+          error_messages.emplace_back("Incompatible types in expression");
+        } else {
+          if (expType != rightType or expDerivedType != rightDerivedType) {
+            add_cast_to_exp(exp->get_right(), expType, expDerivedType);
+          }
+          exp->set_type(expType);
+          exp->set_derived_type(expDerivedType);
+        }
       }
-      if (expType != exp->get_right()->get_type() or
-          expDerivedType != exp->get_right()->get_derived_type()) {
-        add_cast_to_exp(exp->get_right(), expType, expDerivedType);
-      }
-      exp->set_type(expType);
-      exp->set_derived_type(expDerivedType);
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
       auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
       DECAY_ARR_TO_PTR(ternary->get_middle());
