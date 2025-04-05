@@ -447,7 +447,11 @@ void parser::init_static_array_initializer(
             child_exp->get_factor_node()->get_const_node()->get_constant(),
             baseElemType));
         if (baseElemType == ast::ElemType::DERIVED and
-            varInfo.value[0].get_value().i != 0) {
+            (varInfo.value[0].get_value().i != 0 or
+             child_exp->get_factor_node()
+                     ->get_const_node()
+                     ->get_constant()
+                     .get_type() == constant::Type::DOUBLE)) {
           success = false;
           error_messages.emplace_back("Invalid initialization of derived type "
                                       "in static array initializer");
