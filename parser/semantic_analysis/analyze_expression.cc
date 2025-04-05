@@ -94,18 +94,15 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
       if (exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
         success = false;
         error_messages.emplace_back(
-            "Modulus, division and multiplication operator not allowed on "
-            "derived types");
+            "Modulus operator not allowed on derived types");
       } else if (exp->get_binop_node()->get_op() == binop::BINOP::DIV) {
         success = false;
         error_messages.emplace_back(
-            "Modulus, division and multiplication operator not allowed on "
-            "derived types");
+            "Division operator not allowed on derived types");
       } else if (exp->get_binop_node()->get_op() == binop::BINOP::MUL) {
         success = false;
         error_messages.emplace_back(
-            "Modulus, division and multiplication operator not allowed on "
-            "derived types");
+            "Multiplication operator not allowed on derived types");
       }
     }
   }
