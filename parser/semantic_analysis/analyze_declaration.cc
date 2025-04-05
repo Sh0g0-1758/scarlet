@@ -346,6 +346,11 @@ void parser::analyze_function_declaration(
       std::vector<long> derivedType;
       unroll_derived_type(funcDecl->get_declarator(), derivedType);
       if (!derivedType.empty()) {
+        // function cannot return an array
+        if (derivedType[0] > 0) {
+          success = false;
+          error_messages.emplace_back("function cannot return an array");
+        }
         derivedType.push_back((long)funcDecl->get_return_type());
         funcType.push_back(ast::ElemType::DERIVED);
         funcDerivedTypeMap[i] = derivedType;
@@ -357,6 +362,11 @@ void parser::analyze_function_declaration(
       auto param = funcDecl->get_params()[i - 1];
       unroll_derived_type(param->declarator, derivedType);
       if (!derivedType.empty()) {
+        if (derivedType[0] > 0) {
+          // implicit conversion from array to pointer
+          derivedType.erase(derivedType.begin());
+          derivedType.insert(derivedType.begin(), (long)ast::ElemType::POINTER);
+        }
         derivedType.push_back((long)param->base_type);
         funcType.push_back(ast::ElemType::DERIVED);
         funcDerivedTypeMap[i] = derivedType;
