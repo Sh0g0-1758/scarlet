@@ -231,6 +231,12 @@ void parser::analyze_local_variable_declaration(
     if (varDecl->get_exp() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
+      if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+          varInfo.derivedTypeMap[0][0] > 0) {
+        success = false;
+        error_messages.emplace_back("Cannot initialize array with an "
+                                    "expression, need an initializer list");
+      }
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
       decay_arr_to_pointer(nullptr, varDecl->get_exp());
       auto expType = varDecl->get_exp()->get_type();
