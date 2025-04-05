@@ -14,6 +14,8 @@ ElemType constTypeToElemType(constant::Type t) {
     return ElemType::ULONG;
   case constant::Type::DOUBLE:
     return ElemType::DOUBLE;
+  // FIXME
+  case constant::Type::ZERO:
   case constant::Type::NONE:
     return ElemType::NONE;
   }
@@ -197,6 +199,7 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
   case constant::Type::DOUBLE:                                                 \
     ret.set_value({.t = static_cast<T>(c.get_value().d)});                     \
     break;                                                                     \
+  case constant::Type::ZERO:                                                   \
   case constant::Type::NONE:                                                   \
     break;                                                                     \
   }

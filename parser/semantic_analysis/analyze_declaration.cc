@@ -178,40 +178,19 @@ void parser::analyze_global_variable_declaration(
       symbol_table[{var_name, 0}] = globalSymbolTable[var_name];
     }
 
-    // If the variable has been defined, check that it is initialized with a
-    // constant integer
-    if (varDecl->get_exp() != nullptr) {
-      if (!EXPISCONSTANT(varDecl->get_exp())) {
-        success = false;
-        error_messages.emplace_back(
-            "Variable " + var_name +
-            " is not initialized with a constant integer");
-      } else {
-        globalSymbolTable[var_name].def = symbolTable::defType::TRUE;
-        globalSymbolTable[var_name].value =
-            ast::castConstToElemType(varDecl->get_exp()
-                                         ->get_factor_node()
-                                         ->get_const_node()
-                                         ->get_constant(),
-                                     globalSymbolTable[var_name].typeDef[0]);
-        if (globalSymbolTable[var_name].typeDef[0] == ast::ElemType::DERIVED and
-            globalSymbolTable[var_name].value.get_value().i != 0) {
-          success = false;
-          error_messages.emplace_back(
-              "Invalid initialization of derived type " + var_name);
-        }
-        symbol_table[{var_name, 0}].def = symbolTable::defType::TRUE;
-        symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
-      }
-    } else if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
+    initialize_global_variable(globalSymbolTable[var_name], varDecl, var_name);
+    symbol_table[{var_name, 0}].def = globalSymbolTable[var_name].def;
+    symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
+
+    if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
       // If the variable has not been defined and is not extern,
       // mark it as a tentative definition
       if (globalSymbolTable[var_name].def == symbolTable::defType::FALSE) {
         INITZERO(globalSymbolTable[var_name].typeDef[0]);
         symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
         globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
-        symbol_table[{var_name, 0}].value = constZero;
-        globalSymbolTable[var_name].value = constZero;
+        symbol_table[{var_name, 0}].value.push_back(constZero);
+        globalSymbolTable[var_name].value.push_back(constZero);
       }
     }
   } else { // symbol has not been declared before
@@ -235,35 +214,14 @@ void parser::analyze_global_variable_declaration(
       varInfo.def = symbolTable::defType::FALSE;
     }
 
-    // If storage specifier is not extern, set the tentative value to zero
-    if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
-      INITZERO(varInfo.typeDef[0]);
-      varInfo.value = constZero;
-    }
+    // FIXME: CAN WE REMOVE THIS ?
+    // // If storage specifier is not extern, set the tentative value to zero
+    // if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
+    //   INITZERO(varInfo.typeDef[0]);
+    //   varInfo.value.push_back(constZero);
+    // }
 
-    // Make sure that global variables are initialized only with
-    // constant integers
-    if (varDecl->get_exp() != nullptr) {
-      varInfo.def = symbolTable::defType::TRUE;
-      if (!EXPISCONSTANT(varDecl->get_exp())) {
-        success = false;
-        error_messages.emplace_back(
-            "Global variable " + var_name +
-            " is not initialized with a constant integer");
-      } else {
-        varInfo.value = ast::castConstToElemType(varDecl->get_exp()
-                                                     ->get_factor_node()
-                                                     ->get_const_node()
-                                                     ->get_constant(),
-                                                 varInfo.typeDef[0]);
-        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
-            varInfo.value.get_value().i != 0) {
-          success = false;
-          error_messages.emplace_back(
-              "Invalid initialization of derived type " + var_name);
-        }
-      }
-    }
+    initialize_global_variable(varInfo, varDecl, var_name);
     symbol_table[{var_name, 0}] = varInfo;
     globalSymbolTable[var_name] = varInfo;
   }
@@ -439,6 +397,102 @@ void parser::analyze_function_declaration(
   }
 }
 
+void parser::initialize_global_variable(
+    symbolTable::symbolInfo &varInfo,
+    std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
+    std::string &var_name) {
+  if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+      varInfo.derivedTypeMap[0][0] > 0) {
+    // array type
+    std::vector<long> arrDim;
+    ast::ElemType baseElemType;
+    std::vector<long> derivedElemType;
+    int i = 0;
+    for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+      if (varInfo.derivedTypeMap[0][i] > 0) {
+        arrDim.push_back(varInfo.derivedTypeMap[0][i]);
+      } else {
+        break;
+      }
+    }
+    baseElemType = (ast::ElemType)varInfo.derivedTypeMap[0][i];
+    i++;
+    for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+      derivedElemType.push_back(varInfo.derivedTypeMap[0][i]);
+    }
+    if (!derivedElemType.empty()) {
+      derivedElemType.insert(derivedElemType.begin(), (long)baseElemType);
+      baseElemType = ast::ElemType::DERIVED;
+    }
+
+    if (varDecl->get_exp() != nullptr) {
+      success = false;
+      error_messages.emplace_back("Cannot initialize array with an expression, "
+                                  "need an initializer list");
+    } else if (varDecl->get_initializer() != nullptr) {
+      varInfo.def = symbolTable::defType::TRUE;
+      init_static_array_initializer(varDecl->get_initializer(), arrDim,
+                                    baseElemType, derivedElemType, varInfo);
+    } else {
+      constant::Constant constZero;
+      constZero.set_type(constant::Type::ZERO);
+      unsigned long num_bytes = 1;
+      for (auto dim : arrDim) {
+        num_bytes *= dim;
+      }
+      switch (baseElemType) {
+      case ast::ElemType::INT:
+      case ast::ElemType::UINT:
+        num_bytes *= sizeof(int);
+        break;
+      case ast::ElemType::LONG:
+      case ast::ElemType::ULONG:
+        num_bytes *= sizeof(long);
+        break;
+      case ast::ElemType::DOUBLE:
+        num_bytes *= sizeof(double);
+        break;
+      case ast::ElemType::DERIVED:
+        num_bytes *= sizeof(long);
+        break;
+      default:
+        break;
+      }
+      constZero.set_value({.ul = num_bytes});
+      varInfo.value.push_back(constZero);
+    }
+  } else {
+    if (varDecl->get_initializer() != nullptr) {
+      success = false;
+      error_messages.emplace_back("Invalid use of initializer list, it can "
+                                  "only be used to initialize arrays");
+    } else if (varDecl->get_exp() != nullptr) {
+      varInfo.def = symbolTable::defType::TRUE;
+      if (!EXPISCONSTANT(varDecl->get_exp())) {
+        success = false;
+        error_messages.emplace_back(
+            "Global variable " + var_name +
+            " is not initialized with a constant integer");
+      } else {
+        varInfo.value.push_back(ast::castConstToElemType(varDecl->get_exp()
+                                                             ->get_factor_node()
+                                                             ->get_const_node()
+                                                             ->get_constant(),
+                                                         varInfo.typeDef[0]));
+        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+            varInfo.value[0].get_value().i != 0) {
+          success = false;
+          error_messages.emplace_back(
+              "Invalid initialization of derived type " + var_name);
+        }
+      }
+    } else {
+      INITZERO(varInfo.typeDef[0]);
+      varInfo.value.push_back(constZero);
+    }
+  }
+}
+
 void parser::analyze_local_variable_declaration(
     std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -507,29 +561,7 @@ void parser::analyze_local_variable_declaration(
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
     varInfo.def = symbolTable::defType::TRUE;
-    if (varDecl->get_exp() != nullptr) {
-      if (!EXPISCONSTANT(varDecl->get_exp())) {
-        success = false;
-        error_messages.emplace_back(
-            "Global variable " + var_name +
-            " is not initialized with a constant integer");
-      } else {
-        varInfo.value = ast::castConstToElemType(varDecl->get_exp()
-                                                     ->get_factor_node()
-                                                     ->get_const_node()
-                                                     ->get_constant(),
-                                                 varInfo.typeDef[0]);
-        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
-            varInfo.value.get_value().i != 0) {
-          success = false;
-          error_messages.emplace_back(
-              "Invalid initialization of derived type " + var_name);
-        }
-      }
-    } else {
-      INITZERO(varInfo.typeDef[0]);
-      varInfo.value = constZero;
-    }
+    initialize_global_variable(varInfo, varDecl, temp_name);
     symbol_table[{var_name, indx}] = varInfo;
     globalSymbolTable[temp_name] = varInfo;
   } else {
@@ -602,6 +634,99 @@ void parser::analyze_local_variable_declaration(
                                     "only be used to initialize arrays");
       }
     }
+  }
+}
+
+void parser::init_static_array_initializer(
+    std::shared_ptr<ast::initializer> init, std::vector<long> arrDim,
+    ast::ElemType baseElemType, std::vector<long> derivedElemType,
+    symbolTable::symbolInfo &varInfo) {
+  if (init == nullptr)
+    return;
+  if (!(init->initializer_list.empty())) {
+    long currDim = arrDim[0];
+    if ((long)init->initializer_list.size() > currDim) {
+      success = false;
+      error_messages.emplace_back(
+          "Wrong number of elements in the initializer list");
+    }
+    arrDim.erase(arrDim.begin());
+    long i = 0;
+    for (; i < (long)init->initializer_list.size(); i++) {
+      init_static_array_initializer(init->initializer_list[i], arrDim,
+                                    baseElemType, derivedElemType, varInfo);
+    }
+    for (; i < currDim; i++) {
+      unsigned long num_bytes = 1;
+      for (auto dim : arrDim) {
+        num_bytes *= dim;
+      }
+      switch (baseElemType) {
+      case ast::ElemType::INT:
+      case ast::ElemType::UINT:
+        num_bytes *= sizeof(int);
+        break;
+      case ast::ElemType::LONG:
+      case ast::ElemType::ULONG:
+        num_bytes *= sizeof(long);
+        break;
+      case ast::ElemType::DOUBLE:
+        num_bytes *= sizeof(double);
+        break;
+      case ast::ElemType::DERIVED:
+        num_bytes *= sizeof(long);
+        break;
+      default:
+        break;
+      }
+      constant::Constant constZero;
+      constZero.set_type(constant::Type::ZERO);
+      constZero.set_value({.ul = num_bytes});
+      varInfo.value.push_back(constZero);
+    }
+  } else if (!(init->exp_list.empty())) {
+    long i = 0;
+    for (; i < (long)init->exp_list.size(); i++) {
+      auto child_exp = init->exp_list[i];
+      if (!EXPISCONSTANT(child_exp)) {
+        success = false;
+        error_messages.emplace_back(
+            "Static Array initializer list can only contain constant integers");
+      } else {
+        varInfo.value.push_back(ast::castConstToElemType(
+            child_exp->get_factor_node()->get_const_node()->get_constant(),
+            baseElemType));
+        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+            varInfo.value[0].get_value().i != 0) {
+          success = false;
+          error_messages.emplace_back("Invalid initialization of derived type "
+                                      "in static array initializer");
+        }
+      }
+    }
+    unsigned long num_bytes = arrDim[0];
+    switch (baseElemType) {
+    case ast::ElemType::INT:
+    case ast::ElemType::UINT:
+      num_bytes *= sizeof(int);
+      break;
+    case ast::ElemType::LONG:
+    case ast::ElemType::ULONG:
+      num_bytes *= sizeof(long);
+      break;
+    case ast::ElemType::DOUBLE:
+      num_bytes *= sizeof(double);
+      break;
+    case ast::ElemType::DERIVED:
+      num_bytes *= sizeof(long);
+      break;
+    default:
+      break;
+    }
+    constant::Constant constZero;
+    constZero.set_type(constant::Type::ZERO);
+    constZero.set_value({.ul = num_bytes});
+    varInfo.value.push_back(constZero);
   }
 }
 

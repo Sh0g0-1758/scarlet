@@ -20,6 +20,9 @@ enum class Type {
   DOUBLE,
   UINT,
   ULONG,
+  /* ZERO is a special type that can be used to store how many bytes need to be
+     zeroed out. The value is stored as an unsigned long */
+  ZERO,
 };
 
 class Constant {
@@ -49,6 +52,8 @@ public:
       return "unsigned int";
     case Type::ULONG:
       return "unsigned long";
+    case Type::ZERO:
+      return "zero";
     case Type::NONE:
       return "";
     }
@@ -68,6 +73,8 @@ public:
     case Type::UINT:
       return value.ui < constant.value.ui;
     case Type::ULONG:
+      return value.ul < constant.value.ul;
+    case Type::ZERO:
       return value.ul < constant.value.ul;
     case Type::NONE:
       UNREACHABLE();
@@ -89,6 +96,8 @@ public:
       return value.ui == constant.value.ui;
     case Type::ULONG:
       return value.ul == constant.value.ul;
+    case Type::ZERO:
+      return value.ul == constant.value.ul;
     case Type::NONE:
       UNREACHABLE();
     }
@@ -109,6 +118,9 @@ public:
       os << constant.value.ui;
       break;
     case Type::ULONG:
+      os << constant.value.ul;
+      break;
+    case Type::ZERO:
       os << constant.value.ul;
       break;
     case Type::NONE:
