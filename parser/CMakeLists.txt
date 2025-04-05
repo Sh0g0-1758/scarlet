@@ -12,6 +12,8 @@ add_library(scarParser STATIC
 
     semantic_analysis/analyze_block.cc
     semantic_analysis/analyze_declaration.cc
+    semantic_analysis/analyze_function_declaration.cc
+    semantic_analysis/analyze_variable_declaration.cc
     semantic_analysis/analyze_expression.cc
     semantic_analysis/analyze_statement.cc
 
