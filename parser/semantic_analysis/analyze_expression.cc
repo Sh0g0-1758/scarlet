@@ -325,8 +325,8 @@ void parser::assign_type_from_subscript(
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (TypeDef == ast::ElemType::DERIVED) {
     for (int i = 0; i < (long)factor->get_arrIdx().size(); i++) {
-      if (derivedType[i] > 0 or
-          derivedType[i] == (long)ast::ElemType::POINTER) {
+      if (derivedType[0] > 0 or
+          derivedType[0] == (long)ast::ElemType::POINTER) {
         derivedType.erase(derivedType.begin());
       } else {
         success = false;
