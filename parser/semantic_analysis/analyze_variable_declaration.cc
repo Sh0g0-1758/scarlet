@@ -522,6 +522,7 @@ void parser::analyze_array_initializer(
     for (; i < (long)init->exp_list.size(); i++) {
       auto child_exp = init->exp_list[i];
       analyze_exp(child_exp, symbol_table, indx);
+      decay_arr_to_pointer(nullptr, child_exp);
       auto expType = child_exp->get_type();
       auto expDerivedType = child_exp->get_derived_type();
       auto [castType, castDerivedType] = ast::getAssignType(
