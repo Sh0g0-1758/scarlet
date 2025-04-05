@@ -313,6 +313,33 @@ private:
     return "";
   }
 
+  // NOTE: This function will be run only after the ast::is_lvalue check
+  //       so we can take assumptions about the factor being an lvalue
+  //       and simplify the checks in this function
+  std::pair<bool, std::vector<long>>
+  is_array(std::shared_ptr<ast::AST_factor_Node> factor) {
+    if (factor == nullptr)
+      return {false, {}};
+    if (factor->get_identifier_node() != nullptr) {
+      auto id = factor->get_identifier_node()->get_value();
+      auto info = globalSymbolTable[id];
+      if (info.typeDef[0] == ast::ElemType::DERIVED) {
+        if (info.derivedTypeMap[0][0] > 0) {
+          return {true, info.derivedTypeMap[0]};
+        }
+      }
+    }
+    auto res = is_array(factor->get_child());
+    if (res.first)
+      return {true, res.second};
+    if (factor->get_exp_node() != nullptr) {
+      auto res = is_array(factor->get_exp_node()->get_factor_node());
+      if (res.first)
+        return {true, res.second};
+    }
+    return {false, {}};
+  }
+
 public:
   void parse_program(std::vector<token::Token> tokens);
   void semantic_analysis();

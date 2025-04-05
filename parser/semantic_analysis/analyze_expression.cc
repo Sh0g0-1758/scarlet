@@ -323,7 +323,25 @@ void parser::assign_type_to_factor(
         globalSymbolTable[factor->get_identifier_node()->get_value()];
     factor->set_type(identInfo.typeDef[0]);
     if (factor->get_type() == ast::ElemType::DERIVED) {
-      factor->set_derived_type(identInfo.derivedTypeMap[0]);
+      // if the identifier is of type array, then it will decay to a pointer
+      // the derived type of an array would contain positive values in the
+      // derivedTypeMap vector.
+      if (identInfo.derivedTypeMap[0][0] > 0) {
+        int i = 0;
+        while (identInfo.derivedTypeMap[0][i] > 0) {
+          i++;
+        }
+        std::vector<long> derivedType;
+        for (int j = 0; j < 1; j++) {
+          derivedType.push_back((long)ast::ElemType::POINTER);
+        }
+        for (int j = i; j < (int)identInfo.derivedTypeMap[0].size(); j++) {
+          derivedType.push_back(identInfo.derivedTypeMap[0][j]);
+        }
+        factor->set_derived_type(derivedType);
+      } else {
+        factor->set_derived_type(identInfo.derivedTypeMap[0]);
+      }
     }
   } else if (factor->get_exp_node() != nullptr) {
     factor->set_type(factor->get_exp_node()->get_type());
@@ -353,7 +371,15 @@ void parser::assign_type_to_factor(
       factor->set_type(ast::ElemType::DERIVED);
       std::vector<long> derivedType;
       if (factor->get_child()->get_type() == ast::ElemType::DERIVED) {
-        derivedType = factor->get_child()->get_derived_type();
+        // we unconditionally decay the array to a pointer but if the
+        // addressof operator is used on an array, then it should not decay
+        // to a pointer. Here we rectify the type of address of array
+        auto res = is_array(factor->get_child());
+        if (res.first) {
+          derivedType = res.second;
+        } else {
+          derivedType = factor->get_child()->get_derived_type();
+        }
         derivedType.insert(derivedType.begin(), (long)ast::ElemType::POINTER);
       } else {
         derivedType.push_back((long)ast::ElemType::POINTER);
