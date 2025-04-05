@@ -514,6 +514,32 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
           (leftType == ast::ElemType::DERIVED or
            rightType == ast::ElemType::DERIVED)) {
         // pointer arithmetic
+        if (leftType == ast::ElemType::DERIVED and
+            rightType != ast::ElemType::DERIVED and
+            rightType != ast::ElemType::DOUBLE) {
+          if (rightType != ast::ElemType::LONG) {
+            add_cast_to_exp(exp->get_right(), ast::ElemType::LONG, {});
+          }
+          exp->set_type(leftType);
+          exp->set_derived_type(leftDerivedType);
+        } else if (exp->get_binop_node()->get_op() == binop::BINOP::ADD and
+                   rightType == ast::ElemType::DERIVED and
+                   leftType != ast::ElemType::DERIVED and
+                   leftType != ast::ElemType::DOUBLE) {
+          if (leftType != ast::ElemType::LONG) {
+            add_cast_to_exp(exp->get_left(), ast::ElemType::LONG, {});
+          }
+          exp->set_type(rightType);
+          exp->set_derived_type(rightDerivedType);
+        } else if (exp->get_binop_node()->get_op() == binop::BINOP::SUB and
+                   rightDerivedType == leftDerivedType) {
+          exp->set_type(ast::ElemType::LONG);
+          exp->set_derived_type({});
+        } else {
+          success = false;
+          error_messages.emplace_back(
+              "Pointer arithmetic not allowed on derived types");
+        }
       } else {
         auto [expType, expDerivedType] = ast::getParentType(
             leftType, rightType, leftDerivedType, rightDerivedType, exp);
