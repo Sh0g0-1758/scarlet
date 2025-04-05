@@ -379,7 +379,9 @@ void parser::assign_type_to_factor(
       factor->set_derived_type(exp->get_derived_type());
     }
   } else if (factor->get_unop_node() != nullptr) {
-    decay_arr_to_pointer(factor->get_child(), nullptr);
+    if (factor->get_unop_node()->get_op() != unop::UNOP::ADDROF) {
+      decay_arr_to_pointer(factor->get_child(), nullptr);
+    }
     if (factor->get_unop_node()->get_op() == unop::UNOP::NOT) {
       factor->set_type(ast::ElemType::INT);
     } else if (factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {

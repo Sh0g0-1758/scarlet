@@ -441,7 +441,7 @@ void parser::init_static_array_initializer(
         varInfo.value.push_back(ast::castConstToElemType(
             child_exp->get_factor_node()->get_const_node()->get_constant(),
             baseElemType));
-        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+        if (baseElemType == ast::ElemType::DERIVED and
             varInfo.value[0].get_value().i != 0) {
           success = false;
           error_messages.emplace_back("Invalid initialization of derived type "
