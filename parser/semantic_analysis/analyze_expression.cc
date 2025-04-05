@@ -320,17 +320,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
-#define DECAY_ARR_TO_PTR(node)                                                 \
-  if (node != nullptr) {                                                       \
-    if (node->get_type() == ast::ElemType::DERIVED and                         \
-        node->get_derived_type()[0] > 0) {                                     \
-      /* Make it a pointer of inner type */                                    \
-      auto decayType = node->get_derived_type();                               \
-      decayType[0] = (long)ast::ElemType::POINTER;                             \
-      node->set_derived_type(decayType);                                       \
-    }                                                                          \
-  }
-
 void parser::assign_type_from_subscript(
     scarlet::ast::ElemType TypeDef, std::vector<long> derivedType,
     std::shared_ptr<ast::AST_factor_Node> factor) {
@@ -390,7 +379,7 @@ void parser::assign_type_to_factor(
       factor->set_derived_type(exp->get_derived_type());
     }
   } else if (factor->get_unop_node() != nullptr) {
-    DECAY_ARR_TO_PTR(factor->get_child());
+    decay_arr_to_pointer(factor->get_child(), nullptr);
     if (factor->get_unop_node()->get_op() == unop::UNOP::NOT) {
       factor->set_type(ast::ElemType::INT);
     } else if (factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
@@ -463,9 +452,11 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     exp->set_type(exp->get_factor_node()->get_type());
     exp->set_derived_type(exp->get_factor_node()->get_derived_type());
   } else {
-    DECAY_ARR_TO_PTR(exp->get_left());
-    DECAY_ARR_TO_PTR(exp->get_right());
-    DECAY_ARR_TO_PTR(exp->get_factor_node());
+    decay_arr_to_pointer(nullptr, exp->get_left());
+    decay_arr_to_pointer(nullptr, exp->get_right());
+    if (exp->get_binop_node()->get_op() != binop::BINOP::ASSIGN) {
+      decay_arr_to_pointer(exp->get_factor_node(), nullptr);
+    }
     // Logical and / or depends on only one operand
     if (exp->get_binop_node()->get_op() == binop::BINOP::LAND or
         exp->get_binop_node()->get_op() == binop::BINOP::LOR) {
@@ -497,7 +488,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       }
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
       auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
-      DECAY_ARR_TO_PTR(ternary->get_middle());
+      decay_arr_to_pointer(nullptr, ternary->get_middle());
       ast::ElemType leftType = ternary->get_middle()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
       auto leftDerivedType = ternary->get_middle()->get_derived_type();
@@ -737,6 +728,7 @@ void parser::add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     copy_factor->set_child(factor->get_child());
     copy_factor->set_type(factor->get_type());
     copy_factor->set_derived_type(factor->get_derived_type());
+    copy_factor->set_arrIdx(factor->get_arrIdx());
 
     factor->set_const_node(nullptr);
     factor->set_identifier_node(nullptr);
@@ -748,6 +740,7 @@ void parser::add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     factor->set_type(type);
     factor->set_derived_type(derivedType);
     factor->set_child(std::move(copy_factor));
+    factor->set_arrIdx({});
   }
 }
 

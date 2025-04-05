@@ -227,6 +227,9 @@ public:
   void add_arrIdx(std::shared_ptr<ast::AST_exp_Node> arrIdx) {
     this->arrIdx.emplace_back(arrIdx);
   }
+  void set_arrIdx(std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx) {
+    this->arrIdx = arrIdx;
+  }
   std::vector<long> get_derived_type() { return derivedType; }
   void set_derived_type(std::vector<long> derivedType) {
     this->derivedType = std::move(derivedType);
