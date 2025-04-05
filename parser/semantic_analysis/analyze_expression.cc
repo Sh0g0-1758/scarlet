@@ -418,6 +418,7 @@ void parser::assign_type_to_factor(
       factor->set_derived_type(factor->get_child()->get_derived_type());
     }
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
+    decay_arr_to_pointer(factor->get_child(), nullptr);
     std::vector<long> derivedType;
     unroll_derived_type(factor->get_cast_declarator(), derivedType);
     if (!derivedType.empty()) {
