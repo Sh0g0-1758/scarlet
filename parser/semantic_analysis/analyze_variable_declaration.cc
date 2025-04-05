@@ -231,28 +231,21 @@ void parser::analyze_local_variable_declaration(
     if (varDecl->get_exp() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
-      if (varInfo.typeDef[0] != ast::ElemType::DERIVED) {
-        analyze_exp(varDecl->get_exp(), symbol_table, indx);
-        decay_arr_to_pointer(nullptr, varDecl->get_exp());
-        auto expType = varDecl->get_exp()->get_type();
-        auto expDerivedType = varDecl->get_exp()->get_derived_type();
-        auto [castType, castDerivedType] =
-            ast::getAssignType(varInfo.typeDef[0], varInfo.derivedTypeMap[0],
-                               expType, expDerivedType, varDecl->get_exp());
-        if (castType == ast::ElemType::NONE) {
-          success = false;
-          error_messages.emplace_back("Invalid assignment to variable " +
-                                      var_name);
-        } else {
-          if (castType != expType or castDerivedType != expDerivedType) {
-            add_cast_to_exp(varDecl->get_exp(), castType, castDerivedType);
-          }
-        }
-      } else {
+      analyze_exp(varDecl->get_exp(), symbol_table, indx);
+      decay_arr_to_pointer(nullptr, varDecl->get_exp());
+      auto expType = varDecl->get_exp()->get_type();
+      auto expDerivedType = varDecl->get_exp()->get_derived_type();
+      auto [castType, castDerivedType] =
+          ast::getAssignType(varInfo.typeDef[0], varInfo.derivedTypeMap[0],
+                             expType, expDerivedType, varDecl->get_exp());
+      if (castType == ast::ElemType::NONE) {
         success = false;
-        error_messages.emplace_back(
-            "Invalid assignment to variable " + var_name +
-            ", need an initializer list to initialize arrays");
+        error_messages.emplace_back("Invalid assignment to variable " +
+                                    var_name);
+      } else {
+        if (castType != expType or castDerivedType != expDerivedType) {
+          add_cast_to_exp(varDecl->get_exp(), castType, castDerivedType);
+        }
       }
     } else if (varDecl->get_initializer() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
