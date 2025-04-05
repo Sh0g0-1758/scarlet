@@ -431,6 +431,11 @@ void parser::init_static_array_initializer(
     }
   } else if (!(init->exp_list.empty())) {
     long i = 0;
+    if ((long)init->exp_list.size() > arrDim[0]) {
+      success = false;
+      error_messages.emplace_back(
+          "Wrong number of elements in the initializer list");
+    }
     for (; i < (long)init->exp_list.size(); i++) {
       auto child_exp = init->exp_list[i];
       if (!EXPISCONSTANT(child_exp)) {
@@ -504,6 +509,11 @@ void parser::analyze_array_initializer(
     }
   } else if (!(init->exp_list.empty())) {
     long i = 0;
+    if ((long)init->exp_list.size() > arrDim[0]) {
+      success = false;
+      error_messages.emplace_back(
+          "Wrong number of elements in the initializer list");
+    }
     for (; i < (long)init->exp_list.size(); i++) {
       auto child_exp = init->exp_list[i];
       analyze_exp(child_exp, symbol_table, indx);

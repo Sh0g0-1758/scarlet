@@ -101,6 +101,8 @@ bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
   if (factor == nullptr)
     return false;
+  if (factor->get_arrIdx().size() != 0)
+    return true;
   if (factor->get_identifier_node() != nullptr) {
     if (factor->get_factor_type() == FactorType::FUNCTION_CALL) {
       return false;
