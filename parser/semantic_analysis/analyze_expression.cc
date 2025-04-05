@@ -94,18 +94,15 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
       if (exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
         success = false;
         error_messages.emplace_back(
-            "Modulus, division and multiplication operator not allowed on "
-            "derived types");
+            "Modulus operator not allowed on derived types");
       } else if (exp->get_binop_node()->get_op() == binop::BINOP::DIV) {
         success = false;
         error_messages.emplace_back(
-            "Modulus, division and multiplication operator not allowed on "
-            "derived types");
+            "Division operator not allowed on derived types");
       } else if (exp->get_binop_node()->get_op() == binop::BINOP::MUL) {
         success = false;
         error_messages.emplace_back(
-            "Modulus, division and multiplication operator not allowed on "
-            "derived types");
+            "Multiplication operator not allowed on derived types");
       }
     }
   }
@@ -230,6 +227,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       // check that the function is being called with the correct type of
       //  arguments. If not we cast the arguments to the correct type
       for (int i = 0; i < (int)func_call->get_arguments().size(); i++) {
+        decay_arr_to_pointer(nullptr, func_call->get_arguments()[i]);
         auto funcArgType = func_call->get_arguments()[i]->get_type();
         auto funcArgDerivedType =
             func_call->get_arguments()[i]->get_derived_type();
@@ -280,6 +278,19 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   // since the factor can have its own exp as well, we recursively check that
   analyze_exp(factor->get_exp_node(), symbol_table, indx);
 
+  if (factor->get_arrIdx().size() != 0) {
+    for (auto it : factor->get_arrIdx()) {
+      analyze_exp(it, symbol_table, indx);
+      if (it->get_type() == ast::ElemType::DERIVED or
+          it->get_type() == ast::ElemType::DOUBLE) {
+        success = false;
+        error_messages.emplace_back("Array index must be of type integer");
+      } else {
+        // cast to long
+        add_cast_to_exp(it, ast::ElemType::LONG, {});
+      }
+    }
+  }
   // assign type to the factor
   assign_type_to_factor(factor);
 
@@ -310,6 +321,33 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
+void parser::assign_type_from_subscript(
+    scarlet::ast::ElemType TypeDef, std::vector<long> derivedType,
+    std::shared_ptr<ast::AST_factor_Node> factor) {
+  if (TypeDef == ast::ElemType::DERIVED) {
+    for (int i = 0; i < (long)factor->get_arrIdx().size(); i++) {
+      if (derivedType[0] > 0 or
+          derivedType[0] == (long)ast::ElemType::POINTER) {
+        derivedType.erase(derivedType.begin());
+      } else {
+        success = false;
+        error_messages.emplace_back("subscripting a non array or pointer type");
+        break;
+      }
+    }
+    if (derivedType.size() == 1) {
+      factor->set_type((ast::ElemType)derivedType[0]);
+      factor->set_derived_type({});
+    } else {
+      factor->set_type(ast::ElemType::DERIVED);
+      factor->set_derived_type(derivedType);
+    }
+  } else {
+    success = false;
+    error_messages.emplace_back("subscripting a non array or pointer type");
+  }
+}
+
 void parser::assign_type_to_factor(
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!success)
@@ -318,17 +356,33 @@ void parser::assign_type_to_factor(
   if (factor->get_const_node() != nullptr) {
     factor->set_type(ast::constTypeToElemType(
         factor->get_const_node()->get_constant().get_type()));
+    if (factor->get_arrIdx().size() != 0) {
+      success = false;
+      error_messages.emplace_back("subscipting a constant is not allowed");
+    }
   } else if (factor->get_identifier_node() != nullptr) {
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];
-    factor->set_type(identInfo.typeDef[0]);
-    if (factor->get_type() == ast::ElemType::DERIVED) {
+    if (factor->get_arrIdx().size() != 0) {
+      assign_type_from_subscript(identInfo.typeDef[0],
+                                 identInfo.derivedTypeMap[0], factor);
+    } else {
+      factor->set_type(identInfo.typeDef[0]);
       factor->set_derived_type(identInfo.derivedTypeMap[0]);
     }
   } else if (factor->get_exp_node() != nullptr) {
-    factor->set_type(factor->get_exp_node()->get_type());
-    factor->set_derived_type(factor->get_exp_node()->get_derived_type());
+    auto exp = factor->get_exp_node();
+    if (factor->get_arrIdx().size() != 0) {
+      assign_type_from_subscript(exp->get_type(), exp->get_derived_type(),
+                                 factor);
+    } else {
+      factor->set_type(exp->get_type());
+      factor->set_derived_type(exp->get_derived_type());
+    }
   } else if (factor->get_unop_node() != nullptr) {
+    if (factor->get_unop_node()->get_op() != unop::UNOP::ADDROF) {
+      decay_arr_to_pointer(factor->get_child(), nullptr);
+    }
     if (factor->get_unop_node()->get_op() == unop::UNOP::NOT) {
       factor->set_type(ast::ElemType::INT);
     } else if (factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
@@ -365,14 +419,18 @@ void parser::assign_type_to_factor(
       factor->set_derived_type(factor->get_child()->get_derived_type());
     }
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
+    decay_arr_to_pointer(factor->get_child(), nullptr);
     std::vector<long> derivedType;
     unroll_derived_type(factor->get_cast_declarator(), derivedType);
     if (!derivedType.empty()) {
       if (factor->get_child()->get_type() == ast::ElemType::DOUBLE) {
-        // FIXME : include case for array
         success = false;
         error_messages.emplace_back(
             "Cannot cast double precision to pointer type");
+      }
+      if (derivedType[0] > 0) {
+        success = false;
+        error_messages.emplace_back("cannot cast to an array");
       }
       derivedType.push_back((long)factor->get_cast_type());
       factor->set_derived_type(derivedType);
@@ -398,29 +456,43 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     exp->set_type(exp->get_factor_node()->get_type());
     exp->set_derived_type(exp->get_factor_node()->get_derived_type());
   } else {
+    decay_arr_to_pointer(nullptr, exp->get_left());
+    decay_arr_to_pointer(nullptr, exp->get_right());
+    if (exp->get_binop_node()->get_op() != binop::BINOP::ASSIGN) {
+      decay_arr_to_pointer(exp->get_factor_node(), nullptr);
+    }
     // Logical and / or depends on only one operand
     if (exp->get_binop_node()->get_op() == binop::BINOP::LAND or
         exp->get_binop_node()->get_op() == binop::BINOP::LOR) {
       exp->set_type(ast::ElemType::INT);
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
                binop::is_compound(exp->get_binop_node()->get_op())) {
-      auto [expType, expDerivedType] = ast::getAssignType(
-          exp->get_factor_node()->get_type(),
-          exp->get_factor_node()->get_derived_type(),
-          exp->get_right()->get_type(), exp->get_right()->get_derived_type(),
-          exp->get_right());
-      if (expType == ast::ElemType::NONE) {
+      auto leftType = exp->get_factor_node()->get_type();
+      auto leftDerivedType = exp->get_factor_node()->get_derived_type();
+      auto rightType = exp->get_right()->get_type();
+      auto rightDerivedType = exp->get_right()->get_derived_type();
+      if (leftType == ast::ElemType::DERIVED and leftDerivedType[0] > 0) {
         success = false;
-        error_messages.emplace_back("Incompatible types in expression");
+        error_messages.emplace_back(
+            "Assignment operator not allowed on array type");
+      } else {
+        auto [expType, expDerivedType] =
+            ast::getAssignType(leftType, leftDerivedType, rightType,
+                               rightDerivedType, exp->get_right());
+        if (expType == ast::ElemType::NONE) {
+          success = false;
+          error_messages.emplace_back("Incompatible types in expression");
+        } else {
+          if (expType != rightType or expDerivedType != rightDerivedType) {
+            add_cast_to_exp(exp->get_right(), expType, expDerivedType);
+          }
+          exp->set_type(expType);
+          exp->set_derived_type(expDerivedType);
+        }
       }
-      if (expType != exp->get_right()->get_type() or
-          expDerivedType != exp->get_right()->get_derived_type()) {
-        add_cast_to_exp(exp->get_right(), expType, expDerivedType);
-      }
-      exp->set_type(expType);
-      exp->set_derived_type(expDerivedType);
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
       auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
+      decay_arr_to_pointer(nullptr, ternary->get_middle());
       ast::ElemType leftType = ternary->get_middle()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
       auto leftDerivedType = ternary->get_middle()->get_derived_type();
@@ -474,29 +546,65 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                  ? exp->get_left()->get_derived_type()
                                  : exp->get_factor_node()->get_derived_type();
       auto rightDerivedType = exp->get_right()->get_derived_type();
-      auto [expType, expDerivedType] = ast::getParentType(
-          leftType, rightType, leftDerivedType, rightDerivedType, exp);
-      if (expType == ast::ElemType::NONE) {
-        success = false;
-        error_messages.emplace_back("Incompatible types in expression");
-      }
-
-      if (expType != rightType or expDerivedType != rightDerivedType) {
-        add_cast_to_exp(exp->get_right(), expType, expDerivedType);
-      }
-
-      if (expType != leftType or expDerivedType != leftDerivedType) {
-        (exp->get_left() != nullptr)
-            ? add_cast_to_exp(exp->get_left(), expType, expDerivedType)
-            : add_cast_to_factor(exp->get_factor_node(), expType,
-                                 expDerivedType);
-      }
-
-      if (binop::is_relational(exp->get_binop_node()->get_op())) {
-        exp->set_type(ast::ElemType::INT);
+      if ((exp->get_binop_node()->get_op() == binop::BINOP::ADD or
+           exp->get_binop_node()->get_op() == binop::BINOP::SUB) and
+          (leftType == ast::ElemType::DERIVED or
+           rightType == ast::ElemType::DERIVED)) {
+        // pointer arithmetic
+        if (leftType == ast::ElemType::DERIVED and
+            rightType != ast::ElemType::DERIVED and
+            rightType != ast::ElemType::DOUBLE) {
+          if (rightType != ast::ElemType::LONG) {
+            add_cast_to_exp(exp->get_right(), ast::ElemType::LONG, {});
+          }
+          exp->set_type(leftType);
+          exp->set_derived_type(leftDerivedType);
+        } else if (exp->get_binop_node()->get_op() == binop::BINOP::ADD and
+                   rightType == ast::ElemType::DERIVED and
+                   leftType != ast::ElemType::DERIVED and
+                   leftType != ast::ElemType::DOUBLE) {
+          if (leftType != ast::ElemType::LONG) {
+            exp->get_left() == nullptr
+                ? add_cast_to_factor(exp->get_factor_node(),
+                                     ast::ElemType::LONG, {})
+                : add_cast_to_exp(exp->get_left(), ast::ElemType::LONG, {});
+          }
+          exp->set_type(rightType);
+          exp->set_derived_type(rightDerivedType);
+        } else if (exp->get_binop_node()->get_op() == binop::BINOP::SUB and
+                   rightDerivedType == leftDerivedType) {
+          exp->set_type(ast::ElemType::LONG);
+          exp->set_derived_type({});
+        } else {
+          success = false;
+          error_messages.emplace_back(
+              "Pointer arithmetic not allowed on derived types");
+        }
       } else {
-        exp->set_type(expType);
-        exp->set_derived_type(expDerivedType);
+        auto [expType, expDerivedType] = ast::getParentType(
+            leftType, rightType, leftDerivedType, rightDerivedType, exp);
+        if (expType == ast::ElemType::NONE) {
+          success = false;
+          error_messages.emplace_back("Incompatible types in expression");
+        }
+
+        if (expType != rightType or expDerivedType != rightDerivedType) {
+          add_cast_to_exp(exp->get_right(), expType, expDerivedType);
+        }
+
+        if (expType != leftType or expDerivedType != leftDerivedType) {
+          (exp->get_left() != nullptr)
+              ? add_cast_to_exp(exp->get_left(), expType, expDerivedType)
+              : add_cast_to_factor(exp->get_factor_node(), expType,
+                                   expDerivedType);
+        }
+
+        if (binop::is_relational(exp->get_binop_node()->get_op())) {
+          exp->set_type(ast::ElemType::INT);
+        } else {
+          exp->set_type(expType);
+          exp->set_derived_type(expDerivedType);
+        }
       }
     }
   }
@@ -627,6 +735,7 @@ void parser::add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     copy_factor->set_child(factor->get_child());
     copy_factor->set_type(factor->get_type());
     copy_factor->set_derived_type(factor->get_derived_type());
+    copy_factor->set_arrIdx(factor->get_arrIdx());
 
     factor->set_const_node(nullptr);
     factor->set_identifier_node(nullptr);
@@ -638,6 +747,7 @@ void parser::add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     factor->set_type(type);
     factor->set_derived_type(derivedType);
     factor->set_child(std::move(copy_factor));
+    factor->set_arrIdx({});
   }
 }
 

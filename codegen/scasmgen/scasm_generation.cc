@@ -22,6 +22,8 @@ void Codegen::gen_scasm() {
       case constant::Type::DOUBLE:
         scasm_var->set_alignment(8);
         break;
+      // FIXME
+      case constant::Type::ZERO:
       case constant::Type::NONE:
         scasm_var->set_alignment(0);
         break;

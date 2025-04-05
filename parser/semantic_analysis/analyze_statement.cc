@@ -19,6 +19,7 @@ void parser::analyze_statement(
   switch (statement->get_type()) {
   case ast::statementType::RETURN: {
     analyze_exp(statement->get_exps(), symbol_table, indx);
+    decay_arr_to_pointer(nullptr, statement->get_exps());
     auto funcType = globalSymbolTable[currFuncName].typeDef[0];
     auto funcDerivedType = globalSymbolTable[currFuncName].derivedTypeMap[0];
     auto expType = statement->get_exps()->get_type();
