@@ -37,7 +37,7 @@ std::string to_string(scar::instruction_type type) {
     return "IntToDouble";
   case scar::instruction_type::UINT_TO_DOUBLE:
     return "UintToDouble";
-    case scar::instruction_type::LOAD:
+  case scar::instruction_type::LOAD:
     return "Load";
   case scar::instruction_type::STORE:
     return "Store";
