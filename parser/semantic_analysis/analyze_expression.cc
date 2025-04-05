@@ -509,29 +509,36 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                  ? exp->get_left()->get_derived_type()
                                  : exp->get_factor_node()->get_derived_type();
       auto rightDerivedType = exp->get_right()->get_derived_type();
-      auto [expType, expDerivedType] = ast::getParentType(
-          leftType, rightType, leftDerivedType, rightDerivedType, exp);
-      if (expType == ast::ElemType::NONE) {
-        success = false;
-        error_messages.emplace_back("Incompatible types in expression");
-      }
-
-      if (expType != rightType or expDerivedType != rightDerivedType) {
-        add_cast_to_exp(exp->get_right(), expType, expDerivedType);
-      }
-
-      if (expType != leftType or expDerivedType != leftDerivedType) {
-        (exp->get_left() != nullptr)
-            ? add_cast_to_exp(exp->get_left(), expType, expDerivedType)
-            : add_cast_to_factor(exp->get_factor_node(), expType,
-                                 expDerivedType);
-      }
-
-      if (binop::is_relational(exp->get_binop_node()->get_op())) {
-        exp->set_type(ast::ElemType::INT);
+      if ((exp->get_binop_node()->get_op() == binop::BINOP::ADD or
+           exp->get_binop_node()->get_op() == binop::BINOP::SUB) and
+          (leftType == ast::ElemType::DERIVED or
+           rightType == ast::ElemType::DERIVED)) {
+        // pointer arithmetic
       } else {
-        exp->set_type(expType);
-        exp->set_derived_type(expDerivedType);
+        auto [expType, expDerivedType] = ast::getParentType(
+            leftType, rightType, leftDerivedType, rightDerivedType, exp);
+        if (expType == ast::ElemType::NONE) {
+          success = false;
+          error_messages.emplace_back("Incompatible types in expression");
+        }
+
+        if (expType != rightType or expDerivedType != rightDerivedType) {
+          add_cast_to_exp(exp->get_right(), expType, expDerivedType);
+        }
+
+        if (expType != leftType or expDerivedType != leftDerivedType) {
+          (exp->get_left() != nullptr)
+              ? add_cast_to_exp(exp->get_left(), expType, expDerivedType)
+              : add_cast_to_factor(exp->get_factor_node(), expType,
+                                   expDerivedType);
+        }
+
+        if (binop::is_relational(exp->get_binop_node()->get_op())) {
+          exp->set_type(ast::ElemType::INT);
+        } else {
+          exp->set_type(expType);
+          exp->set_derived_type(expDerivedType);
+        }
       }
     }
   }
