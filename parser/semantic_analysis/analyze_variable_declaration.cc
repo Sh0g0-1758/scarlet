@@ -232,6 +232,7 @@ void parser::analyze_local_variable_declaration(
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
+      decay_arr_to_pointer(nullptr, varDecl->get_exp());
       auto expType = varDecl->get_exp()->get_type();
       auto expDerivedType = varDecl->get_exp()->get_derived_type();
       auto [castType, castDerivedType] =
