@@ -392,10 +392,13 @@ void parser::assign_type_to_factor(
     unroll_derived_type(factor->get_cast_declarator(), derivedType);
     if (!derivedType.empty()) {
       if (factor->get_child()->get_type() == ast::ElemType::DOUBLE) {
-        // FIXME : include case for array
         success = false;
         error_messages.emplace_back(
             "Cannot cast double precision to pointer type");
+      }
+      if (derivedType[0] > 0) {
+        success = false;
+        error_messages.emplace_back("cannot cast to an array");
       }
       derivedType.push_back((long)factor->get_cast_type());
       factor->set_derived_type(derivedType);
