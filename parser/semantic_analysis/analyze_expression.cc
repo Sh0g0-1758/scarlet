@@ -283,6 +283,23 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   // assign type to the factor
   assign_type_to_factor(factor);
 
+  // array subscript are present
+  if (factor->get_arrIdx().size() != 0) {
+    bool hasPtr = false;
+    if (factor->get_type() == ast::ElemType::DERIVED and
+        factor->get_derived_type()[0] == (long)ast::ElemType::POINTER) {
+      hasPtr = true;
+    }
+    for (int i = 0; i < factor->get_arrIdx().size(); i++) {
+      analyze_exp(factor->get_arrIdx()[i], symbol_table, indx);
+      auto arrIdx = factor->get_arrIdx()[i];
+      if (arrIdx->get_type() != ast::ElemType::INT) {
+        success = false;
+        error_messages.emplace_back("Array index must be of type int");
+      }
+    }
+  }
+
   // complement operator cannot be used on double precision
   if (factor->get_unop_node() != nullptr) {
     if (factor->get_type() == ast::ElemType::DOUBLE) {
@@ -322,27 +339,7 @@ void parser::assign_type_to_factor(
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];
     factor->set_type(identInfo.typeDef[0]);
-    if (factor->get_type() == ast::ElemType::DERIVED) {
-      // if the identifier is of type array, then it will decay to a pointer
-      // the derived type of an array would contain positive values in the
-      // derivedTypeMap vector.
-      if (identInfo.derivedTypeMap[0][0] > 0) {
-        int i = 0;
-        while (identInfo.derivedTypeMap[0][i] > 0) {
-          i++;
-        }
-        std::vector<long> derivedType;
-        for (int j = 0; j < 1; j++) {
-          derivedType.push_back((long)ast::ElemType::POINTER);
-        }
-        for (int j = i; j < (int)identInfo.derivedTypeMap[0].size(); j++) {
-          derivedType.push_back(identInfo.derivedTypeMap[0][j]);
-        }
-        factor->set_derived_type(derivedType);
-      } else {
-        factor->set_derived_type(identInfo.derivedTypeMap[0]);
-      }
-    }
+    factor->set_derived_type(identInfo.derivedTypeMap[0]);
   } else if (factor->get_exp_node() != nullptr) {
     factor->set_type(factor->get_exp_node()->get_type());
     factor->set_derived_type(factor->get_exp_node()->get_derived_type());
@@ -371,15 +368,6 @@ void parser::assign_type_to_factor(
       factor->set_type(ast::ElemType::DERIVED);
       std::vector<long> derivedType;
       if (factor->get_child()->get_type() == ast::ElemType::DERIVED) {
-        // we unconditionally decay the array to a pointer but if the
-        // addressof operator is used on an array, then it should not decay
-        // to a pointer. Here we rectify the type of address of array
-        auto res = is_array(factor->get_child());
-        if (res.first) {
-          derivedType = res.second;
-        } else {
-          derivedType = factor->get_child()->get_derived_type();
-        }
         derivedType.insert(derivedType.begin(), (long)ast::ElemType::POINTER);
       } else {
         derivedType.push_back((long)ast::ElemType::POINTER);
