@@ -227,6 +227,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       // check that the function is being called with the correct type of
       //  arguments. If not we cast the arguments to the correct type
       for (int i = 0; i < (int)func_call->get_arguments().size(); i++) {
+        decay_arr_to_pointer(nullptr, func_call->get_arguments()[i]);
         auto funcArgType = func_call->get_arguments()[i]->get_type();
         auto funcArgDerivedType =
             func_call->get_arguments()[i]->get_derived_type();
