@@ -155,6 +155,9 @@ private:
   void analyze_switch_case(
       std::shared_ptr<ast::AST_switch_statement_Node> switch_statement,
       constant::Type switchType);
+  void assign_type_from_subscript(scarlet::ast::ElemType TypeDef,
+                                  std::vector<long> derivedType,
+                                  std::shared_ptr<ast::AST_factor_Node> factor);
   void assign_type_to_factor(std::shared_ptr<ast::AST_factor_Node> factor);
   void assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp);
   void add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
