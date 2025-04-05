@@ -280,12 +280,13 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   if (factor->get_arrIdx().size() != 0) {
     for (auto it : factor->get_arrIdx()) {
       analyze_exp(it, symbol_table, indx);
-      if (it->get_type() != ast::ElemType::INT and
-          it->get_type() != ast::ElemType::LONG and
-          it->get_type() != ast::ElemType::ULONG and
-          it->get_type() != ast::ElemType::UINT) {
+      if (it->get_type() == ast::ElemType::DERIVED or
+          it->get_type() == ast::ElemType::DOUBLE) {
         success = false;
         error_messages.emplace_back("Array index must be of type integer");
+      } else {
+        // cast to long
+        add_cast_to_exp(it, ast::ElemType::LONG, {});
       }
     }
   }
@@ -330,8 +331,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     }                                                                          \
   }
 
-void parser::assign_type_to_subscript(
-    scarlet::ast::ElemType TypeDef, std::vector<long> &derivedType,
+void parser::assign_type_from_subscript(
+    scarlet::ast::ElemType TypeDef, std::vector<long> derivedType,
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (TypeDef == ast::ElemType::DERIVED) {
     for (int i = 0; i < (long)factor->get_arrIdx().size(); i++) {
@@ -346,6 +347,7 @@ void parser::assign_type_to_subscript(
     }
     if (derivedType.size() == 1) {
       factor->set_type((ast::ElemType)derivedType[0]);
+      factor->set_derived_type({});
     } else {
       factor->set_type(ast::ElemType::DERIVED);
       factor->set_derived_type(derivedType);
@@ -371,23 +373,21 @@ void parser::assign_type_to_factor(
   } else if (factor->get_identifier_node() != nullptr) {
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];
-    // base type and derived type -> final type
     if (factor->get_arrIdx().size() != 0) {
-      auto derivedType = identInfo.derivedTypeMap[0];
-      assign_type_to_subscript(identInfo.typeDef[0], derivedType, factor);
+      assign_type_from_subscript(identInfo.typeDef[0],
+                                 identInfo.derivedTypeMap[0], factor);
     } else {
       factor->set_type(identInfo.typeDef[0]);
       factor->set_derived_type(identInfo.derivedTypeMap[0]);
     }
   } else if (factor->get_exp_node() != nullptr) {
-    if (factor->get_exp_node()->get_type() == ast::ElemType::DERIVED and
-        factor->get_exp_node()->get_derived_type()[0] ==
-            (long)ast::ElemType::POINTER) {
-      auto derivedType = factor->get_exp_node()->get_derived_type();
-      assign_type_to_subscript(ast::ElemType::DERIVED, derivedType, factor);
+    auto exp = factor->get_exp_node();
+    if (factor->get_arrIdx().size() != 0) {
+      assign_type_from_subscript(exp->get_type(), exp->get_derived_type(),
+                                 factor);
     } else {
-      factor->set_type(factor->get_exp_node()->get_type());
-      factor->set_derived_type(factor->get_exp_node()->get_derived_type());
+      factor->set_type(exp->get_type());
+      factor->set_derived_type(exp->get_derived_type());
     }
   } else if (factor->get_unop_node() != nullptr) {
     DECAY_ARR_TO_PTR(factor->get_child());
