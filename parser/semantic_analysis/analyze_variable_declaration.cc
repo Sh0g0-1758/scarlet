@@ -43,15 +43,15 @@ void parser::analyze_global_variable_declaration(
 
   // Check if the symbol has been declared before
   if (globalSymbolTable.find(var_name) != globalSymbolTable.end()) {
+    auto varInfo = globalSymbolTable[var_name];
     // Ensure that the previous declaration has the same type
-    if (globalSymbolTable[var_name].type != symbolTable::symbolType::VARIABLE) {
+    if (varInfo.type != symbolTable::symbolType::VARIABLE) {
       success = false;
       error_messages.emplace_back(var_name +
                                   " redeclared as a different kind of symbol");
     } else {
       bool same_type = previous_declaration_has_same_type(
-          globalSymbolTable[var_name].typeDef[0],
-          globalSymbolTable[var_name].derivedTypeMap[0],
+          varInfo.typeDef[0], varInfo.derivedTypeMap[0],
           varDecl->get_declarator(), varDecl->get_base_type());
       if (!same_type) {
         success = false;
@@ -61,7 +61,7 @@ void parser::analyze_global_variable_declaration(
     }
 
     // If the symbol has been redefined, throw an error
-    if (globalSymbolTable[var_name].def == symbolTable::defType::TRUE and
+    if (varInfo.def == symbolTable::defType::TRUE and
         varDecl->get_exp() != nullptr) {
       success = false;
       error_messages.emplace_back("Variable " + var_name +
@@ -73,7 +73,7 @@ void parser::analyze_global_variable_declaration(
       // declaration.
     } else if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
       // If the previous declaration was external, throw an error
-      if (globalSymbolTable[var_name].link == symbolTable::linkage::EXTERNAL) {
+      if (varInfo.link == symbolTable::linkage::EXTERNAL) {
         success = false;
         error_messages.emplace_back(
             "Variable " + var_name +
@@ -82,7 +82,7 @@ void parser::analyze_global_variable_declaration(
       }
     } else {
       // If the previous declaration was internal, throw an error
-      if (globalSymbolTable[var_name].link == symbolTable::linkage::INTERNAL) {
+      if (varInfo.link == symbolTable::linkage::INTERNAL) {
         success = false;
         error_messages.emplace_back("Variable " + var_name +
                                     " declared with external linkage after "
@@ -90,28 +90,18 @@ void parser::analyze_global_variable_declaration(
       }
     }
 
-    // If the previous declaration was because of a block scope extern
-    // then it is possible that the symbol definition is not present in the
-    // symbol table at index 0
-    if (symbol_table.find({var_name, 0}) == symbol_table.end()) {
-      symbol_table[{var_name, 0}] = globalSymbolTable[var_name];
-    }
-
-    initialize_global_variable(globalSymbolTable[var_name], varDecl, var_name);
-    symbol_table[{var_name, 0}].def = globalSymbolTable[var_name].def;
-    symbol_table[{var_name, 0}].value = globalSymbolTable[var_name].value;
+    initialize_global_variable(varInfo, varDecl, var_name);
 
     if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
       // If the variable has not been defined and is not extern,
       // mark it as a tentative definition
-      if (globalSymbolTable[var_name].def == symbolTable::defType::FALSE) {
-        INITZERO(globalSymbolTable[var_name].typeDef[0]);
-        symbol_table[{var_name, 0}].def = symbolTable::defType::TENTATIVE;
-        globalSymbolTable[var_name].def = symbolTable::defType::TENTATIVE;
-        symbol_table[{var_name, 0}].value.push_back(constZero);
-        globalSymbolTable[var_name].value.push_back(constZero);
+      if (varInfo.def == symbolTable::defType::FALSE) {
+        varInfo.def = symbolTable::defType::TENTATIVE;
       }
     }
+
+    symbol_table[{var_name, 0}] = varInfo;
+    globalSymbolTable[var_name] = varInfo;
   } else { // symbol has not been declared before
     symbolTable::symbolInfo varInfo;
     varInfo.name = var_name;
@@ -133,14 +123,14 @@ void parser::analyze_global_variable_declaration(
       varInfo.def = symbolTable::defType::FALSE;
     }
 
-    // FIXME: CAN WE REMOVE THIS ?
-    // // If storage specifier is not extern, set the tentative value to zero
-    // if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
-    //   INITZERO(varInfo.typeDef[0]);
-    //   varInfo.value.push_back(constZero);
-    // }
-
     initialize_global_variable(varInfo, varDecl, var_name);
+
+    if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
+      if (varInfo.def == symbolTable::defType::FALSE) {
+        varInfo.def = symbolTable::defType::TENTATIVE;
+      }
+    }
+
     symbol_table[{var_name, 0}] = varInfo;
     globalSymbolTable[var_name] = varInfo;
   }
