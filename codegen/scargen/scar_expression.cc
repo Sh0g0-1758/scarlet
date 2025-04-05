@@ -265,6 +265,22 @@ void Codegen::gen_scar_ternary_exp(
   reg_name = result;
 }
 
+void Codegen::gen_scar_def_assign_exp(
+  std::shared_ptr<ast::AST_exp_Node> exp,
+  std::shared_ptr<scar::scar_Function_Node> scar_function) {
+MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+scar_instruction->set_type(scar::instruction_type::STORE);
+MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
+SETVARCONSTANTREG(scar_val_dst);
+scar_instruction->set_dst(std::move(scar_val_dst));
+gen_scar_exp(exp->get_right(), scar_function);
+SETVARCONSTANTREG(scar_val_src);
+scar_instruction->set_src1(std::move(scar_val_src));
+scar_function->add_instruction(std::move(scar_instruction));
+}
+
 void Codegen::gen_scar_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
@@ -286,7 +302,20 @@ void Codegen::gen_scar_exp(
     // and copy the result to a new register. Ternary is actually a special
     // case of short circuiting
     if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
-      gen_scar_assign_exp(exp, scar_function);
+      if(exp->get_factor_node() != nullptr ){
+        if(exp->get_factor_node()->get_unop_node() != nullptr){
+        if(exp->get_factor_node()->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE){
+          gen_scar_def_assign_exp(exp,scar_function);
+        }else{
+          gen_scar_assign_exp(exp, scar_function);
+        }
+        }
+        else{
+          gen_scar_assign_exp(exp, scar_function);
+        }
+  }else{
+  gen_scar_assign_exp(exp, scar_function);
+  }
       return;
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
       gen_scar_ternary_exp(exp, scar_function);
