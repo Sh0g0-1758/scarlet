@@ -331,7 +331,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   if (node != nullptr) {                                                       \
     if (node->get_type() == ast::ElemType::DERIVED and                         \
         node->get_derived_type()[0] > 0) {                                     \
-      /* decay the array into a pointer */                                     \
+      /* Make it a pointer of inner type */                                    \
       auto decayType = node->get_derived_type();                               \
       decayType[0] = (long)ast::ElemType::POINTER;                             \
       node->set_derived_type(decayType);                                       \
