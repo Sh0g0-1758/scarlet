@@ -90,7 +90,9 @@ void parser::analyze_global_variable_declaration(
       }
     }
 
-    initialize_global_variable(varInfo, varDecl, var_name);
+    if (varInfo.def != symbolTable::defType::TRUE) {
+      initialize_global_variable(varInfo, varDecl, var_name);
+    }
 
     if (varDecl->get_specifier() != ast::SpecifierType::EXTERN) {
       // If the variable has not been defined and is not extern,
@@ -350,6 +352,8 @@ void parser::initialize_global_variable(
       error_messages.emplace_back("Invalid use of initializer list, it can "
                                   "only be used to initialize arrays");
     } else if (varDecl->get_exp() != nullptr) {
+      if (varInfo.value.size() == 0)
+        varInfo.value.resize(1);
       varInfo.def = symbolTable::defType::TRUE;
       if (!EXPISCONSTANT(varDecl->get_exp())) {
         success = false;
@@ -357,11 +361,11 @@ void parser::initialize_global_variable(
             "Global variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        varInfo.value.push_back(ast::castConstToElemType(varDecl->get_exp()
-                                                             ->get_factor_node()
-                                                             ->get_const_node()
-                                                             ->get_constant(),
-                                                         varInfo.typeDef[0]));
+        varInfo.value[0] = ast::castConstToElemType(varDecl->get_exp()
+                                                        ->get_factor_node()
+                                                        ->get_const_node()
+                                                        ->get_constant(),
+                                                    varInfo.typeDef[0]);
         if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
             varInfo.value[0].get_value().i != 0) {
           success = false;
@@ -370,8 +374,10 @@ void parser::initialize_global_variable(
         }
       }
     } else {
+      if (varInfo.value.size() == 0)
+        varInfo.value.resize(1);
       INITZERO(varInfo.typeDef[0]);
-      varInfo.value.push_back(constZero);
+      varInfo.value[0] = constZero;
     }
   }
 }
