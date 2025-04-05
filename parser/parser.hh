@@ -340,6 +340,29 @@ private:
     return {false, {}};
   }
 
+  void decay_arr_to_pointer(std::shared_ptr<ast::AST_factor_Node> factor,
+                            std::shared_ptr<ast::AST_exp_Node> exp) {
+    if (factor != nullptr) {
+      if (factor->get_type() == ast::ElemType::DERIVED and
+          factor->get_derived_type()[0] > 0) {
+        // decay the array into a pointer
+        auto decayType = factor->get_derived_type();
+        decayType[0] = (long)ast::ElemType::POINTER;
+        factor->set_derived_type(decayType);
+      }
+    }
+
+    if (exp != nullptr) {
+      if (exp->get_type() == ast::ElemType::DERIVED and
+          exp->get_derived_type()[0] > 0) {
+        // decay the array into a pointer
+        auto decayType = exp->get_derived_type();
+        decayType[0] = (long)ast::ElemType::POINTER;
+        exp->set_derived_type(decayType);
+      }
+    }
+  }
+
 public:
   void parse_program(std::vector<token::Token> tokens);
   void semantic_analysis();
