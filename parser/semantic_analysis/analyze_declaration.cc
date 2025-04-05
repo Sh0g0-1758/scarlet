@@ -566,10 +566,135 @@ void parser::analyze_local_variable_declaration(
                                     var_name);
       } else {
         if (castType != expType or castDerivedType != expDerivedType) {
-          add_cast_to_exp(varDecl->get_exp(), varInfo.typeDef[0],
-                          varInfo.derivedTypeMap[0]);
+          add_cast_to_exp(varDecl->get_exp(), castType, castDerivedType);
         }
       }
+    } else if (varDecl->get_initializer() != nullptr) {
+      symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
+      globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
+      if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+          varInfo.derivedTypeMap[0][0] > 0) {
+        std::vector<long> arrDim;
+        ast::ElemType baseElemType;
+        std::vector<long> derivedElemType;
+        int i = 0;
+        for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+          if (varInfo.derivedTypeMap[0][i] > 0) {
+            arrDim.push_back(varInfo.derivedTypeMap[0][i]);
+          } else {
+            break;
+          }
+        }
+        baseElemType = (ast::ElemType)varInfo.derivedTypeMap[0][i];
+        i++;
+        for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+          derivedElemType.push_back(varInfo.derivedTypeMap[0][i]);
+        }
+        if (!derivedElemType.empty()) {
+          derivedElemType.insert(derivedElemType.begin(), (long)baseElemType);
+          baseElemType = ast::ElemType::DERIVED;
+        }
+        analyze_array_initializer(varDecl->get_initializer(), symbol_table,
+                                  indx, arrDim, baseElemType, derivedElemType);
+      } else {
+        success = false;
+        error_messages.emplace_back("Invalid use of initializer list, it can "
+                                    "only be used to initialize arrays");
+      }
+    }
+  }
+}
+
+void parser::analyze_array_initializer(
+    std::shared_ptr<ast::initializer> init,
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table,
+    int indx, std::vector<long> arrDim, ast::ElemType baseElemType,
+    std::vector<long> derivedElemType) {
+  if (init == nullptr)
+    return;
+  if (!(init->initializer_list.empty())) {
+    long currDim = arrDim[0];
+    if ((long)init->initializer_list.size() > currDim) {
+      success = false;
+      error_messages.emplace_back(
+          "Wrong number of elements in the initializer list");
+    }
+    arrDim.erase(arrDim.begin());
+    long i = 0;
+    for (; i < (long)init->initializer_list.size(); i++) {
+      analyze_array_initializer(init->initializer_list[i], symbol_table, indx,
+                                arrDim, baseElemType, derivedElemType);
+    }
+    for (; i < currDim; i++) {
+      MAKE_SHARED(ast::initializer, child_init);
+      analyze_array_initializer(child_init, symbol_table, indx, arrDim,
+                                baseElemType, derivedElemType);
+      init->initializer_list.push_back(child_init);
+    }
+  } else if (!(init->exp_list.empty())) {
+    long i = 0;
+    for (; i < (long)init->exp_list.size(); i++) {
+      auto child_exp = init->exp_list[i];
+      analyze_exp(child_exp, symbol_table, indx);
+      auto expType = child_exp->get_type();
+      auto expDerivedType = child_exp->get_derived_type();
+      auto [castType, castDerivedType] = ast::getAssignType(
+          baseElemType, derivedElemType, expType, expDerivedType, child_exp);
+      if (castType == ast::ElemType::NONE) {
+        success = false;
+        error_messages.emplace_back("Invalid type in initializer list");
+      } else {
+        if (castType != expType or castDerivedType != expDerivedType) {
+          add_cast_to_exp(child_exp, castType, castDerivedType);
+        }
+      }
+    }
+    for (; i < arrDim[0]; i++) {
+      MAKE_SHARED(ast::AST_exp_Node, child_exp);
+      child_exp->set_type(baseElemType);
+      child_exp->set_derived_type(derivedElemType);
+
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+      child_factor->set_type(baseElemType);
+      child_factor->set_derived_type(derivedElemType);
+
+      MAKE_SHARED(ast::AST_const_Node, child_zero);
+      INITZERO(baseElemType);
+      child_zero->set_constant(constZero);
+
+      child_factor->set_const_node(child_zero);
+      child_exp->set_factor_node(child_factor);
+
+      init->exp_list.push_back(child_exp);
+    }
+  } else if (arrDim.size() > 1) {
+    int currDim = arrDim[0];
+    arrDim.erase(arrDim.begin());
+    for (long i = 0; i < currDim; i++) {
+      MAKE_SHARED(ast::initializer, child_init);
+      analyze_array_initializer(child_init, symbol_table, indx, arrDim,
+                                baseElemType, derivedElemType);
+      init->initializer_list.push_back(child_init);
+    }
+  } else if (arrDim.size() == 1) {
+    for (long i = 0; i < arrDim[0]; i++) {
+      MAKE_SHARED(ast::AST_exp_Node, child_exp);
+      child_exp->set_type(baseElemType);
+      child_exp->set_derived_type(derivedElemType);
+
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+      child_factor->set_type(baseElemType);
+      child_factor->set_derived_type(derivedElemType);
+
+      MAKE_SHARED(ast::AST_const_Node, child_zero);
+      INITZERO(baseElemType);
+      child_zero->set_constant(constZero);
+
+      child_factor->set_const_node(child_zero);
+      child_exp->set_factor_node(child_factor);
+
+      init->exp_list.push_back(child_exp);
     }
   }
 }

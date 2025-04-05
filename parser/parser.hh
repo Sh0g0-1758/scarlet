@@ -127,6 +127,12 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
+  void analyze_array_initializer(
+      std::shared_ptr<ast::initializer> init,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
+      int indx, std::vector<long> arrDim, ast::ElemType baseElemType,
+      std::vector<long> derivedElemType);
   void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
                            std::vector<long> &derivedType);
   bool previous_declaration_has_same_type(

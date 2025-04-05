@@ -415,6 +415,7 @@ void parser::assign_type_to_factor(
       factor->set_type(ast::ElemType::DERIVED);
       std::vector<long> derivedType;
       if (factor->get_child()->get_type() == ast::ElemType::DERIVED) {
+        derivedType = factor->get_child()->get_derived_type();
         derivedType.insert(derivedType.begin(), (long)ast::ElemType::POINTER);
       } else {
         derivedType.push_back((long)ast::ElemType::POINTER);
