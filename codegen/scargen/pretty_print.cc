@@ -163,12 +163,18 @@ void Codegen::pretty_print_static_variable(
   std::cout << "\t\tglobal="
             << (static_variable->is_global() ? "True" : "False") << ","
             << std::endl;
-  std::cout << "\t\tinit=";
-  for (auto i : static_variable->get_init()) {
-    std::cout << i << ", ";
+  std::cout << "\t\tinit=[";
+  for (int i = 0; i < (int)static_variable->get_init().size() - 1; i++) {
+    std::cout << static_variable->get_init()[i] << ", ";
   }
+  std::cout << static_variable->get_init().back() << "]," << std::endl;
+  std::cout << "\t\ttype=";
+  pretty_print_type(
+      globalSymbolTable[static_variable->get_identifier()->get_value()]
+          .typeDef[0],
+      globalSymbolTable[static_variable->get_identifier()->get_value()]
+          .derivedTypeMap[0]);
   std::cout << std::endl;
-  std::cout << "\t)," << std::endl;
 }
 
 void Codegen::pretty_print() {

@@ -97,7 +97,7 @@ private:
   void
   gen_scar_initializer(std::shared_ptr<ast::initializer> init,
                        std::shared_ptr<scar::scar_Function_Node> scar_function,
-                       std::string arrName, long offset, long jump);
+                       std::string arrName, long &offset, long jump);
   void gen_scar_block(std::shared_ptr<ast::AST_Block_Node> block,
                       std::shared_ptr<scar::scar_Function_Node> scar_function);
 

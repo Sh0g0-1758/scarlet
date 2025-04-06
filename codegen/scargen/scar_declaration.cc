@@ -38,8 +38,9 @@ void Codegen::gen_scar_declaration(
             baseType = static_cast<ast::ElemType>(it);
           }
         }
+        long offset = 0;
         gen_scar_initializer(variable_declaration->get_initializer(),
-                             scar_function, varName, 0,
+                             scar_function, varName, offset,
                              ast::getSizeOfTypeOnArch(baseType));
       }
     }
@@ -49,7 +50,7 @@ void Codegen::gen_scar_declaration(
 void Codegen::gen_scar_initializer(
     std::shared_ptr<ast::initializer> init,
     std::shared_ptr<scar::scar_Function_Node> scar_function,
-    std::string arrName, long offset, long jump) {
+    std::string arrName, long &offset, long jump) {
   if (init == nullptr)
     return;
 
