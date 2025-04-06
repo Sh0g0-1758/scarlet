@@ -429,6 +429,7 @@ void Codegen::gen_scar_exp(
                (exp->get_type() == ast::ElemType::DERIVED or
                 exp->get_right()->get_type() == ast::ElemType::DERIVED)) {
       gen_scar_pointer_exp(exp, scar_function);
+      return;
     }
 
     binop::BINOP binop = exp->get_binop_node()->get_op();
