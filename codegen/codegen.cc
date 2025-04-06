@@ -20,6 +20,10 @@ namespace codegen {
     assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
                                  scasm::register_size::LWORD);                 \
     break;                                                                     \
+  case scasm::AssemblyType::BYTE:                                              \
+    assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
+                                 scasm::register_size::BYTE);                  \
+    break;                                                                     \
   default:                                                                     \
     break;                                                                     \
   }
