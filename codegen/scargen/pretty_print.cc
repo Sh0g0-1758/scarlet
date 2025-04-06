@@ -95,6 +95,14 @@ void Codegen::pretty_print_function(
       std::cout << ", ";
       PRINT_VAR_CONST(statement->get_dst());
       std::cout << ", ";
+      std::cout << "scale=" << statement->get_offset();
+      std::cout << ")" << std::endl;
+    } else if (statement->get_type() ==
+               scar::instruction_type::COPY_TO_OFFSET) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ", ";
       std::cout << "offset=" << statement->get_offset();
       std::cout << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::LOAD or
