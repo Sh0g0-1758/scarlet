@@ -111,6 +111,7 @@ private:
   pretty_print_function(std::shared_ptr<scar::scar_Function_Node> function);
   void pretty_print_static_variable(
       std::shared_ptr<scar::scar_StaticVariable_Node> static_variable);
+  void pretty_print_type(ast::ElemType type, std::vector<long> derivedType);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,
@@ -136,12 +137,15 @@ public:
   // #############################
   void set_file_name(std::string file_name) { this->file_name = file_name; }
   bool is_success() { return success; }
-  std::string get_reg_name(ast::ElemType type) {
+  std::string get_reg_name(ast::ElemType type, std::vector<long> derivedType) {
     reg_name = "scarReg." + std::to_string(curr_regNum);
-    globalSymbolTable[reg_name] = {reg_name,
-                                   symbolTable::linkage::NONE,
-                                   symbolTable::symbolType::VARIABLE,
-                                   {type}};
+    symbolTable::symbolInfo scarReg;
+    scarReg.name = reg_name;
+    scarReg.link = symbolTable::linkage::NONE;
+    scarReg.type = symbolTable::symbolType::VARIABLE;
+    scarReg.typeDef = {type};
+    scarReg.derivedTypeMap[0] = derivedType;
+    globalSymbolTable[reg_name] = scarReg;
     curr_regNum++;
     return reg_name;
   }
@@ -294,6 +298,20 @@ public:
         break;
       }
     }
+  }
+
+  bool is_deref_lval(std::shared_ptr<ast::AST_factor_Node> factor) {
+    if (factor == nullptr)
+      return false;
+
+    if (factor->get_unop_node() != nullptr and
+        factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
+      return true;
+    }
+
+    return factor->get_exp_node() != nullptr
+               ? is_deref_lval(factor->get_exp_node()->get_factor_node())
+               : false;
   }
 
   std::vector<scasm::register_type> int_argReg = {

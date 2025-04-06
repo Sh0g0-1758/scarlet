@@ -3,15 +3,34 @@
 namespace scarlet {
 namespace codegen {
 
+void Codegen::pretty_print_type(ast::ElemType type,
+                                std::vector<long> derivedType) {
+  std::cout << "<<";
+  if (type != ast::ElemType::DERIVED) {
+    std::cout << ast::to_string(type);
+  } else {
+    for (auto i : derivedType) {
+      if (i == (long)ast::ElemType::POINTER) {
+        std::cout << "*->";
+      } else if (i > 0) {
+        std::cout << "[" << i << "]->";
+      } else {
+        std::cout << ast::to_string(static_cast<ast::ElemType>(i));
+      }
+    }
+  }
+  std::cout << ">>";
+}
+
 #define PRINT_VAR_CONST(scarValNode)                                           \
   if (scarValNode->get_type() == scar::val_type::CONSTANT) {                   \
     std::cout << "<<" << scarValNode->get_const_val().typeToString() << ">>"   \
               << "Constant(" << scarValNode->get_const_val() << ")";           \
   } else if (scarValNode->get_type() == scar::val_type::VAR) {                 \
-    std::cout << "<<"                                                          \
-              << to_string(                                                    \
-                     globalSymbolTable[scarValNode->get_reg()].typeDef[0])     \
-              << ">>" << "Var(" << scarValNode->get_reg() << ")";              \
+    pretty_print_type(                                                         \
+        globalSymbolTable[scarValNode->get_reg()].typeDef[0],                  \
+        globalSymbolTable[scarValNode->get_reg()].derivedTypeMap[0]);          \
+    std::cout << "Var(" << scarValNode->get_reg() << ")";                      \
   }
 
 void Codegen::pretty_print_function(

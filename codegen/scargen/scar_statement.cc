@@ -30,7 +30,7 @@ void Codegen::gen_scar_statement(
         scar_instruction->set_binop(binop::EQUAL);
         MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
         scar_val_dst->set_type(scar::val_type::VAR);
-        scar_val_dst->set_reg_name(get_reg_name(ast::ElemType::INT));
+        scar_val_dst->set_reg_name(get_reg_name(ast::ElemType::INT, {}));
         scar_instruction->set_dst(scar_val_dst);
         scar_function->add_instruction(scar_instruction);
 

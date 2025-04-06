@@ -28,10 +28,7 @@ void Codegen::gen_scar_assign_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
 
-  if (exp->get_factor_node() != nullptr and
-      exp->get_factor_node()->get_unop_node() != nullptr and
-      exp->get_factor_node()->get_unop_node()->get_op() ==
-          unop::UNOP::DEREFERENCE) {
+  if (is_deref_lval(exp->get_factor_node())) {
     gen_scar_def_assign_exp(exp, scar_function);
     return;
   }
@@ -139,7 +136,8 @@ void Codegen::gen_scar_short_circuit_exp(
     scar_val_src3->set_const_val(zero);
   }
   scar_val_dst3->set_type(scar::val_type::VAR);
-  scar_val_dst3->set_reg_name(get_reg_name(exp->get_type()));
+  scar_val_dst3->set_reg_name(
+      get_reg_name(exp->get_type(), exp->get_derived_type()));
   scar_instruction3->set_src1(std::move(scar_val_src3));
   scar_instruction3->set_dst(std::move(scar_val_dst3));
   scar_function->add_instruction(std::move(scar_instruction3));
@@ -238,7 +236,7 @@ void Codegen::gen_scar_ternary_exp(
   // We cannot simply use get_prev_reg_name() since we need to
   // parse the second expression first and that will change the
   // register counter
-  std::string result = get_reg_name(exp->get_type());
+  std::string result = get_reg_name(exp->get_type(), exp->get_derived_type());
   scar_val_dst2->set_reg_name(result);
   scar_instruction2->set_dst(std::move(scar_val_dst2));
   scar_function->add_instruction(std::move(scar_instruction2));
@@ -342,7 +340,8 @@ void Codegen::gen_scar_exp(
 
     MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
     scar_val_dst->set_type(scar::val_type::VAR);
-    scar_val_dst->set_reg_name(get_reg_name(exp->get_type()));
+    scar_val_dst->set_reg_name(
+        get_reg_name(exp->get_type(), exp->get_derived_type()));
 
     scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));
