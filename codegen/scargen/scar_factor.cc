@@ -7,6 +7,10 @@ void Codegen::gen_scar_factor(
     std::shared_ptr<ast::AST_factor_Node> factor,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
 
+  if (factor == nullptr) {
+    return;
+  }
+
   if (factor->get_const_node() != nullptr) {
     constant_buffer = factor->get_const_node()->get_constant();
   } else if (factor->get_identifier_node() != nullptr) {
@@ -67,6 +71,24 @@ void Codegen::gen_scar_factor(
       scar_function->add_instruction(std::move(scar_instruction));
     }
   } else if (factor->get_unop_node() != nullptr) {
+    // if the factor is a dereference and the child is an addrof, then we can
+    // simply omit the instructions for both of them. the same is true when the
+    // factor is an addrof and the child is a dereference.
+    if (factor->get_child() != nullptr and
+        factor->get_child()->get_unop_node() != nullptr) {
+      if (factor->get_child()->get_unop_node()->get_op() ==
+              unop::UNOP::ADDROF and
+          factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
+        gen_scar_factor(factor->get_child()->get_child(), scar_function);
+      }
+      if (factor->get_child()->get_unop_node()->get_op() ==
+              unop::UNOP::DEREFERENCE and
+          factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
+        gen_scar_factor(factor->get_child()->get_child(), scar_function);
+      }
+      return;
+    }
+
     gen_scar_factor(factor->get_child(), scar_function);
 
     auto op = factor->get_unop_node()->get_op();
@@ -165,7 +187,7 @@ void Codegen::gen_scar_factor(
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
 
-      SETVARCONSTANTREG(scar_val_src)
+      SETVARCONSTANTREG(scar_val_src);
       scar_instruction->set_src1(std::move(scar_val_src));
 
       scar_val_dst->set_type(scar::val_type::VAR);
@@ -178,7 +200,7 @@ void Codegen::gen_scar_factor(
       scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-      SETVARCONSTANTREG(scar_val_src)
+      SETVARCONSTANTREG(scar_val_src);
       scar_instruction->set_src1(std::move(scar_val_src));
       scar_val_dst->set_type(scar::val_type::VAR);
       scar_val_dst->set_reg_name(get_reg_name(factor->get_type()));
