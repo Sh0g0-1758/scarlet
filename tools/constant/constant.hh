@@ -121,7 +121,7 @@ public:
       os << constant.value.ul;
       break;
     case Type::ZERO:
-      os << constant.value.ul;
+      os << "Zero(" << constant.value.ul << ")";
       break;
     case Type::NONE:
       UNREACHABLE();
