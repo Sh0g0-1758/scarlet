@@ -27,10 +27,10 @@ namespace parser {
     constZero.set_value({.d = 0});                                             \
     break;                                                                     \
   case ast::ElemType::DERIVED:                                                 \
+  case ast::ElemType::POINTER:                                                 \
     constZero.set_type(constant::Type::ULONG);                                 \
     constZero.set_value({.ul = 0});                                            \
     break;                                                                     \
-  case ast::ElemType::POINTER:                                                 \
   case ast::ElemType::NONE:                                                    \
     UNREACHABLE();                                                             \
   }
@@ -328,27 +328,9 @@ void parser::initialize_global_variable(
     } else {
       constant::Constant constZero;
       constZero.set_type(constant::Type::ZERO);
-      unsigned long num_bytes = 1;
+      unsigned long num_bytes = ast::getSizeOfTypeOnArch(baseElemType);
       for (auto dim : arrDim) {
         num_bytes *= dim;
-      }
-      switch (baseElemType) {
-      case ast::ElemType::INT:
-      case ast::ElemType::UINT:
-        num_bytes *= sizeof(int);
-        break;
-      case ast::ElemType::LONG:
-      case ast::ElemType::ULONG:
-        num_bytes *= sizeof(long);
-        break;
-      case ast::ElemType::DOUBLE:
-        num_bytes *= sizeof(double);
-        break;
-      case ast::ElemType::DERIVED:
-        num_bytes *= sizeof(long);
-        break;
-      default:
-        break;
       }
       constZero.set_value({.ul = num_bytes});
       varInfo.value.push_back(constZero);
@@ -405,45 +387,35 @@ void parser::init_static_array_initializer(
     arrDim.erase(arrDim.begin());
     long i = 0;
     for (; i < (long)init->initializer_list.size(); i++) {
+      currDim--;
       init_static_array_initializer(init->initializer_list[i], arrDim,
                                     baseElemType, derivedElemType, varInfo);
     }
-    for (; i < currDim; i++) {
-      unsigned long num_bytes = 1;
+    if (currDim != 0) {
+      unsigned long num_bytes = ast::getSizeOfTypeOnArch(baseElemType);
       for (auto dim : arrDim) {
         num_bytes *= dim;
       }
-      switch (baseElemType) {
-      case ast::ElemType::INT:
-      case ast::ElemType::UINT:
-        num_bytes *= sizeof(int);
-        break;
-      case ast::ElemType::LONG:
-      case ast::ElemType::ULONG:
-        num_bytes *= sizeof(long);
-        break;
-      case ast::ElemType::DOUBLE:
-        num_bytes *= sizeof(double);
-        break;
-      case ast::ElemType::DERIVED:
-        num_bytes *= sizeof(long);
-        break;
-      default:
-        break;
-      }
+      num_bytes *= currDim;
       constant::Constant constZero;
       constZero.set_type(constant::Type::ZERO);
       constZero.set_value({.ul = num_bytes});
       varInfo.value.push_back(constZero);
     }
   } else if (!(init->exp_list.empty())) {
-    long i = 0;
+    if (arrDim.size() != 1) {
+      success = false;
+      error_messages.emplace_back("Invalid use of initializer list, it does "
+                                  "not respect the array dimensions");
+    }
     if ((long)init->exp_list.size() > arrDim[0]) {
       success = false;
       error_messages.emplace_back(
           "Wrong number of elements in the initializer list");
     }
-    for (; i < (long)init->exp_list.size(); i++) {
+    unsigned long num_left = arrDim[0];
+    for (int i = 0; i < (int)init->exp_list.size(); i++) {
+      num_left--;
       auto child_exp = init->exp_list[i];
       if (!EXPISCONSTANT(child_exp)) {
         success = false;
@@ -465,29 +437,14 @@ void parser::init_static_array_initializer(
         }
       }
     }
-    unsigned long num_bytes = arrDim[0];
-    switch (baseElemType) {
-    case ast::ElemType::INT:
-    case ast::ElemType::UINT:
-      num_bytes *= sizeof(int);
-      break;
-    case ast::ElemType::LONG:
-    case ast::ElemType::ULONG:
-      num_bytes *= sizeof(long);
-      break;
-    case ast::ElemType::DOUBLE:
-      num_bytes *= sizeof(double);
-      break;
-    case ast::ElemType::DERIVED:
-      num_bytes *= sizeof(long);
-      break;
-    default:
-      break;
+    if (num_left != 0) {
+      unsigned long num_bytes =
+          num_left * ast::getSizeOfTypeOnArch(baseElemType);
+      constant::Constant constZero;
+      constZero.set_type(constant::Type::ZERO);
+      constZero.set_value({.ul = num_bytes});
+      varInfo.value.push_back(constZero);
     }
-    constant::Constant constZero;
-    constZero.set_type(constant::Type::ZERO);
-    constZero.set_value({.ul = num_bytes});
-    varInfo.value.push_back(constZero);
   }
 }
 
@@ -519,6 +476,11 @@ void parser::analyze_array_initializer(
       init->initializer_list.push_back(child_init);
     }
   } else if (!(init->exp_list.empty())) {
+    if (arrDim.size() != 1) {
+      success = false;
+      error_messages.emplace_back("Invalid use of initializer list, it does "
+                                  "not respect the array dimensions");
+    }
     long i = 0;
     if ((long)init->exp_list.size() > arrDim[0]) {
       success = false;

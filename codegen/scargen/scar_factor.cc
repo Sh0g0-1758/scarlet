@@ -7,6 +7,10 @@ void Codegen::gen_scar_factor(
     std::shared_ptr<ast::AST_factor_Node> factor,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
 
+  if (factor == nullptr) {
+    return;
+  }
+
   if (factor->get_const_node() != nullptr) {
     constant_buffer = factor->get_const_node()->get_constant();
   } else if (factor->get_identifier_node() != nullptr) {
@@ -14,17 +18,39 @@ void Codegen::gen_scar_factor(
       gen_scar_factor_function_call(
           std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor),
           scar_function);
+      if (factor->get_arrIdx().size() > 0) {
+        auto derivedType =
+            globalSymbolTable[factor->get_identifier_node()->get_value()]
+                .derivedTypeMap[0];
+        gen_scar_factor_array(factor, scar_function, derivedType);
+      }
+
     } else {
-      variable_buffer = factor->get_identifier_node()->get_value();
+      if (factor->get_arrIdx().size() > 0) {
+        auto derivedType =
+            globalSymbolTable[factor->get_identifier_node()->get_value()]
+                .derivedTypeMap[0];
+        gen_scar_factor_array(factor, scar_function, derivedType);
+      } else {
+        variable_buffer = factor->get_identifier_node()->get_value();
+      }
     }
   } else if (factor->get_exp_node() != nullptr) {
     gen_scar_exp(factor->get_exp_node(), scar_function);
+    if (factor->get_arrIdx().size() > 0) {
+      auto derivedType = factor->get_exp_node()->get_derived_type();
+      gen_scar_factor_array(factor, scar_function, derivedType);
+    }
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     gen_scar_factor(factor->get_child(), scar_function);
 
     auto inner_type = factor->get_child()->get_type();
-    auto typeCast_type = factor->get_cast_type();
-    if (inner_type != typeCast_type) {
+    auto inner_derived_type = factor->get_child()->get_derived_type();
+    auto typeCast_type = factor->get_type();
+    auto typeCast_derived_type = factor->get_derived_type();
+
+    if (inner_type != typeCast_type or
+        inner_derived_type != typeCast_derived_type) {
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -33,8 +59,20 @@ void Codegen::gen_scar_factor(
       scar_instruction->set_src1(std::move(scar_val_src));
 
       scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(get_reg_name(typeCast_type));
+      scar_val_dst->set_reg_name(
+          get_reg_name(typeCast_type, typeCast_derived_type));
       scar_instruction->set_dst(std::move(scar_val_dst));
+
+      // Treat derived type(pointer) as ulong
+      if (typeCast_type == ast::ElemType::DERIVED and
+          typeCast_derived_type[0] == (long)ast::ElemType::POINTER) {
+        typeCast_type = ast::ElemType::ULONG;
+      }
+
+      if (inner_type == ast::ElemType::DERIVED and
+          inner_derived_type[0] == (long)ast::ElemType::POINTER) {
+        inner_type = ast::ElemType::ULONG;
+      }
 
       if (typeCast_type == ast::ElemType::DOUBLE) {
         if (inner_type == ast::ElemType::INT or
@@ -51,10 +89,11 @@ void Codegen::gen_scar_factor(
           scar_instruction->set_type(scar::instruction_type::DOUBLE_TO_UINT);
         }
       } else {
-        if (ast::getSizeType(typeCast_type) == ast::getSizeType(inner_type)) {
+        if (ast::getSizeOfTypeOnArch(typeCast_type) ==
+            ast::getSizeOfTypeOnArch(inner_type)) {
           scar_instruction->set_type(scar::instruction_type::COPY);
-        } else if (ast::getSizeType(typeCast_type) <
-                   ast::getSizeType(inner_type)) {
+        } else if (ast::getSizeOfTypeOnArch(typeCast_type) <
+                   ast::getSizeOfTypeOnArch(inner_type)) {
           scar_instruction->set_type(scar::instruction_type::TRUNCATE);
         } else if (inner_type == ast::ElemType::INT or
                    inner_type == ast::ElemType::LONG) {
@@ -67,6 +106,25 @@ void Codegen::gen_scar_factor(
       scar_function->add_instruction(std::move(scar_instruction));
     }
   } else if (factor->get_unop_node() != nullptr) {
+    // if the factor is a dereference and the child is an addrof, then we can
+    // simply omit the instructions for both of them. the same is true when the
+    // factor is an addrof and the child is a dereference.
+    if (factor->get_child() != nullptr and
+        factor->get_child()->get_unop_node() != nullptr) {
+      if (factor->get_child()->get_unop_node()->get_op() ==
+              unop::UNOP::ADDROF and
+          factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
+        gen_scar_factor(factor->get_child()->get_child(), scar_function);
+        return;
+      }
+      if (factor->get_child()->get_unop_node()->get_op() ==
+              unop::UNOP::DEREFERENCE and
+          factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
+        gen_scar_factor(factor->get_child()->get_child(), scar_function);
+        return;
+      }
+    }
+
     gen_scar_factor(factor->get_child(), scar_function);
 
     auto op = factor->get_unop_node()->get_op();
@@ -120,7 +178,8 @@ void Codegen::gen_scar_factor(
 
       scar_instruction->set_src1(std::move(scar_val_src1));
       scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(get_reg_name(factor->get_type()));
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
       scar_instruction->set_dst(std::move(scar_val_dst));
       scar_function->add_instruction(std::move(scar_instruction));
 
@@ -160,6 +219,32 @@ void Codegen::gen_scar_factor(
 
       scar_function->add_instruction(std::move(scar_instruction2));
       variable_buffer.clear();
+    } else if (op == unop::UNOP::DEREFERENCE) {
+      scar_instruction->set_type(scar::instruction_type::LOAD);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+
+      SETVARCONSTANTREG(scar_val_src);
+      scar_instruction->set_src1(std::move(scar_val_src));
+
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
+      scar_instruction->set_dst(std::move(scar_val_dst));
+
+      scar_function->add_instruction(std::move(scar_instruction));
+    } else if (op == unop::UNOP::ADDROF) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+      scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+      SETVARCONSTANTREG(scar_val_src);
+      scar_instruction->set_src1(std::move(scar_val_src));
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
+      scar_instruction->set_dst(std::move(scar_val_dst));
+      scar_function->add_instruction(std::move(scar_instruction));
     } else {
       scar_instruction->set_type(scar::instruction_type::UNARY);
       scar_instruction->set_unop(op);
@@ -171,7 +256,8 @@ void Codegen::gen_scar_factor(
       scar_instruction->set_src1(std::move(scar_val_src));
 
       scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(get_reg_name(factor->get_type()));
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
       scar_instruction->set_dst(std::move(scar_val_dst));
 
       scar_function->add_instruction(std::move(scar_instruction));
@@ -211,7 +297,8 @@ void Codegen::gen_scar_factor_function_call(
     }
   }
 
-  std::string dstReg = get_reg_name(factor->get_type());
+  std::string dstReg =
+      get_reg_name(factor->get_type(), factor->get_derived_type());
 
   variable_buffer = dstReg;
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -220,6 +307,95 @@ void Codegen::gen_scar_factor_function_call(
   scar_instruction->set_dst(scar_val_dst);
 
   scar_function->add_instruction(scar_instruction);
+}
+
+void Codegen::gen_scar_factor_array(
+    std::shared_ptr<ast::AST_factor_Node> factor,
+    std::shared_ptr<scar::scar_Function_Node> scar_function,
+    std::vector<long> derivedType) {
+  std::string prev_arr_reg_name;
+  auto arrIdx = factor->get_arrIdx();
+  if (derivedType[0] > 0) {
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+    scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
+
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+    scar_val_src->set_type(scar::val_type::VAR);
+    if (factor->get_identifier_node() != nullptr) {
+      scar_val_src->set_reg_name(factor->get_identifier_node()->get_value());
+    } else if (!variable_buffer.empty()) {
+      scar_val_src->set_reg_name(variable_buffer);
+      variable_buffer.clear();
+    } else {
+      scar_val_src->set_reg_name(get_prev_reg_name());
+    }
+    scar_instruction->set_src1(std::move(scar_val_src));
+
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+    scar_val_dst->set_type(scar::val_type::VAR);
+    scar_val_dst->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
+    scar_instruction->set_dst(std::move(scar_val_dst));
+
+    prev_arr_reg_name = get_prev_reg_name();
+    scar_function->add_instruction(std::move(scar_instruction));
+  } else {
+    if (factor->get_identifier_node() != nullptr) {
+      prev_arr_reg_name = factor->get_identifier_node()->get_value();
+    } else if (!variable_buffer.empty()) {
+      prev_arr_reg_name = variable_buffer;
+      variable_buffer.clear();
+    } else {
+      prev_arr_reg_name = get_prev_reg_name();
+    }
+  }
+
+  for (int i = 0; i < (long)arrIdx.size(); i++) {
+    derivedType.erase(derivedType.begin());
+
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_offset_instruction);
+    scar_offset_instruction->set_type(scar::instruction_type::ADD_PTR);
+    scar_offset_instruction->set_offset(
+        ast::getSizeOfArrayTypeOnArch(derivedType));
+
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+    scar_val_src1->set_type(scar::val_type::VAR);
+    scar_val_src1->set_reg_name(prev_arr_reg_name);
+    scar_offset_instruction->set_src1(std::move(scar_val_src1));
+
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_index);
+    gen_scar_exp(arrIdx[i], scar_function);
+    SETVARCONSTANTREG(scar_val_index);
+    scar_offset_instruction->set_src2(std::move(scar_val_index));
+
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
+    scar_val_dst_addptr->set_type(scar::val_type::VAR);
+    if (derivedType.size() == 1) {
+      scar_val_dst_addptr->set_reg_name(
+          get_reg_name((ast::ElemType)derivedType[0], {}));
+    } else {
+      scar_val_dst_addptr->set_reg_name(
+          get_reg_name(ast::ElemType::DERIVED, derivedType));
+    }
+    scar_offset_instruction->set_dst(std::move(scar_val_dst_addptr));
+
+    scar_function->add_instruction(std::move(scar_offset_instruction));
+    prev_arr_reg_name = get_prev_reg_name();
+  }
+
+  MAKE_SHARED(scar::scar_Instruction_Node, scar_load_instruction);
+  scar_load_instruction->set_type(scar::instruction_type::LOAD);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+  scar_val_src2->set_type(scar::val_type::VAR);
+  scar_val_src2->set_reg_name(prev_arr_reg_name);
+  scar_load_instruction->set_src1(std::move(scar_val_src2));
+
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+  scar_val_dst2->set_type(scar::val_type::VAR);
+  scar_val_dst2->set_reg_name(
+      get_reg_name(factor->get_type(), factor->get_derived_type()));
+  scar_load_instruction->set_dst(std::move(scar_val_dst2));
+
+  scar_function->add_instruction(std::move(scar_load_instruction));
 }
 
 } // namespace codegen

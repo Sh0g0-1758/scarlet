@@ -3,15 +3,34 @@
 namespace scarlet {
 namespace codegen {
 
+void Codegen::pretty_print_type(ast::ElemType type,
+                                std::vector<long> derivedType) {
+  std::cout << "<<";
+  if (type != ast::ElemType::DERIVED) {
+    std::cout << ast::to_string(type);
+  } else {
+    for (auto i : derivedType) {
+      if (i == (long)ast::ElemType::POINTER) {
+        std::cout << "*->";
+      } else if (i > 0) {
+        std::cout << "[" << i << "]->";
+      } else {
+        std::cout << ast::to_string(static_cast<ast::ElemType>(i));
+      }
+    }
+  }
+  std::cout << ">>";
+}
+
 #define PRINT_VAR_CONST(scarValNode)                                           \
   if (scarValNode->get_type() == scar::val_type::CONSTANT) {                   \
     std::cout << "<<" << scarValNode->get_const_val().typeToString() << ">>"   \
               << "Constant(" << scarValNode->get_const_val() << ")";           \
   } else if (scarValNode->get_type() == scar::val_type::VAR) {                 \
-    std::cout << "<<"                                                          \
-              << to_string(                                                    \
-                     globalSymbolTable[scarValNode->get_reg()].typeDef[0])     \
-              << ">>" << "Var(" << scarValNode->get_reg() << ")";              \
+    pretty_print_type(                                                         \
+        globalSymbolTable[scarValNode->get_reg()].typeDef[0],                  \
+        globalSymbolTable[scarValNode->get_reg()].derivedTypeMap[0]);          \
+    std::cout << "Var(" << scarValNode->get_reg() << ")";                      \
   }
 
 void Codegen::pretty_print_function(
@@ -21,6 +40,12 @@ void Codegen::pretty_print_function(
             << std::endl;
   std::cout << "\t\tglobal=" << (function->is_global() ? "True" : "False")
             << "," << std::endl;
+  std::cout << "\t\treturn_type=";
+  pretty_print_type(
+      globalSymbolTable[function->get_identifier()->get_value()].typeDef[0],
+      globalSymbolTable[function->get_identifier()->get_value()]
+          .derivedTypeMap[0]);
+  std::cout << "," << std::endl;
   std::cout << "\t\tparams=[";
   std::stringstream ss;
   for (auto param : function->get_params()) {
@@ -63,6 +88,30 @@ void Codegen::pretty_print_function(
       std::cout << ", ";
       PRINT_VAR_CONST(statement->get_dst());
       std::cout << ")" << std::endl;
+    } else if (statement->get_type() == scar::instruction_type::ADD_PTR) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_src2());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ", ";
+      std::cout << "scale=" << statement->get_offset();
+      std::cout << ")" << std::endl;
+    } else if (statement->get_type() ==
+               scar::instruction_type::COPY_TO_OFFSET) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ", ";
+      std::cout << "offset=" << statement->get_offset();
+      std::cout << ")" << std::endl;
+    } else if (statement->get_type() == scar::instruction_type::LOAD or
+               statement->get_type() == scar::instruction_type::STORE or
+               statement->get_type() == scar::instruction_type::GET_ADDRESS) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::COPY) {
       PRINT_VAR_CONST(statement->get_src1());
       std::cout << " ,";
@@ -90,6 +139,16 @@ void Codegen::pretty_print_function(
       std::cout << ", ";
       PRINT_VAR_CONST(statement->get_dst());
       std::cout << ")" << std::endl;
+    } else if (statement->get_type() == scar::instruction_type::ADD_PTR) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_src2());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ", ";
+      std::cout << statement->get_offset();
+
+      std::cout << ")" << std::endl;
     }
   }
   std::cout << "\t\t]" << std::endl;
@@ -104,8 +163,18 @@ void Codegen::pretty_print_static_variable(
   std::cout << "\t\tglobal="
             << (static_variable->is_global() ? "True" : "False") << ","
             << std::endl;
-  std::cout << "\t\tinit=" << static_variable->get_init() << std::endl;
-  std::cout << "\t)," << std::endl;
+  std::cout << "\t\tinit=[";
+  for (int i = 0; i < (int)static_variable->get_init().size() - 1; i++) {
+    std::cout << static_variable->get_init()[i] << ", ";
+  }
+  std::cout << static_variable->get_init().back() << "]," << std::endl;
+  std::cout << "\t\ttype=";
+  pretty_print_type(
+      globalSymbolTable[static_variable->get_identifier()->get_value()]
+          .typeDef[0],
+      globalSymbolTable[static_variable->get_identifier()->get_value()]
+          .derivedTypeMap[0]);
+  std::cout << std::endl;
 }
 
 void Codegen::pretty_print() {

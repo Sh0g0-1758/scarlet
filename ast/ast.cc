@@ -78,15 +78,49 @@ std::string to_string(SpecifierType type) {
   UNREACHABLE();
 }
 
-int getSizeType(ElemType type) {
-  if (type == ElemType::INT || type == ElemType::UINT)
-    return 4;
-  else if (type == ElemType::LONG || type == ElemType::ULONG)
-    return 8;
-  else if (type == ElemType::DOUBLE)
-    return 8;
-  else
-    return -1;
+int getSizeOfTypeOnArch(ElemType type) {
+  switch (type) {
+  case ast::ElemType::INT:
+  case ast::ElemType::UINT:
+    return sizeof(int);
+  case ast::ElemType::LONG:
+  case ast::ElemType::ULONG:
+    return sizeof(long);
+  case ast::ElemType::DOUBLE:
+    return sizeof(double);
+  case ast::ElemType::POINTER:
+    return sizeof(unsigned long);
+  default:
+    return 0;
+  }
+}
+
+// WARNING: Use this function when you want to find the size of the type
+//          a pointer points to
+long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType) {
+  long sizeOfReferencedType = 1;
+  int i = 1;
+  while (derivedType[i] > 0) {
+    sizeOfReferencedType *= derivedType[i];
+    i++;
+  }
+  sizeOfReferencedType *=
+      ast::getSizeOfTypeOnArch((ast::ElemType)derivedType[i]);
+  return sizeOfReferencedType;
+}
+
+long getSizeOfArrayTypeOnArch(std::vector<long> derivedType) {
+  long sizeOfArrayType = 1;
+  for (auto i : derivedType) {
+    if (i > 0) {
+      sizeOfArrayType *= i;
+    } else {
+      sizeOfArrayType *= getSizeOfTypeOnArch((ast::ElemType)i);
+      break;
+    }
+  }
+
+  return sizeOfArrayType;
 }
 
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
@@ -155,12 +189,12 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
       return {left, {}};
     else if (left == ElemType::DOUBLE or right == ElemType::DOUBLE)
       return {ElemType::DOUBLE, {}};
-    else if (getSizeType(left) == getSizeType(right)) {
+    else if (getSizeOfTypeOnArch(left) == getSizeOfTypeOnArch(right)) {
       if (left == ElemType::UINT || left == ElemType::ULONG)
         return {left, {}};
       else
         return {right, {}};
-    } else if (getSizeType(left) > getSizeType(right))
+    } else if (getSizeOfTypeOnArch(left) > getSizeOfTypeOnArch(right))
       return {left, {}};
     else
       return {right, {}};

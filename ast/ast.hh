@@ -700,7 +700,6 @@ ElemType constTypeToElemType(constant::Type t);
 constant::Type elemTypeToConstType(ElemType t);
 std::string to_string(ElemType type);
 std::string to_string(SpecifierType type);
-int getSizeType(ElemType type);
 std::pair<ElemType, std::vector<long>>
 getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
               std::vector<long> &rightDerivedType,
@@ -714,5 +713,8 @@ bool isComplexType(ElemType type);
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor);
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
+int getSizeOfTypeOnArch(ElemType type);
+long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType);
+long getSizeOfArrayTypeOnArch(std::vector<long> derivedType);
 } // namespace ast
 } // namespace scarlet

@@ -21,15 +21,51 @@ Grammar:
 
 program = Program(top_level*)
 
-top_level = Function(identifier, bool global, identifier* params, instruction* body) | StaticVariable(identifier, bool global, const init)
+top_level = Function(identifier, bool global, identifier* params, instruction* body) 
+          | StaticVariable(identifier, bool global, const* init)
 
-instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst) | SignExtend(val src, val dst) | Truncate(val src, val dst) | ZeroExtend(val src, val dst) | DoubleToInt(val src, val dst) | DoubleToUint(val src, val dst) | IntToDouble(val src, val dst) | UintToDouble(val src, val dst)
+instruction = Return(val) 
+            | Unary(unary_operator, val src, val dst) 
+            | Binary(binary_operator, val src1, val src2, val dst) 
+            | Copy(val src, val dst) 
+            | Jump(identifier target) 
+            | JumpIfZero(val condition, identifier target) 
+            | JumpIfNotZero(val condition, identifier target) 
+            | Label(Identifier) 
+            | FunCall(identifier name, val* args, val dst) 
+            | SignExtend(val src, val dst) 
+            | Truncate(val src, val dst) 
+            | ZeroExtend(val src, val dst) 
+            | DoubleToInt(val src, val dst) 
+            | DoubleToUint(val src, val dst) 
+            | IntToDouble(val src, val dst) 
+            | UintToDouble(val src, val dst) 
+            | GetAddress(val src , val dst) 
+            | Load(val src_ptr, val dst) 
+            | Store(val src, val dst_ptr)
+            | AddPtr(val src, val index, int scale, val dst)
+            | CopyToOffset(val src, identifier dst, int offset)
 
 val = Constant(const) | Var(identifier)
 
 unary_operator = Complement | Negate | Not
 
-binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | leftShift | rightShift | Equal | notEqual | lessThan | LessOrEqual | greaterThan | greaterThanOrEqual
+binary_operator = Add 
+                | Subtract 
+                | Multiply 
+                | Divide 
+                | Remainder 
+                | And 
+                | Or 
+                | Xor 
+                | leftShift 
+                | rightShift 
+                | Equal 
+                | notEqual
+                | lessThan 
+                | LessOrEqual 
+                | greaterThan 
+                | greaterThanOrEqual
 
 */
 
@@ -55,6 +91,11 @@ enum class instruction_type {
   DOUBLE_TO_UINT,
   INT_TO_DOUBLE,
   UINT_TO_DOUBLE,
+  LOAD,
+  STORE,
+  GET_ADDRESS,
+  ADD_PTR,
+  COPY_TO_OFFSET
 };
 // CONSTANT is a constant value (1, 2 , 42 etc.)
 // VAR is a scar register
@@ -105,12 +146,14 @@ public:
 
 class scar_Instruction_Node {
 private:
-  instruction_type type; // Return, Unary, Binary
-  unop::UNOP unop;       // When the instruction is a unary instruction
-  binop::BINOP binop;    // When the instruction is a binary instruction
+  instruction_type type;
+  unop::UNOP unop;
+  binop::BINOP binop;
   std::shared_ptr<scar_Val_Node> src1;
   std::shared_ptr<scar_Val_Node> src2;
   std::shared_ptr<scar_Val_Node> dst;
+  // used by pointer and array instructions
+  long offset;
 
 public:
   std::string get_scar_name() { return "Instruction"; }
@@ -132,6 +175,8 @@ public:
   void set_dst(std::shared_ptr<scar_Val_Node> dst) {
     this->dst = std::move(dst);
   }
+  long get_offset() { return offset; }
+  void set_offset(long offset) { this->offset = offset; }
 };
 
 class scar_FunctionCall_Instruction_Node : public scar_Instruction_Node {
@@ -198,7 +243,7 @@ public:
 class scar_StaticVariable_Node : public scar_Top_Level_Node {
 private:
   std::shared_ptr<scar_Identifier_Node> identifier;
-  constant::Constant init;
+  std::vector<constant::Constant> init;
 
 public:
   std::string get_scar_name() { return "StaticVariable"; }
@@ -206,8 +251,13 @@ public:
   void set_identifier(std::shared_ptr<scar_Identifier_Node> identifier) {
     this->identifier = std::move(identifier);
   }
-  constant::Constant get_init() { return init; }
-  void set_init(constant::Constant init) { this->init = init; }
+  std::vector<constant::Constant> &get_init() { return init; }
+  void add_init(constant::Constant init) {
+    this->init.emplace_back(std::move(init));
+  }
+  void set_init(std::vector<constant::Constant> init) {
+    this->init = std::move(init);
+  }
 };
 
 class scar_Program_Node {

@@ -245,15 +245,16 @@ void Codegen::asm_gen_static_variable(
 #endif
   assembly << ARCHPREFIX << vars->get_name() << ":\n";
   if (InDataSection) {
+    // FIXME
     if (varType == scasm::AssemblyType::QUAD_WORD) {
       assembly << "\t.quad ";
-      assembly << vars->get_init() << "\n";
+      assembly << vars->get_init()[0] << "\n";
     } else if (varType == scasm::AssemblyType::LONG_WORD) {
       assembly << "\t.long ";
-      assembly << vars->get_init() << "\n";
+      assembly << vars->get_init()[0] << "\n";
     } else if (varType == scasm::AssemblyType::DOUBLE) {
       assembly << "\t.quad ";
-      assembly << vars->get_init().get_value().l << "\n";
+      assembly << vars->get_init()[0].get_value().l << "\n";
     }
   } else {
     assembly << "\t.zero " + std::to_string(vars->get_alignment()) + '\n';
