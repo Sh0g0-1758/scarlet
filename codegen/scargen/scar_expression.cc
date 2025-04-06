@@ -351,9 +351,6 @@ void Codegen::gen_scar_pointer_exp(
         get_reg_name(exp->get_type(), exp->get_derived_type()));
     scar_instruction->set_dst(std::move(scar_val_dst));
 
-    long sizeOfReferencedType =
-        ast::getSizeOfReferencedTypeOnArch(exp->get_derived_type());
-
     // When we subtract two pointers, we don't emit Addptr instruction.
     // instead, we use the binop divide to get the result
     if (exp->get_type() == ast::ElemType::LONG) {
@@ -375,7 +372,8 @@ void Codegen::gen_scar_pointer_exp(
       scar_val_src4->set_type(scar::val_type::CONSTANT);
       constant::Constant sortc;
       sortc.set_type(constant::Type::LONG);
-      sortc.set_value({.l = sizeOfReferencedType});
+      sortc.set_value({.l = ast::getSizeOfReferencedTypeOnArch(
+                           exp->get_right()->get_derived_type())});
       scar_val_src4->set_const_val(sortc);
       scar_instruction2->set_src2(std::move(scar_val_src4));
 
@@ -386,7 +384,8 @@ void Codegen::gen_scar_pointer_exp(
       scar_function->add_instruction(std::move(scar_instruction2));
     } else {
       scar_instruction->set_type(scar::instruction_type::ADD_PTR);
-      scar_instruction->set_offset(sizeOfReferencedType);
+      scar_instruction->set_offset(
+          ast::getSizeOfReferencedTypeOnArch(exp->get_derived_type()));
       scar_function->add_instruction(std::move(scar_instruction));
     }
   } else {
