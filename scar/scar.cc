@@ -76,6 +76,7 @@ bool is_type_cast(scar::instruction_type type) {
   default:
     return false;
   }
+}
 
 } // namespace scar
 } // namespace scarlet

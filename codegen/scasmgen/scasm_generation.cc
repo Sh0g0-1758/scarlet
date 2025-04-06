@@ -235,6 +235,10 @@ void Codegen::gen_scasm() {
       } else if (inst->get_type() == scar::instruction_type::LOAD) {
         // Mov(src, reg(<R>))
         // Mov(Mem(<R>), dst)
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
       }
     }
     MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
