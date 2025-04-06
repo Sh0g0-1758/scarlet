@@ -88,6 +88,22 @@ void Codegen::pretty_print_function(
       std::cout << ", ";
       PRINT_VAR_CONST(statement->get_dst());
       std::cout << ")" << std::endl;
+    } else if (statement->get_type() == scar::instruction_type::ADD_PTR) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_src2());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ", ";
+      std::cout << "offset=" << statement->get_offset();
+      std::cout << ")" << std::endl;
+    } else if (statement->get_type() == scar::instruction_type::LOAD or
+               statement->get_type() == scar::instruction_type::STORE or
+               statement->get_type() == scar::instruction_type::GET_ADDRESS) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ")" << std::endl;
     } else if (statement->get_type() == scar::instruction_type::COPY) {
       PRINT_VAR_CONST(statement->get_src1());
       std::cout << " ,";
@@ -110,10 +126,7 @@ void Codegen::pretty_print_function(
                statement->get_type() ==
                    scar::instruction_type::DOUBLE_TO_UINT or
                statement->get_type() ==
-                   scar::instruction_type::UINT_TO_DOUBLE or
-               statement->get_type() == scar::instruction_type::LOAD or
-               statement->get_type() == scar::instruction_type::STORE or
-               statement->get_type() == scar::instruction_type::GET_ADDRESS) {
+                   scar::instruction_type::UINT_TO_DOUBLE) {
       PRINT_VAR_CONST(statement->get_src1());
       std::cout << ", ";
       PRINT_VAR_CONST(statement->get_dst());
