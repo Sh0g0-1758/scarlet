@@ -10,7 +10,7 @@ void Codegen::gen_scasm() {
       auto var = std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem);
       MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
       scasm_var->set_name(var->get_identifier()->get_value());
-      switch (var->get_init().get_type()) {
+      switch (var->get_init()[0].get_type()) {
       case constant::Type::UINT:
       case constant::Type::INT:
         scasm_var->set_alignment(4);

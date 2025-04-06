@@ -321,7 +321,6 @@ void Codegen::gen_scar_exp(
 
     binop::BINOP binop = exp->get_binop_node()->get_op();
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-    scar_instruction->set_type(scar::instruction_type::BINARY);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
 
@@ -345,6 +344,11 @@ void Codegen::gen_scar_exp(
 
     scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));
+
+    if (exp->get_type() == ast::ElemType::DERIVED and
+        exp->get_derived_type()[0] == (long)ast::ElemType::POINTER) {
+    }
+    scar_instruction->set_type(scar::instruction_type::BINARY);
     scar_instruction->set_binop(binop);
     scar_function->add_instruction(std::move(scar_instruction));
   } else {

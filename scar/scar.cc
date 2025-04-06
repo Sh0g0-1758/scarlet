@@ -43,6 +43,10 @@ std::string to_string(scar::instruction_type type) {
     return "Store";
   case scar::instruction_type::GET_ADDRESS:
     return "GetAddress";
+  case scar::instruction_type::ADD_PTR:
+    return "AddPtr";
+  case scar::instruction_type::COPY_TO_OFFSET:
+    return "CopyToOffset";
   }
   UNREACHABLE()
 }

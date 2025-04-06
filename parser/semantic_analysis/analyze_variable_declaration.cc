@@ -479,7 +479,7 @@ void parser::init_static_array_initializer(
       num_bytes *= sizeof(double);
       break;
     case ast::ElemType::DERIVED:
-      num_bytes *= sizeof(long);
+      num_bytes *= sizeof(unsigned long);
       break;
     default:
       break;

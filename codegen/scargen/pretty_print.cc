@@ -132,7 +132,11 @@ void Codegen::pretty_print_static_variable(
   std::cout << "\t\tglobal="
             << (static_variable->is_global() ? "True" : "False") << ","
             << std::endl;
-  std::cout << "\t\tinit=" << static_variable->get_init() << std::endl;
+  std::cout << "\t\tinit=";
+  for (auto i : static_variable->get_init()) {
+    std::cout << i << ", ";
+  }
+  std::cout << std::endl;
   std::cout << "\t)," << std::endl;
 }
 

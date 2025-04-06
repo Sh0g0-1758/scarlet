@@ -714,5 +714,6 @@ bool isComplexType(ElemType type);
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor);
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
+int getSizeTypeOnArch(ElemType type);
 } // namespace ast
 } // namespace scarlet
