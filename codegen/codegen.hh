@@ -68,8 +68,9 @@ private:
   std::map<double, std::string, DoubleCompare> doubleLabelMap;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
-  void gen_scar_def_assign_exp(std::shared_ptr<ast::AST_exp_Node> exp,
-                      std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void gen_scar_def_assign_exp(
+      std::shared_ptr<ast::AST_exp_Node> exp,
+      std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
   gen_scar_assign_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                       std::shared_ptr<scar::scar_Function_Node> scar_function);

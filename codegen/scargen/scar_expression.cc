@@ -300,19 +300,19 @@ void Codegen::gen_scar_exp(
     // and copy the result to a new register. Ternary is actually a special
     // case of short circuiting
     if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
-      if(exp->get_factor_node() != nullptr ){
-            if(exp->get_factor_node()->get_unop_node() != nullptr){
-            if(exp->get_factor_node()->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE){
-              gen_scar_def_assign_exp(exp,scar_function);
-            }else{
-              gen_scar_assign_exp(exp, scar_function);
-            }
-            }
-            else{
-              gen_scar_assign_exp(exp, scar_function);
-            }
-      }else{
-      gen_scar_assign_exp(exp, scar_function);
+      if (exp->get_factor_node() != nullptr) {
+        if (exp->get_factor_node()->get_unop_node() != nullptr) {
+          if (exp->get_factor_node()->get_unop_node()->get_op() ==
+              unop::UNOP::DEREFERENCE) {
+            gen_scar_def_assign_exp(exp, scar_function);
+          } else {
+            gen_scar_assign_exp(exp, scar_function);
+          }
+        } else {
+          gen_scar_assign_exp(exp, scar_function);
+        }
+      } else {
+        gen_scar_assign_exp(exp, scar_function);
       }
       return;
     } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
