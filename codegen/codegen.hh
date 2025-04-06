@@ -80,6 +80,9 @@ private:
   void
   gen_scar_ternary_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void
+  gen_scar_pointer_exp(std::shared_ptr<ast::AST_exp_Node> exp,
+                       std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor_function_call(

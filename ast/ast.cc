@@ -88,7 +88,7 @@ int getSizeOfTypeOnArch(ElemType type) {
     return sizeof(long);
   case ast::ElemType::DOUBLE:
     return sizeof(double);
-  case ast::ElemType::DERIVED:
+  case ast::ElemType::POINTER:
     return sizeof(unsigned long);
   default:
     return 0;

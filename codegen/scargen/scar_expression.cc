@@ -28,6 +28,8 @@ void Codegen::gen_scar_assign_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
 
+  // If the factor is an lvalue because of a dereference operation,
+  // we have to make a store instruction
   if (is_deref_lval(exp->get_factor_node())) {
     gen_scar_def_assign_exp(exp, scar_function);
     return;
@@ -63,12 +65,27 @@ void Codegen::gen_scar_def_assign_exp(
   scar_instruction->set_type(scar::instruction_type::STORE);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+
+  gen_scar_exp(exp->get_right(), scar_function);
+  // NOTE: we don't clear the buffers because we might need to propagate
+  // the source values further in expressions like:
+  // int a = *c = 42;
+
+  if (!variable_buffer.empty()) {
+    scar_val_src->set_type(scar::val_type::VAR);
+    scar_val_src->set_reg_name(variable_buffer);
+  } else if (!constant_buffer.empty()) {
+    scar_val_src->set_type(scar::val_type::CONSTANT);
+    scar_val_src->set_const_val(constant_buffer);
+  } else {
+    scar_val_src->set_type(scar::val_type::VAR);
+    scar_val_src->set_reg_name(get_prev_reg_name());
+  }
+  scar_instruction->set_src1(std::move(scar_val_src));
+
   gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
   SETVARCONSTANTREG(scar_val_dst);
   scar_instruction->set_dst(std::move(scar_val_dst));
-  gen_scar_exp(exp->get_right(), scar_function);
-  SETVARCONSTANTREG(scar_val_src);
-  scar_instruction->set_src1(std::move(scar_val_src));
   scar_function->add_instruction(std::move(scar_instruction));
 }
 
@@ -288,6 +305,54 @@ void Codegen::gen_scar_ternary_exp(
   reg_name = result;
 }
 
+void Codegen::gen_scar_pointer_exp(
+    std::shared_ptr<ast::AST_exp_Node> exp,
+    std::shared_ptr<scar::scar_Function_Node> scar_function) {
+  // {ptr + int, int + ptr}, {ptr - int}, {ptr - ptr}
+  // the source must always be a ptr
+  MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+  scar_instruction->set_type(scar::instruction_type::ADD_PTR);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+
+  if (exp->get_left() == nullptr) {
+    gen_scar_factor(exp->get_factor_node(), scar_function);
+    SETVARCONSTANTREG(scar_val_src1);
+  } else {
+    scar_val_src1->set_type(scar::val_type::VAR);
+    scar_val_src1->set_reg_name(get_prev_reg_name());
+  }
+
+  scar_instruction->set_src1(std::move(scar_val_src1));
+
+  gen_scar_exp(exp->get_right(), scar_function);
+  SETVARCONSTANTREG(scar_val_src2);
+
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+  scar_val_dst->set_type(scar::val_type::VAR);
+  scar_val_dst->set_reg_name(
+      get_reg_name(exp->get_type(), exp->get_derived_type()));
+
+  scar_instruction->set_src2(std::move(scar_val_src2));
+  scar_instruction->set_dst(std::move(scar_val_dst));
+
+  if (exp->get_type() == ast::ElemType::DERIVED and
+      exp->get_derived_type()[0] == (long)ast::ElemType::POINTER) {
+    // make sure that the pointer is the first operand
+    // get the size of the referenced type
+    long sizeOfReferencedType = 1;
+    int i = 1;
+    while (exp->get_derived_type()[i] > 0) {
+      sizeOfReferencedType *= exp->get_derived_type()[i];
+      i++;
+    }
+    sizeOfReferencedType *=
+        ast::getSizeOfTypeOnArch((ast::ElemType)exp->get_derived_type()[i]);
+    scar_instruction->set_offset(sizeOfReferencedType);
+  }
+  scar_function->add_instruction(std::move(scar_instruction));
+}
+
 void Codegen::gen_scar_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
@@ -308,6 +373,14 @@ void Codegen::gen_scar_exp(
     // or the second expression that will be returned using jmpifzero
     // and copy the result to a new register. Ternary is actually a special
     // case of short circuiting
+    //
+    // There will also be a separate case to handle pointer arithmetic. There
+    // are Only 3 types of pointer arithmetic operations. These are: {ptr + int,
+    // int + ptr}, {ptr - int}, {ptr - ptr} In the first two cases, the
+    // expression will have ptr type and in the third case, the exp will have
+    // long type but the right exp will still have ptr type. Thus we can use the
+    // type of the root exp and the type of the right exp to decide whether we
+    // have to do pointer arithmetic
     if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN) {
       gen_scar_assign_exp(exp, scar_function);
       return;
@@ -317,10 +390,15 @@ void Codegen::gen_scar_exp(
     } else if (binop::short_circuit(exp->get_binop_node()->get_op())) {
       gen_scar_short_circuit_exp(exp, scar_function);
       return;
+    } else if (exp->get_type() == ast::ElemType::DERIVED or
+               exp->get_right()->get_type() == ast::ElemType::DERIVED) {
+      gen_scar_pointer_exp(exp, scar_function);
     }
 
     binop::BINOP binop = exp->get_binop_node()->get_op();
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+    scar_instruction->set_type(scar::instruction_type::BINARY);
+    scar_instruction->set_binop(binop);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
 
@@ -345,11 +423,6 @@ void Codegen::gen_scar_exp(
     scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));
 
-    if (exp->get_type() == ast::ElemType::DERIVED and
-        exp->get_derived_type()[0] == (long)ast::ElemType::POINTER) {
-    }
-    scar_instruction->set_type(scar::instruction_type::BINARY);
-    scar_instruction->set_binop(binop);
     scar_function->add_instruction(std::move(scar_instruction));
   } else {
     // When we do not have a binary operator, so only parse the factor node
