@@ -311,7 +311,6 @@ void Codegen::gen_scar_pointer_exp(
   // {ptr + int, int + ptr}, {ptr - int}, {ptr - ptr}
 
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-  scar_instruction->set_type(scar::instruction_type::ADD_PTR);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
   // the first operand in add_ptr must always be an integer
@@ -348,9 +347,44 @@ void Codegen::gen_scar_pointer_exp(
       get_reg_name(exp->get_type(), exp->get_derived_type()));
   scar_instruction->set_dst(std::move(scar_val_dst));
 
-  scar_instruction->set_offset(
-      ast::getSizeOfDerivedTypeOnArch(exp->get_derived_type()));
-  scar_function->add_instruction(std::move(scar_instruction));
+  long sizeOfReferencedType =
+      ast::getSizeOfDerivedTypeOnArch(exp->get_derived_type());
+
+  // When we subtract two pointers, we don't emit Addptr instruction.
+  // instead, we use the binop divide to get the result
+  if (exp->get_type() == ast::ElemType::LONG) {
+    scar_instruction->set_type(scar::instruction_type::BINARY);
+    scar_instruction->set_binop(binop::BINOP::SUB);
+    scar_function->add_instruction(std::move(scar_instruction));
+
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
+    scar_instruction2->set_type(scar::instruction_type::BINARY);
+    scar_instruction2->set_binop(binop::BINOP::DIV);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src4);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+
+    scar_val_src3->set_type(scar::val_type::VAR);
+    scar_val_src3->set_reg_name(get_prev_reg_name());
+    scar_instruction2->set_src1(std::move(scar_val_src3));
+
+    scar_val_src4->set_type(scar::val_type::CONSTANT);
+    constant::Constant sortc;
+    sortc.set_type(constant::Type::LONG);
+    sortc.set_value({.l = sizeOfReferencedType});
+    scar_val_src4->set_const_val(sortc);
+    scar_instruction2->set_src2(std::move(scar_val_src4));
+
+    scar_val_dst2->set_type(scar::val_type::VAR);
+    scar_val_dst2->set_reg_name(get_reg_name(ast::ElemType::LONG, {}));
+    scar_instruction2->set_dst(std::move(scar_val_dst2));
+
+    scar_function->add_instruction(std::move(scar_instruction2));
+  } else {
+    scar_instruction->set_type(scar::instruction_type::ADD_PTR);
+    scar_instruction->set_offset(sizeOfReferencedType);
+    scar_function->add_instruction(std::move(scar_instruction));
+  }
 }
 
 void Codegen::gen_scar_exp(
@@ -390,8 +424,10 @@ void Codegen::gen_scar_exp(
     } else if (binop::short_circuit(exp->get_binop_node()->get_op())) {
       gen_scar_short_circuit_exp(exp, scar_function);
       return;
-    } else if (exp->get_type() == ast::ElemType::DERIVED or
-               exp->get_right()->get_type() == ast::ElemType::DERIVED) {
+    } else if ((exp->get_binop_node()->get_op() == binop::BINOP::ADD or
+                exp->get_binop_node()->get_op() == binop::BINOP::SUB) and
+               (exp->get_type() == ast::ElemType::DERIVED or
+                exp->get_right()->get_type() == ast::ElemType::DERIVED)) {
       gen_scar_pointer_exp(exp, scar_function);
     }
 
