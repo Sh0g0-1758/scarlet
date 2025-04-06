@@ -71,10 +71,11 @@ void Codegen::gen_scar_factor(
           scar_instruction->set_type(scar::instruction_type::DOUBLE_TO_UINT);
         }
       } else {
-        if (ast::getSizeType(typeCast_type) == ast::getSizeType(inner_type)) {
+        if (ast::getSizeOfTypeOnArch(typeCast_type) ==
+            ast::getSizeOfTypeOnArch(inner_type)) {
           scar_instruction->set_type(scar::instruction_type::COPY);
-        } else if (ast::getSizeType(typeCast_type) <
-                   ast::getSizeType(inner_type)) {
+        } else if (ast::getSizeOfTypeOnArch(typeCast_type) <
+                   ast::getSizeOfTypeOnArch(inner_type)) {
           scar_instruction->set_type(scar::instruction_type::TRUNCATE);
         } else if (inner_type == ast::ElemType::INT or
                    inner_type == ast::ElemType::LONG) {

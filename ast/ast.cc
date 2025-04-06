@@ -78,15 +78,21 @@ std::string to_string(SpecifierType type) {
   UNREACHABLE();
 }
 
-int getSizeType(ElemType type) {
-  if (type == ElemType::INT || type == ElemType::UINT)
-    return 4;
-  else if (type == ElemType::LONG || type == ElemType::ULONG)
-    return 8;
-  else if (type == ElemType::DOUBLE)
-    return 8;
-  else
-    return -1;
+int getSizeOfTypeOnArch(ElemType type) {
+  switch (type) {
+  case ast::ElemType::INT:
+  case ast::ElemType::UINT:
+    return sizeof(int);
+  case ast::ElemType::LONG:
+  case ast::ElemType::ULONG:
+    return sizeof(long);
+  case ast::ElemType::DOUBLE:
+    return sizeof(double);
+  case ast::ElemType::DERIVED:
+    return sizeof(unsigned long);
+  default:
+    return 0;
+  }
 }
 
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
@@ -155,12 +161,12 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
       return {left, {}};
     else if (left == ElemType::DOUBLE or right == ElemType::DOUBLE)
       return {ElemType::DOUBLE, {}};
-    else if (getSizeType(left) == getSizeType(right)) {
+    else if (getSizeOfTypeOnArch(left) == getSizeOfTypeOnArch(right)) {
       if (left == ElemType::UINT || left == ElemType::ULONG)
         return {left, {}};
       else
         return {right, {}};
-    } else if (getSizeType(left) > getSizeType(right))
+    } else if (getSizeOfTypeOnArch(left) > getSizeOfTypeOnArch(right))
       return {left, {}};
     else
       return {right, {}};

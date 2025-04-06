@@ -328,27 +328,9 @@ void parser::initialize_global_variable(
     } else {
       constant::Constant constZero;
       constZero.set_type(constant::Type::ZERO);
-      unsigned long num_bytes = 1;
+      unsigned long num_bytes = ast::getSizeOfTypeOnArch(baseElemType);
       for (auto dim : arrDim) {
         num_bytes *= dim;
-      }
-      switch (baseElemType) {
-      case ast::ElemType::INT:
-      case ast::ElemType::UINT:
-        num_bytes *= sizeof(int);
-        break;
-      case ast::ElemType::LONG:
-      case ast::ElemType::ULONG:
-        num_bytes *= sizeof(long);
-        break;
-      case ast::ElemType::DOUBLE:
-        num_bytes *= sizeof(double);
-        break;
-      case ast::ElemType::DERIVED:
-        num_bytes *= sizeof(long);
-        break;
-      default:
-        break;
       }
       constZero.set_value({.ul = num_bytes});
       varInfo.value.push_back(constZero);
@@ -409,27 +391,9 @@ void parser::init_static_array_initializer(
                                     baseElemType, derivedElemType, varInfo);
     }
     for (; i < currDim; i++) {
-      unsigned long num_bytes = 1;
+      unsigned long num_bytes = ast::getSizeOfTypeOnArch(baseElemType);
       for (auto dim : arrDim) {
         num_bytes *= dim;
-      }
-      switch (baseElemType) {
-      case ast::ElemType::INT:
-      case ast::ElemType::UINT:
-        num_bytes *= sizeof(int);
-        break;
-      case ast::ElemType::LONG:
-      case ast::ElemType::ULONG:
-        num_bytes *= sizeof(long);
-        break;
-      case ast::ElemType::DOUBLE:
-        num_bytes *= sizeof(double);
-        break;
-      case ast::ElemType::DERIVED:
-        num_bytes *= sizeof(long);
-        break;
-      default:
-        break;
       }
       constant::Constant constZero;
       constZero.set_type(constant::Type::ZERO);
@@ -465,25 +429,8 @@ void parser::init_static_array_initializer(
         }
       }
     }
-    unsigned long num_bytes = arrDim[0];
-    switch (baseElemType) {
-    case ast::ElemType::INT:
-    case ast::ElemType::UINT:
-      num_bytes *= sizeof(int);
-      break;
-    case ast::ElemType::LONG:
-    case ast::ElemType::ULONG:
-      num_bytes *= sizeof(long);
-      break;
-    case ast::ElemType::DOUBLE:
-      num_bytes *= sizeof(double);
-      break;
-    case ast::ElemType::DERIVED:
-      num_bytes *= sizeof(unsigned long);
-      break;
-    default:
-      break;
-    }
+    unsigned long num_bytes =
+        arrDim[0] * ast::getSizeOfTypeOnArch(baseElemType);
     constant::Constant constZero;
     constZero.set_type(constant::Type::ZERO);
     constZero.set_value({.ul = num_bytes});
