@@ -13,9 +13,10 @@ namespace codegen {
       inst->get_##target()->get_type() == scasm::operand_type::PSEUDO) {       \
     if (pseudoRegToMemOffset.find(inst->get_##target()->get_identifier()) !=   \
         pseudoRegToMemOffset.end()) {                                          \
+      inst->get_##target()->set_type(scasm::operand_type::MEMORY);             \
+      inst->get_##target()->set_reg(scasm::register_type::BP);                 \
       inst->get_##target()->set_offset(                                        \
           pseudoRegToMemOffset[inst->get_##target()->get_identifier()]);       \
-      inst->get_##target()->set_type(scasm::operand_type::MEMORY);             \
     } else {                                                                   \
       std::string temp = inst->get_##target()->get_identifier();               \
       if (backendSymbolTable[temp].isTopLevel) {                               \

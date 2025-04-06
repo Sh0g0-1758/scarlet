@@ -9,15 +9,15 @@ namespace codegen {
 #define ARCHPREFIX ""
 #endif
 
-#define PRINT_REG()                                                            \
+#define PRINT_REG(target)                                                      \
   switch (instr->get_asm_type()) {                                             \
   case scasm::AssemblyType::DOUBLE:                                            \
   case scasm::AssemblyType::QUAD_WORD:                                         \
-    assembly << scasm::to_string(instr->get_src()->get_reg(),                  \
+    assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
                                  scasm::register_size::QWORD);                 \
     break;                                                                     \
   case scasm::AssemblyType::LONG_WORD:                                         \
-    assembly << scasm::to_string(instr->get_src()->get_reg(),                  \
+    assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
                                  scasm::register_size::LWORD);                 \
     break;                                                                     \
   default:                                                                     \
@@ -29,23 +29,23 @@ namespace codegen {
     assembly << "$" << instr->get_src()->get_imm();                            \
   } else if (instr->get_src()->get_type() == scasm::operand_type::MEMORY) {    \
     assembly << instr->get_src()->get_offset() << "(";                         \
-    PRINT_REG();                                                               \
+    PRINT_REG(src);                                                            \
     assembly << ")";                                                           \
   } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {      \
     assembly << ARCHPREFIX << instr->get_src()->get_identifier() << "(%rip)";  \
   } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {       \
-    PRINT_REG();                                                               \
+    PRINT_REG(src);                                                            \
   }
 
 #define CODEGEN_DST()                                                          \
   if (instr->get_dst()->get_type() == scasm::operand_type::MEMORY) {           \
     assembly << instr->get_dst()->get_offset() << "(";                         \
-    PRINT_REG();                                                               \
+    PRINT_REG(dst);                                                            \
     assembly << ")";                                                           \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {      \
     assembly << ARCHPREFIX << instr->get_dst()->get_identifier() << "(%rip)";  \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {       \
-    PRINT_REG();                                                               \
+    PRINT_REG(dst);                                                            \
   }
 
 #define CODEGEN_SRC_DST()                                                      \
