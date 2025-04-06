@@ -50,7 +50,8 @@ void Codegen::gen_scar_factor(
         } else {
           scar_instruction->set_type(scar::instruction_type::DOUBLE_TO_UINT);
         }
-      } else {
+      } 
+      else {
         if (ast::getSizeType(typeCast_type) == ast::getSizeType(inner_type)) {
           scar_instruction->set_type(scar::instruction_type::COPY);
         } else if (ast::getSizeType(typeCast_type) <
@@ -160,7 +161,52 @@ void Codegen::gen_scar_factor(
 
       scar_function->add_instruction(std::move(scar_instruction2));
       variable_buffer.clear();
-    } else {
+    } else if (op == unop::UNOP::DEREFERENCE){
+      scar_instruction->set_type(scar::instruction_type::LOAD);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+
+      SETVARCONSTANTREG(scar_val_src)
+      scar_instruction->set_src1(std::move(scar_val_src));
+
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(get_reg_name(factor->get_type()));
+      scar_instruction->set_dst(std::move(scar_val_dst));
+
+      scar_function->add_instruction(std::move(scar_instruction));
+    } else if(op == unop::UNOP::ADDROF){
+      if(factor->get_child() != nullptr){
+        gen_scar_factor(factor->get_child(), scar_function);
+        if(factor->get_child()->get_unop_node()){
+          if(factor->get_child()->get_unop_node()->get_op() != unop::UNOP::DEREFERENCE){
+            MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+            scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
+            MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+            MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+            SETVARCONSTANTREG(scar_val_src)
+            scar_instruction->set_src1(std::move(scar_val_src));
+            scar_val_dst->set_type(scar::val_type::VAR);
+            scar_val_dst->set_reg_name(get_reg_name(factor->get_type()));
+            scar_instruction->set_dst(std::move(scar_val_dst));
+            scar_function->add_instruction(std::move(scar_instruction));
+          }
+        }
+        else
+        {
+            MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+            scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
+            MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+            MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+            SETVARCONSTANTREG(scar_val_src)
+            scar_instruction->set_src1(std::move(scar_val_src));
+            scar_val_dst->set_type(scar::val_type::VAR);
+            scar_val_dst->set_reg_name(get_reg_name(factor->get_type()));
+            scar_instruction->set_dst(std::move(scar_val_dst));
+            scar_function->add_instruction(std::move(scar_instruction));
+        }
+      }
+      }
+      else {
       scar_instruction->set_type(scar::instruction_type::UNARY);
       scar_instruction->set_unop(op);
 
