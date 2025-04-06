@@ -95,6 +95,19 @@ int getSizeOfTypeOnArch(ElemType type) {
   }
 }
 
+// WARNING: Use this function when you want to find the size of the type
+//          a pointer points to
+long getSizeOfDerivedTypeOnArch(std::vector<long> derivedType) {
+  long sizeOfReferencedType = 1;
+  int i = 1;
+  while (derivedType[i] > 0) {
+    sizeOfReferencedType *= derivedType[i];
+    i++;
+  }
+  sizeOfReferencedType *=
+      ast::getSizeOfTypeOnArch((ast::ElemType)derivedType[i]);
+}
+
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
   if (factor != nullptr and factor->get_const_node() != nullptr and
       factor->get_const_node()->get_constant().get_value().i == 0 and

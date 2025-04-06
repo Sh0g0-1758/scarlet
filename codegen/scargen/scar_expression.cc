@@ -309,47 +309,47 @@ void Codegen::gen_scar_pointer_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
   // {ptr + int, int + ptr}, {ptr - int}, {ptr - ptr}
-  // the source must always be a ptr
+
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
   scar_instruction->set_type(scar::instruction_type::ADD_PTR);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+  // the first operand in add_ptr must always be an integer
+  // so we check if the left operand is an integer and if it is
+  // store it as the second operand
+
+  bool leftOperandIsInteger;
 
   if (exp->get_left() == nullptr) {
+    leftOperandIsInteger =
+        exp->get_factor_node()->get_type() == ast::ElemType::LONG;
     gen_scar_factor(exp->get_factor_node(), scar_function);
     SETVARCONSTANTREG(scar_val_src1);
   } else {
+    leftOperandIsInteger = exp->get_left()->get_type() == ast::ElemType::LONG;
     scar_val_src1->set_type(scar::val_type::VAR);
     scar_val_src1->set_reg_name(get_prev_reg_name());
   }
-
-  scar_instruction->set_src1(std::move(scar_val_src1));
+  if (leftOperandIsInteger)
+    scar_instruction->set_src2(std::move(scar_val_src1));
+  else
+    scar_instruction->set_src1(std::move(scar_val_src1));
 
   gen_scar_exp(exp->get_right(), scar_function);
   SETVARCONSTANTREG(scar_val_src2);
+  if (leftOperandIsInteger)
+    scar_instruction->set_src1(std::move(scar_val_src2));
+  else
+    scar_instruction->set_src2(std::move(scar_val_src2));
 
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
   scar_val_dst->set_type(scar::val_type::VAR);
   scar_val_dst->set_reg_name(
       get_reg_name(exp->get_type(), exp->get_derived_type()));
-
-  scar_instruction->set_src2(std::move(scar_val_src2));
   scar_instruction->set_dst(std::move(scar_val_dst));
 
-  if (exp->get_type() == ast::ElemType::DERIVED and
-      exp->get_derived_type()[0] == (long)ast::ElemType::POINTER) {
-    // make sure that the pointer is the first operand
-    // get the size of the referenced type
-    long sizeOfReferencedType = 1;
-    int i = 1;
-    while (exp->get_derived_type()[i] > 0) {
-      sizeOfReferencedType *= exp->get_derived_type()[i];
-      i++;
-    }
-    sizeOfReferencedType *=
-        ast::getSizeOfTypeOnArch((ast::ElemType)exp->get_derived_type()[i]);
-    scar_instruction->set_offset(sizeOfReferencedType);
-  }
+  scar_instruction->set_offset(
+      ast::getSizeOfDerivedTypeOnArch(exp->get_derived_type()));
   scar_function->add_instruction(std::move(scar_instruction));
 }
 
@@ -399,9 +399,8 @@ void Codegen::gen_scar_exp(
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::BINARY);
     scar_instruction->set_binop(binop);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
 
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
     if (exp->get_left() == nullptr) {
       gen_scar_factor(exp->get_factor_node(), scar_function);
       SETVARCONSTANTREG(scar_val_src1);
@@ -409,18 +408,17 @@ void Codegen::gen_scar_exp(
       scar_val_src1->set_type(scar::val_type::VAR);
       scar_val_src1->set_reg_name(get_prev_reg_name());
     }
-
     scar_instruction->set_src1(std::move(scar_val_src1));
 
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
     gen_scar_exp(exp->get_right(), scar_function);
     SETVARCONSTANTREG(scar_val_src2);
+    scar_instruction->set_src2(std::move(scar_val_src2));
 
     MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
     scar_val_dst->set_type(scar::val_type::VAR);
     scar_val_dst->set_reg_name(
         get_reg_name(exp->get_type(), exp->get_derived_type()));
-
-    scar_instruction->set_src2(std::move(scar_val_src2));
     scar_instruction->set_dst(std::move(scar_val_dst));
 
     scar_function->add_instruction(std::move(scar_instruction));
