@@ -714,6 +714,6 @@ bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor);
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 int getSizeOfTypeOnArch(ElemType type);
-long getSizeOfDerivedTypeOnArch(std::vector<long> derivedType);
+long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType);
 } // namespace ast
 } // namespace scarlet

@@ -348,7 +348,7 @@ void Codegen::gen_scar_pointer_exp(
   scar_instruction->set_dst(std::move(scar_val_dst));
 
   long sizeOfReferencedType =
-      ast::getSizeOfDerivedTypeOnArch(exp->get_derived_type());
+      ast::getSizeOfReferencedTypeOnArch(exp->get_derived_type());
 
   // When we subtract two pointers, we don't emit Addptr instruction.
   // instead, we use the binop divide to get the result
