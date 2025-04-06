@@ -188,6 +188,9 @@ std::string to_string(register_type reg, register_size size) {
       return "%r11";
     }
     break;
+
+  case register_type::BP:
+    return "%rbp";
   case register_type::SP:
     return "%rsp";
   case register_type::CL:

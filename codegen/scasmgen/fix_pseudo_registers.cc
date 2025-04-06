@@ -11,13 +11,13 @@ namespace codegen {
 #define FIX_PSEUDO(target)                                                     \
   if (NOTNULL(inst->get_##target()) &&                                         \
       inst->get_##target()->get_type() == scasm::operand_type::PSEUDO) {       \
-    if (pseduo_registers.find(inst->get_##target()->get_identifier_stack()) != \
-        pseduo_registers.end()) {                                              \
-      inst->get_##target()->set_identifier_stack(                              \
-          pseduo_registers[inst->get_##target()->get_identifier_stack()]);     \
-      inst->get_##target()->set_type(scasm::operand_type::STACK);              \
+    if (pseudoRegToMemOffset.find(inst->get_##target()->get_identifier()) !=   \
+        pseudoRegToMemOffset.end()) {                                          \
+      inst->get_##target()->set_offset(                                        \
+          pseudoRegToMemOffset[inst->get_##target()->get_identifier()]);       \
+      inst->get_##target()->set_type(scasm::operand_type::MEMORY);             \
     } else {                                                                   \
-      std::string temp = inst->get_##target()->get_identifier_stack();         \
+      std::string temp = inst->get_##target()->get_identifier();               \
       if (backendSymbolTable[temp].isTopLevel) {                               \
         inst->get_##target()->set_type(scasm::operand_type::DATA);             \
       } else {                                                                 \
@@ -31,10 +31,10 @@ namespace codegen {
           offset += 4;                                                         \
           MAKE_ALIGNED(offset, 4);                                             \
         }                                                                      \
-        inst->get_##target()->set_identifier_stack(                            \
-            "-" + std::to_string(offset) + "(%rbp)");                          \
-        pseduo_registers[temp] = inst->get_##target()->get_identifier_stack(); \
-        inst->get_##target()->set_type(scasm::operand_type::STACK);            \
+        inst->get_##target()->set_type(scasm::operand_type::MEMORY);           \
+        inst->get_##target()->set_reg(scasm::register_type::BP);               \
+        inst->get_##target()->set_offset(-offset);                             \
+        pseudoRegToMemOffset[temp] = -offset;                                  \
       }                                                                        \
     }                                                                          \
   }

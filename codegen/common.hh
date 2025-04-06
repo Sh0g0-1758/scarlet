@@ -46,12 +46,12 @@ namespace codegen {
     doubleLabelMap[constVal.get_value().d] = doubleName;                       \
     /* put the identifier for the constant in target */                        \
     target->set_type(scasm::operand_type::PSEUDO);                             \
-    target->set_identifier_stack(doubleName);                                  \
+    target->set_identifier(doubleName);                                        \
   } else {                                                                     \
     /* get the identifier from doubleMap and put it in target */               \
     std::string doubleName = doubleLabelMap[constVal.get_value().d];           \
     target->set_type(scasm::operand_type::PSEUDO);                             \
-    target->set_identifier_stack(doubleName);                                  \
+    target->set_identifier(doubleName);                                        \
   }
 
 /*
@@ -64,7 +64,7 @@ namespace codegen {
   switch (inst->get_target()->get_type()) {                                    \
   case scar::val_type::VAR: {                                                  \
     target->set_type(scasm::operand_type::PSEUDO);                             \
-    target->set_identifier_stack(inst->get_target()->get_reg());               \
+    target->set_identifier(inst->get_target()->get_reg());                     \
   } break;                                                                     \
   case scar::val_type::CONSTANT: {                                             \
     if (inst->get_target()->get_const_val().get_type() ==                      \
@@ -84,7 +84,7 @@ namespace codegen {
   switch (inst->get_target()->get_type()) {                                    \
   case scar::val_type::VAR: {                                                  \
     target->set_type(scasm::operand_type::PSEUDO);                             \
-    target->set_identifier_stack(inst->get_target()->get_reg());               \
+    target->set_identifier(inst->get_target()->get_reg());                     \
   } break;                                                                     \
   case scar::val_type::CONSTANT: {                                             \
     if (inst->get_target()->get_const_val().get_type() ==                      \

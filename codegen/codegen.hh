@@ -62,7 +62,7 @@ private:
   int doubleLabelCounter = 0;
   int doubleCastCounter = 0;
   std::string reg_name;
-  std::map<std::string, std::string> pseduo_registers;
+  std::map<std::string, long> pseudoRegToMemOffset;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   std::map<std::string, scasm::backendSymbol> backendSymbolTable;
   std::map<double, std::string, DoubleCompare> doubleLabelMap;

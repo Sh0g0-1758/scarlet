@@ -182,7 +182,7 @@ void Codegen::fix_instructions() {
       } else if ((*it)->get_type() == scasm::instruction_type::MOVZX) {
         // NOTE: MovZeroExtend simply uses movl because movl zeroes out the
         // upper 32 bits of the register
-        if ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+        if ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
             (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
           // MovZeroExtend(Stack/Data/Reg , Stack/Data)
           //      |
@@ -212,7 +212,7 @@ void Codegen::fix_instructions() {
         }
       } else if ((*it)->get_type() == scasm::instruction_type::BINARY and
                  (*it)->get_binop() == scasm::Binop::MUL and
-                 ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+                 ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
                   (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
         // imull $3, STACK/DATA
         //        |
@@ -266,7 +266,7 @@ void Codegen::fix_instructions() {
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
         }
-        if ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+        if ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
             (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
           MAKE_SHARED(scasm::scasm_operand, src);
           src->set_type(scasm::operand_type::REG);
@@ -294,9 +294,9 @@ void Codegen::fix_instructions() {
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
       if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
-          ((*it)->get_src()->get_type() == scasm::operand_type::STACK or
+          ((*it)->get_src()->get_type() == scasm::operand_type::MEMORY or
            (*it)->get_src()->get_type() == scasm::operand_type::DATA) &&
-          ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+          ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
            (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);

@@ -72,7 +72,7 @@ void Codegen::gen_scasm() {
       scasm_inst->set_src(std::move(scasm_src));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       scasm_dst->set_type(scasm::operand_type::PSEUDO);
-      scasm_dst->set_identifier_stack(
+      scasm_dst->set_identifier(
           func->get_params()[int_param_indx[i].second]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
@@ -89,7 +89,7 @@ void Codegen::gen_scasm() {
       scasm_inst->set_src(std::move(scasm_src));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       scasm_dst->set_type(scasm::operand_type::PSEUDO);
-      scasm_dst->set_identifier_stack(
+      scasm_dst->set_identifier(
           func->get_params()[double_param_indx[i]]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
@@ -101,12 +101,13 @@ void Codegen::gen_scasm() {
       scasm_inst->set_type(scasm::instruction_type::MOV);
       scasm_inst->set_asm_type(stack_param_indx[i].first);
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
-      scasm_src->set_type(scasm::operand_type::STACK);
-      scasm_src->set_identifier_stack(std::to_string(16 + 8 * i) + "(%rbp)");
+      scasm_src->set_type(scasm::operand_type::MEMORY);
+      scasm_src->set_reg(scasm::register_type::BP);
+      scasm_src->set_offset(16 + 8 * i);
       scasm_inst->set_src(std::move(scasm_src));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       scasm_dst->set_type(scasm::operand_type::PSEUDO);
-      scasm_dst->set_identifier_stack(
+      scasm_dst->set_identifier(
           func->get_params()[stack_param_indx[i].second]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
@@ -155,7 +156,7 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::LABEL);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::LABEL);
-        scasm_src->set_identifier_stack(inst->get_src1()->get_label());
+        scasm_src->set_identifier(inst->get_src1()->get_label());
         scasm_inst->set_src(std::move(scasm_src));
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::JUMP) {
@@ -163,7 +164,7 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::JMP);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         scasm_src->set_type(scasm::operand_type::LABEL);
-        scasm_src->set_identifier_stack(inst->get_src1()->get_label());
+        scasm_src->set_identifier(inst->get_src1()->get_label());
         scasm_inst->set_src(std::move(scasm_src));
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO or
@@ -224,7 +225,7 @@ void Codegen::gen_scasm() {
         scasm_inst2->set_src(std::move(scasm_src2));
         MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
         scasm_dst2->set_type(scasm::operand_type::LABEL);
-        scasm_dst2->set_identifier_stack(inst->get_dst()->get_label());
+        scasm_dst2->set_identifier(inst->get_dst()->get_label());
         scasm_inst2->set_dst(std::move(scasm_dst2));
         scasm_func->add_instruction(std::move(scasm_inst2));
       } else if (inst->get_type() == scar::instruction_type::CALL) {
@@ -332,11 +333,11 @@ void Codegen::gen_scasm() {
 
           MAKE_SHARED(scasm::scasm_operand, scasm_label1);
           scasm_label1->set_type(scasm::operand_type::LABEL);
-          scasm_label1->set_identifier_stack(label1);
+          scasm_label1->set_identifier(label1);
 
           MAKE_SHARED(scasm::scasm_operand, scasm_label2);
           scasm_label2->set_type(scasm::operand_type::LABEL);
-          scasm_label2->set_identifier_stack(label2);
+          scasm_label2->set_identifier(label2);
 
           /* SCASM GEN */
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
@@ -500,11 +501,11 @@ void Codegen::gen_scasm() {
 
           MAKE_SHARED(scasm::scasm_operand, scasm_label1);
           scasm_label1->set_type(scasm::operand_type::LABEL);
-          scasm_label1->set_identifier_stack(label1);
+          scasm_label1->set_identifier(label1);
 
           MAKE_SHARED(scasm::scasm_operand, scasm_label2);
           scasm_label2->set_type(scasm::operand_type::LABEL);
-          scasm_label2->set_identifier_stack(label2);
+          scasm_label2->set_identifier(label2);
 
           constant::Constant constVal;
           constVal.set_type(constant::Type::DOUBLE);
@@ -545,7 +546,7 @@ void Codegen::gen_scasm() {
           scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
           MAKE_SHARED(scasm::scasm_operand, scasm_doubleConst);
           scasm_doubleConst->set_type(scasm::operand_type::DATA);
-          scasm_doubleConst->set_identifier_stack(doubleName);
+          scasm_doubleConst->set_identifier(doubleName);
           scasm_inst->set_src(std::move(scasm_doubleConst));
           scasm_inst->set_dst(scasm_src);
           scasm_func->add_instruction(std::move(scasm_inst));
@@ -589,7 +590,7 @@ void Codegen::gen_scasm() {
           scasm_inst7->set_binop(scasm::Binop::SUB);
           MAKE_SHARED(scasm::scasm_operand, scasm_src7);
           scasm_src7->set_type(scasm::operand_type::DATA);
-          scasm_src7->set_identifier_stack(doubleName);
+          scasm_src7->set_identifier(doubleName);
           scasm_inst7->set_src(std::move(scasm_src7));
           scasm_inst7->set_dst(scasm_regx);
           scasm_func->add_instruction(std::move(scasm_inst7));
