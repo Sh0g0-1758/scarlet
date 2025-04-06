@@ -131,6 +131,16 @@ void Codegen::pretty_print_function(
       std::cout << ", ";
       PRINT_VAR_CONST(statement->get_dst());
       std::cout << ")" << std::endl;
+    } else if (statement->get_type() == scar::instruction_type::ADD_PTR) {
+      PRINT_VAR_CONST(statement->get_src1());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_src2());
+      std::cout << ", ";
+      PRINT_VAR_CONST(statement->get_dst());
+      std::cout << ", ";
+      std::cout << statement->get_offset();
+
+      std::cout << ")" << std::endl;
     }
   }
   std::cout << "\t\t]" << std::endl;

@@ -52,7 +52,7 @@ void Codegen::gen_scar_factor(
         scar_offset_instruction->set_src1(scar_val_src1);
 
         scar_offset_instruction->set_offset(
-            ast::getSizeOfDerivedTypeOnArch(derivedType));
+            ast::getSizeOfArrayTypeOnArch(derivedType));
 
         SETVARCONSTANTREG(scar_val_index);
         scar_offset_instruction->set_src2(std::move(scar_val_index));
