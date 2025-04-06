@@ -63,5 +63,19 @@ std::string to_string(scar::val_type type) {
   UNREACHABLE()
 }
 
+bool is_type_cast(scar::instruction_type type) {
+  switch (type) {
+  case scar::instruction_type::SIGN_EXTEND:
+  case scar::instruction_type::TRUNCATE:
+  case scar::instruction_type::ZERO_EXTEND:
+  case scar::instruction_type::DOUBLE_TO_INT:
+  case scar::instruction_type::DOUBLE_TO_UINT:
+  case scar::instruction_type::INT_TO_DOUBLE:
+  case scar::instruction_type::UINT_TO_DOUBLE:
+    return true;
+  default:
+    return false;
+  }
+
 } // namespace scar
 } // namespace scarlet
