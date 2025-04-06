@@ -315,9 +315,7 @@ void Codegen::gen_scar_factor_array(
     std::vector<long> derivedType) {
   std::string prev_arr_reg_name;
   auto arrIdx = factor->get_arrIdx();
-  // auto derivedType = factor->get_exp_node()->get_derived_type();
   if (derivedType[0] > 0) {
-    // if array type
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
     MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
@@ -339,7 +337,6 @@ void Codegen::gen_scar_factor_array(
     prev_arr_reg_name = scar_instruction->get_dst()->get_reg();
     scar_function->add_instruction(std::move(scar_instruction));
   } else {
-    // if pointer type
     if (!variable_buffer.empty()) {
       prev_arr_reg_name = variable_buffer;
       variable_buffer.clear();
@@ -347,47 +344,53 @@ void Codegen::gen_scar_factor_array(
       prev_arr_reg_name = get_prev_reg_name();
     }
   }
+
   for (int i = 0; i < (long)arrIdx.size(); i++) {
     derivedType.erase(derivedType.begin());
-    gen_scar_exp(arrIdx[i], scar_function);
 
     MAKE_SHARED(scar::scar_Instruction_Node, scar_offset_instruction);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_index);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
-
     scar_offset_instruction->set_type(scar::instruction_type::ADD_PTR);
-
-    scar_val_src1->set_type(scar::val_type::VAR);
-    scar_val_src1->set_reg_name(prev_arr_reg_name);
-    scar_offset_instruction->set_src1(scar_val_src1);
-
     scar_offset_instruction->set_offset(
         ast::getSizeOfArrayTypeOnArch(derivedType));
 
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+    scar_val_src1->set_type(scar::val_type::VAR);
+    scar_val_src1->set_reg_name(prev_arr_reg_name);
+    scar_offset_instruction->set_src1(std::move(scar_val_src1));
+
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_index);
+    gen_scar_exp(arrIdx[i], scar_function);
     SETVARCONSTANTREG(scar_val_index);
     scar_offset_instruction->set_src2(std::move(scar_val_index));
 
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
     scar_val_dst_addptr->set_type(scar::val_type::VAR);
-    // FIXME: this is not correct, we need to add the derived type to the
-    // reg name
-    scar_val_dst_addptr->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
+    if (derivedType.size() == 1) {
+      scar_val_dst_addptr->set_reg_name(
+          get_reg_name((ast::ElemType)derivedType[0], {}));
+    } else {
+      scar_val_dst_addptr->set_reg_name(
+          get_reg_name(ast::ElemType::DERIVED, derivedType));
+    }
     scar_offset_instruction->set_dst(std::move(scar_val_dst_addptr));
-    prev_arr_reg_name = scar_offset_instruction->get_dst()->get_reg();
+
     scar_function->add_instruction(std::move(scar_offset_instruction));
+    prev_arr_reg_name = get_prev_reg_name();
   }
-  // final load instruction
+
   MAKE_SHARED(scar::scar_Instruction_Node, scar_load_instruction);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
   scar_load_instruction->set_type(scar::instruction_type::LOAD);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
   scar_val_src2->set_type(scar::val_type::VAR);
   scar_val_src2->set_reg_name(prev_arr_reg_name);
   scar_load_instruction->set_src1(std::move(scar_val_src2));
+
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
   scar_val_dst2->set_type(scar::val_type::VAR);
   scar_val_dst2->set_reg_name(
       get_reg_name(factor->get_type(), factor->get_derived_type()));
   scar_load_instruction->set_dst(std::move(scar_val_dst2));
+
   scar_function->add_instruction(std::move(scar_load_instruction));
 }
 
