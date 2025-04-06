@@ -32,7 +32,7 @@ void Codegen::gen_scar_declaration(
         scar_function->add_instruction(scar_instruction);
       } else if (variable_declaration->get_initializer() != nullptr) {
         auto derivedType = globalSymbolTable[varName].derivedTypeMap[0];
-        ast::ElemType baseType;
+        ast::ElemType baseType{};
         for (auto it : derivedType) {
           if (it < 0) {
             baseType = static_cast<ast::ElemType>(it);
