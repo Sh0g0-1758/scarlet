@@ -14,154 +14,32 @@ void Codegen::gen_scar_factor(
   if (factor->get_const_node() != nullptr) {
     constant_buffer = factor->get_const_node()->get_constant();
   } else if (factor->get_identifier_node() != nullptr) {
-    if (factor->get_arrIdx().size() > 0) {
-      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-
-      scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
-      scar_val_src->set_type(scar::val_type::VAR);
-      scar_val_src->set_reg_name(factor->get_identifier_node()->get_value());
-      scar_instruction->set_src1(std::move(scar_val_src));
-
-      auto derivedType =
-          globalSymbolTable[factor->get_identifier_node()->get_value()]
-              .derivedTypeMap[0];
-      scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
-
-      scar_instruction->set_dst(std::move(scar_val_dst));
-
-      auto arrIdx = factor->get_arrIdx();
-      std::string prev_arr_reg_name = scar_instruction->get_dst()->get_reg();
-      scar_function->add_instruction(std::move(scar_instruction));
-
-      for (int i = 0; i < (long)arrIdx.size(); i++) {
-        derivedType.erase(derivedType.begin());
-        gen_scar_exp(arrIdx[i], scar_function);
-
-        MAKE_SHARED(scar::scar_Instruction_Node, scar_offset_instruction);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_index);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
-
-        scar_offset_instruction->set_type(scar::instruction_type::ADD_PTR);
-
-        scar_val_src1->set_type(scar::val_type::VAR);
-        scar_val_src1->set_reg_name(prev_arr_reg_name);
-        scar_offset_instruction->set_src1(scar_val_src1);
-
-        scar_offset_instruction->set_offset(
-            ast::getSizeOfArrayTypeOnArch(derivedType));
-
-        SETVARCONSTANTREG(scar_val_index);
-        scar_offset_instruction->set_src2(std::move(scar_val_index));
-
-        scar_val_dst_addptr->set_type(scar::val_type::VAR);
-        // FIXME: this is not correct, we need to add the derived type to the
-        // reg name
-        scar_val_dst_addptr->set_reg_name(
-            get_reg_name(ast::ElemType::ULONG, {}));
-        scar_offset_instruction->set_dst(std::move(scar_val_dst_addptr));
-        prev_arr_reg_name = scar_offset_instruction->get_dst()->get_reg();
-        scar_function->add_instruction(std::move(scar_offset_instruction));
-      }
-      // final load instruction
-      MAKE_SHARED(scar::scar_Instruction_Node, scar_load_instruction);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
-      scar_load_instruction->set_type(scar::instruction_type::LOAD);
-      scar_val_src2->set_type(scar::val_type::VAR);
-      scar_val_src2->set_reg_name(prev_arr_reg_name);
-      scar_load_instruction->set_src1(std::move(scar_val_src2));
-      scar_val_dst2->set_type(scar::val_type::VAR);
-      scar_val_dst2->set_reg_name(
-          get_reg_name(factor->get_type(), factor->get_derived_type()));
-      scar_load_instruction->set_dst(std::move(scar_val_dst2));
-      scar_function->add_instruction(std::move(scar_load_instruction));
-    } else if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
+    if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
       gen_scar_factor_function_call(
           std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor),
           scar_function);
+      if (factor->get_arrIdx().size() > 0) {
+        auto derivedType =
+            globalSymbolTable[factor->get_identifier_node()->get_value()]
+                .derivedTypeMap[0];
+        gen_scar_factor_array(factor, scar_function, derivedType);
+      }
+
     } else {
-      variable_buffer = factor->get_identifier_node()->get_value();
+      if (factor->get_arrIdx().size() > 0) {
+        auto derivedType =
+            globalSymbolTable[factor->get_identifier_node()->get_value()]
+                .derivedTypeMap[0];
+        gen_scar_factor_array(factor, scar_function, derivedType);
+      } else {
+        variable_buffer = factor->get_identifier_node()->get_value();
+      }
     }
   } else if (factor->get_exp_node() != nullptr) {
     gen_scar_exp(factor->get_exp_node(), scar_function);
     if (factor->get_arrIdx().size() > 0) {
-      std::string prev_arr_reg_name;
-
-      auto arrIdx = factor->get_arrIdx();
       auto derivedType = factor->get_exp_node()->get_derived_type();
-      if (factor->get_exp_node()->get_derived_type()[0] > 0) {
-        MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-
-        scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
-        scar_val_src->set_type(scar::val_type::VAR);
-        SETVARCONSTANTREG(scar_val_src);
-        scar_instruction->set_src1(std::move(scar_val_src));
-
-        scar_val_dst->set_type(scar::val_type::VAR);
-        scar_val_dst->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
-
-        scar_instruction->set_dst(std::move(scar_val_dst));
-
-        prev_arr_reg_name = scar_instruction->get_dst()->get_reg();
-        scar_function->add_instruction(std::move(scar_instruction));
-      } else {
-        if (!variable_buffer.empty()) {
-          prev_arr_reg_name = variable_buffer;
-          variable_buffer.clear();
-        } else {
-          prev_arr_reg_name = get_prev_reg_name();
-        }
-      }
-
-      for (int i = 0; i < (long)arrIdx.size(); i++) {
-        derivedType.erase(derivedType.begin());
-        gen_scar_exp(arrIdx[i], scar_function);
-
-        MAKE_SHARED(scar::scar_Instruction_Node, scar_offset_instruction);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_index);
-        MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
-
-        scar_offset_instruction->set_type(scar::instruction_type::ADD_PTR);
-
-        scar_val_src1->set_type(scar::val_type::VAR);
-        scar_val_src1->set_reg_name(prev_arr_reg_name);
-        scar_offset_instruction->set_src1(scar_val_src1);
-
-        scar_offset_instruction->set_offset(
-            ast::getSizeOfArrayTypeOnArch(derivedType));
-
-        SETVARCONSTANTREG(scar_val_index);
-        scar_offset_instruction->set_src2(std::move(scar_val_index));
-
-        scar_val_dst_addptr->set_type(scar::val_type::VAR);
-        // FIXME: this is not correct, we need to add the derived type to the
-        // reg name
-        scar_val_dst_addptr->set_reg_name(
-            get_reg_name(ast::ElemType::ULONG, {}));
-        scar_offset_instruction->set_dst(std::move(scar_val_dst_addptr));
-        prev_arr_reg_name = scar_offset_instruction->get_dst()->get_reg();
-        scar_function->add_instruction(std::move(scar_offset_instruction));
-      }
-      // final load instruction
-      MAKE_SHARED(scar::scar_Instruction_Node, scar_load_instruction);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
-      scar_load_instruction->set_type(scar::instruction_type::LOAD);
-      scar_val_src2->set_type(scar::val_type::VAR);
-      scar_val_src2->set_reg_name(prev_arr_reg_name);
-      scar_load_instruction->set_src1(std::move(scar_val_src2));
-      scar_val_dst2->set_type(scar::val_type::VAR);
-      scar_val_dst2->set_reg_name(
-          get_reg_name(factor->get_type(), factor->get_derived_type()));
-      scar_load_instruction->set_dst(std::move(scar_val_dst2));
-      scar_function->add_instruction(std::move(scar_load_instruction));
+      gen_scar_factor_array(factor, scar_function, derivedType);
     }
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     gen_scar_factor(factor->get_child(), scar_function);
@@ -429,6 +307,88 @@ void Codegen::gen_scar_factor_function_call(
   scar_instruction->set_dst(scar_val_dst);
 
   scar_function->add_instruction(scar_instruction);
+}
+
+void Codegen::gen_scar_factor_array(
+    std::shared_ptr<ast::AST_factor_Node> factor,
+    std::shared_ptr<scar::scar_Function_Node> scar_function,
+    std::vector<long> derivedType) {
+  std::string prev_arr_reg_name;
+  auto arrIdx = factor->get_arrIdx();
+  // auto derivedType = factor->get_exp_node()->get_derived_type();
+  if (derivedType[0] > 0) {
+    // if array type
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+
+    scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
+    scar_val_src->set_type(scar::val_type::VAR);
+    if (factor->get_identifier_node() != nullptr) {
+      scar_val_src->set_reg_name(factor->get_identifier_node()->get_value());
+    } else {
+      SETVARCONSTANTREG(scar_val_src);
+    }
+
+    scar_instruction->set_src1(std::move(scar_val_src));
+    scar_val_dst->set_type(scar::val_type::VAR);
+    scar_val_dst->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
+
+    scar_instruction->set_dst(std::move(scar_val_dst));
+
+    prev_arr_reg_name = scar_instruction->get_dst()->get_reg();
+    scar_function->add_instruction(std::move(scar_instruction));
+  } else {
+    // if pointer type
+    if (!variable_buffer.empty()) {
+      prev_arr_reg_name = variable_buffer;
+      variable_buffer.clear();
+    } else {
+      prev_arr_reg_name = get_prev_reg_name();
+    }
+  }
+  for (int i = 0; i < (long)arrIdx.size(); i++) {
+    derivedType.erase(derivedType.begin());
+    gen_scar_exp(arrIdx[i], scar_function);
+
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_offset_instruction);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_index);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
+
+    scar_offset_instruction->set_type(scar::instruction_type::ADD_PTR);
+
+    scar_val_src1->set_type(scar::val_type::VAR);
+    scar_val_src1->set_reg_name(prev_arr_reg_name);
+    scar_offset_instruction->set_src1(scar_val_src1);
+
+    scar_offset_instruction->set_offset(
+        ast::getSizeOfArrayTypeOnArch(derivedType));
+
+    SETVARCONSTANTREG(scar_val_index);
+    scar_offset_instruction->set_src2(std::move(scar_val_index));
+
+    scar_val_dst_addptr->set_type(scar::val_type::VAR);
+    // FIXME: this is not correct, we need to add the derived type to the
+    // reg name
+    scar_val_dst_addptr->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
+    scar_offset_instruction->set_dst(std::move(scar_val_dst_addptr));
+    prev_arr_reg_name = scar_offset_instruction->get_dst()->get_reg();
+    scar_function->add_instruction(std::move(scar_offset_instruction));
+  }
+  // final load instruction
+  MAKE_SHARED(scar::scar_Instruction_Node, scar_load_instruction);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+  scar_load_instruction->set_type(scar::instruction_type::LOAD);
+  scar_val_src2->set_type(scar::val_type::VAR);
+  scar_val_src2->set_reg_name(prev_arr_reg_name);
+  scar_load_instruction->set_src1(std::move(scar_val_src2));
+  scar_val_dst2->set_type(scar::val_type::VAR);
+  scar_val_dst2->set_reg_name(
+      get_reg_name(factor->get_type(), factor->get_derived_type()));
+  scar_load_instruction->set_dst(std::move(scar_val_dst2));
+  scar_function->add_instruction(std::move(scar_load_instruction));
 }
 
 } // namespace codegen
