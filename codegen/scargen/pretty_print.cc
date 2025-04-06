@@ -40,6 +40,12 @@ void Codegen::pretty_print_function(
             << std::endl;
   std::cout << "\t\tglobal=" << (function->is_global() ? "True" : "False")
             << "," << std::endl;
+  std::cout << "\t\treturn_type=";
+  pretty_print_type(
+      globalSymbolTable[function->get_identifier()->get_value()].typeDef[0],
+      globalSymbolTable[function->get_identifier()->get_value()]
+          .derivedTypeMap[0]);
+  std::cout << "," << std::endl;
   std::cout << "\t\tparams=[";
   std::stringstream ss;
   for (auto param : function->get_params()) {
