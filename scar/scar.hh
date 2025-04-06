@@ -23,13 +23,46 @@ program = Program(top_level*)
 
 top_level = Function(identifier, bool global, identifier* params, instruction* body) | StaticVariable(identifier, bool global, const init)
 
-instruction = Return(val) | Unary(unary_operator, val src, val dst) | Binary(binary_operator, val src1, val src2, val dst) | Copy(val src, val dst) | Jump(identifier target) | JumpIfZero(val condition, identifier target) | JumpIfNotZero(val condition, identifier target) | Label(Identifier) | FunCall(identifier name, val* args, val dst) | SignExtend(val src, val dst) | Truncate(val src, val dst) | ZeroExtend(val src, val dst) | DoubleToInt(val src, val dst) | DoubleToUint(val src, val dst) | IntToDouble(val src, val dst) | UintToDouble(val src, val dst)
+instruction = Return(val) 
+            | Unary(unary_operator, val src, val dst) 
+            | Binary(binary_operator, val src1, val src2, val dst) 
+            | Copy(val src, val dst) 
+            | Jump(identifier target) 
+            | JumpIfZero(val condition, identifier target) 
+            | JumpIfNotZero(val condition, identifier target) 
+            | Label(Identifier) 
+            | FunCall(identifier name, val* args, val dst) 
+            | SignExtend(val src, val dst) 
+            | Truncate(val src, val dst) 
+            | ZeroExtend(val src, val dst) 
+            | DoubleToInt(val src, val dst) 
+            | DoubleToUint(val src, val dst) 
+            | IntToDouble(val src, val dst) 
+            | UintToDouble(val src, val dst) 
+            | GetAddress(val src , val dst) 
+            | Load(val src_ptr, val dst) 
+            | Store(val src, val dst_ptr)
 
 val = Constant(const) | Var(identifier)
 
 unary_operator = Complement | Negate | Not
 
-binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or | Xor | leftShift | rightShift | Equal | notEqual | lessThan | LessOrEqual | greaterThan | greaterThanOrEqual
+binary_operator = Add 
+                | Subtract 
+                | Multiply 
+                | Divide 
+                | Remainder 
+                | And 
+                | Or 
+                | Xor 
+                | leftShift 
+                | rightShift 
+                | Equal 
+                | notEqual
+                | lessThan 
+                | LessOrEqual 
+                | greaterThan 
+                | greaterThanOrEqual
 
 */
 
@@ -55,6 +88,9 @@ enum class instruction_type {
   DOUBLE_TO_UINT,
   INT_TO_DOUBLE,
   UINT_TO_DOUBLE,
+  LOAD,
+  STORE,
+  GET_ADDRESS
 };
 // CONSTANT is a constant value (1, 2 , 42 etc.)
 // VAR is a scar register

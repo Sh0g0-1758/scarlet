@@ -68,6 +68,9 @@ private:
   std::map<double, std::string, DoubleCompare> doubleLabelMap;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
+  void gen_scar_def_assign_exp(
+      std::shared_ptr<ast::AST_exp_Node> exp,
+      std::shared_ptr<scar::scar_Function_Node> scar_function);
   void
   gen_scar_assign_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                       std::shared_ptr<scar::scar_Function_Node> scar_function);
@@ -187,8 +190,6 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case constant::Type::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
-      // FIXME
-      case constant::Type::ZERO:
       case constant::Type::NONE:
         return scasm::AssemblyType::NONE;
       }
@@ -285,8 +286,6 @@ public:
           stack_param_indx.push_back({scasm::AssemblyType::DOUBLE, i});
         }
         break;
-      // FIXME
-      case constant::Type::ZERO:
       case constant::Type::NONE:
         break;
       }

@@ -27,6 +27,15 @@ namespace codegen {
 void Codegen::gen_scar_assign_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
+
+  if (exp->get_factor_node() != nullptr and
+      exp->get_factor_node()->get_unop_node() != nullptr and
+      exp->get_factor_node()->get_unop_node()->get_op() ==
+          unop::UNOP::DEREFERENCE) {
+    gen_scar_def_assign_exp(exp, scar_function);
+    return;
+  }
+
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
   scar_instruction->set_type(scar::instruction_type::COPY);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
@@ -47,6 +56,22 @@ void Codegen::gen_scar_assign_exp(
   reg_name = scar_val_dst->get_reg();
   scar_instruction->set_dst(std::move(scar_val_dst));
 
+  scar_function->add_instruction(std::move(scar_instruction));
+}
+
+void Codegen::gen_scar_def_assign_exp(
+    std::shared_ptr<ast::AST_exp_Node> exp,
+    std::shared_ptr<scar::scar_Function_Node> scar_function) {
+  MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+  scar_instruction->set_type(scar::instruction_type::STORE);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+  gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
+  SETVARCONSTANTREG(scar_val_dst);
+  scar_instruction->set_dst(std::move(scar_val_dst));
+  gen_scar_exp(exp->get_right(), scar_function);
+  SETVARCONSTANTREG(scar_val_src);
+  scar_instruction->set_src1(std::move(scar_val_src));
   scar_function->add_instruction(std::move(scar_instruction));
 }
 
