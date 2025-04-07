@@ -369,13 +369,7 @@ void Codegen::gen_scar_factor_array(
 
     MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
     scar_val_dst_addptr->set_type(scar::val_type::VAR);
-    if (derivedType.size() == 1) {
-      scar_val_dst_addptr->set_reg_name(
-          get_reg_name((ast::ElemType)derivedType[0], {}));
-    } else {
-      scar_val_dst_addptr->set_reg_name(
-          get_reg_name(ast::ElemType::DERIVED, derivedType));
-    }
+    scar_val_dst_addptr->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
     scar_offset_instruction->set_dst(std::move(scar_val_dst_addptr));
 
     scar_function->add_instruction(std::move(scar_offset_instruction));
