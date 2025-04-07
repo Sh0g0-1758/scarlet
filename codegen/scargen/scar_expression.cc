@@ -67,26 +67,34 @@ void Codegen::gen_scar_def_assign_exp(
   MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
 
   gen_scar_exp(exp->get_right(), scar_function);
-  // NOTE: we don't clear the buffers because we might need to propagate
+  // NOTE: we reset the buffer values because we might need to propagate
   // the source values further in expressions like:
   // int a = *c = 42;
-
+  int flag{};
   if (!variable_buffer.empty()) {
-    scar_val_src->set_type(scar::val_type::VAR);
-    scar_val_src->set_reg_name(variable_buffer);
+    flag = 1;
   } else if (!constant_buffer.empty()) {
-    scar_val_src->set_type(scar::val_type::CONSTANT);
-    scar_val_src->set_const_val(constant_buffer);
+    flag = 2;
   } else {
-    scar_val_src->set_type(scar::val_type::VAR);
-    scar_val_src->set_reg_name(get_prev_reg_name());
+    // the source value can be a scar register
+    flag = 3;
   }
-  scar_instruction->set_src1(std::move(scar_val_src));
 
-  gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
+  SETVARCONSTANTREG(scar_val_src);
+  scar_instruction->set_src1(scar_val_src);
+
+  gen_scar_factor(exp->get_factor_node(), scar_function);
   SETVARCONSTANTREG(scar_val_dst);
   scar_instruction->set_dst(std::move(scar_val_dst));
   scar_function->add_instruction(std::move(scar_instruction));
+
+  if (flag == 1) {
+    variable_buffer = scar_val_src->get_reg();
+  } else if (flag == 2) {
+    constant_buffer = scar_val_src->get_const_val();
+  } else if (flag == 3) {
+    reg_name = scar_val_src->get_reg();
+  }
 }
 
 void Codegen::gen_scar_short_circuit_exp(
