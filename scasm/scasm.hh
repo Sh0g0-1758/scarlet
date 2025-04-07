@@ -24,9 +24,11 @@ program = Program(top_level*)
 assembly_type = LongWord 
               | QuadWord
               | Double
+              | ByteArray(int size, int alignment)
 
 top_level = Function(identifier name, bool global, instruction* instructions) 
-          | StaticVariable(identifier name, bool global, int alignment, const init)
+          | StaticVariable(identifier name, bool global, int alignment, const* init)
+          | StaticConstant(idnetifier name, int alignment, const init)
 
 instruction = Mov(assembly_type, Operand src, Operand dst)
             | Movsx(Operand src, Operand dst)
@@ -67,6 +69,8 @@ Operand = Imm(int)
         | stack(identifier) 
         | Label(identifier) 
         | Data(Identifier)
+        | PseudoMem(identifier, int offset)
+        | Indexed(reg base, reg index, int scale)
 
 cond_code = E | NE | G | GE | L | LE
 
@@ -109,13 +113,21 @@ namespace scarlet {
 namespace scasm {
 
 // BYTE = 8 bits, LONG WORD = 32 bits, QUAD WORD = 64 bits
-enum class AssemblyType { NONE, BYTE, LONG_WORD, QUAD_WORD, DOUBLE };
+enum class AssemblyType {
+  NONE,
+  BYTE,
+  LONG_WORD,
+  QUAD_WORD,
+  DOUBLE,
+  BYTE_ARRAY
+};
 // NOTE: Every Pseudo Operand gets converted into a memory operand
 enum class operand_type {
   UNKNOWN,
   IMM,
   REG,
   PSEUDO,
+  PSEUDO_MEM,
   MEMORY,
   LABEL,
   COND,
@@ -213,7 +225,11 @@ private:
   operand_type type;
   constant::Constant imm;
   register_type reg;
+  register_type index;
+  /*this is an offset from bare metal memory register*/
   long offset;
+  /*this is the for psuedomem*/
+  long array_offset;
   cond_code cond;
   std::string identifier;
 
@@ -225,12 +241,18 @@ public:
   void set_imm(constant::Constant imm) { this->imm = imm; }
   register_type get_reg() { return reg; }
   void set_reg(register_type reg) { this->reg = reg; }
+  register_type get_index() { return index; }
+  void set_index(register_type index) { this->index = index; }
   cond_code get_cond() { return cond; }
   void set_cond(cond_code cond) { this->cond = cond; }
   std::string get_identifier() { return identifier; }
   void set_identifier(std::string identifier) { this->identifier = identifier; }
   long get_offset() { return offset; }
   void set_offset(long offset) { this->offset = offset; }
+  long get_array_offset() { return array_offset; }
+  void set_array_offset(long array_offset) {
+    this->array_offset = array_offset;
+  }
 };
 
 class scasm_instruction {
@@ -354,6 +376,9 @@ struct backendSymbol {
   bool isTopLevel;
   /* Use for Functions */
   bool isDefined;
+  /*use for array*/
+  int size = 0;
+  int alignment = 0;
 };
 
 } // namespace scasm

@@ -350,12 +350,11 @@ void Codegen::gen_scar_factor_array(
   }
 
   for (int i = 0; i < (long)arrIdx.size(); i++) {
-    derivedType.erase(derivedType.begin());
 
     MAKE_SHARED(scar::scar_Instruction_Node, scar_offset_instruction);
     scar_offset_instruction->set_type(scar::instruction_type::ADD_PTR);
     scar_offset_instruction->set_offset(
-        ast::getSizeOfArrayTypeOnArch(derivedType));
+        ast::getSizeOfReferencedTypeOnArch(derivedType));
 
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
     scar_val_src1->set_type(scar::val_type::VAR);
@@ -374,6 +373,7 @@ void Codegen::gen_scar_factor_array(
 
     scar_function->add_instruction(std::move(scar_offset_instruction));
     prev_arr_reg_name = get_prev_reg_name();
+    derivedType.erase(derivedType.begin());
   }
 
   MAKE_SHARED(scar::scar_Instruction_Node, scar_load_instruction);

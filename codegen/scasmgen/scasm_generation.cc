@@ -291,9 +291,31 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::LEA);
         scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        if (inst->get_src1()->get_type() == scar::val_type::VAR and
+            backendSymbolTable[inst->get_src1()->get_reg()].asmType ==
+                scasm::AssemblyType::BYTE_ARRAY) {
+          scasm_src->set_type(scasm::operand_type::PSEUDO_MEM);
+          scasm_src->set_array_offset(0);
+          scasm_src->set_identifier(inst->get_src1()->get_reg());
+        } else {
+          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        }
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
+        scasm_func->add_instruction(std::move(scasm_inst));
+      } else if (inst->get_type() == scar::instruction_type::COPY_TO_OFFSET) {
+        // mov (<src type>, src, PsuedoMem(dst, offset))
+        // assuming only array types are passed
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_asm_type(valToAsmType(inst->get_src1()));
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        scasm_dst->set_type(scasm::operand_type::PSEUDO_MEM);
+        scasm_dst->set_identifier(inst->get_dst()->get_reg());
+        scasm_dst->set_array_offset(inst->get_offset());
+        scasm_inst->set_dst(std::move(scasm_dst));
         scasm_func->add_instruction(std::move(scasm_inst));
       }
     }
@@ -310,6 +332,22 @@ void Codegen::gen_scasm() {
       scasm::backendSymbol sym;
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
       sym.asmType = elemToAsmType(it.second.typeDef[0]);
+      if (it.second.typeDef[0] == ast::ElemType::DERIVED and
+          it.second.derivedTypeMap[0][0] > 0) {
+        auto derivedType = it.second.derivedTypeMap[0];
+        sym.size = ast::getSizeOfArrayTypeOnArch(derivedType);
+        if (sym.size > 16) {
+          sym.alignment = 16;
+        } else {
+          int i = 0;
+          for (i = 0; i < derivedType.size(); i++) {
+            if (derivedType[i] < 0)
+              break;
+          }
+          sym.alignment =
+              ast::getSizeOfTypeOnArch((ast::ElemType)derivedType[i]);
+        }
+      }
       if (it.second.link != symbolTable::linkage::NONE) {
         sym.isTopLevel = true;
       } else {
