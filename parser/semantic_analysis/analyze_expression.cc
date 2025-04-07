@@ -305,15 +305,12 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     }
     if (factor->get_type() == ast::ElemType::DERIVED) {
       if (factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
-        // FIXME : include case for array
         success = false;
         error_messages.emplace_back(
             "Complement operator not allowed on pointer types");
       }
 
       if (factor->get_unop_node()->get_op() == unop::UNOP::NEGATE) {
-
-        // FIXME : include case for array
         success = false;
         error_messages.emplace_back("negation not allowed on pointer types");
       }
@@ -438,7 +435,6 @@ void parser::assign_type_to_factor(
     } else {
       if (factor->get_cast_type() == ast::ElemType::DOUBLE and
           factor->get_child()->get_type() == ast::ElemType::DERIVED) {
-        // FIXME : include case for array
         success = false;
         error_messages.emplace_back(
             "Cannot cast pointer type to double precision");

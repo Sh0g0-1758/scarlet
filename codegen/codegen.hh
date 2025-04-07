@@ -251,8 +251,9 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
-    // TODO: FIXME
     case ast::ElemType::DERIVED:
+      return scasm::AssemblyType::QUAD_WORD;
+    // TODO: FIXME
     case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
@@ -308,7 +309,7 @@ public:
           stack_param_indx.push_back({scasm::AssemblyType::DOUBLE, i});
         }
         break;
-      // TODO: FIXME
+      // this case will never be reached, so we can safely ignore it
       case constant::Type::ZERO:
       case constant::Type::NONE:
         break;

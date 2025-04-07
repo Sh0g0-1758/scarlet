@@ -14,7 +14,7 @@ ElemType constTypeToElemType(constant::Type t) {
     return ElemType::ULONG;
   case constant::Type::DOUBLE:
     return ElemType::DOUBLE;
-  // FIXME
+  // this case will never be reached, so we can safely ignore it
   case constant::Type::ZERO:
   case constant::Type::NONE:
     return ElemType::NONE;
@@ -34,9 +34,10 @@ constant::Type elemTypeToConstType(ElemType t) {
     return constant::Type::ULONG;
   case ElemType::DOUBLE:
     return constant::Type::DOUBLE;
+  case ElemType::DERIVED:
+    return constant::Type::ULONG;
   // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
   // be something different ?
-  case ElemType::DERIVED:
   case ElemType::POINTER:
   case ElemType::NONE:
     return constant::Type::NONE;
