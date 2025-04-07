@@ -376,15 +376,8 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     if (binop != binop::BINOP::ASSIGN or binop::is_compound(binop)) {
       decay_arr_to_pointer(exp->get_factor_node(), nullptr);
     }
-    // These are used for compound expressions to typecast the result
-    // to the lval type
-    ast::ElemType compoundType;
-    std::vector<long> compoundDerivedType;
-    if (binop::is_compound(binop)) {
-      compoundType = exp->get_factor_node()->get_type();
-      compoundDerivedType = exp->get_factor_node()->get_derived_type();
+    if (binop::is_compound(binop))
       binop = binop::compound_to_base(binop);
-    }
     // Logical and / or depends on only one operand
     if (binop == binop::BINOP::LAND or binop == binop::BINOP::LOR) {
       exp->set_type(ast::ElemType::INT);
@@ -583,33 +576,6 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         success = false;
         error_messages.emplace_back(
             "AND operator not allowed on double precision");
-      }
-    }
-
-    // If the binop was a compound operator, we might have to add an additional
-    // cast to the expression
-    if (success and binop::is_compound(exp->get_binop_node()->get_op())) {
-      auto leftType = compoundType;
-      auto leftDerivedType = compoundDerivedType;
-      auto rightType = exp->get_type();
-      auto rightDerivedType = exp->get_derived_type();
-      if (leftType == ast::ElemType::DERIVED and leftDerivedType[0] > 0) {
-        success = false;
-        error_messages.emplace_back(
-            "Assignment operator not allowed on array type");
-      } else {
-        auto [expType, expDerivedType] = ast::getAssignType(
-            leftType, leftDerivedType, rightType, rightDerivedType, exp);
-        if (expType == ast::ElemType::NONE) {
-          success = false;
-          error_messages.emplace_back("Incompatible types in expression");
-        } else {
-          if (expType != rightType or expDerivedType != rightDerivedType) {
-            add_cast_to_exp(exp, expType, expDerivedType);
-          }
-          exp->set_type(expType);
-          exp->set_derived_type(expDerivedType);
-        }
       }
     }
   }

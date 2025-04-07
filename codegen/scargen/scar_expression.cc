@@ -45,6 +45,8 @@ void Codegen::gen_scar_assign_exp(
     scar_val_ident->set_reg_name(get_prev_reg_name());
   }
 
+  std::string lvalueIdent = ast::get_lvalue_identifier(exp->get_factor_node());
+
   if (binop::is_compound(exp->get_binop_node()->get_op())) {
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
     scar_instruction2->set_type(scar::instruction_type::BINARY);
@@ -61,6 +63,41 @@ void Codegen::gen_scar_assign_exp(
     scar_instruction2->set_dst(scar_val_ident);
 
     scar_function->add_instruction(std::move(scar_instruction2));
+
+    if (scar_val_ident->get_reg() != lvalueIdent) {
+      auto lvalueBaseType = globalSymbolTable[lvalueIdent].typeDef[0];
+      auto lvalueDerivedType = globalSymbolTable[lvalueIdent].derivedTypeMap[0];
+      auto expType = exp->get_type();
+      auto expDerivedType = exp->get_derived_type();
+
+      MAKE_SHARED(ast::AST_factor_Node, cast_factor);
+      cast_factor->set_cast_type(lvalueBaseType);
+      cast_factor->set_type(lvalueBaseType);
+      cast_factor->set_derived_type(lvalueDerivedType);
+
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+      MAKE_SHARED(ast::AST_identifier_Node, child_ident);
+      child_ident->set_identifier(scar_val_ident->get_reg());
+      child_factor->set_identifier_node(std::move(child_ident));
+      child_factor->set_type(expType);
+      child_factor->set_derived_type(expDerivedType);
+
+      cast_factor->set_child(std::move(child_factor));
+
+      gen_scar_factor(cast_factor, scar_function);
+
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+      scar_instruction->set_type(scar::instruction_type::COPY);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      scar_val_src->set_type(scar::val_type::VAR);
+      scar_val_src->set_reg_name(get_prev_reg_name());
+      scar_instruction->set_src1(std::move(scar_val_src));
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(lvalueIdent);
+      scar_instruction->set_dst(std::move(scar_val_dst));
+      scar_function->add_instruction(std::move(scar_instruction));
+    }
   } else {
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::COPY);
@@ -77,7 +114,7 @@ void Codegen::gen_scar_assign_exp(
   // NOTE: we update the current scar register name to use the variable
   // since we can have expressions like:
   // int b = a = 5;
-  reg_name = scar_val_ident->get_reg();
+  reg_name = lvalueIdent;
 }
 
 void Codegen::gen_scar_def_assign_exp(

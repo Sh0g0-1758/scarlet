@@ -286,5 +286,18 @@ bool isComplexType(ElemType type) {
     return true;
   return false;
 }
+
+std::string get_lvalue_identifier(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor == nullptr)
+    return "";
+  if (factor->get_identifier_node() != nullptr) {
+    return factor->get_identifier_node()->get_value();
+  } else if (factor->get_child() != nullptr) {
+    return get_lvalue_identifier(factor->get_child());
+  } else if (factor->get_exp_node() != nullptr) {
+    return get_lvalue_identifier(factor->get_exp_node()->get_factor_node());
+  }
+  return "";
+}
 } // namespace ast
 } // namespace scarlet
