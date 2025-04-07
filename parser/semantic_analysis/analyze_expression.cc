@@ -50,68 +50,6 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
   // assign type to the expression
   assign_type_to_exp(exp);
-
-  if (exp->get_binop_node() != nullptr) {
-    binop::BINOP binop = exp->get_binop_node()->get_op();
-    if (binop::is_compound(binop))
-      binop = binop::compound_to_base(binop);
-
-    if (exp->get_right()->get_type() == ast::ElemType::DERIVED) {
-      if (binop == binop::BINOP::MOD) {
-        success = false;
-        error_messages.emplace_back(
-            "Modulus operator not allowed on derived types");
-      } else if (binop == binop::BINOP::DIV) {
-        success = false;
-        error_messages.emplace_back(
-            "Division operator not allowed on derived types");
-      } else if (binop == binop::BINOP::MUL) {
-        success = false;
-        error_messages.emplace_back(
-            "Multiplication operator not allowed on derived types");
-      }
-    }
-    // left/right shift changed to logical left/right shift if the type is
-    // unsigned
-    if (binop == binop::BINOP::LEFT_SHIFT or
-        binop == binop::BINOP::RIGHT_SHIFT) {
-      if (exp->get_type() == ast::ElemType::UINT or
-          exp->get_type() == ast::ElemType::ULONG) {
-        if (binop == binop::BINOP::LEFT_SHIFT) {
-          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
-        } else {
-          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
-        }
-      }
-    }
-
-    // check that modulus | Xor is not used on double precision
-    if (exp->get_type() == ast::ElemType::DOUBLE) {
-      if (binop == binop::BINOP::MOD) {
-        success = false;
-        error_messages.emplace_back(
-            "Modulus operator not allowed on double precision");
-      }
-
-      if (binop == binop::BINOP::XOR) {
-        success = false;
-        error_messages.emplace_back(
-            "XOR operator not allowed on double precision");
-      }
-
-      if (binop == binop::BINOP::AOR) {
-        success = false;
-        error_messages.emplace_back(
-            "OR operator not allowed on double precision");
-      }
-
-      if (binop == binop::BINOP::AAND) {
-        success = false;
-        error_messages.emplace_back(
-            "AND operator not allowed on double precision");
-      }
-    }
-  }
 }
 
 void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
@@ -590,9 +528,67 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         }
       }
     }
+
+    if (exp->get_right()->get_type() == ast::ElemType::DERIVED) {
+      if (binop == binop::BINOP::MOD) {
+        success = false;
+        error_messages.emplace_back(
+            "Modulus operator not allowed on derived types");
+      } else if (binop == binop::BINOP::DIV) {
+        success = false;
+        error_messages.emplace_back(
+            "Division operator not allowed on derived types");
+      } else if (binop == binop::BINOP::MUL) {
+        success = false;
+        error_messages.emplace_back(
+            "Multiplication operator not allowed on derived types");
+      }
+    }
+
+    // left/right shift changed to logical left/right shift if the type is
+    // unsigned
+    if (binop == binop::BINOP::LEFT_SHIFT or
+        binop == binop::BINOP::RIGHT_SHIFT) {
+      if (exp->get_type() == ast::ElemType::UINT or
+          exp->get_type() == ast::ElemType::ULONG) {
+        if (binop == binop::BINOP::LEFT_SHIFT) {
+          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
+        } else {
+          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
+        }
+      }
+    }
+
+    // check that modulus | Xor is not used on double precision
+    if (exp->get_type() == ast::ElemType::DOUBLE) {
+      if (binop == binop::BINOP::MOD) {
+        success = false;
+        error_messages.emplace_back(
+            "Modulus operator not allowed on double precision");
+      }
+
+      if (binop == binop::BINOP::XOR) {
+        success = false;
+        error_messages.emplace_back(
+            "XOR operator not allowed on double precision");
+      }
+
+      if (binop == binop::BINOP::AOR) {
+        success = false;
+        error_messages.emplace_back(
+            "OR operator not allowed on double precision");
+      }
+
+      if (binop == binop::BINOP::AAND) {
+        success = false;
+        error_messages.emplace_back(
+            "AND operator not allowed on double precision");
+      }
+    }
+
     // If the binop was a compound operator, we might have to add an additional
     // cast to the expression
-    if (binop::is_compound(exp->get_binop_node()->get_op())) {
+    if (success and binop::is_compound(exp->get_binop_node()->get_op())) {
       auto leftType = compoundType;
       auto leftDerivedType = compoundDerivedType;
       auto rightType = exp->get_type();
