@@ -35,71 +35,64 @@ void Codegen::gen_scar_assign_exp(
     return;
   }
 
-  std::string ident =
-      exp->get_factor_node()->get_identifier_node()->get_value();
+  gen_scar_factor(exp->get_factor_node(), scar_function);
+  MAKE_SHARED(scar::scar_Val_Node, scar_val_ident);
+  scar_val_ident->set_type(scar::val_type::VAR);
+  if (!variable_buffer.empty()) {
+    scar_val_ident->set_reg_name(variable_buffer);
+    variable_buffer.clear();
+  } else {
+    scar_val_ident->set_reg_name(get_prev_reg_name());
+  }
 
   if (binop::is_compound(exp->get_binop_node()->get_op())) {
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
     scar_instruction2->set_type(scar::instruction_type::BINARY);
     scar_instruction2->set_binop(
         binop::compound_to_base(exp->get_binop_node()->get_op()));
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
+
+    scar_instruction2->set_src1(scar_val_ident);
+
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-
-    scar_val_src1->set_type(scar::val_type::VAR);
-    scar_val_src1->set_reg_name(ident);
-    scar_instruction2->set_src1(std::move(scar_val_src1));
-
     gen_scar_exp(exp->get_right(), scar_function);
     SETVARCONSTANTREG(scar_val_src2);
     scar_instruction2->set_src2(std::move(scar_val_src2));
 
-    scar_val_dst->set_type(scar::val_type::VAR);
-    scar_val_dst->set_reg_name(ident);
-    scar_instruction2->set_dst(std::move(scar_val_dst));
+    scar_instruction2->set_dst(scar_val_ident);
 
     scar_function->add_instruction(std::move(scar_instruction2));
   } else {
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::COPY);
+
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-    // the semantic analyis phase should have ensured that the left child
-    // is null, factor is an identifier with no unops and the right child
-    // is an expression
     gen_scar_exp(exp->get_right(), scar_function);
     SETVARCONSTANTREG(scar_val_src);
     scar_instruction->set_src1(std::move(scar_val_src));
 
-    scar_val_dst->set_type(scar::val_type::VAR);
-    scar_val_dst->set_reg_name(ident);
-    reg_name = scar_val_dst->get_reg();
-    scar_instruction->set_dst(std::move(scar_val_dst));
+    scar_instruction->set_dst(scar_val_ident);
 
     scar_function->add_instruction(std::move(scar_instruction));
   }
   // NOTE: we update the current scar register name to use the variable
   // since we can have expressions like:
   // int b = a = 5;
-  reg_name = ident;
+  reg_name = scar_val_ident->get_reg();
 }
 
 void Codegen::gen_scar_def_assign_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
-  std::string ident{};
   // store the pointer to the lvalue we want to assign to
   gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
   MAKE_SHARED(scar::scar_Val_Node, scar_val_ident);
   scar_val_ident->set_type(scar::val_type::VAR);
   if (!variable_buffer.empty()) {
-    ident = variable_buffer;
+    scar_val_ident->set_reg_name(variable_buffer);
     variable_buffer.clear();
   } else {
-    ident = get_prev_reg_name();
+    scar_val_ident->set_reg_name(get_prev_reg_name());
   }
-  scar_val_ident->set_reg_name(ident);
 
   if (binop::is_compound(exp->get_binop_node()->get_op())) {
     // extra scar register to store the result of the dereference operation

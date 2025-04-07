@@ -52,51 +52,64 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   assign_type_to_exp(exp);
 
   if (exp->get_binop_node() != nullptr) {
+    binop::BINOP binop = exp->get_binop_node()->get_op();
+    if (binop::is_compound(binop))
+      binop = binop::compound_to_base(binop);
+
     if (exp->get_right()->get_type() == ast::ElemType::DERIVED) {
-      if (exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
+      if (binop == binop::BINOP::MOD) {
         success = false;
         error_messages.emplace_back(
             "Modulus operator not allowed on derived types");
-      } else if (exp->get_binop_node()->get_op() == binop::BINOP::DIV) {
+      } else if (binop == binop::BINOP::DIV) {
         success = false;
         error_messages.emplace_back(
             "Division operator not allowed on derived types");
-      } else if (exp->get_binop_node()->get_op() == binop::BINOP::MUL) {
+      } else if (binop == binop::BINOP::MUL) {
         success = false;
         error_messages.emplace_back(
             "Multiplication operator not allowed on derived types");
       }
     }
-  }
-
-  // left/right shift changed to logical left/right shift if the type is
-  // unsigned
-  if (exp->get_binop_node() != nullptr and
-      (exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT or
-       exp->get_binop_node()->get_op() == binop::BINOP::RIGHT_SHIFT)) {
-    if (exp->get_type() == ast::ElemType::UINT or
-        exp->get_type() == ast::ElemType::ULONG) {
-      if (exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT) {
-        exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
-      } else {
-        exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
+    // left/right shift changed to logical left/right shift if the type is
+    // unsigned
+    if (binop == binop::BINOP::LEFT_SHIFT or
+        binop == binop::BINOP::RIGHT_SHIFT) {
+      if (exp->get_type() == ast::ElemType::UINT or
+          exp->get_type() == ast::ElemType::ULONG) {
+        if (binop == binop::BINOP::LEFT_SHIFT) {
+          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
+        } else {
+          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
+        }
       }
     }
-  }
 
-  // check that modulus | Xor is not used on double precision
-  if (exp->get_binop_node() != nullptr and
-      exp->get_type() == ast::ElemType::DOUBLE) {
-    if (exp->get_binop_node()->get_op() == binop::BINOP::MOD) {
-      success = false;
-      error_messages.emplace_back(
-          "Modulus operator not allowed on double precision");
-    }
+    // check that modulus | Xor is not used on double precision
+    if (exp->get_type() == ast::ElemType::DOUBLE) {
+      if (binop == binop::BINOP::MOD) {
+        success = false;
+        error_messages.emplace_back(
+            "Modulus operator not allowed on double precision");
+      }
 
-    if (exp->get_binop_node()->get_op() == binop::BINOP::XOR) {
-      success = false;
-      error_messages.emplace_back(
-          "XOR operator not allowed on double precision");
+      if (binop == binop::BINOP::XOR) {
+        success = false;
+        error_messages.emplace_back(
+            "XOR operator not allowed on double precision");
+      }
+
+      if (binop == binop::BINOP::AOR) {
+        success = false;
+        error_messages.emplace_back(
+            "OR operator not allowed on double precision");
+      }
+
+      if (binop == binop::BINOP::AAND) {
+        success = false;
+        error_messages.emplace_back(
+            "AND operator not allowed on double precision");
+      }
     }
   }
 }
@@ -419,18 +432,25 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     exp->set_type(exp->get_factor_node()->get_type());
     exp->set_derived_type(exp->get_factor_node()->get_derived_type());
   } else {
+    binop::BINOP binop = exp->get_binop_node()->get_op();
     decay_arr_to_pointer(nullptr, exp->get_left());
     decay_arr_to_pointer(nullptr, exp->get_right());
-    if (exp->get_binop_node()->get_op() != binop::BINOP::ASSIGN or
-        binop::is_compound(exp->get_binop_node()->get_op())) {
+    if (binop != binop::BINOP::ASSIGN or binop::is_compound(binop)) {
       decay_arr_to_pointer(exp->get_factor_node(), nullptr);
     }
+    // These are used for compound expressions to typecast the result
+    // to the lval type
+    ast::ElemType compoundType;
+    std::vector<long> compoundDerivedType;
+    if (binop::is_compound(binop)) {
+      compoundType = exp->get_factor_node()->get_type();
+      compoundDerivedType = exp->get_factor_node()->get_derived_type();
+      binop = binop::compound_to_base(binop);
+    }
     // Logical and / or depends on only one operand
-    if (exp->get_binop_node()->get_op() == binop::BINOP::LAND or
-        exp->get_binop_node()->get_op() == binop::BINOP::LOR) {
+    if (binop == binop::BINOP::LAND or binop == binop::BINOP::LOR) {
       exp->set_type(ast::ElemType::INT);
-    } else if (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
-               binop::is_compound(exp->get_binop_node()->get_op())) {
+    } else if (binop == binop::BINOP::ASSIGN) {
       auto leftType = exp->get_factor_node()->get_type();
       auto leftDerivedType = exp->get_factor_node()->get_derived_type();
       auto rightType = exp->get_right()->get_type();
@@ -454,7 +474,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
           exp->set_derived_type(expDerivedType);
         }
       }
-    } else if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
+    } else if (binop == binop::BINOP::TERNARY) {
       auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
       decay_arr_to_pointer(nullptr, ternary->get_middle());
       ast::ElemType leftType = ternary->get_middle()->get_type();
@@ -478,8 +498,8 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
 
       exp->set_type(expType);
       exp->set_derived_type(expDerivedType);
-    } else if (exp->get_binop_node()->get_op() == binop::BINOP::RIGHT_SHIFT or
-               exp->get_binop_node()->get_op() == binop::BINOP::LEFT_SHIFT) {
+    } else if (binop == binop::BINOP::RIGHT_SHIFT or
+               binop == binop::BINOP::LEFT_SHIFT) {
       ast::ElemType leftType = (exp->get_left() != nullptr)
                                    ? exp->get_left()->get_type()
                                    : exp->get_factor_node()->get_type();
@@ -510,8 +530,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                  ? exp->get_left()->get_derived_type()
                                  : exp->get_factor_node()->get_derived_type();
       auto rightDerivedType = exp->get_right()->get_derived_type();
-      if ((exp->get_binop_node()->get_op() == binop::BINOP::ADD or
-           exp->get_binop_node()->get_op() == binop::BINOP::SUB) and
+      if ((binop == binop::BINOP::ADD or binop == binop::BINOP::SUB) and
           (leftType == ast::ElemType::DERIVED or
            rightType == ast::ElemType::DERIVED)) {
         // pointer arithmetic
@@ -523,7 +542,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
           }
           exp->set_type(leftType);
           exp->set_derived_type(leftDerivedType);
-        } else if (exp->get_binop_node()->get_op() == binop::BINOP::ADD and
+        } else if (binop == binop::BINOP::ADD and
                    rightType == ast::ElemType::DERIVED and
                    leftType != ast::ElemType::DERIVED and
                    leftType != ast::ElemType::DOUBLE) {
@@ -535,7 +554,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
           }
           exp->set_type(rightType);
           exp->set_derived_type(rightDerivedType);
-        } else if (exp->get_binop_node()->get_op() == binop::BINOP::SUB and
+        } else if (binop == binop::BINOP::SUB and
                    rightDerivedType == leftDerivedType) {
           exp->set_type(ast::ElemType::LONG);
           exp->set_derived_type({});
@@ -563,9 +582,35 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    expDerivedType);
         }
 
-        if (binop::is_relational(exp->get_binop_node()->get_op())) {
+        if (binop::is_relational(binop)) {
           exp->set_type(ast::ElemType::INT);
         } else {
+          exp->set_type(expType);
+          exp->set_derived_type(expDerivedType);
+        }
+      }
+    }
+    // If the binop was a compound operator, we might have to add an additional
+    // cast to the expression
+    if (binop::is_compound(exp->get_binop_node()->get_op())) {
+      auto leftType = compoundType;
+      auto leftDerivedType = compoundDerivedType;
+      auto rightType = exp->get_type();
+      auto rightDerivedType = exp->get_derived_type();
+      if (leftType == ast::ElemType::DERIVED and leftDerivedType[0] > 0) {
+        success = false;
+        error_messages.emplace_back(
+            "Assignment operator not allowed on array type");
+      } else {
+        auto [expType, expDerivedType] = ast::getAssignType(
+            leftType, leftDerivedType, rightType, rightDerivedType, exp);
+        if (expType == ast::ElemType::NONE) {
+          success = false;
+          error_messages.emplace_back("Incompatible types in expression");
+        } else {
+          if (expType != rightType or expDerivedType != rightDerivedType) {
+            add_cast_to_exp(exp, expType, expDerivedType);
+          }
           exp->set_type(expType);
           exp->set_derived_type(expDerivedType);
         }
