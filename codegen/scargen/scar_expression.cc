@@ -83,7 +83,7 @@ void Codegen::gen_scar_def_assign_exp(
   SETVARCONSTANTREG(scar_val_src);
   scar_instruction->set_src1(scar_val_src);
 
-  gen_scar_factor(exp->get_factor_node(), scar_function);
+  gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
   SETVARCONSTANTREG(scar_val_dst);
   scar_instruction->set_dst(std::move(scar_val_dst));
   scar_function->add_instruction(std::move(scar_instruction));
