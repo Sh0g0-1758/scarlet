@@ -225,6 +225,7 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
+      // FIXME: For Arrays
       case ast::ElemType::DERIVED:
         return scasm::AssemblyType::QUAD_WORD;
       // this case will never be reached
@@ -251,9 +252,9 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
+    // FIXME: For Arrays
     case ast::ElemType::DERIVED:
       return scasm::AssemblyType::QUAD_WORD;
-    // TODO: FIXME
     case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
