@@ -206,6 +206,7 @@ std::string to_string(register_type reg, register_size size);
 std::string to_string(Unop unop);
 std::string to_string(Binop binop);
 std::string to_string(cond_code cond);
+bool RegIsXMM(register_type reg);
 
 class scasm_operand {
 private:
