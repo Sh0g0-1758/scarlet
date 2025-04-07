@@ -215,6 +215,12 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << " ";
       CODEGEN_SRC_DST();
       assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::LEA) {
+      assembly << "\tlea";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC_DST();
+      assembly << "\n";
     }
   }
 }
