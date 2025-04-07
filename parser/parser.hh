@@ -280,18 +280,6 @@ private:
 
   void remove_switch_loop_label() { loop_switch_end_labels.pop(); }
 
-  std::map<binop::BINOP, binop::BINOP> compound_to_base = {
-      {binop::BINOP::COMPOUND_DIFFERENCE, binop::BINOP::SUB},
-      {binop::BINOP::COMPOUND_DIVISION, binop::BINOP::DIV},
-      {binop::BINOP::COMPOUND_PRODUCT, binop::BINOP::MUL},
-      {binop::BINOP::COMPOUND_REMAINDER, binop::BINOP::MOD},
-      {binop::BINOP::COMPOUND_SUM, binop::BINOP::ADD},
-      {binop::BINOP::COMPOUND_AND, binop::BINOP::AAND},
-      {binop::BINOP::COMPOUND_OR, binop::BINOP::AOR},
-      {binop::BINOP::COMPOUND_XOR, binop::BINOP::XOR},
-      {binop::BINOP::COMPOUND_LEFTSHIFT, binop::BINOP::LEFT_SHIFT},
-      {binop::BINOP::COMPOUND_RIGHTSHIFT, binop::BINOP::RIGHT_SHIFT}};
-
   std::string to_string(ast::statementType type) {
     switch (type) {
     case ast::statementType::NULLSTMT:

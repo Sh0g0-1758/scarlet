@@ -37,44 +37,6 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   if (!success)
     return;
 
-  // expand the compound expression
-  if (exp->get_binop_node() != nullptr and
-      binop::is_compound(exp->get_binop_node()->get_op())) {
-    // a += 5
-    //    |
-    //    v
-    // a = a + 5
-    MAKE_SHARED(ast::AST_exp_Node, rightChild);
-
-    MAKE_SHARED(ast::AST_binop_Node, rightBinop);
-    rightBinop->set_op(compound_to_base[exp->get_binop_node()->get_op()]);
-    rightChild->set_binop_node(rightBinop);
-
-    MAKE_SHARED(ast::AST_factor_Node, rightFactor);
-    rightFactor->set_factor_type(ast::FactorType::BASIC);
-    MAKE_SHARED(ast::AST_identifier_Node, rightIdentifier);
-
-    // remove after . from the identifier name
-    std::string identifierName =
-        exp->get_factor_node()->get_identifier_node()->get_value();
-    auto dotPos = identifierName.find('.');
-    if (dotPos != std::string::npos) {
-      identifierName = identifierName.substr(0, dotPos);
-    }
-
-    rightIdentifier->set_identifier(identifierName);
-    rightFactor->set_identifier_node(std::move(rightIdentifier));
-
-    rightChild->set_factor_node(std::move(rightFactor));
-    rightChild->set_right(exp->get_right());
-
-    MAKE_SHARED(ast::AST_binop_Node, binop);
-    binop->set_op(binop::BINOP::ASSIGN);
-    exp->set_binop_node(binop);
-
-    exp->set_right(rightChild);
-  }
-
   // Recursively check the right side of the expression
   analyze_exp(exp->get_right(), symbol_table, indx);
 
@@ -159,6 +121,11 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     bool isFuncCall =
         factor->get_factor_type() == ast::FactorType::FUNCTION_CALL;
     std::string var_name = factor->get_identifier_node()->get_value();
+    // special case for compound expressions as we are copying the factor
+    auto dotPos = var_name.find('.');
+    if (dotPos != std::string::npos) {
+      var_name = var_name.substr(0, dotPos);
+    }
     int level = indx;
     bool found = false;
     std::string updatedIdentifierName;
@@ -454,7 +421,8 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   } else {
     decay_arr_to_pointer(nullptr, exp->get_left());
     decay_arr_to_pointer(nullptr, exp->get_right());
-    if (exp->get_binop_node()->get_op() != binop::BINOP::ASSIGN) {
+    if (exp->get_binop_node()->get_op() != binop::BINOP::ASSIGN or
+        binop::is_compound(exp->get_binop_node()->get_op())) {
       decay_arr_to_pointer(exp->get_factor_node(), nullptr);
     }
     // Logical and / or depends on only one operand

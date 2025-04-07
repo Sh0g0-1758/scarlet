@@ -90,5 +90,30 @@ bool is_compound(BINOP bin_op) {
   }
   return false;
 }
+
+binop::BINOP compound_to_base(BINOP binop) {
+  if (binop == BINOP::COMPOUND_DIFFERENCE) {
+    return BINOP::SUB;
+  } else if (binop == BINOP::COMPOUND_DIVISION) {
+    return BINOP::DIV;
+  } else if (binop == BINOP::COMPOUND_PRODUCT) {
+    return BINOP::MUL;
+  } else if (binop == BINOP::COMPOUND_REMAINDER) {
+    return BINOP::MOD;
+  } else if (binop == BINOP::COMPOUND_SUM) {
+    return BINOP::ADD;
+  } else if (binop == BINOP::COMPOUND_AND) {
+    return BINOP::AAND;
+  } else if (binop == BINOP::COMPOUND_OR) {
+    return BINOP::AOR;
+  } else if (binop == BINOP::COMPOUND_XOR) {
+    return BINOP::XOR;
+  } else if (binop == BINOP::COMPOUND_LEFTSHIFT) {
+    return BINOP::LEFT_SHIFT;
+  } else if (binop == BINOP::COMPOUND_RIGHTSHIFT) {
+    return BINOP::RIGHT_SHIFT;
+  }
+  return binop;
+}
 } // namespace binop
 } // namespace scarlet
