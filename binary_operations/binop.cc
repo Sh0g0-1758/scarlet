@@ -63,11 +63,20 @@ std::string to_string(BINOP binop) {
     return "COMPOUND_LEFTSHIFT";
   case COMPOUND_RIGHTSHIFT:
     return "COMPOUND_RIGHTSHIFT";
+  case COMPOUND_LOGICAL_LEFTSHIFT:
+    return "COMPOUND_LOGICAL_LEFTSHIFT";
+  case COMPOUND_LOGICAL_RIGHTSHIFT:
+    return "COMPOUND_LOGICAL_RIGHTSHIFT";
   case TERNARY:
     return "TERNARY";
-  default:
+  case LOGICAL_LEFT_SHIFT:
+    return "LOGICAL_LEFT_SHIFT";
+  case LOGICAL_RIGHT_SHIFT:
+    return "LOGICAL_RIGHT_SHIFT";
+  case UNKNOWN:
     return "UNKNOWN";
   }
+  return "UNKNOWN";
 }
 
 bool short_circuit(BINOP binop) {
@@ -85,7 +94,9 @@ bool is_compound(BINOP bin_op) {
       bin_op == BINOP::COMPOUND_REMAINDER or bin_op == BINOP::COMPOUND_SUM or
       bin_op == BINOP::COMPOUND_AND or bin_op == BINOP::COMPOUND_OR or
       bin_op == BINOP::COMPOUND_LEFTSHIFT or
-      bin_op == BINOP::COMPOUND_RIGHTSHIFT or bin_op == BINOP::COMPOUND_XOR) {
+      bin_op == BINOP::COMPOUND_RIGHTSHIFT or bin_op == BINOP::COMPOUND_XOR or
+      bin_op == BINOP::COMPOUND_LOGICAL_LEFTSHIFT or
+      bin_op == BINOP::COMPOUND_LOGICAL_RIGHTSHIFT) {
     return true;
   }
   return false;
@@ -112,6 +123,10 @@ binop::BINOP compound_to_base(BINOP binop) {
     return BINOP::LEFT_SHIFT;
   } else if (binop == BINOP::COMPOUND_RIGHTSHIFT) {
     return BINOP::RIGHT_SHIFT;
+  } else if (binop == BINOP::COMPOUND_LOGICAL_LEFTSHIFT) {
+    return BINOP::LOGICAL_LEFT_SHIFT;
+  } else if (binop == BINOP::COMPOUND_LOGICAL_RIGHTSHIFT) {
+    return BINOP::LOGICAL_RIGHT_SHIFT;
   }
   return binop;
 }

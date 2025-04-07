@@ -78,6 +78,8 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::COMPOUND_XOR:
   case binop::BINOP::COMPOUND_LEFTSHIFT:
   case binop::BINOP::COMPOUND_RIGHTSHIFT:
+  case binop::BINOP::COMPOUND_LOGICAL_LEFTSHIFT:
+  case binop::BINOP::COMPOUND_LOGICAL_RIGHTSHIFT:
   case binop::BINOP::MOD:
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::TERNARY:

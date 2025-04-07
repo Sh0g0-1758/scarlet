@@ -535,6 +535,25 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         success = false;
         error_messages.emplace_back(
             "Multiplication operator not allowed on derived types");
+      } else if (binop == binop::BINOP::AOR) {
+        success = false;
+        error_messages.emplace_back("OR operator not allowed on derived types");
+      } else if (binop == binop::BINOP::AAND) {
+        success = false;
+        error_messages.emplace_back(
+            "AND operator not allowed on derived types");
+      } else if (binop == binop::BINOP::XOR) {
+        success = false;
+        error_messages.emplace_back(
+            "XOR operator not allowed on derived types");
+      } else if (binop == binop::BINOP::LEFT_SHIFT) {
+        success = false;
+        error_messages.emplace_back(
+            "Left shift operator not allowed on derived types");
+      } else if (binop == binop::BINOP::RIGHT_SHIFT) {
+        success = false;
+        error_messages.emplace_back(
+            "Right shift operator not allowed on derived types");
       }
     }
 
@@ -545,9 +564,17 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       if (exp->get_type() == ast::ElemType::UINT or
           exp->get_type() == ast::ElemType::ULONG) {
         if (binop == binop::BINOP::LEFT_SHIFT) {
-          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
+          if (binop::is_compound(exp->get_binop_node()->get_op()))
+            exp->get_binop_node()->set_op(
+                binop::BINOP::COMPOUND_LOGICAL_LEFTSHIFT);
+          else
+            exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_LEFT_SHIFT);
         } else {
-          exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
+          if (binop::is_compound(exp->get_binop_node()->get_op()))
+            exp->get_binop_node()->set_op(
+                binop::BINOP::COMPOUND_LOGICAL_RIGHTSHIFT);
+          else
+            exp->get_binop_node()->set_op(binop::BINOP::LOGICAL_RIGHT_SHIFT);
         }
       }
     }
