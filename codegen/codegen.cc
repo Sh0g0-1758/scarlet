@@ -33,7 +33,8 @@ namespace codegen {
     assembly << "$" << instr->get_src()->get_imm();                            \
   } else if (instr->get_src()->get_type() == scasm::operand_type::MEMORY) {    \
     assembly << instr->get_src()->get_offset() << "(";                         \
-    PRINT_REG(src);                                                            \
+    assembly << scasm::to_string(instr->get_src()->get_reg(),                  \
+                                 scasm::register_size::QWORD);                 \
     assembly << ")";                                                           \
   } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {      \
     assembly << ARCHPREFIX << instr->get_src()->get_identifier() << "(%rip)";  \
@@ -44,7 +45,8 @@ namespace codegen {
 #define CODEGEN_DST()                                                          \
   if (instr->get_dst()->get_type() == scasm::operand_type::MEMORY) {           \
     assembly << instr->get_dst()->get_offset() << "(";                         \
-    PRINT_REG(dst);                                                            \
+    assembly << scasm::to_string(instr->get_dst()->get_reg(),                  \
+                                 scasm::register_size::QWORD);                 \
     assembly << ")";                                                           \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {      \
     assembly << ARCHPREFIX << instr->get_dst()->get_identifier() << "(%rip)";  \
