@@ -233,12 +233,68 @@ void Codegen::gen_scasm() {
       } else if (scar::is_type_cast(inst->get_type())) {
         gen_type_cast_scasm(inst, scasm_func, scasm_program);
       } else if (inst->get_type() == scar::instruction_type::LOAD) {
-        // Mov(src, reg(<R>))
-        // Mov(Mem(<R>), dst)
+        // <QuadWord> Mov(src, reg(<R>))
+        // <dstType> Mov(Mem(<R>), dst)
 
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        scasm_dst->set_type(scasm::operand_type::REG);
+        scasm_dst->set_reg(scasm::register_type::AX);
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+        scasm_inst2->set_type(scasm::instruction_type::MOV);
+        scasm_inst2->set_asm_type(valToAsmType(inst->get_dst()));
+        MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+        scasm_src2->set_type(scasm::operand_type::MEMORY);
+        scasm_src2->set_reg(scasm::register_type::AX);
+        scasm_src2->set_offset(0);
+        scasm_inst2->set_src(std::move(scasm_src2));
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+        SET_OPERAND(scasm_dst2, set_dst, get_dst, scasm_inst2);
+        scasm_func->add_instruction(std::move(scasm_inst2));
+      } else if (inst->get_type() == scar::instruction_type::STORE) {
+        // <QuadWord> Mov(dst, reg(<R>))
+        // <srcType> Mov(src, Mem(<R>))
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        SET_OPERAND(scasm_src, set_src, get_dst, scasm_inst);
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        scasm_dst->set_type(scasm::operand_type::REG);
+        scasm_dst->set_reg(scasm::register_type::AX);
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+        scasm_inst2->set_type(scasm::instruction_type::MOV);
+        scasm_inst2->set_asm_type(instType);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+        SET_OPERAND(scasm_src2, set_src, get_src1, scasm_inst2);
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+        scasm_dst2->set_type(scasm::operand_type::MEMORY);
+        scasm_dst2->set_reg(scasm::register_type::AX);
+        scasm_dst2->set_offset(0);
+        scasm_inst2->set_dst(std::move(scasm_dst2));
+        scasm_func->add_instruction(std::move(scasm_inst2));
+      } else if (inst->get_type() == scar::instruction_type::GET_ADDRESS) {
+        // Lea(src, dst)
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::LEA);
+        scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
+        scasm_func->add_instruction(std::move(scasm_inst));
       }
     }
     MAKE_SHARED(scasm::scasm_top_level, top_level_elem);

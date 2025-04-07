@@ -167,6 +167,7 @@ enum class instruction_type {
   CALL,
   CVTTS2DI,
   CVTSI2SD,
+  LEA,
 };
 
 enum class register_type {

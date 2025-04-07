@@ -208,7 +208,8 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case constant::Type::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
-      // TODO: FIXME
+      // Since ZERO Type will only ever be used in the initializer list
+      // we can safely ignore it here
       case constant::Type::ZERO:
       case constant::Type::NONE:
         return scasm::AssemblyType::NONE;
@@ -224,8 +225,9 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
-      // TODO: FIXME
       case ast::ElemType::DERIVED:
+        return scasm::AssemblyType::QUAD_WORD;
+      // this case will never be reached
       case ast::ElemType::POINTER:
       case ast::ElemType::NONE:
         return scasm::AssemblyType::NONE;
