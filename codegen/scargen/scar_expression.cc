@@ -64,6 +64,15 @@ void Codegen::gen_scar_assign_exp(
 
     scar_function->add_instruction(std::move(scar_instruction2));
 
+    // compound expressions are special in the sense that something like
+    // int a = 5;
+    // a += 5l;
+    // will be converted to a = <int>(<long>(a) + 5l);
+    // This explicit outer cast has not been handled until now. So we create a
+    // pseudo factor node to handle the type casting. Additionally, checking
+    // whether the lvalue Identifier is the same as the one we are using in
+    // scar_val_ident is a sufficient check for the same because they will be
+    // different only when we need to downcast/upcast the lvalue.
     if (scar_val_ident->get_reg() != lvalueIdent) {
       auto lvalueBaseType = globalSymbolTable[lvalueIdent].typeDef[0];
       auto lvalueDerivedType = globalSymbolTable[lvalueIdent].derivedTypeMap[0];
