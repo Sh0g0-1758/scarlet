@@ -147,8 +147,6 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
                                 token::to_string(tokens[0].get_token()));
   }
   // NOTE THIS IS A SPECIAL CASE WHERE WE HAVE A POST INCREMENT OR DECREMENT
-  // IF THIS BRANCH IS CALLED THEN WE CAN BE SURE THAT WE ARE DEALING WITH A
-  // POST INCREMENT OR DECREMENT
   if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR or
       tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
     if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
@@ -158,8 +156,22 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     } else {
       MAKE_SHARED(ast::AST_factor_Node, nested_factor);
       nested_factor->set_identifier_node(factor->get_identifier_node());
+      nested_factor->set_unop_node(factor->get_unop_node());
+      nested_factor->set_exp_node(factor->get_exp_node());
+      nested_factor->set_factor_type(factor->get_factor_type());
+      nested_factor->set_cast_type(factor->get_cast_type());
+      nested_factor->set_cast_declarator(factor->get_cast_declarator());
+      nested_factor->set_child(factor->get_child());
+      nested_factor->set_arrIdx(factor->get_arrIdx());
+
       factor->set_identifier_node(nullptr);
+      factor->set_unop_node(nullptr);
+      factor->set_exp_node(nullptr);
+      factor->set_factor_type(ast::FactorType::BASIC);
+      factor->set_cast_type(ast::ElemType::NONE);
+      factor->set_cast_declarator(nullptr);
       factor->set_child(std::move(nested_factor));
+      factor->set_arrIdx({});
 
       MAKE_SHARED(ast::AST_unop_Node, unop);
       if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR) {
