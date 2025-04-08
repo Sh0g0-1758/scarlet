@@ -129,30 +129,12 @@ void Codegen::gen_scar_assign_exp(
 void Codegen::gen_scar_def_assign_exp(
     std::shared_ptr<ast::AST_exp_Node> exp,
     std::shared_ptr<scar::scar_Function_Node> scar_function) {
-  // store the pointer to the lvalue we want to assign to
-  gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_ident);
-  scar_val_ident->set_type(scar::val_type::VAR);
-  if (!variable_buffer.empty()) {
-    scar_val_ident->set_reg_name(variable_buffer);
-    variable_buffer.clear();
-  } else {
-    scar_val_ident->set_reg_name(get_prev_reg_name());
-  }
-
   if (binop::is_compound(exp->get_binop_node()->get_op())) {
-    // extra scar register to store the result of the dereference operation
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_deref);
-    scar_val_deref->set_type(scar::val_type::VAR);
-    scar_val_deref->set_reg_name(
-        get_reg_name(exp->get_type(), exp->get_derived_type()));
-
-    // load the lvalue into a scar register
-    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-    scar_instruction->set_type(scar::instruction_type::LOAD);
-    scar_instruction->set_src1(scar_val_ident);
-    scar_instruction->set_dst(scar_val_deref);
-    scar_function->add_instruction(std::move(scar_instruction));
+    // get the lvalue
+    gen_scar_factor(exp->get_factor_node(), scar_function);
+    MAKE_SHARED(scar::scar_Val_Node, scar_lvalue);
+    scar_lvalue->set_type(scar::val_type::VAR);
+    scar_lvalue->set_reg_name(get_prev_reg_name());
 
     // generate the expression
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
@@ -160,7 +142,7 @@ void Codegen::gen_scar_def_assign_exp(
     scar_instruction2->set_binop(
         binop::compound_to_base(exp->get_binop_node()->get_op()));
 
-    scar_instruction2->set_src1(scar_val_deref);
+    scar_instruction2->set_src1(scar_lvalue);
 
     MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
     gen_scar_exp(exp->get_right(), scar_function);
@@ -175,16 +157,84 @@ void Codegen::gen_scar_def_assign_exp(
 
     scar_function->add_instruction(std::move(scar_instruction2));
 
+    // type cast the result to the lvalue type. We can get the lvalue type
+    // from the factor but we need to be careful because the factor can
+    // have a cast
+    ast::ElemType lvalueBaseType{};
+    std::vector<long> lvalueDerivedType{};
+    if (exp->get_factor_node()->get_cast_type() != ast::ElemType::NONE) {
+      lvalueBaseType = exp->get_factor_node()->get_child()->get_type();
+      lvalueDerivedType =
+          exp->get_factor_node()->get_child()->get_derived_type();
+    } else {
+      lvalueBaseType = exp->get_factor_node()->get_type();
+      lvalueDerivedType = exp->get_factor_node()->get_derived_type();
+    }
+    auto expType = exp->get_type();
+    auto expDerivedType = exp->get_derived_type();
+
+    if (lvalueBaseType != expType or lvalueDerivedType != expDerivedType) {
+      MAKE_SHARED(ast::AST_factor_Node, cast_factor);
+      cast_factor->set_cast_type(lvalueBaseType);
+      cast_factor->set_type(lvalueBaseType);
+      cast_factor->set_derived_type(lvalueDerivedType);
+
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+      MAKE_SHARED(ast::AST_identifier_Node, child_ident);
+      child_ident->set_identifier(get_prev_reg_name());
+      child_factor->set_identifier_node(std::move(child_ident));
+      child_factor->set_type(expType);
+      child_factor->set_derived_type(expDerivedType);
+
+      cast_factor->set_child(std::move(child_factor));
+
+      gen_scar_factor(cast_factor, scar_function);
+    }
+
     // store the result of the expression in the lvalue
+    // to do so, we need its address. This we can do so by simply generating
+    // the factor node again but from its child this time.
+    // additionally, since there can be a cast as well, we need to
+    // skip to the appropriate child
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
     scar_instruction3->set_type(scar::instruction_type::STORE);
-    scar_instruction3->set_src1(scar_val_res);
-    scar_instruction3->set_dst(scar_val_ident);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_res2);
+    scar_val_res2->set_type(scar::val_type::VAR);
+    scar_val_res2->set_reg_name(get_prev_reg_name());
+    scar_instruction3->set_src1(scar_val_res2);
+
+    if (exp->get_factor_node()->get_cast_type() != ast::ElemType::NONE) {
+      gen_scar_factor(exp->get_factor_node()->get_child()->get_child(),
+                      scar_function);
+    } else {
+      gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
+    }
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_lvalptr);
+    scar_val_lvalptr->set_type(scar::val_type::VAR);
+    if (!variable_buffer.empty()) {
+      scar_val_lvalptr->set_reg_name(variable_buffer);
+      variable_buffer.clear();
+    } else {
+      scar_val_lvalptr->set_reg_name(get_prev_reg_name());
+    }
+    scar_instruction3->set_dst(scar_val_lvalptr);
+
     scar_function->add_instruction(std::move(scar_instruction3));
 
-    // the result will be propagated because of the scar register
-    // used to store the result of the expression
+    // To propagate the result, restore the type casted result value from the
+    // source scar node used in the last store instruction
+    reg_name = scar_val_res2->get_reg();
   } else {
+    // store the pointer to the lvalue we want to assign to
+    gen_scar_factor(exp->get_factor_node()->get_child(), scar_function);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_ident);
+    scar_val_ident->set_type(scar::val_type::VAR);
+    if (!variable_buffer.empty()) {
+      scar_val_ident->set_reg_name(variable_buffer);
+      variable_buffer.clear();
+    } else {
+      scar_val_ident->set_reg_name(get_prev_reg_name());
+    }
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::STORE);
     scar_instruction->set_dst(std::move(scar_val_ident));
