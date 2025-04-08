@@ -194,25 +194,21 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   if (!success)
     return;
 
-  // If factor has an increment/decrement operator
-  // make sure it operates on an lvalue
-  if (factor->get_unop_node() != nullptr and
-      unop::is_incr_decr(factor->get_unop_node()->get_op())) {
-    if (!ast::is_lvalue(factor->get_child())) {
-      success = false;
-      error_messages.emplace_back(
-          "Expected an lvalue for the increment / decrement operator");
+  if (factor->get_unop_node() != nullptr) {
+    if (unop::is_incr_decr(factor->get_unop_node()->get_op())) {
+      if (!ast::is_lvalue(factor->get_child())) {
+        success = false;
+        error_messages.emplace_back(
+            "Expected an lvalue for the increment / decrement operator");
+      }
     }
-  }
 
-  // If factor has an addressof(&) operator
-  // make sure it operates on an lvalue
-  if (factor->get_unop_node() != nullptr and
-      factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
-    if (!ast::is_lvalue(factor->get_child())) {
-      success = false;
-      error_messages.emplace_back(
-          "Expected an lvalue for AddressOf (&) operator");
+    if (factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
+      if (!ast::is_lvalue(factor->get_child())) {
+        success = false;
+        error_messages.emplace_back(
+            "Expected an lvalue for AddressOf (&) operator");
+      }
     }
   }
 
@@ -232,29 +228,89 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       }
     }
   }
+
   // assign type to the factor
   assign_type_to_factor(factor);
 
   // complement operator cannot be used on double precision
   if (factor->get_unop_node() != nullptr) {
+    auto unop = factor->get_unop_node()->get_op();
     if (factor->get_type() == ast::ElemType::DOUBLE) {
-      if (factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
+      if (unop == unop::UNOP::COMPLEMENT) {
         success = false;
         error_messages.emplace_back(
             "Complement operator not allowed on double precision");
       }
     }
     if (factor->get_type() == ast::ElemType::DERIVED) {
-      if (factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT) {
+      if (unop == unop::UNOP::COMPLEMENT) {
         success = false;
         error_messages.emplace_back(
             "Complement operator not allowed on pointer types");
       }
 
-      if (factor->get_unop_node()->get_op() == unop::UNOP::NEGATE) {
+      if (unop == unop::UNOP::NEGATE) {
         success = false;
         error_messages.emplace_back("negation not allowed on pointer types");
       }
+    }
+
+    // convert pre increment / decrement to an expression
+    if (unop == unop::UNOP::PREDECREMENT or unop == unop::UNOP::PREINCREMENT) {
+      auto base = factor->get_child();
+      auto baseType = base->get_type();
+      auto baseDerivedType = base->get_derived_type();
+
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      exp->set_type(factor->get_type());
+      exp->set_derived_type(factor->get_derived_type());
+      MAKE_SHARED(ast::AST_binop_Node, binop_node);
+      binop_node->set_op(binop::BINOP::ASSIGN);
+      exp->set_binop_node(binop_node);
+      exp->set_factor_node(base);
+
+      MAKE_SHARED(ast::AST_exp_Node, right);
+      right->set_type(factor->get_type());
+      right->set_derived_type(factor->get_derived_type());
+      right->set_factor_node(base);
+      MAKE_SHARED(ast::AST_binop_Node, binop_node2);
+      if (unop == unop::UNOP::PREDECREMENT)
+        binop_node2->set_op(binop::BINOP::SUB);
+      else
+        binop_node2->set_op(binop::BINOP::ADD);
+      right->set_binop_node(binop_node2);
+
+      MAKE_SHARED(ast::AST_exp_Node, constExp);
+      constExp->set_type(baseType);
+      constExp->set_derived_type(baseDerivedType);
+      MAKE_SHARED(ast::AST_factor_Node, constFactor);
+      constFactor->set_type(baseType);
+      constFactor->set_derived_type(baseDerivedType);
+      MAKE_SHARED(ast::AST_const_Node, constVal);
+      constant::Constant one;
+      if (baseType == ast::ElemType::DOUBLE) {
+        one.set_type(constant::Type::DOUBLE);
+        one.set_value({.d = 1});
+      } else {
+        one.set_type(constant::Type::INT);
+        one.set_value({.i = 1});
+        if (baseType == ast::ElemType::DERIVED) {
+          constExp->set_type(ast::ElemType::INT);
+          constExp->set_derived_type({});
+          constFactor->set_type(ast::ElemType::INT);
+          constFactor->set_derived_type({});
+        }
+      }
+      constVal->set_constant(one);
+      constFactor->set_const_node(constVal);
+      constExp->set_factor_node(constFactor);
+
+      right->set_right(constExp);
+      exp->set_right(right);
+
+      factor->set_unop_node(nullptr);
+      factor->set_child(nullptr);
+      factor->set_exp_node(exp);
     }
   }
 }

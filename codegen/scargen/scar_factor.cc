@@ -130,44 +130,7 @@ void Codegen::gen_scar_factor(
     auto op = factor->get_unop_node()->get_op();
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
 
-    if (op == unop::UNOP::PREDECREMENT or op == unop::UNOP::PREINCREMENT) {
-      scar_instruction->set_type(scar::instruction_type::BINARY);
-      if (op == unop::UNOP::PREINCREMENT) {
-        scar_instruction->set_binop(binop::BINOP::ADD);
-      } else {
-        scar_instruction->set_binop(binop::BINOP::SUB);
-      }
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-
-      scar_val_src1->set_type(scar::val_type::VAR);
-      scar_val_src1->set_reg_name(variable_buffer);
-      scar_instruction->set_src1(std::move(scar_val_src1));
-
-      scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(variable_buffer);
-      scar_instruction->set_dst(std::move(scar_val_dst));
-
-      scar_val_src2->set_type(scar::val_type::CONSTANT);
-      constant::Constant one;
-      // constant should be double for a double increment but
-      // can be a signed int for all integer types (int/long/uint/ulong)
-      if (factor->get_type() == ast::ElemType::DOUBLE) {
-        one.set_type(constant::Type::DOUBLE);
-        one.set_value({.d = 1.0});
-      } else {
-        one.set_type(constant::Type::INT);
-        one.set_value({.i = 1});
-      }
-      scar_val_src2->set_const_val(one);
-      scar_instruction->set_src2(std::move(scar_val_src2));
-
-      scar_function->add_instruction(std::move(scar_instruction));
-      // propagate the updated value by not clearing the variable buffer
-
-    } else if (op == unop::UNOP::POSTDECREMENT or
-               op == unop::UNOP::POSTINCREMENT) {
+    if (op == unop::UNOP::POSTDECREMENT or op == unop::UNOP::POSTINCREMENT) {
       // copy the original value into a scar register
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       scar_instruction->set_type(scar::instruction_type::COPY);
