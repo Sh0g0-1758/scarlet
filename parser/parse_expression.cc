@@ -154,15 +154,24 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       error_messages.emplace_back(
           "Expected an lvalue for the increment / decrement operator");
     } else {
+      // an increment decrement operator is a unary operator
+      // so in the ast we should have the operand as a child factor
+      // but there can be cases like (*p)++ where this is not the case
+      // However, in these cases, we can be sure that the child factor
+      // is simply factor->exp->factor. If that is not the case, it will
+      // simply be raised as an error during semantic analysis
       MAKE_SHARED(ast::AST_factor_Node, nested_factor);
-      nested_factor->set_identifier_node(factor->get_identifier_node());
-      nested_factor->set_unop_node(factor->get_unop_node());
-      nested_factor->set_exp_node(factor->get_exp_node());
-      nested_factor->set_factor_type(factor->get_factor_type());
-      nested_factor->set_cast_type(factor->get_cast_type());
-      nested_factor->set_cast_declarator(factor->get_cast_declarator());
-      nested_factor->set_child(factor->get_child());
-      nested_factor->set_arrIdx(factor->get_arrIdx());
+      if (factor->get_exp_node() != nullptr) {
+        nested_factor = factor->get_exp_node()->get_factor_node();
+      } else {
+        nested_factor->set_identifier_node(factor->get_identifier_node());
+        nested_factor->set_unop_node(factor->get_unop_node());
+        nested_factor->set_factor_type(factor->get_factor_type());
+        nested_factor->set_cast_type(factor->get_cast_type());
+        nested_factor->set_cast_declarator(factor->get_cast_declarator());
+        nested_factor->set_child(factor->get_child());
+        nested_factor->set_arrIdx(factor->get_arrIdx());
+      }
 
       factor->set_identifier_node(nullptr);
       factor->set_unop_node(nullptr);

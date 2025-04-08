@@ -175,11 +175,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   // make sure it operates on an lvalue
   if (factor->get_unop_node() != nullptr and
       unop::is_incr_decr(factor->get_unop_node()->get_op())) {
-    // it is possible that the lvalue is in the exp node of the factor
-    // consider: (*p)++
-    if (!ast::is_lvalue(factor->get_child()) and
-        !(factor->get_exp_node() != nullptr and
-          ast::is_lvalue(factor->get_exp_node()->get_factor_node()))) {
+    if (!ast::is_lvalue(factor->get_child())) {
       success = false;
       error_messages.emplace_back(
           "Expected an lvalue for the increment / decrement operator");
