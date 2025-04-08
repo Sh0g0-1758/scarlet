@@ -75,7 +75,7 @@ Scarlet currently supports the following architectures:
 - [x] Add support for Long Integers
 - [x] Add support for Unsigned Integers
 - [x] Add support for double precision
-- [ ] Add support for Pointers
+- [x] Add support for Pointers
 - [ ] Add support for Arrays
 - [ ] Add support for characters and strings
 - [ ] Add support for dynamic memory allocation
