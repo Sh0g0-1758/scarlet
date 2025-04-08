@@ -256,7 +256,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     }
 
     // convert pre increment / decrement to an expression
-    if (unop == unop::UNOP::PREDECREMENT or unop == unop::UNOP::PREINCREMENT) {
+    if (unop::is_incr_decr(unop)) {
       auto base = factor->get_child();
       auto baseType = base->get_type();
       auto baseDerivedType = base->get_derived_type();
@@ -274,7 +274,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       right->set_derived_type(factor->get_derived_type());
       right->set_factor_node(base);
       MAKE_SHARED(ast::AST_binop_Node, binop_node2);
-      if (unop == unop::UNOP::PREDECREMENT)
+      if (unop == unop::UNOP::PREDECREMENT or unop == unop::UNOP::POSTDECREMENT)
         binop_node2->set_op(binop::BINOP::SUB);
       else
         binop_node2->set_op(binop::BINOP::ADD);
@@ -308,8 +308,14 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       right->set_right(constExp);
       exp->set_right(right);
 
-      factor->set_unop_node(nullptr);
-      factor->set_child(nullptr);
+      if (unop == unop::UNOP::POSTDECREMENT or
+          unop == unop::UNOP::POSTINCREMENT) {
+        // preserve the unop and child so that during scargen, we can propagate
+        // the original lvalue (before updation)
+      } else {
+        factor->set_unop_node(nullptr);
+        factor->set_child(nullptr);
+      }
       factor->set_exp_node(exp);
     }
   }
