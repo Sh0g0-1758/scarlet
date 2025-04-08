@@ -329,12 +329,7 @@ public:
       return true;
     }
 
-    // we check the child because it is possible that a compound expression
-    // added a typecast to the factor
-    return is_deref_lval(factor->get_child()) or
-           (factor->get_exp_node() != nullptr
-                ? is_deref_lval(factor->get_exp_node()->get_factor_node())
-                : false);
+    return is_deref_lval(factor->get_child());
   }
 
   std::vector<scasm::register_type> int_argReg = {
