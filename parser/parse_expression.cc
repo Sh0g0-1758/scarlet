@@ -74,6 +74,8 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     } else {
       MAKE_SHARED(ast::AST_exp_Node, exp);
       parse_exp(tokens, exp);
+      // A very useful optimization which simplifies lvalue assumptions
+      // if the expression is a factor, we can just set it as the factor
       if (ast::exp_is_factor(exp)) {
         factor = exp->get_factor_node();
       } else {
@@ -95,14 +97,16 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       error_messages.emplace_back(
           "Expected an lvalue for the increment / decrement operator");
     } else {
-      // an increment decrement operator is a unary operator
+      // increment / decrement operator only works on lvalues
+      // so we the factor should only be an identifier or a
+      // dereference. However there is only one case in which the factor
+      // can be a function call. We handle that during semantic analysis.
+      // Thus setting the identifier, unop, child, arrIdx and factorType
+      // suffices.
       MAKE_SHARED(ast::AST_factor_Node, nested_factor);
       nested_factor->set_identifier_node(factor->get_identifier_node());
       nested_factor->set_unop_node(factor->get_unop_node());
-      nested_factor->set_exp_node(factor->get_exp_node());
       nested_factor->set_factor_type(factor->get_factor_type());
-      nested_factor->set_cast_type(factor->get_cast_type());
-      nested_factor->set_cast_declarator(factor->get_cast_declarator());
       nested_factor->set_child(factor->get_child());
       nested_factor->set_arrIdx(factor->get_arrIdx());
 
