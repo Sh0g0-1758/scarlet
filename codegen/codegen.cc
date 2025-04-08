@@ -9,50 +9,49 @@ namespace codegen {
 #define ARCHPREFIX ""
 #endif
 
+#define PRINT_REG(target)                                                      \
+  switch (instr->get_asm_type()) {                                             \
+  case scasm::AssemblyType::DOUBLE:                                            \
+  case scasm::AssemblyType::QUAD_WORD:                                         \
+    assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
+                                 scasm::register_size::QWORD);                 \
+    break;                                                                     \
+  case scasm::AssemblyType::LONG_WORD:                                         \
+    assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
+                                 scasm::register_size::LWORD);                 \
+    break;                                                                     \
+  case scasm::AssemblyType::BYTE:                                              \
+    assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
+                                 scasm::register_size::BYTE);                  \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
 #define CODEGEN_SRC()                                                          \
   if (instr->get_src()->get_type() == scasm::operand_type::IMM) {              \
     assembly << "$" << instr->get_src()->get_imm();                            \
-  } else if (instr->get_src()->get_type() == scasm::operand_type::STACK) {     \
-    assembly << instr->get_src()->get_identifier_stack();                      \
+  } else if (instr->get_src()->get_type() == scasm::operand_type::MEMORY) {    \
+    assembly << instr->get_src()->get_offset() << "(";                         \
+    assembly << scasm::to_string(instr->get_src()->get_reg(),                  \
+                                 scasm::register_size::QWORD);                 \
+    assembly << ")";                                                           \
   } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {      \
-    assembly << ARCHPREFIX << instr->get_src()->get_identifier_stack()         \
-             << "(%rip)";                                                      \
+    assembly << ARCHPREFIX << instr->get_src()->get_identifier() << "(%rip)";  \
   } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {       \
-    switch (instr->get_asm_type()) {                                           \
-    case scasm::AssemblyType::DOUBLE:                                          \
-    case scasm::AssemblyType::QUAD_WORD:                                       \
-      assembly << scasm::to_string(instr->get_src()->get_reg(),                \
-                                   scasm::register_size::QWORD);               \
-      break;                                                                   \
-    case scasm::AssemblyType::LONG_WORD:                                       \
-      assembly << scasm::to_string(instr->get_src()->get_reg(),                \
-                                   scasm::register_size::LWORD);               \
-      break;                                                                   \
-    default:                                                                   \
-      break;                                                                   \
-    }                                                                          \
+    PRINT_REG(src);                                                            \
   }
 
 #define CODEGEN_DST()                                                          \
-  if (instr->get_dst()->get_type() == scasm::operand_type::STACK) {            \
-    assembly << instr->get_dst()->get_identifier_stack();                      \
+  if (instr->get_dst()->get_type() == scasm::operand_type::MEMORY) {           \
+    assembly << instr->get_dst()->get_offset() << "(";                         \
+    assembly << scasm::to_string(instr->get_dst()->get_reg(),                  \
+                                 scasm::register_size::QWORD);                 \
+    assembly << ")";                                                           \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {      \
-    assembly << ARCHPREFIX << instr->get_dst()->get_identifier_stack()         \
-             << "(%rip)";                                                      \
+    assembly << ARCHPREFIX << instr->get_dst()->get_identifier() << "(%rip)";  \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {       \
-    switch (instr->get_asm_type()) {                                           \
-    case scasm::AssemblyType::DOUBLE:                                          \
-    case scasm::AssemblyType::QUAD_WORD:                                       \
-      assembly << scasm::to_string(instr->get_dst()->get_reg(),                \
-                                   scasm::register_size::QWORD);               \
-      break;                                                                   \
-    case scasm::AssemblyType::LONG_WORD:                                       \
-      assembly << scasm::to_string(instr->get_dst()->get_reg(),                \
-                                   scasm::register_size::LWORD);               \
-      break;                                                                   \
-    default:                                                                   \
-      break;                                                                   \
-    }                                                                          \
+    PRINT_REG(dst);                                                            \
   }
 
 #define CODEGEN_SRC_DST()                                                      \
@@ -89,7 +88,7 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
   assembly << "\tmovq %rsp, %rbp\n";
   for (auto instr : funcs->get_instructions()) {
     if (instr->get_type() == scasm::instruction_type::CALL) {
-      std::string funcName = instr->get_src()->get_identifier_stack();
+      std::string funcName = instr->get_src()->get_identifier();
 #ifdef __APPLE__
       assembly << "\tcall " << "_" << funcName << "\n";
 #else
@@ -165,17 +164,16 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::JMP) {
 #ifdef __APPLE__
-      assembly << "\tjmp " << "L" << instr->get_src()->get_identifier_stack()
-               << "\n";
+      assembly << "\tjmp " << "L" << instr->get_src()->get_identifier() << "\n";
 #else
-      assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier_stack()
+      assembly << "\tjmp " << ".L" << instr->get_src()->get_identifier()
                << "\n";
 #endif
     } else if (instr->get_type() == scasm::instruction_type::LABEL) {
 #ifdef __APPLE__
-      assembly << "L" << instr->get_src()->get_identifier_stack() << ":\n";
+      assembly << "L" << instr->get_src()->get_identifier() << ":\n";
 #else
-      assembly << ".L" << instr->get_src()->get_identifier_stack() << ":\n";
+      assembly << ".L" << instr->get_src()->get_identifier() << ":\n";
 #endif
     } else if (instr->get_type() == scasm::instruction_type::CMP) {
       if (instr->get_asm_type() == scasm::AssemblyType::DOUBLE) {
@@ -191,9 +189,9 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << "\tj";
       assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
 #ifdef __APPLE__
-      assembly << "L" << instr->get_dst()->get_identifier_stack() << "\n";
+      assembly << "L" << instr->get_dst()->get_identifier() << "\n";
 #else
-      assembly << ".L" << instr->get_dst()->get_identifier_stack() << "\n";
+      assembly << ".L" << instr->get_dst()->get_identifier() << "\n";
 #endif
     } else if (instr->get_type() == scasm::instruction_type::SETCC) {
       assembly << "\tset";
@@ -215,6 +213,12 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::CVTTS2DI) {
       assembly << "\tcvttsd2si";
+      POSTFIX_ASM_TYPE();
+      assembly << " ";
+      CODEGEN_SRC_DST();
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::LEA) {
+      assembly << "\tlea";
       POSTFIX_ASM_TYPE();
       assembly << " ";
       CODEGEN_SRC_DST();

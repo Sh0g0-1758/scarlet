@@ -14,7 +14,7 @@ ElemType constTypeToElemType(constant::Type t) {
     return ElemType::ULONG;
   case constant::Type::DOUBLE:
     return ElemType::DOUBLE;
-  // FIXME
+  // this case will never be reached, so we can safely ignore it
   case constant::Type::ZERO:
   case constant::Type::NONE:
     return ElemType::NONE;
@@ -34,9 +34,10 @@ constant::Type elemTypeToConstType(ElemType t) {
     return constant::Type::ULONG;
   case ElemType::DOUBLE:
     return constant::Type::DOUBLE;
+  case ElemType::DERIVED:
+    return constant::Type::ULONG;
   // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
   // be something different ?
-  case ElemType::DERIVED:
   case ElemType::POINTER:
   case ElemType::NONE:
     return constant::Type::NONE;
@@ -285,5 +286,33 @@ bool isComplexType(ElemType type) {
     return true;
   return false;
 }
+
+std::string get_lvalue_identifier(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor == nullptr)
+    return "";
+  if (factor->get_identifier_node() != nullptr) {
+    return factor->get_identifier_node()->get_value();
+  } else if (factor->get_child() != nullptr) {
+    return get_lvalue_identifier(factor->get_child());
+  } else if (factor->get_exp_node() != nullptr) {
+    return get_lvalue_identifier(factor->get_exp_node()->get_factor_node());
+  }
+  return "";
+}
+
+bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp) {
+  if (exp == nullptr)
+    return false;
+  if (exp->get_binop_node() != nullptr)
+    return false;
+  if (exp->get_left() != nullptr)
+    return false;
+  if (exp->get_right() != nullptr)
+    return false;
+  if (exp->get_factor_node() == nullptr)
+    return false;
+  return true;
+}
+
 } // namespace ast
 } // namespace scarlet

@@ -110,8 +110,17 @@ namespace scasm {
 
 // BYTE = 8 bits, LONG WORD = 32 bits, QUAD WORD = 64 bits
 enum class AssemblyType { NONE, BYTE, LONG_WORD, QUAD_WORD, DOUBLE };
-// NOTE: Every Pseudo Operand gets converted into a stack operand
-enum class operand_type { UNKNOWN, IMM, REG, PSEUDO, STACK, LABEL, COND, DATA };
+// NOTE: Every Pseudo Operand gets converted into a memory operand
+enum class operand_type {
+  UNKNOWN,
+  IMM,
+  REG,
+  PSEUDO,
+  MEMORY,
+  LABEL,
+  COND,
+  DATA
+};
 enum class Unop { UNKNOWN, NEG, ANOT, LNOT, SHR };
 enum class Binop {
   UNKNOWN,
@@ -158,6 +167,7 @@ enum class instruction_type {
   CALL,
   CVTTS2DI,
   CVTSI2SD,
+  LEA,
 };
 
 enum class register_type {
@@ -173,6 +183,7 @@ enum class register_type {
   R11,
   CL,
   SP,
+  BP,
   XMM0,
   XMM1,
   XMM2,
@@ -195,14 +206,16 @@ std::string to_string(register_type reg, register_size size);
 std::string to_string(Unop unop);
 std::string to_string(Binop binop);
 std::string to_string(cond_code cond);
+bool RegIsXMM(register_type reg);
 
 class scasm_operand {
 private:
   operand_type type;
   constant::Constant imm;
   register_type reg;
+  long offset;
   cond_code cond;
-  std::string identifier_stack;
+  std::string identifier;
 
 public:
   std::string get_scasm_name() { return "Operand"; }
@@ -214,10 +227,10 @@ public:
   void set_reg(register_type reg) { this->reg = reg; }
   cond_code get_cond() { return cond; }
   void set_cond(cond_code cond) { this->cond = cond; }
-  std::string get_identifier_stack() { return identifier_stack; }
-  void set_identifier_stack(std::string identifier_stack) {
-    this->identifier_stack = identifier_stack;
-  }
+  std::string get_identifier() { return identifier; }
+  void set_identifier(std::string identifier) { this->identifier = identifier; }
+  long get_offset() { return offset; }
+  void set_offset(long offset) { this->offset = offset; }
 };
 
 class scasm_instruction {

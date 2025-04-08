@@ -62,7 +62,7 @@ void Codegen::gen_funcall_scasm(
     switch (funcArg->get_type()) {
     case scar::val_type::VAR:
       scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier_stack(funcArg->get_reg());
+      scasm_src->set_identifier(funcArg->get_reg());
       break;
     case scar::val_type::CONSTANT:
       scasm_src->set_type(scasm::operand_type::IMM);
@@ -89,7 +89,7 @@ void Codegen::gen_funcall_scasm(
     switch (funcArg->get_type()) {
     case scar::val_type::VAR:
       scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier_stack(funcArg->get_reg());
+      scasm_src->set_identifier(funcArg->get_reg());
       break;
     case scar::val_type::CONSTANT: {
       MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val(), 8);
@@ -115,7 +115,7 @@ void Codegen::gen_funcall_scasm(
     switch (funcArg->get_type()) {
     case scar::val_type::VAR:
       scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier_stack(funcArg->get_reg());
+      scasm_src->set_identifier(funcArg->get_reg());
       break;
     case scar::val_type::CONSTANT: {
       if (funcArg->get_const_val().get_type() == constant::Type::DOUBLE) {
@@ -160,7 +160,7 @@ void Codegen::gen_funcall_scasm(
   scasm_inst->set_type(scasm::instruction_type::CALL);
   MAKE_SHARED(scasm::scasm_operand, scasm_src);
   scasm_src->set_type(scasm::operand_type::LABEL);
-  scasm_src->set_identifier_stack(funcCall->get_name()->get_value());
+  scasm_src->set_identifier(funcCall->get_name()->get_value());
   scasm_inst->set_src(std::move(scasm_src));
   scasm_func->add_instruction(std::move(scasm_inst));
 

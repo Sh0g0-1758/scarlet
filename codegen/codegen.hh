@@ -62,7 +62,7 @@ private:
   int doubleLabelCounter = 0;
   int doubleCastCounter = 0;
   std::string reg_name;
-  std::map<std::string, std::string> pseduo_registers;
+  std::map<std::string, long> pseudoRegToMemOffset;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   std::map<std::string, scasm::backendSymbol> backendSymbolTable;
   std::map<double, std::string, DoubleCompare> doubleLabelMap;
@@ -85,6 +85,8 @@ private:
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
+  // void gen_scar_incr_decr(std::shared_ptr<ast::AST_factor_Node> factor,
+  // std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor_function_call(
       std::shared_ptr<ast::AST_factor_function_call_Node> factor,
       std::shared_ptr<scar::scar_Function_Node> scar_function);
@@ -110,6 +112,9 @@ private:
   void gen_funcall_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
                          std::shared_ptr<scasm::scasm_function> scasm_func,
                          scasm::scasm_program &scasm_program);
+  void gen_type_cast_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
+                           std::shared_ptr<scasm::scasm_function> scasm_func,
+                           scasm::scasm_program &scasm_program);
   void
   gen_scar_factor_array(std::shared_ptr<ast::AST_factor_Node> factor,
                         std::shared_ptr<scar::scar_Function_Node> scar_function,
@@ -205,7 +210,8 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case constant::Type::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
-      // TODO: FIXME
+      // Since ZERO Type will only ever be used in the initializer list
+      // we can safely ignore it here
       case constant::Type::ZERO:
       case constant::Type::NONE:
         return scasm::AssemblyType::NONE;
@@ -221,8 +227,10 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
-      // TODO: FIXME
+      // FIXME: For Arrays
       case ast::ElemType::DERIVED:
+        return scasm::AssemblyType::QUAD_WORD;
+      // this case will never be reached
       case ast::ElemType::POINTER:
       case ast::ElemType::NONE:
         return scasm::AssemblyType::NONE;
@@ -246,8 +254,9 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
-    // TODO: FIXME
+    // FIXME: For Arrays
     case ast::ElemType::DERIVED:
+      return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
@@ -303,7 +312,7 @@ public:
           stack_param_indx.push_back({scasm::AssemblyType::DOUBLE, i});
         }
         break;
-      // TODO: FIXME
+      // this case will never be reached, so we can safely ignore it
       case constant::Type::ZERO:
       case constant::Type::NONE:
         break;
@@ -320,9 +329,7 @@ public:
       return true;
     }
 
-    return factor->get_exp_node() != nullptr
-               ? is_deref_lval(factor->get_exp_node()->get_factor_node())
-               : false;
+    return is_deref_lval(factor->get_child());
   }
 
   std::vector<scasm::register_type> int_argReg = {

@@ -78,6 +78,8 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   case binop::BINOP::COMPOUND_XOR:
   case binop::BINOP::COMPOUND_LEFTSHIFT:
   case binop::BINOP::COMPOUND_RIGHTSHIFT:
+  case binop::BINOP::COMPOUND_LOGICAL_LEFTSHIFT:
+  case binop::BINOP::COMPOUND_LOGICAL_RIGHTSHIFT:
   case binop::BINOP::MOD:
   case binop::BINOP::UNKNOWN:
   case binop::BINOP::TERNARY:
@@ -188,6 +190,9 @@ std::string to_string(register_type reg, register_size size) {
       return "%r11";
     }
     break;
+
+  case register_type::BP:
+    return "%rbp";
   case register_type::SP:
     return "%rsp";
   case register_type::CL:
@@ -302,6 +307,24 @@ std::string to_string(Binop binop) {
     UNREACHABLE()
   }
   UNREACHABLE()
+}
+
+bool RegIsXMM(register_type reg) {
+  switch (reg) {
+  case register_type::XMM0:
+  case register_type::XMM1:
+  case register_type::XMM2:
+  case register_type::XMM3:
+  case register_type::XMM4:
+  case register_type::XMM5:
+  case register_type::XMM6:
+  case register_type::XMM7:
+  case register_type::XMM14:
+  case register_type::XMM15:
+    return true;
+  default:
+    return false;
+  }
 }
 
 } // namespace scasm

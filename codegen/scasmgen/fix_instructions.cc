@@ -182,7 +182,7 @@ void Codegen::fix_instructions() {
       } else if ((*it)->get_type() == scasm::instruction_type::MOVZX) {
         // NOTE: MovZeroExtend simply uses movl because movl zeroes out the
         // upper 32 bits of the register
-        if ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+        if ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
             (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
           // MovZeroExtend(Stack/Data/Reg , Stack/Data)
           //      |
@@ -212,7 +212,7 @@ void Codegen::fix_instructions() {
         }
       } else if ((*it)->get_type() == scasm::instruction_type::BINARY and
                  (*it)->get_binop() == scasm::Binop::MUL and
-                 ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+                 ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
                   (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
         // imull $3, STACK/DATA
         //        |
@@ -266,7 +266,7 @@ void Codegen::fix_instructions() {
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
         }
-        if ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+        if ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
             (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
           MAKE_SHARED(scasm::scasm_operand, src);
           src->set_type(scasm::operand_type::REG);
@@ -282,6 +282,70 @@ void Codegen::fix_instructions() {
 
           it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
         }
+      } else if ((*it)->get_type() == scasm::instruction_type::LEA) {
+        // lea stack/data/reg, stack/data
+        //     |
+        //     v
+        // lea stack/data/reg, %r10
+        // movq %r10, stack/data
+
+        if ((*it)->get_dst()->get_type() != scasm::operand_type::REG) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::MOV);
+          scasm_inst->set_asm_type((*it)->get_asm_type());
+          MAKE_SHARED(scasm::scasm_operand, reg);
+          reg->set_type(scasm::operand_type::REG);
+          reg->set_reg(scasm::register_type::R10);
+          scasm_inst->set_dst((*it)->get_dst());
+          scasm_inst->set_src(reg);
+
+          (*it)->set_dst(std::move(reg));
+
+          it = funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
+        }
+      } else if ((*it)->get_type() == scasm::instruction_type::PUSH) {
+        if ((*it)->get_src()->get_type() == scasm::operand_type::REG and
+            scasm::RegIsXMM((*it)->get_src()->get_reg())) {
+          // pushq reg(xmm)
+          //        |
+          //        v
+          // subq $8, %rsp
+          // movq reg(xmm), (%rsp)
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::BINARY);
+          scasm_inst->set_binop(scasm::Binop::SUB);
+          scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          scasm_src->set_type(scasm::operand_type::IMM);
+          constant::Constant cfs;
+          cfs.set_type(constant::Type::INT);
+          cfs.set_value({.i = 8});
+          scasm_src->set_imm(cfs);
+          scasm_inst->set_src(std::move(scasm_src));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+          scasm_dst->set_type(scasm::operand_type::REG);
+          scasm_dst->set_reg(scasm::register_type::SP);
+          scasm_inst->set_dst(std::move(scasm_dst));
+
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::MOV);
+          scasm_inst2->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          MAKE_SHARED(scasm::scasm_operand, src);
+          src->set_type(scasm::operand_type::REG);
+          src->set_reg((*it)->get_src()->get_reg());
+          scasm_inst2->set_src(src);
+          MAKE_SHARED(scasm::scasm_operand, dst);
+          dst->set_type(scasm::operand_type::MEMORY);
+          dst->set_offset(0);
+          dst->set_reg(scasm::register_type::SP);
+          scasm_inst2->set_dst(dst);
+
+          it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+          it++;
+          funcs->get_instructions().erase(it);
+          it = funcs->get_instructions().insert(it, std::move(scasm_inst2));
+        }
       }
     }
 
@@ -294,9 +358,9 @@ void Codegen::fix_instructions() {
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
       if (NOTNULL((*it)->get_src()) && NOTNULL((*it)->get_dst()) &&
-          ((*it)->get_src()->get_type() == scasm::operand_type::STACK or
+          ((*it)->get_src()->get_type() == scasm::operand_type::MEMORY or
            (*it)->get_src()->get_type() == scasm::operand_type::DATA) &&
-          ((*it)->get_dst()->get_type() == scasm::operand_type::STACK or
+          ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
            (*it)->get_dst()->get_type() == scasm::operand_type::DATA)) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);

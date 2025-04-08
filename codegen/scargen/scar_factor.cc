@@ -35,6 +35,95 @@ void Codegen::gen_scar_factor(
         variable_buffer = factor->get_identifier_node()->get_value();
       }
     }
+  } else if (factor->get_unop_node() != nullptr) {
+    // if the factor is a dereference and the child is an addrof, then we can
+    // simply omit the instructions for both of them. the same is true when the
+    // factor is an addrof and the child is a dereference.
+    if (factor->get_child() != nullptr and
+        factor->get_child()->get_unop_node() != nullptr) {
+      if (factor->get_child()->get_unop_node()->get_op() ==
+              unop::UNOP::ADDROF and
+          factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
+        gen_scar_factor(factor->get_child()->get_child(), scar_function);
+        return;
+      }
+      if (factor->get_child()->get_unop_node()->get_op() ==
+              unop::UNOP::DEREFERENCE and
+          factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
+        gen_scar_factor(factor->get_child()->get_child(), scar_function);
+        return;
+      }
+    }
+
+    gen_scar_factor(factor->get_child(), scar_function);
+
+    auto op = factor->get_unop_node()->get_op();
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+
+    if (op == unop::UNOP::POSTDECREMENT or op == unop::UNOP::POSTINCREMENT) {
+      // copy the original value into a scar register
+      scar_instruction->set_type(scar::instruction_type::COPY);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+      SETVARCONSTANTREG(scar_val_src);
+      scar_instruction->set_src1(std::move(scar_val_src));
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
+      scar_instruction->set_dst(std::move(scar_val_dst));
+      scar_function->add_instruction(std::move(scar_instruction));
+      std::string retval = get_prev_reg_name();
+
+      // now do increment / decrement on the original value
+      gen_scar_exp(factor->get_exp_node(), scar_function);
+
+      // propagate the original value
+      variable_buffer.clear();
+      constant_buffer.clear();
+      reg_name = retval;
+    } else if (op == unop::UNOP::DEREFERENCE) {
+      scar_instruction->set_type(scar::instruction_type::LOAD);
+
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      SETVARCONSTANTREG(scar_val_src);
+      scar_instruction->set_src1(std::move(scar_val_src));
+
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
+      scar_instruction->set_dst(std::move(scar_val_dst));
+
+      scar_function->add_instruction(std::move(scar_instruction));
+    } else if (op == unop::UNOP::ADDROF) {
+      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+      scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+      SETVARCONSTANTREG(scar_val_src);
+      scar_instruction->set_src1(std::move(scar_val_src));
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
+      scar_instruction->set_dst(std::move(scar_val_dst));
+      scar_function->add_instruction(std::move(scar_instruction));
+    } else {
+      scar_instruction->set_type(scar::instruction_type::UNARY);
+      scar_instruction->set_unop(op);
+
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
+
+      SETVARCONSTANTREG(scar_val_src)
+      scar_instruction->set_src1(std::move(scar_val_src));
+
+      scar_val_dst->set_type(scar::val_type::VAR);
+      scar_val_dst->set_reg_name(
+          get_reg_name(factor->get_type(), factor->get_derived_type()));
+      scar_instruction->set_dst(std::move(scar_val_dst));
+
+      scar_function->add_instruction(std::move(scar_instruction));
+    }
   } else if (factor->get_exp_node() != nullptr) {
     gen_scar_exp(factor->get_exp_node(), scar_function);
     if (factor->get_arrIdx().size() > 0) {
@@ -102,163 +191,6 @@ void Codegen::gen_scar_factor(
           scar_instruction->set_type(scar::instruction_type::ZERO_EXTEND);
         }
       }
-
-      scar_function->add_instruction(std::move(scar_instruction));
-    }
-  } else if (factor->get_unop_node() != nullptr) {
-    // if the factor is a dereference and the child is an addrof, then we can
-    // simply omit the instructions for both of them. the same is true when the
-    // factor is an addrof and the child is a dereference.
-    if (factor->get_child() != nullptr and
-        factor->get_child()->get_unop_node() != nullptr) {
-      if (factor->get_child()->get_unop_node()->get_op() ==
-              unop::UNOP::ADDROF and
-          factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
-        gen_scar_factor(factor->get_child()->get_child(), scar_function);
-        return;
-      }
-      if (factor->get_child()->get_unop_node()->get_op() ==
-              unop::UNOP::DEREFERENCE and
-          factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
-        gen_scar_factor(factor->get_child()->get_child(), scar_function);
-        return;
-      }
-    }
-
-    gen_scar_factor(factor->get_child(), scar_function);
-
-    auto op = factor->get_unop_node()->get_op();
-    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-
-    if (op == unop::UNOP::PREDECREMENT or op == unop::UNOP::PREINCREMENT) {
-      scar_instruction->set_type(scar::instruction_type::BINARY);
-      if (op == unop::UNOP::PREINCREMENT) {
-        scar_instruction->set_binop(binop::BINOP::ADD);
-      } else {
-        scar_instruction->set_binop(binop::BINOP::SUB);
-      }
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-
-      scar_val_src1->set_type(scar::val_type::VAR);
-      scar_val_src1->set_reg_name(variable_buffer);
-      scar_instruction->set_src1(std::move(scar_val_src1));
-
-      scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(variable_buffer);
-      scar_instruction->set_dst(std::move(scar_val_dst));
-
-      scar_val_src2->set_type(scar::val_type::CONSTANT);
-      constant::Constant one;
-      // constant should be double for a double increment but
-      // can be a signed int for all integer types (int/long/uint/ulong)
-      if (factor->get_type() == ast::ElemType::DOUBLE) {
-        one.set_type(constant::Type::DOUBLE);
-        one.set_value({.d = 1.0});
-      } else {
-        one.set_type(constant::Type::INT);
-        one.set_value({.i = 1});
-      }
-      scar_val_src2->set_const_val(one);
-      scar_instruction->set_src2(std::move(scar_val_src2));
-
-      scar_function->add_instruction(std::move(scar_instruction));
-      // propagate the updated value by not clearing the variable buffer
-
-    } else if (op == unop::UNOP::POSTDECREMENT or
-               op == unop::UNOP::POSTINCREMENT) {
-      // copy the original value into a scar register
-      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-      scar_instruction->set_type(scar::instruction_type::COPY);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-      scar_val_src1->set_type(scar::val_type::VAR);
-      scar_val_src1->set_reg_name(variable_buffer);
-
-      scar_instruction->set_src1(std::move(scar_val_src1));
-      scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(
-          get_reg_name(factor->get_type(), factor->get_derived_type()));
-      scar_instruction->set_dst(std::move(scar_val_dst));
-      scar_function->add_instruction(std::move(scar_instruction));
-
-      // now do increment / decrement on the original value
-      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
-      scar_instruction2->set_type(scar::instruction_type::BINARY);
-      if (op == unop::UNOP::POSTINCREMENT) {
-        scar_instruction2->set_binop(binop::BINOP::ADD);
-      } else {
-        scar_instruction2->set_binop(binop::BINOP::SUB);
-      }
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src3);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
-
-      scar_val_src2->set_type(scar::val_type::VAR);
-      scar_val_src2->set_reg_name(variable_buffer);
-      scar_instruction2->set_src1(std::move(scar_val_src2));
-
-      scar_val_dst2->set_type(scar::val_type::VAR);
-      scar_val_dst2->set_reg_name(variable_buffer);
-      scar_instruction2->set_dst(std::move(scar_val_dst2));
-
-      scar_val_src3->set_type(scar::val_type::CONSTANT);
-      constant::Constant one;
-      // constant should be double for a double increment but
-      // can be a signed int for all integer types (int/long/uint/ulong)
-      if (factor->get_type() == ast::ElemType::DOUBLE) {
-        one.set_type(constant::Type::DOUBLE);
-        one.set_value({.d = 1.0});
-      } else {
-        one.set_type(constant::Type::INT);
-        one.set_value({.i = 1});
-      }
-      scar_val_src3->set_const_val(one);
-      scar_instruction2->set_src2(std::move(scar_val_src3));
-
-      scar_function->add_instruction(std::move(scar_instruction2));
-      variable_buffer.clear();
-    } else if (op == unop::UNOP::DEREFERENCE) {
-      scar_instruction->set_type(scar::instruction_type::LOAD);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-
-      SETVARCONSTANTREG(scar_val_src);
-      scar_instruction->set_src1(std::move(scar_val_src));
-
-      scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(
-          get_reg_name(factor->get_type(), factor->get_derived_type()));
-      scar_instruction->set_dst(std::move(scar_val_dst));
-
-      scar_function->add_instruction(std::move(scar_instruction));
-    } else if (op == unop::UNOP::ADDROF) {
-      MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-      scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-      SETVARCONSTANTREG(scar_val_src);
-      scar_instruction->set_src1(std::move(scar_val_src));
-      scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(
-          get_reg_name(factor->get_type(), factor->get_derived_type()));
-      scar_instruction->set_dst(std::move(scar_val_dst));
-      scar_function->add_instruction(std::move(scar_instruction));
-    } else {
-      scar_instruction->set_type(scar::instruction_type::UNARY);
-      scar_instruction->set_unop(op);
-
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-
-      SETVARCONSTANTREG(scar_val_src)
-      scar_instruction->set_src1(std::move(scar_val_src));
-
-      scar_val_dst->set_type(scar::val_type::VAR);
-      scar_val_dst->set_reg_name(
-          get_reg_name(factor->get_type(), factor->get_derived_type()));
-      scar_instruction->set_dst(std::move(scar_val_dst));
 
       scar_function->add_instruction(std::move(scar_instruction));
     }

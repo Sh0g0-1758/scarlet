@@ -104,6 +104,7 @@ enum class val_type { LABEL, CONSTANT, VAR };
 
 std::string to_string(instruction_type type);
 std::string to_string(val_type type);
+bool is_type_cast(instruction_type type);
 
 class scar_Identifier_Node {
 private:
