@@ -85,6 +85,8 @@ private:
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
+  // void gen_scar_incr_decr(std::shared_ptr<ast::AST_factor_Node> factor,
+  // std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor_function_call(
       std::shared_ptr<ast::AST_factor_function_call_Node> factor,
       std::shared_ptr<scar::scar_Function_Node> scar_function);

@@ -299,5 +299,20 @@ std::string get_lvalue_identifier(std::shared_ptr<AST_factor_Node> factor) {
   }
   return "";
 }
+
+bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp) {
+  if (exp == nullptr)
+    return false;
+  if (exp->get_binop_node() != nullptr)
+    return false;
+  if (exp->get_left() != nullptr)
+    return false;
+  if (exp->get_right() != nullptr)
+    return false;
+  if (exp->get_factor_node() == nullptr)
+    return false;
+  return true;
+}
+
 } // namespace ast
 } // namespace scarlet

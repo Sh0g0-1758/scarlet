@@ -3,36 +3,6 @@
 namespace scarlet {
 namespace parser {
 
-std::pair<bool, int>
-parser::is_single_identifier_parentheses(std::vector<token::Token> &tokens) {
-  int i = 0;
-  int NUM_TOKENS = tokens.size();
-  while (i < NUM_TOKENS) {
-    if (tokens[i].get_token() == token::TOKEN::OPEN_PARANTHESES) {
-      i++;
-    } else {
-      break;
-    }
-  }
-  if (token::is_constant_or_identifier(tokens[i].get_token())) {
-    int num_open_parentheses = i;
-    int tmp = i;
-    i++;
-    while (i < NUM_TOKENS) {
-      if (tokens[i].get_token() == token::TOKEN::CLOSE_PARANTHESES) {
-        tmp--;
-        i++;
-      } else {
-        break;
-      }
-    }
-    if (tmp == 0) {
-      return {true, num_open_parentheses};
-    }
-  }
-  return {false, 0};
-}
-
 void parser::parse_abstract_declarator(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_declarator_Node> &declarator) {
@@ -88,57 +58,28 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     parse_factor(tokens, nested_factor);
     factor->set_child(std::move(nested_factor));
   } else if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
-    /**
-     * Simplification for Single-Identifier Parentheses
-     *
-     * When encountering an expression with a single identifier or numeric
-     * constant wrapped in parentheses, we treat it as a simple identifier or
-     * numeric constant rather than a complex expression. This optimization
-     * significantly reduces complexity during semantic analysis by avoiding
-     * unnecessary nested expression handling.
-     *
-     * Example:
-     *   Input: (((((((((((((((((a)))))))))))))))))
-     *   Treats as: a
-     *
-     *   Input: (((((((((((((((((1)))))))))))))))))
-     *   Treats as: 1
-     */
-    std::pair<bool, int> res = is_single_identifier_parentheses(tokens);
-    if (res.first) {
-      for (int i = 0; i < res.second; i++) {
-        tokens.erase(tokens.begin());
+    tokens.erase(tokens.begin());
+    if (!tokens.empty() and token::is_type_specifier(tokens[0].get_token())) {
+      PARSE_TYPE(factor, set_cast_type);
+      if (!tokens.empty() and
+          tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
+        MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);
+        parse_abstract_declarator(tokens, cast_declarator);
+        factor->set_cast_declarator(std::move(cast_declarator));
       }
-      if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
-        EXPECT_IDENTIFIER();
-        factor->set_identifier_node(std::move(identifier));
-      } else {
-        parse_const(tokens, factor);
-      }
-      for (int i = 0; i < res.second; i++) {
-        tokens.erase(tokens.begin());
-      }
+      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      MAKE_SHARED(ast::AST_factor_Node, nested_factor);
+      parse_factor(tokens, nested_factor);
+      factor->set_child(std::move(nested_factor));
     } else {
-      // it can have a nested expression or it could be a cast operation
-      tokens.erase(tokens.begin());
-      if (!tokens.empty() and token::is_type_specifier(tokens[0].get_token())) {
-        PARSE_TYPE(factor, set_cast_type);
-        if (!tokens.empty() and
-            tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
-          MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);
-          parse_abstract_declarator(tokens, cast_declarator);
-          factor->set_cast_declarator(std::move(cast_declarator));
-        }
-        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
-        MAKE_SHARED(ast::AST_factor_Node, nested_factor);
-        parse_factor(tokens, nested_factor);
-        factor->set_child(std::move(nested_factor));
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      if (ast::exp_is_factor(exp)) {
+        factor = exp->get_factor_node();
       } else {
-        MAKE_SHARED(ast::AST_exp_Node, exp);
-        parse_exp(tokens, exp);
         factor->set_exp_node(std::move(exp));
-        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
       }
+      EXPECT(token::TOKEN::CLOSE_PARANTHESES);
     }
   } else {
     success = false;
@@ -155,23 +96,15 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
           "Expected an lvalue for the increment / decrement operator");
     } else {
       // an increment decrement operator is a unary operator
-      // so in the ast we should have the operand as a child factor
-      // but there can be cases like (*p)++ where this is not the case
-      // However, in these cases, we can be sure that the child factor
-      // is simply factor->exp->factor. If that is not the case, it will
-      // simply be raised as an error during semantic analysis
       MAKE_SHARED(ast::AST_factor_Node, nested_factor);
-      if (factor->get_exp_node() != nullptr) {
-        nested_factor = factor->get_exp_node()->get_factor_node();
-      } else {
-        nested_factor->set_identifier_node(factor->get_identifier_node());
-        nested_factor->set_unop_node(factor->get_unop_node());
-        nested_factor->set_factor_type(factor->get_factor_type());
-        nested_factor->set_cast_type(factor->get_cast_type());
-        nested_factor->set_cast_declarator(factor->get_cast_declarator());
-        nested_factor->set_child(factor->get_child());
-        nested_factor->set_arrIdx(factor->get_arrIdx());
-      }
+      nested_factor->set_identifier_node(factor->get_identifier_node());
+      nested_factor->set_unop_node(factor->get_unop_node());
+      nested_factor->set_exp_node(factor->get_exp_node());
+      nested_factor->set_factor_type(factor->get_factor_type());
+      nested_factor->set_cast_type(factor->get_cast_type());
+      nested_factor->set_cast_declarator(factor->get_cast_declarator());
+      nested_factor->set_child(factor->get_child());
+      nested_factor->set_arrIdx(factor->get_arrIdx());
 
       factor->set_identifier_node(nullptr);
       factor->set_unop_node(nullptr);
@@ -193,11 +126,6 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     }
   }
   if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
-    // if (factor->get_const_node()!=nullptr){
-    //   success = false;
-    //   error_messages.emplace_back(
-    //       "Expected an lvalue for the array index operator");
-    // } else{
     while (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
       tokens.erase(tokens.begin());
       MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -205,7 +133,6 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       factor->add_arrIdx(exp);
       EXPECT(token::TOKEN::CLOSE_BRACKET);
     }
-    // }
   }
 }
 
