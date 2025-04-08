@@ -21,12 +21,6 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
   if (exp->get_binop_node() != nullptr and
       (exp->get_binop_node()->get_op() == binop::BINOP::ASSIGN or
        binop::is_compound(exp->get_binop_node()->get_op()))) {
-    // ERROR CONDITION: (no factor node) or (factor node is a constant, not a
-    // variable) or (factor node is a variable but has unary operators) Here we
-    // exploit the benefit of short circuiting power of the logical operator
-    // this means that as we proceed, we are ensured that the earlier checks
-    // must not be satisfied. Note that an identifier with unops makes it an
-    // rvalue.
     if (!ast::is_lvalue(exp->get_factor_node())) {
       success = false;
       error_messages.emplace_back("Expected a modifiable lvalue on the left "
@@ -50,6 +44,35 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
   // assign type to the expression
   assign_type_to_exp(exp);
+
+  // expand the compound expression
+  if (exp->get_binop_node() != nullptr and
+      binop::is_compound(exp->get_binop_node()->get_op())) {
+    auto binop = binop::compound_to_base(exp->get_binop_node()->get_op());
+    auto factor = exp->get_factor_node();
+    auto right = exp->get_right();
+
+    MAKE_SHARED(ast::AST_exp_Node, base_exp);
+    MAKE_SHARED(ast::AST_binop_Node, binop_node);
+    binop_node->set_op(binop);
+    base_exp->set_binop_node(binop_node);
+    base_exp->set_factor_node(factor);
+    base_exp->set_right(right);
+    base_exp->set_type(exp->get_type());
+    base_exp->set_derived_type(exp->get_derived_type());
+
+    if (factor->get_cast_type() != ast::ElemType::NONE) {
+      auto baseType = factor->get_child()->get_type();
+      auto baseDerivedType = factor->get_child()->get_derived_type();
+
+      add_cast_to_exp(base_exp, baseType, baseDerivedType);
+
+      exp->set_factor_node(factor->get_child());
+    }
+
+    exp->get_binop_node()->set_op(binop::BINOP::ASSIGN);
+    exp->set_right(base_exp);
+  }
 }
 
 void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
