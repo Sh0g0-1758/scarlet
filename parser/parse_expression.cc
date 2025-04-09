@@ -83,6 +83,13 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       }
       EXPECT(token::TOKEN::CLOSE_PARANTHESES);
     }
+  } else if (tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+    while(tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+      MAKE_SHARED(ast::AST_string_Node, string_node);
+      string_node->set_string(tokens[0].get_value().value());
+      factor->add_stringLiteral(std::move(string_node));
+      tokens.erase(tokens.begin());
+    }
   } else {
     success = false;
     error_messages.emplace_back("Expected constant, unary operator, semicolon "

@@ -34,7 +34,7 @@ Grammar:
 
 <param> ::= { <type-specifier> }+ <declarator>
 
-<type-specifier> ::= "int" | "long" |"unsigned" | "signed" 
+<type-specifier> ::= "int" | "long" |"unsigned" | "signed" | "char"
 
 <specifier> ::= <type-specifier> | "static" | "extern"
 
@@ -69,8 +69,10 @@ Grammar:
            | <identifier> "(" [ <argument-list> ] ")"
            | <postfix-exp>
 
-<postfix-exp> ::= <identifier> { "[" <const> "]" }+
-                | "(" <exp> ")" { "[" <const> "]" }+
+<postfix-exp> ::= <identifier> { "[" <exp> "]" }
+                | "(" <exp> ")" { "[" <exp> "]" }
+                | <identifier> "(" [ <argument-list> ] ")" { "[" <const> "]" }+
+                | { <string> }+ { "[" <exp> "]" }
 
 <abstract-declarator> ::= "*"
                         | "*" <abstract-declarator> 
@@ -82,7 +84,7 @@ Grammar:
 
 <binop> ::= "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "<<" | ">>" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "&&" | "||"  | "="
 
-<const> ::= <int> | <long> | <uint> | <ulong> 
+<const> ::= <int> | <long> | <uint> | <ulong> | <double> | <char>
 
 <identifier> ::= ? An identifier token ?
 
@@ -111,7 +113,10 @@ enum class ElemType {
   LONG = -4,
   ULONG = -5,
   UINT = -6,
-  DOUBLE = -7
+  DOUBLE = -7,
+  UCHAR = -8,
+  SCHAR = -9,
+  CHAR = -10,
 };
 
 class AST_const_Node {
@@ -123,6 +128,17 @@ public:
   constant::Constant &get_constant() { return constant; }
   void set_constant(constant::Constant constant) { this->constant = constant; }
 };
+
+class AST_string_Node {
+private:
+  std::string value;
+
+public:
+  std::string get_AST_name() { return "String"; }
+  std::string get_value() { return value; }
+  void set_string(std::string value) { this->value = std::move(value); }
+
+};  
 
 class AST_identifier_Node {
 private:
@@ -174,6 +190,7 @@ private:
   std::shared_ptr<AST_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
+  std::vector<std::shared_ptr<ast::AST_string_Node>> stringLiteral;
   std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx;
   std::vector<long> derivedType{};
 
@@ -234,6 +251,17 @@ public:
   void set_derived_type(std::vector<long> derivedType) {
     this->derivedType = std::move(derivedType);
   }
+  std::vector<std::shared_ptr<ast::AST_string_Node>> get_stringLiteral() {
+    return stringLiteral;
+  }
+  void add_stringLiteral(std::shared_ptr<ast::AST_string_Node> stringLiteral) {
+    this->stringLiteral.emplace_back(stringLiteral);
+  }
+  void set_stringLiteral(
+      std::vector<std::shared_ptr<ast::AST_string_Node>> stringLiteral) {
+    this->stringLiteral = stringLiteral;
+  }
+  void clear_stringLiteral() { this->stringLiteral.clear(); }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {

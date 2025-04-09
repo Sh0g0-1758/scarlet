@@ -20,6 +20,9 @@ enum class Type {
   DOUBLE,
   UINT,
   ULONG,
+  CHAR,
+  UCHAR,
+  SCHAR,
   /* ZERO is a special type that can be used to store how many bytes need to be
      zeroed out. The value is stored as an unsigned long */
   ZERO,
@@ -52,6 +55,12 @@ public:
       return "unsigned int";
     case Type::ULONG:
       return "unsigned long";
+    case Type::CHAR:
+      return "char";
+    case Type::UCHAR:
+      return "unsigned char";
+    case Type::SCHAR:
+      return "signed char";
     case Type::ZERO:
       return "zero";
     case Type::NONE:
@@ -74,6 +83,10 @@ public:
       return value.ui < constant.value.ui;
     case Type::ULONG:
       return value.ul < constant.value.ul;
+    case Type::CHAR:
+    case Type::UCHAR:
+    case Type::SCHAR:
+      return value.i < constant.value.i;
     case Type::ZERO:
       return value.ul < constant.value.ul;
     case Type::NONE:
@@ -96,6 +109,10 @@ public:
       return value.ui == constant.value.ui;
     case Type::ULONG:
       return value.ul == constant.value.ul;
+    case Type::CHAR:
+    case Type::UCHAR:
+    case Type::SCHAR:
+      return value.i == constant.value.i;
     case Type::ZERO:
       return value.ul == constant.value.ul;
     case Type::NONE:
@@ -119,6 +136,15 @@ public:
       break;
     case Type::ULONG:
       os << constant.value.ul;
+      break;
+    case Type::CHAR:
+      os << "'" << static_cast<char>(constant.value.i) << "'";
+      break;
+    case Type::UCHAR:
+      os << "'" << static_cast<unsigned char>(constant.value.i) << "'";
+      break;
+    case Type::SCHAR:
+      os << "'" << static_cast<signed char>(constant.value.i) << "'";
       break;
     case Type::ZERO:
       os << "Zero(" << constant.value.ul << ")";

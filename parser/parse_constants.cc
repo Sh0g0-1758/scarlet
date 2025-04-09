@@ -84,6 +84,16 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       return;
     }
   } break;
+  case token::TOKEN::CHARACTER_CONSTANT: {
+    constant.set_type(constant::Type::CHAR);
+    try {
+      v.i = std::stoi(tokens[0].get_value().value());
+    } catch (std::out_of_range &e) {
+      success = false;
+      error_messages.emplace_back("Character constant out of range");
+      return;
+    }
+  }
   default:
     break;
   }

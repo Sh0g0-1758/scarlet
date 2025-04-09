@@ -210,6 +210,10 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case constant::Type::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
+      case constant::Type::CHAR:
+      case constant::Type::UCHAR:
+      case constant::Type::SCHAR:
+        return scasm::AssemblyType::LONG_WORD;
       // Since ZERO Type will only ever be used in the initializer list
       // we can safely ignore it here
       case constant::Type::ZERO:
@@ -227,6 +231,10 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
+      case ast::ElemType::CHAR:
+      case ast::ElemType::UCHAR:
+      case ast::ElemType::SCHAR:
+        return scasm::AssemblyType::LONG_WORD;
       // FIXME: For Arrays
       case ast::ElemType::DERIVED:
         return scasm::AssemblyType::QUAD_WORD;
@@ -254,6 +262,10 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
+    case ast::ElemType::CHAR:
+    case ast::ElemType::UCHAR:
+    case ast::ElemType::SCHAR:
+      return scasm::AssemblyType::LONG_WORD;
     // FIXME: For Arrays
     case ast::ElemType::DERIVED:
       return scasm::AssemblyType::QUAD_WORD;
@@ -312,6 +324,16 @@ public:
           stack_param_indx.push_back({scasm::AssemblyType::DOUBLE, i});
         }
         break;
+      case constant::Type::CHAR:
+      case constant::Type::UCHAR:
+      case constant::Type::SCHAR: {
+        if (int_reg_count < 6) {
+          int_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
+          int_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::LONG_WORD, i});
+        }
+      } break;
       // this case will never be reached, so we can safely ignore it
       case constant::Type::ZERO:
       case constant::Type::NONE:

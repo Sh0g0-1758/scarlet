@@ -26,6 +26,18 @@ namespace parser {
     constZero.set_type(constant::Type::DOUBLE);                                \
     constZero.set_value({.d = 0});                                             \
     break;                                                                     \
+  case ast::ElemType::CHAR:                                                   \
+    constZero.set_type(constant::Type::CHAR);                                  \
+    constZero.set_value({.i = 0});                                             \
+    break;                                                                     \
+  case ast::ElemType::UCHAR:                                                  \
+    constZero.set_type(constant::Type::UCHAR);                                 \
+    constZero.set_value({.i = 0});                                             \
+    break;                                                                     \
+  case ast::ElemType::SCHAR:                                                  \
+    constZero.set_type(constant::Type::SCHAR);                                 \
+    constZero.set_value({.i = 0});                                             \
+    break;                                                                     \
   case ast::ElemType::DERIVED:                                                 \
   case ast::ElemType::POINTER:                                                 \
     constZero.set_type(constant::Type::ULONG);                                 \

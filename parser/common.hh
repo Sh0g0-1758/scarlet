@@ -50,6 +50,7 @@ namespace parser {
 - Error: Declarations with no type specifiers are considered invalid
 - Error: 'unsigned' and 'signed' qualifiers cannot be used together
 - Error: 'double' cannot occur with any other type specifier
+- Error: 'char' cannot occur with any other type specifier
 - Type resolution: When 'unsigned' and 'long' appear together -> ulong
 - Type resolution: When only 'unsigned' appears -> uint
 - Type resolution: When only 'long' appears -> long, otherwise defaults to int
@@ -78,7 +79,25 @@ namespace parser {
     success = false;                                                           \
     error_messages.emplace_back(                                               \
         "Unsigned and signed specifiers found together");                      \
-  } else if (type_specifiers.find(token::TOKEN::DOUBLE) !=                     \
+  } else if(type_specifiers.find(token::TOKEN::CHAR) != type_specifiers.end()) { \
+      if(type_specifiers.find(token::TOKEN::LONG) != type_specifiers.end() or  \
+        type_specifiers.find(token::TOKEN::INT) != type_specifiers.end() or    \
+        type_specifiers.find(token::TOKEN::DOUBLE) != type_specifiers.end()) { \
+         success = false;                                                      \
+         error_messages.emplace_back("Char specifier found with other types"); \
+        }                                                                      \
+      else {                                                                   \
+        if(type_specifiers.find(token::TOKEN::UNSIGNED) !=                     \
+            type_specifiers.end()) {                                           \
+          decl->func(ast::ElemType::UCHAR);                                    \
+        } else if (type_specifiers.find(token::TOKEN::SIGNED) != type_specifiers.end()) {\
+          decl->func(ast::ElemType::SCHAR);                                    \
+        } else {                                                               \
+          decl->func(ast::ElemType::CHAR);                                     \
+        }                                                                      \
+  }                                                                            \
+}                                                                              \
+  else if (type_specifiers.find(token::TOKEN::DOUBLE) !=                       \
                  type_specifiers.end() and                                     \
              type_specifiers.size() > 1) {                                     \
     success = false;                                                           \

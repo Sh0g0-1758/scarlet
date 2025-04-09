@@ -458,40 +458,40 @@ std::string char_to_esc(char c) {
   std::string ret;
   switch (c) {
   case 'a':
-    ret = "\\a";
+    ret = "\a";
     break;
   case 'n':
-    ret = "\\n";
+    ret = "\n";
     break;
   case 'f':
-    ret = "\\f";
+    ret = "\f";
     break;
   case 'b':
-    ret = "\\b";
+    ret = "\b";
     break;
   case 'r':
-    ret = "\\r";
+    ret = "\r";
     break;
   case 't':
-    ret = "\\t";
+    ret = "\t";
     break;
   case 'v':
-    ret = "\\v";
+    ret = "\v";
     break;
   case '\'':
-    ret = "\\\'";
+    ret = "\\'";
     break;
   case '"':
-    ret = "\\";
+    ret = "\"";
     break;
   case '?':
-    ret = "\\?";
+    ret = "\?";
     break;
   case '\\':
-    ret = "\\\\";
+    ret = "\\";
     break;
   default:
-    ret = "\\0";
+    ret = "\0";
     break;
   }
   return ret;
@@ -537,7 +537,7 @@ bool is_right_associative(TOKEN token) {
 bool is_type_specifier(TOKEN token) {
   return token == TOKEN::INT or token == TOKEN::LONG or
          token == TOKEN::SIGNED or token == TOKEN::UNSIGNED or
-         token == TOKEN::DOUBLE;
+         token == TOKEN::DOUBLE or token == TOKEN::CHAR;
 }
 
 bool is_storage_specifier(TOKEN token) {
@@ -553,7 +553,7 @@ bool is_constant_or_identifier(TOKEN token) {
 bool is_numeric_constant(TOKEN token) {
   return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
          token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
-         token == TOKEN::DOUBLE_CONSTANT;
+         token == TOKEN::DOUBLE_CONSTANT or token == TOKEN::CHARACTER_CONSTANT;
 }
 
 bool is_integer_constant(TOKEN token) {

@@ -241,7 +241,7 @@ void lexer::tokenize() {
                                "no end quote for character " + tmp,
                            "please add end quotes"));
       } else {
-        tokens.emplace_back(token::Token(token::TOKEN::CHAR, tmp));
+        tokens.emplace_back(token::Token(token::TOKEN::CHARACTER_CONSTANT, tmp));
       }
       col_number++;
     } else if (ch == '\"') {
