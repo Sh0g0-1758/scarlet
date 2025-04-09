@@ -114,9 +114,8 @@ enum class ElemType {
   ULONG = -5,
   UINT = -6,
   DOUBLE = -7,
-  UCHAR = -8,
-  SCHAR = -9,
-  CHAR = -10,
+  CHAR = -8,
+  UCHAR = -9,
 };
 
 class AST_const_Node {

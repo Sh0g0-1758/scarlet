@@ -34,10 +34,6 @@ namespace parser {
     constZero.set_type(constant::Type::UCHAR);                                 \
     constZero.set_value({.i = 0});                                             \
     break;                                                                     \
-  case ast::ElemType::SCHAR:                                                  \
-    constZero.set_type(constant::Type::SCHAR);                                 \
-    constZero.set_value({.i = 0});                                             \
-    break;                                                                     \
   case ast::ElemType::DERIVED:                                                 \
   case ast::ElemType::POINTER:                                                 \
     constZero.set_type(constant::Type::ULONG);                                 \

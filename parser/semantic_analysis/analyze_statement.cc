@@ -80,10 +80,6 @@ void parser::analyze_statement(
       analyze_switch_case<unsigned char>(switch_statement,
                                          constant::Type::UCHAR);
       break;
-    case ast::ElemType::SCHAR:
-      analyze_switch_case<signed char>(switch_statement,
-                                       constant::Type::SCHAR);
-      break;
     case ast::ElemType::DOUBLE: {
       success = false;
       error_messages.emplace_back(

@@ -91,7 +91,7 @@ namespace parser {
             type_specifiers.end()) {                                           \
           decl->func(ast::ElemType::UCHAR);                                    \
         } else if (type_specifiers.find(token::TOKEN::SIGNED) != type_specifiers.end()) {\
-          decl->func(ast::ElemType::SCHAR);                                    \
+          decl->func(ast::ElemType::CHAR);                                    \
         } else {                                                               \
           decl->func(ast::ElemType::CHAR);                                     \
         }                                                                      \
