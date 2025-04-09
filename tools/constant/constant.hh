@@ -11,6 +11,8 @@ union Value {
   double d;
   unsigned int ui;
   unsigned long ul;
+  char c;
+  unsigned char uc;
 };
 
 enum class Type {
