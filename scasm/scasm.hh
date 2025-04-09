@@ -24,9 +24,11 @@ program = Program(top_level*)
 assembly_type = LongWord 
               | QuadWord
               | Double
+              | ByteArray(int size, int alignment)
 
 top_level = Function(identifier name, bool global, instruction* instructions) 
-          | StaticVariable(identifier name, bool global, int alignment, const init)
+          | StaticVariable(identifier name, bool global, int alignment, const* init)
+          | StaticConstant(idnetifier name, int alignment, const init)
 
 instruction = Mov(assembly_type, Operand src, Operand dst)
             | Movsx(Operand src, Operand dst)
@@ -67,6 +69,8 @@ Operand = Imm(int)
         | stack(identifier) 
         | Label(identifier) 
         | Data(Identifier)
+        | PseudoMem(identifier, int offset)
+        | Indexed(reg base, reg index, int scale)
 
 cond_code = E | NE | G | GE | L | LE
 
@@ -109,17 +113,26 @@ namespace scarlet {
 namespace scasm {
 
 // BYTE = 8 bits, LONG WORD = 32 bits, QUAD WORD = 64 bits
-enum class AssemblyType { NONE, BYTE, LONG_WORD, QUAD_WORD, DOUBLE };
+enum class AssemblyType {
+  NONE,
+  BYTE,
+  LONG_WORD,
+  QUAD_WORD,
+  DOUBLE,
+  BYTE_ARRAY
+};
 // NOTE: Every Pseudo Operand gets converted into a memory operand
 enum class operand_type {
   UNKNOWN,
   IMM,
   REG,
   PSEUDO,
+  PSEUDO_MEM,
   MEMORY,
   LABEL,
   COND,
-  DATA
+  DATA,
+  INDEXED
 };
 enum class Unop { UNKNOWN, NEG, ANOT, LNOT, SHR };
 enum class Binop {
@@ -213,6 +226,10 @@ private:
   operand_type type;
   constant::Constant imm;
   register_type reg;
+  register_type index;
+  /*this is for Mem operands (reg based indexing)*/
+  /*resused as offset the for psuedomem*/
+  /*resused as scale for array index operands*/
   long offset;
   cond_code cond;
   std::string identifier;
@@ -225,6 +242,8 @@ public:
   void set_imm(constant::Constant imm) { this->imm = imm; }
   register_type get_reg() { return reg; }
   void set_reg(register_type reg) { this->reg = reg; }
+  register_type get_index() { return index; }
+  void set_index(register_type index) { this->index = index; }
   cond_code get_cond() { return cond; }
   void set_cond(cond_code cond) { this->cond = cond; }
   std::string get_identifier() { return identifier; }
@@ -302,7 +321,7 @@ class scasm_static_variable : public scasm_top_level {
 private:
   std::string name;
   std::vector<constant::Constant> init;
-  int alignment;
+  // int alignment;
 
 public:
   std::string get_scasm_name() { return "StaticVariable"; }
@@ -313,8 +332,8 @@ public:
   void set_init(std::vector<constant::Constant> init) {
     this->init = std::move(init);
   }
-  int get_alignment() { return alignment; }
-  void set_alignment(int alignment) { this->alignment = alignment; }
+  // int get_alignment() { return alignment; }
+  // void set_alignment(int alignment) { this->alignment = alignment; }
 };
 
 class scasm_static_constant : public scasm_top_level {
@@ -354,6 +373,10 @@ struct backendSymbol {
   bool isTopLevel;
   /* Use for Functions */
   bool isDefined;
+  /*use for array*/
+  int size = 0;
+  int alignment = 0;
+  // std::vector<constant::Constant> value;
 };
 
 } // namespace scasm

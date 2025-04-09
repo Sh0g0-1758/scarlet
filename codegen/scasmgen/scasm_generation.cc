@@ -10,24 +10,32 @@ void Codegen::gen_scasm() {
       auto var = std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem);
       MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
       scasm_var->set_name(var->get_identifier()->get_value());
-      switch (var->get_init()[0].get_type()) {
-      case constant::Type::UINT:
-      case constant::Type::INT:
-        scasm_var->set_alignment(4);
-        break;
-      case constant::Type::ULONG:
-      case constant::Type::LONG:
-        scasm_var->set_alignment(8);
-        break;
-      case constant::Type::DOUBLE:
-        scasm_var->set_alignment(8);
-        break;
-      // FIXME: For Arrays
-      case constant::Type::ZERO:
-      case constant::Type::NONE:
-        scasm_var->set_alignment(0);
-        break;
+      if (globalSymbolTable[var->get_identifier()->get_value()].typeDef[0] ==
+              ast::ElemType::DERIVED and
+          globalSymbolTable[var->get_identifier()->get_value()]
+                  .derivedTypeMap[0]
+                  .size() > 0) {
+        ; // for array the alignement is set later
+      } else {
+        switch (var->get_init()[0].get_type()) {
+        case constant::Type::UINT:
+        case constant::Type::INT:
+          backendSymbolTable[var->get_identifier()->get_value()].alignment = 4;
+          break;
+        case constant::Type::ULONG:
+        case constant::Type::LONG:
+          backendSymbolTable[var->get_identifier()->get_value()].alignment = 8;
+          break;
+        case constant::Type::DOUBLE:
+          backendSymbolTable[var->get_identifier()->get_value()].alignment = 8;
+          break;
+        case constant::Type::ZERO:
+        case constant::Type::NONE:
+          backendSymbolTable[var->get_identifier()->get_value()].alignment = 8;
+          break;
+        }
       }
+
       scasm_var->set_init(var->get_init());
       scasm_var->set_global(elem->is_global());
       MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
@@ -291,10 +299,135 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::LEA);
         scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        if (inst->get_src1()->get_type() == scar::val_type::VAR and
+            backendSymbolTable[inst->get_src1()->get_reg()].asmType ==
+                scasm::AssemblyType::BYTE_ARRAY) {
+          scasm_src->set_type(scasm::operand_type::PSEUDO_MEM);
+          scasm_src->set_offset(0);
+          scasm_src->set_identifier(inst->get_src1()->get_reg());
+        } else {
+          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        }
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
         scasm_func->add_instruction(std::move(scasm_inst));
+      } else if (inst->get_type() == scar::instruction_type::COPY_TO_OFFSET) {
+        // mov (<src type>, src, PsuedoMem(dst, offset))
+        // FIXME?: assumes only array types are passed
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_asm_type(valToAsmType(inst->get_src1()));
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        scasm_dst->set_type(scasm::operand_type::PSEUDO_MEM);
+        scasm_dst->set_identifier(inst->get_dst()->get_reg());
+        scasm_dst->set_offset(inst->get_offset());
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+      } else if (inst->get_type() == scar::instruction_type::ADD_PTR) {
+        // if scale if one of 1,2,4,8
+        // mov(<quadword>, ptr, Reg(AX))
+        // mov(<quadword>, index, Reg(AX))
+        // lea(Indexed(AX, DX, scale), dst)
+
+        // if scale is not one of 1,2,4,8
+        // mov(<quadword>, ptr, Reg(AX))
+        // mov(<quadword>, index, Reg(AX))
+        // Binary(MUL, <quadword>, Imm(scale), Reg(AX))
+        // lea(Indexed(AX, DX, 1), dst)
+
+        // if index is a constant
+        // mov(<quadword>, ptr, Reg(AX))
+        // lea(Memory(AX, index*scale), dst)
+
+        MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+        scasm_inst->set_type(scasm::instruction_type::MOV);
+        scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+        MAKE_SHARED(scasm::scasm_operand, scasm_src);
+        SET_OPERAND(scasm_src, set_src, get_src1,
+                    scasm_inst); // check if pointer goes to the psuedo operand
+        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+        scasm_dst->set_type(scasm::operand_type::REG);
+        scasm_dst->set_reg(scasm::register_type::AX);
+        scasm_inst->set_dst(std::move(scasm_dst));
+        scasm_func->add_instruction(std::move(scasm_inst));
+        if (inst->get_src2()->get_type() == scar::val_type::VAR) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::MOV);
+          scasm_inst2->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+          SET_OPERAND(scasm_src2, set_src, get_src2,
+                      scasm_inst2); // use index (in the src2 field)
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          scasm_dst2->set_type(scasm::operand_type::REG);
+          scasm_dst2->set_reg(scasm::register_type::DX);
+          scasm_inst2->set_dst(std::move(scasm_dst2));
+          scasm_func->add_instruction(std::move(scasm_inst2));
+          if (inst->get_offset() == 1 or inst->get_offset() == 2 or
+              inst->get_offset() == 4 or inst->get_offset() == 8) {
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
+            scasm_inst3->set_type(scasm::instruction_type::LEA);
+            scasm_inst3->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+            MAKE_SHARED(scasm::scasm_operand, scasm_src3);
+            scasm_src3->set_type(scasm::operand_type::INDEXED);
+            scasm_src3->set_reg(scasm::register_type::AX);
+            scasm_src3->set_index(scasm::register_type::DX);
+            // use scale 1 for indexed operand
+            scasm_src3->set_offset(inst->get_offset());
+            scasm_inst3->set_src(std::move(scasm_src3));
+            MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
+            SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst3);
+            scasm_func->add_instruction(std::move(scasm_inst3));
+
+          } else {
+            // multipy offset with index
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
+            scasm_inst3->set_type(scasm::instruction_type::BINARY);
+            scasm_inst3->set_binop(scasm::Binop::MUL);
+            scasm_inst3->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+            MAKE_SHARED(scasm::scasm_operand, scasm_src3);
+            scasm_src3->set_type(scasm::operand_type::IMM);
+            constant::Constant offset;
+            offset.set_type(constant::Type::LONG);
+            offset.set_value({.l = inst->get_offset()});
+            scasm_src3->set_imm(offset);
+            scasm_inst3->set_src(std::move(scasm_src3));
+            MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
+            scasm_dst3->set_type(scasm::operand_type::REG);
+            scasm_dst3->set_reg(scasm::register_type::DX);
+            scasm_inst3->set_dst(std::move(scasm_dst3));
+            scasm_func->add_instruction(std::move(scasm_inst3));
+
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst4);
+            scasm_inst4->set_type(scasm::instruction_type::LEA);
+            scasm_inst4->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+            MAKE_SHARED(scasm::scasm_operand, scasm_src4);
+            scasm_src4->set_type(scasm::operand_type::INDEXED);
+            scasm_src4->set_reg(scasm::register_type::AX);
+            scasm_src4->set_index(scasm::register_type::DX);
+            // use scale 1 for indexed operand
+            scasm_src4->set_offset(1);
+            scasm_inst4->set_src(std::move(scasm_src4));
+            MAKE_SHARED(scasm::scasm_operand, scasm_dst4);
+            SET_OPERAND(scasm_dst4, set_dst, get_dst, scasm_inst4);
+            scasm_func->add_instruction(std::move(scasm_inst4));
+          }
+        } else {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+          scasm_inst2->set_type(scasm::instruction_type::LEA);
+          scasm_inst2->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src2);
+          scasm_src2->set_type(scasm::operand_type::MEMORY);
+          scasm_src2->set_reg(scasm::register_type::AX);
+          long total_offset = inst->get_offset() *
+                              inst->get_src2()->get_const_val().get_value().l;
+          scasm_src2->set_offset(total_offset);
+          scasm_inst2->set_src(std::move(scasm_src2));
+          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
+          SET_OPERAND(scasm_dst2, set_dst, get_dst, scasm_inst2);
+          scasm_func->add_instruction(std::move(scasm_inst2));
+        }
       }
     }
     MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
@@ -307,9 +440,26 @@ void Codegen::gen_scasm() {
   // Make the backend symbol table
   for (auto it : globalSymbolTable) {
     if (it.second.type == symbolTable::symbolType::VARIABLE) {
-      scasm::backendSymbol sym;
+      scasm::backendSymbol sym = backendSymbolTable[it.first];
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
-      sym.asmType = elemToAsmType(it.second.typeDef[0]);
+      sym.asmType =
+          elemToAsmType(it.second.typeDef[0], it.second.derivedTypeMap[0]);
+      if (it.second.typeDef[0] == ast::ElemType::DERIVED and
+          it.second.derivedTypeMap[0][0] > 0) {
+        auto derivedType = it.second.derivedTypeMap[0];
+        sym.size = ast::getSizeOfArrayTypeOnArch(derivedType);
+        if (sym.size > 16) {
+          sym.alignment = 16;
+        } else {
+          int i = 0;
+          for (i = 0; i < (int)derivedType.size(); i++) {
+            if (derivedType[i] < 0)
+              break;
+          }
+          sym.alignment =
+              ast::getSizeOfTypeOnArch((ast::ElemType)derivedType[i]);
+        }
+      }
       if (it.second.link != symbolTable::linkage::NONE) {
         sym.isTopLevel = true;
       } else {

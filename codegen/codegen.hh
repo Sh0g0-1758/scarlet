@@ -242,7 +242,8 @@ public:
     UNREACHABLE();
   }
 
-  scasm::AssemblyType elemToAsmType(ast::ElemType type) {
+  scasm::AssemblyType elemToAsmType(ast::ElemType type,
+                                    std::vector<long> derivedType) {
     switch (type) {
     case ast::ElemType::INT:
       return scasm::AssemblyType::LONG_WORD;
@@ -254,9 +255,14 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
-    // FIXME: For Arrays
-    case ast::ElemType::DERIVED:
-      return scasm::AssemblyType::QUAD_WORD;
+    // FIXME: For Arrays : check if ok
+    case ast::ElemType::DERIVED: {
+      if (derivedType[0] > 0) {
+        return scasm::AssemblyType::BYTE_ARRAY;
+      } else {
+        return scasm::AssemblyType::QUAD_WORD;
+      }
+    } break;
     case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
