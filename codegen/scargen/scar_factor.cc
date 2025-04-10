@@ -18,22 +18,8 @@ void Codegen::gen_scar_factor(
       gen_scar_factor_function_call(
           std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor),
           scar_function);
-      // if (factor->get_arrIdx().size() > 0) {
-      //   auto derivedType =
-      //       globalSymbolTable[factor->get_identifier_node()->get_value()]
-      //           .derivedTypeMap[0];
-      //   gen_scar_factor_array(factor, scar_function, derivedType);
-      // }
-
     } else {
-      // if (factor->get_arrIdx().size() > 0) {
-      //   auto derivedType =
-      //       globalSymbolTable[factor->get_identifier_node()->get_value()]
-      //           .derivedTypeMap[0];
-      //   gen_scar_factor_array(factor, scar_function, derivedType);
-      // } else {
       variable_buffer = factor->get_identifier_node()->get_value();
-      // }
     }
   } else if (factor->get_unop_node() != nullptr) {
     // if the factor is a dereference and the child is an addrof, then we can
@@ -126,10 +112,6 @@ void Codegen::gen_scar_factor(
     }
   } else if (factor->get_exp_node() != nullptr) {
     gen_scar_exp(factor->get_exp_node(), scar_function);
-    // if (factor->get_arrIdx().size() > 0) {
-    //   auto derivedType = factor->get_exp_node()->get_derived_type();
-    //   gen_scar_factor_array(factor, scar_function, derivedType);
-    // }
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     gen_scar_factor(factor->get_child(), scar_function);
 
