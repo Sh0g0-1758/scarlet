@@ -227,6 +227,13 @@ private:
   constant::Constant imm;
   register_type reg;
   register_type index;
+  /*
+   * For Memory operands, this is used for register based indexing (so the value
+   * is present at some offset from the register) For PseudoMem operands, this
+   * is used as the offset from the array (so store the value at some offset
+   * from the array) For Indexed operands, this is used as the scale (so final
+   * value will be base + index * scale)
+   */
   /*this is for Mem operands (reg based indexing)*/
   /*resused as offset the for psuedomem*/
   /*resused as scale for array index operands*/
