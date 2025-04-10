@@ -18,22 +18,8 @@ void Codegen::gen_scar_factor(
       gen_scar_factor_function_call(
           std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor),
           scar_function);
-      if (factor->get_arrIdx().size() > 0) {
-        auto derivedType =
-            globalSymbolTable[factor->get_identifier_node()->get_value()]
-                .derivedTypeMap[0];
-        gen_scar_factor_array(factor, scar_function, derivedType);
-      }
-
     } else {
-      if (factor->get_arrIdx().size() > 0) {
-        auto derivedType =
-            globalSymbolTable[factor->get_identifier_node()->get_value()]
-                .derivedTypeMap[0];
-        gen_scar_factor_array(factor, scar_function, derivedType);
-      } else {
-        variable_buffer = factor->get_identifier_node()->get_value();
-      }
+      variable_buffer = factor->get_identifier_node()->get_value();
     }
   } else if (factor->get_unop_node() != nullptr) {
     // if the factor is a dereference and the child is an addrof, then we can
@@ -126,10 +112,6 @@ void Codegen::gen_scar_factor(
     }
   } else if (factor->get_exp_node() != nullptr) {
     gen_scar_exp(factor->get_exp_node(), scar_function);
-    if (factor->get_arrIdx().size() > 0) {
-      auto derivedType = factor->get_exp_node()->get_derived_type();
-      gen_scar_factor_array(factor, scar_function, derivedType);
-    }
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     gen_scar_factor(factor->get_child(), scar_function);
 
@@ -239,95 +221,6 @@ void Codegen::gen_scar_factor_function_call(
   scar_instruction->set_dst(scar_val_dst);
 
   scar_function->add_instruction(scar_instruction);
-}
-
-void Codegen::gen_scar_factor_array(
-    std::shared_ptr<ast::AST_factor_Node> factor,
-    std::shared_ptr<scar::scar_Function_Node> scar_function,
-    std::vector<long> derivedType) {
-  std::string prev_arr_reg_name;
-  auto arrIdx = factor->get_arrIdx();
-  if (derivedType[0] > 0) {
-    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
-    scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
-
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-    scar_val_src->set_type(scar::val_type::VAR);
-    if (factor->get_identifier_node() != nullptr) {
-      scar_val_src->set_reg_name(factor->get_identifier_node()->get_value());
-    } else if (!variable_buffer.empty()) {
-      scar_val_src->set_reg_name(variable_buffer);
-      variable_buffer.clear();
-    } else {
-      scar_val_src->set_reg_name(get_prev_reg_name());
-    }
-    scar_instruction->set_src1(std::move(scar_val_src));
-
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst);
-    scar_val_dst->set_type(scar::val_type::VAR);
-    scar_val_dst->set_reg_name(get_reg_name(ast::ElemType::ULONG, {}));
-    scar_instruction->set_dst(std::move(scar_val_dst));
-
-    prev_arr_reg_name = get_prev_reg_name();
-    scar_function->add_instruction(std::move(scar_instruction));
-  } else {
-    if (factor->get_identifier_node() != nullptr) {
-      prev_arr_reg_name = factor->get_identifier_node()->get_value();
-    } else if (!variable_buffer.empty()) {
-      prev_arr_reg_name = variable_buffer;
-      variable_buffer.clear();
-    } else {
-      prev_arr_reg_name = get_prev_reg_name();
-    }
-  }
-
-  for (int i = 0; i < (long)arrIdx.size(); i++) {
-    derivedType.erase(derivedType.begin());
-
-    MAKE_SHARED(scar::scar_Instruction_Node, scar_offset_instruction);
-    scar_offset_instruction->set_type(scar::instruction_type::ADD_PTR);
-    scar_offset_instruction->set_offset(
-        ast::getSizeOfArrayTypeOnArch(derivedType));
-
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src1);
-    scar_val_src1->set_type(scar::val_type::VAR);
-    scar_val_src1->set_reg_name(prev_arr_reg_name);
-    scar_offset_instruction->set_src1(std::move(scar_val_src1));
-
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_index);
-    gen_scar_exp(arrIdx[i], scar_function);
-    SETVARCONSTANTREG(scar_val_index);
-    scar_offset_instruction->set_src2(std::move(scar_val_index));
-
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst_addptr);
-    scar_val_dst_addptr->set_type(scar::val_type::VAR);
-    if (derivedType.size() == 1) {
-      scar_val_dst_addptr->set_reg_name(
-          get_reg_name((ast::ElemType)derivedType[0], {}));
-    } else {
-      scar_val_dst_addptr->set_reg_name(
-          get_reg_name(ast::ElemType::DERIVED, derivedType));
-    }
-    scar_offset_instruction->set_dst(std::move(scar_val_dst_addptr));
-
-    scar_function->add_instruction(std::move(scar_offset_instruction));
-    prev_arr_reg_name = get_prev_reg_name();
-  }
-
-  MAKE_SHARED(scar::scar_Instruction_Node, scar_load_instruction);
-  scar_load_instruction->set_type(scar::instruction_type::LOAD);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-  scar_val_src2->set_type(scar::val_type::VAR);
-  scar_val_src2->set_reg_name(prev_arr_reg_name);
-  scar_load_instruction->set_src1(std::move(scar_val_src2));
-
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
-  scar_val_dst2->set_type(scar::val_type::VAR);
-  scar_val_dst2->set_reg_name(
-      get_reg_name(factor->get_type(), factor->get_derived_type()));
-  scar_load_instruction->set_dst(std::move(scar_val_dst2));
-
-  scar_function->add_instruction(std::move(scar_load_instruction));
 }
 
 } // namespace codegen

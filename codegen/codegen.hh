@@ -85,8 +85,6 @@ private:
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                        std::shared_ptr<scar::scar_Function_Node> scar_function);
-  // void gen_scar_incr_decr(std::shared_ptr<ast::AST_factor_Node> factor,
-  // std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_factor_function_call(
       std::shared_ptr<ast::AST_factor_function_call_Node> factor,
       std::shared_ptr<scar::scar_Function_Node> scar_function);
@@ -115,10 +113,6 @@ private:
   void gen_type_cast_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
                            std::shared_ptr<scasm::scasm_function> scasm_func,
                            scasm::scasm_program &scasm_program);
-  void
-  gen_scar_factor_array(std::shared_ptr<ast::AST_factor_Node> factor,
-                        std::shared_ptr<scar::scar_Function_Node> scar_function,
-                        std::vector<long> derivedType);
   int fr_label_counter = 1;
   int res_label_counter = 1;
   std::stack<std::string> fr_label_stack;
@@ -242,7 +236,8 @@ public:
     UNREACHABLE();
   }
 
-  scasm::AssemblyType elemToAsmType(ast::ElemType type) {
+  scasm::AssemblyType elemToAsmType(ast::ElemType type,
+                                    std::vector<long> derivedType) {
     switch (type) {
     case ast::ElemType::INT:
       return scasm::AssemblyType::LONG_WORD;
@@ -254,9 +249,13 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
-    // FIXME: For Arrays
-    case ast::ElemType::DERIVED:
-      return scasm::AssemblyType::QUAD_WORD;
+    case ast::ElemType::DERIVED: {
+      if (derivedType[0] > 0) {
+        return scasm::AssemblyType::BYTE_ARRAY;
+      } else {
+        return scasm::AssemblyType::QUAD_WORD;
+      }
+    } break;
     case ast::ElemType::POINTER:
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;

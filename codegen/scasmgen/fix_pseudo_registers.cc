@@ -10,13 +10,21 @@ namespace codegen {
 
 #define FIX_PSEUDO(target)                                                     \
   if (NOTNULL(inst->get_##target()) &&                                         \
-      inst->get_##target()->get_type() == scasm::operand_type::PSEUDO) {       \
+      (inst->get_##target()->get_type() == scasm::operand_type::PSEUDO or      \
+       inst->get_##target()->get_type() == scasm::operand_type::PSEUDO_MEM)) { \
     if (pseudoRegToMemOffset.find(inst->get_##target()->get_identifier()) !=   \
         pseudoRegToMemOffset.end()) {                                          \
+      if (inst->get_##target()->get_type() ==                                  \
+          scasm::operand_type::PSEUDO_MEM) {                                   \
+        inst->get_##target()->set_offset(                                      \
+            pseudoRegToMemOffset[inst->get_##target()->get_identifier()] +     \
+            inst->get_##target()->get_offset());                               \
+      } else {                                                                 \
+        inst->get_##target()->set_offset(                                      \
+            pseudoRegToMemOffset[inst->get_##target()->get_identifier()]);     \
+      }                                                                        \
       inst->get_##target()->set_type(scasm::operand_type::MEMORY);             \
       inst->get_##target()->set_reg(scasm::register_type::BP);                 \
-      inst->get_##target()->set_offset(                                        \
-          pseudoRegToMemOffset[inst->get_##target()->get_identifier()]);       \
     } else {                                                                   \
       std::string temp = inst->get_##target()->get_identifier();               \
       if (backendSymbolTable[temp].isTopLevel) {                               \
@@ -31,11 +39,26 @@ namespace codegen {
                    scasm::AssemblyType::LONG_WORD) {                           \
           offset += 4;                                                         \
           MAKE_ALIGNED(offset, 4);                                             \
+        } else if (backendSymbolTable[temp].asmType ==                         \
+                   scasm::AssemblyType::BYTE_ARRAY) {                          \
+          offset += backendSymbolTable[temp].size;                             \
+          MAKE_ALIGNED(offset, backendSymbolTable[temp].alignment);            \
         }                                                                      \
-        inst->get_##target()->set_type(scasm::operand_type::MEMORY);           \
-        inst->get_##target()->set_reg(scasm::register_type::BP);               \
+        if (inst->get_##target()->get_type() ==                                \
+            scasm::operand_type::PSEUDO_MEM) {                                 \
+          /* the Pseudo Mem operand used by arrays to copy data into some      \
+           * offset. As such they already has some base positive offset and    \
+           * then we change that according the offset we calculate for the     \
+           * array  */                                                         \
+          inst->get_##target()->set_offset(                                    \
+              -offset + inst->get_##target()->get_offset());                   \
+        } else {                                                               \
+          inst->get_##target()->set_offset(-offset);                           \
+        }                                                                      \
         inst->get_##target()->set_offset(-offset);                             \
         pseudoRegToMemOffset[temp] = -offset;                                  \
+        inst->get_##target()->set_type(scasm::operand_type::MEMORY);           \
+        inst->get_##target()->set_reg(scasm::register_type::BP);               \
       }                                                                        \
     }                                                                          \
   }

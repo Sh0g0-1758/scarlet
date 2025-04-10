@@ -82,6 +82,75 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   if (factor == nullptr)
     return;
 
+  if (factor->get_arrIdx().size() > 0) {
+    /*
+     * When we have array subscripts, we expand them by adding the subscript
+     * to the base type. The only base types allowed are array and pointers.
+     * So for instance, p[i][j] will expand to *(*(p + i) + j)
+     */
+    auto arrIdx = factor->get_arrIdx();
+    factor->set_arrIdx({});
+    MAKE_SHARED(ast::AST_factor_Node, propogate_factor);
+
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    unop->set_op(unop::UNOP::DEREFERENCE);
+
+    for (int i = 0; i < (int)arrIdx.size(); i++) {
+      MAKE_SHARED(ast::AST_factor_Node, deref_factor);
+      deref_factor->set_unop_node(unop);
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      MAKE_SHARED(ast::AST_binop_Node, binop_node);
+      binop_node->set_op(binop::BINOP::ADD);
+      exp->set_binop_node(binop_node);
+      exp->set_right(arrIdx[i]);
+
+      child_factor->set_exp_node(exp);
+      deref_factor->set_child(child_factor);
+
+      if (i == 0) {
+        exp->set_binop_node(binop_node);
+        if (factor->get_exp_node() != nullptr) {
+          exp->set_left(factor->get_exp_node());
+
+          factor->set_exp_node(nullptr);
+        } else if (factor->get_identifier_node() != nullptr) {
+          if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
+            auto func_call_factor =
+                std::static_pointer_cast<ast::AST_factor_function_call_Node>(
+                    factor);
+            MAKE_SHARED(ast::AST_factor_function_call_Node, func_call);
+            func_call->set_identifier_node(
+                func_call_factor->get_identifier_node());
+            func_call->set_arguments(func_call_factor->get_arguments());
+            func_call->set_factor_type(ast::FactorType::FUNCTION_CALL);
+
+            func_call_factor->set_identifier_node(nullptr);
+            func_call_factor->set_factor_type(ast::FactorType::BASIC);
+            func_call_factor->set_arguments({});
+
+            exp->set_factor_node(func_call);
+          } else {
+            MAKE_SHARED(ast::AST_factor_Node, base_factor);
+            base_factor->set_identifier_node(factor->get_identifier_node());
+
+            factor->set_identifier_node(nullptr);
+
+            exp->set_factor_node(base_factor);
+          }
+        }
+      } else {
+        exp->set_factor_node(propogate_factor);
+      }
+
+      propogate_factor = deref_factor;
+    }
+
+    factor->set_unop_node(unop);
+    factor->set_child(propogate_factor->get_child());
+  }
+
   // Recursively check the factor child
   analyze_factor(factor->get_child(), symbol_table, indx);
 
@@ -215,20 +284,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   // since the factor can have its own exp as well, we recursively check that
   analyze_exp(factor->get_exp_node(), symbol_table, indx);
 
-  if (factor->get_arrIdx().size() != 0) {
-    for (auto it : factor->get_arrIdx()) {
-      analyze_exp(it, symbol_table, indx);
-      if (it->get_type() == ast::ElemType::DERIVED or
-          it->get_type() == ast::ElemType::DOUBLE) {
-        success = false;
-        error_messages.emplace_back("Array index must be of type integer");
-      } else {
-        // cast to long
-        add_cast_to_exp(it, ast::ElemType::LONG, {});
-      }
-    }
-  }
-
   // assign type to the factor
   assign_type_to_factor(factor);
 
@@ -356,29 +411,15 @@ void parser::assign_type_to_factor(
   if (factor->get_const_node() != nullptr) {
     factor->set_type(ast::constTypeToElemType(
         factor->get_const_node()->get_constant().get_type()));
-    if (factor->get_arrIdx().size() != 0) {
-      success = false;
-      error_messages.emplace_back("subscipting a constant is not allowed");
-    }
   } else if (factor->get_identifier_node() != nullptr) {
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];
-    if (factor->get_arrIdx().size() != 0) {
-      assign_type_from_subscript(identInfo.typeDef[0],
-                                 identInfo.derivedTypeMap[0], factor);
-    } else {
-      factor->set_type(identInfo.typeDef[0]);
-      factor->set_derived_type(identInfo.derivedTypeMap[0]);
-    }
+    factor->set_type(identInfo.typeDef[0]);
+    factor->set_derived_type(identInfo.derivedTypeMap[0]);
   } else if (factor->get_exp_node() != nullptr) {
     auto exp = factor->get_exp_node();
-    if (factor->get_arrIdx().size() != 0) {
-      assign_type_from_subscript(exp->get_type(), exp->get_derived_type(),
-                                 factor);
-    } else {
-      factor->set_type(exp->get_type());
-      factor->set_derived_type(exp->get_derived_type());
-    }
+    factor->set_type(exp->get_type());
+    factor->set_derived_type(exp->get_derived_type());
   } else if (factor->get_unop_node() != nullptr) {
     if (factor->get_unop_node()->get_op() != unop::UNOP::ADDROF) {
       decay_arr_to_pointer(factor->get_child(), nullptr);

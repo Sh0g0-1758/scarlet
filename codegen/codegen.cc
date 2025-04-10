@@ -28,6 +28,15 @@ namespace codegen {
     break;                                                                     \
   }
 
+#define PRINT_INDEXED(target)                                                  \
+  assembly << "(";                                                             \
+  assembly << scasm::to_string(instr->get_##target()->get_reg(),               \
+                               scasm::register_size::QWORD);                   \
+  assembly << ", ";                                                            \
+  assembly << scasm::to_string(instr->get_##target()->get_index(),             \
+                               scasm::register_size::QWORD);                   \
+  assembly << ", " << instr->get_##target()->get_offset() << ")";
+
 #define CODEGEN_SRC()                                                          \
   if (instr->get_src()->get_type() == scasm::operand_type::IMM) {              \
     assembly << "$" << instr->get_src()->get_imm();                            \
@@ -40,6 +49,8 @@ namespace codegen {
     assembly << ARCHPREFIX << instr->get_src()->get_identifier() << "(%rip)";  \
   } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {       \
     PRINT_REG(src);                                                            \
+  } else if (instr->get_src()->get_type() == scasm::operand_type::INDEXED) {   \
+    PRINT_INDEXED(src)                                                         \
   }
 
 #define CODEGEN_DST()                                                          \
@@ -229,39 +240,74 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
 
 void Codegen::asm_gen_static_variable(
     std::shared_ptr<scasm::scasm_top_level> elem, std::stringstream &assembly) {
+  /* DATA */
   auto vars = std::static_pointer_cast<scasm::scasm_static_variable>(elem);
-  auto varType = backendSymbolTable[vars->get_name()].asmType;
+  auto init = vars->get_init();
+  auto varName = vars->get_name();
+
+  auto symInfo = backendSymbolTable[varName];
+  auto varType = symInfo.asmType;
+  auto alignement = symInfo.alignment;
+
   if (vars->is_global()) {
     assembly << "\t.globl ";
-    assembly << ARCHPREFIX << vars->get_name() << "\n";
+    assembly << ARCHPREFIX << varName << "\n";
   }
-  bool InDataSection =
-      ((!vars->get_init().empty()) or (varType == scasm::AssemblyType::DOUBLE));
+
+  bool InDataSection = false;
+  if (symInfo.asmType == scasm::AssemblyType::BYTE_ARRAY) {
+    InDataSection =
+        !(init.size() == 1 and init[0].get_type() == constant::Type::ZERO);
+  } else {
+    InDataSection = (!init.empty()) or (varType == scasm::AssemblyType::DOUBLE);
+  }
+
   if (InDataSection) {
     assembly << "\t.data\n";
   } else {
     assembly << "\t.bss\n";
   }
+
 #ifdef __APPLE__
-  assembly << "\t.balign " + std::to_string(vars->get_alignment()) + '\n';
+  assembly << "\t.balign " + std::to_string(alignement) + '\n';
 #else
-  assembly << "\t.align " + std::to_string(vars->get_alignment()) + '\n';
+  assembly << "\t.align " + std::to_string(alignement) + '\n';
 #endif
-  assembly << ARCHPREFIX << vars->get_name() << ":\n";
+  assembly << ARCHPREFIX << varName << ":\n";
+
   if (InDataSection) {
     // FIXME
     if (varType == scasm::AssemblyType::QUAD_WORD) {
       assembly << "\t.quad ";
-      assembly << vars->get_init()[0] << "\n";
+      assembly << init[0] << "\n";
     } else if (varType == scasm::AssemblyType::LONG_WORD) {
       assembly << "\t.long ";
-      assembly << vars->get_init()[0] << "\n";
+      assembly << init[0] << "\n";
     } else if (varType == scasm::AssemblyType::DOUBLE) {
       assembly << "\t.quad ";
-      assembly << vars->get_init()[0].get_value().l << "\n";
+      assembly << init[0].get_value().l << "\n";
+    } else if (varType == scasm::AssemblyType::BYTE_ARRAY) {
+      for (auto it : init) {
+        if (it.get_type() == constant::Type::ZERO) {
+          assembly << "\t.zero " + std::to_string(it.get_value().ul) + '\n';
+        } else if (it.get_type() == constant::Type::INT) {
+          assembly << "\t.long " + std::to_string(it.get_value().i) + '\n';
+        } else if (it.get_type() == constant::Type::UINT) {
+          assembly << "\t.long " + std::to_string(it.get_value().ui) + '\n';
+        } else if (it.get_type() == constant::Type::LONG) {
+          assembly << "\t.quad " + std::to_string(it.get_value().l) + '\n';
+        } else if (it.get_type() == constant::Type::ULONG) {
+          assembly << "\t.quad " + std::to_string(it.get_value().ul) + '\n';
+        } else if (it.get_type() == constant::Type::DOUBLE) {
+          assembly << "\t.quad " + std::to_string(it.get_value().ul) + '\n';
+        }
+      }
     }
   } else {
-    assembly << "\t.zero " + std::to_string(vars->get_alignment()) + '\n';
+    if (varType == scasm::AssemblyType::BYTE_ARRAY) {
+      assembly << "\t.zero " + std::to_string(symInfo.size) + '\n';
+    }
+    assembly << "\t.zero " + std::to_string(alignement) + '\n';
   }
 }
 
