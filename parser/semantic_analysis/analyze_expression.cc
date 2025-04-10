@@ -450,7 +450,7 @@ void parser::assign_type_to_factor(
     factor->set_type(ast::ElemType::DERIVED);
     std::vector<long> derivedType;
     std::string str = factor->get_string_node()->get_value();
-    derivedType.push_back((long)str.size());
+    derivedType.push_back((long)str.size()+1);
     derivedType.push_back((long)ast::ElemType::CHAR);
     factor->set_derived_type(derivedType);
   }
