@@ -139,6 +139,14 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
 
             exp->set_factor_node(base_factor);
           }
+        } else if (factor->get_unop_node() != nullptr and
+                   unop::is_incr_decr(factor->get_unop_node()->get_op())) {
+          MAKE_SHARED(ast::AST_factor_Node, base_factor);
+          base_factor->set_unop_node(factor->get_unop_node());
+          base_factor->set_child(factor->get_child());
+          factor->set_unop_node(nullptr);
+          factor->set_child(nullptr);
+          exp->set_factor_node(base_factor);
         }
       } else {
         exp->set_factor_node(propogate_factor);
