@@ -111,17 +111,7 @@ long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType) {
 }
 
 long getSizeOfArrayTypeOnArch(std::vector<long> derivedType) {
-  long sizeOfArrayType = 1;
-  for (auto i : derivedType) {
-    if (i > 0) {
-      sizeOfArrayType *= i;
-    } else {
-      sizeOfArrayType *= getSizeOfTypeOnArch((ast::ElemType)i);
-      break;
-    }
-  }
-
-  return sizeOfArrayType;
+  return derivedType[0] * getSizeOfReferencedTypeOnArch(derivedType);
 }
 
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {

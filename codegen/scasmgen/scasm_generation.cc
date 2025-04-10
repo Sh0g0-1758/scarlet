@@ -6,42 +6,15 @@ namespace codegen {
 void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto elem : scar.get_elems()) {
+
     if (elem->get_type() == scar::topLevelType::STATICVARIABLE) {
       auto var = std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem);
       MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
       scasm_var->set_name(var->get_identifier()->get_value());
-      if (is_array(globalSymbolTable[var->get_identifier()->get_value()])) {
-        // allignment for array is set later
-      } else {
-        switch (var->get_init()[0].get_type()) {
-        case constant::Type::UINT:
-        case constant::Type::INT:
-          backendSymbolTable[var->get_identifier()->get_value()].alignment = 4;
-          break;
-        case constant::Type::ULONG:
-        case constant::Type::LONG:
-          backendSymbolTable[var->get_identifier()->get_value()].alignment = 8;
-          break;
-        case constant::Type::DOUBLE:
-          backendSymbolTable[var->get_identifier()->get_value()].alignment = 8;
-          break;
-        // These two cases should never be reached as constant type zero is only
-        // used to store information about uninitialized static arrays
-        case constant::Type::ZERO:
-        case constant::Type::NONE:
-          backendSymbolTable[var->get_identifier()->get_value()].alignment =
-              INT_MIN;
-          break;
-        }
-      }
-
       scasm_var->set_init(var->get_init());
       scasm_var->set_global(elem->is_global());
-      MAKE_SHARED(scasm::scasm_top_level, top_level_elem);
-      top_level_elem =
-          std::static_pointer_cast<scasm::scasm_top_level>(scasm_var);
-      top_level_elem->set_type(scasm::scasm_top_level_type::STATIC_VARIABLE);
-      scasm_program.add_elem(std::move(top_level_elem));
+      scasm_var->set_type(scasm::scasm_top_level_type::STATIC_VARIABLE);
+      scasm_program.add_elem(std::move(scasm_var));
       continue;
     }
 
@@ -443,13 +416,12 @@ void Codegen::gen_scasm() {
   // Make the backend symbol table
   for (auto it : globalSymbolTable) {
     if (it.second.type == symbolTable::symbolType::VARIABLE) {
-      scasm::backendSymbol sym = backendSymbolTable[it.first];
+      auto baseType = it.second.typeDef[0];
+      auto derivedType = it.second.derivedTypeMap[0];
+      scasm::backendSymbol sym;
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
-      sym.asmType =
-          elemToAsmType(it.second.typeDef[0], it.second.derivedTypeMap[0]);
-      if (it.second.typeDef[0] == ast::ElemType::DERIVED and
-          it.second.derivedTypeMap[0][0] > 0) {
-        auto derivedType = it.second.derivedTypeMap[0];
+      sym.asmType = elemToAsmType(baseType, derivedType);
+      if (symbolTable::is_array(it.second)) {
         sym.size = ast::getSizeOfArrayTypeOnArch(derivedType);
         if (sym.size > 16) {
           sym.alignment = 16;
@@ -462,6 +434,27 @@ void Codegen::gen_scasm() {
           sym.alignment =
               ast::getSizeOfTypeOnArch((ast::ElemType)derivedType[i]);
         }
+      } else {
+        switch (baseType) {
+        case ast::ElemType::UINT:
+        case ast::ElemType::INT:
+          sym.alignment = 4;
+          break;
+        case ast::ElemType::ULONG:
+        case ast::ElemType::LONG:
+          sym.alignment = 8;
+          break;
+        case ast::ElemType::DOUBLE:
+          sym.alignment = 8;
+          break;
+        case ast::ElemType::DERIVED:
+          sym.alignment = 8;
+          break;
+        case ast::ElemType::POINTER:
+        case ast::ElemType::NONE:
+          sym.alignment = INT_MIN;
+          break;
+        }
       }
       if (it.second.link != symbolTable::linkage::NONE) {
         sym.isTopLevel = true;
@@ -472,11 +465,9 @@ void Codegen::gen_scasm() {
     } else {
       scasm::backendSymbol sym;
       sym.type = scasm::backendSymbolType::FUNCTION;
-      if (globalSymbolTable[it.first].def == symbolTable::defType::TRUE) {
-        sym.isDefined = true;
-      } else {
-        sym.isDefined = false;
-      }
+      sym.isDefined =
+          globalSymbolTable[it.first].def == symbolTable::defType::TRUE ? true
+                                                                        : false;
       backendSymbolTable[it.first] = sym;
     }
   }

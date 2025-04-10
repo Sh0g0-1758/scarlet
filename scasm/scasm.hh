@@ -321,7 +321,6 @@ class scasm_static_variable : public scasm_top_level {
 private:
   std::string name;
   std::vector<constant::Constant> init;
-  // int alignment;
 
 public:
   std::string get_scasm_name() { return "StaticVariable"; }
@@ -332,8 +331,6 @@ public:
   void set_init(std::vector<constant::Constant> init) {
     this->init = std::move(init);
   }
-  // int get_alignment() { return alignment; }
-  // void set_alignment(int alignment) { this->alignment = alignment; }
 };
 
 class scasm_static_constant : public scasm_top_level {

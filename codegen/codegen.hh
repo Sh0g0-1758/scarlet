@@ -255,7 +255,6 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
-    // FIXME: For Arrays : check if ok
     case ast::ElemType::DERIVED: {
       if (derivedType[0] > 0) {
         return scasm::AssemblyType::BYTE_ARRAY;
