@@ -304,79 +304,90 @@ void Codegen::gen_scasm() {
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::COPY_TO_OFFSET) {
         // mov (<src type>, src, PsuedoMem(dst, offset))
-        // FIXME?: assumes only array types are passed
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
-        scasm_inst->set_asm_type(valToAsmType(inst->get_src1()));
+        scasm_inst->set_asm_type(instType);
+
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
         SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         scasm_dst->set_type(scasm::operand_type::PSEUDO_MEM);
         scasm_dst->set_identifier(inst->get_dst()->get_reg());
         scasm_dst->set_offset(inst->get_offset());
         scasm_inst->set_dst(std::move(scasm_dst));
+
         scasm_func->add_instruction(std::move(scasm_inst));
       } else if (inst->get_type() == scar::instruction_type::ADD_PTR) {
-        // if scale if one of 1,2,4,8
+        // if scale == 1,2,4,8
         // mov(<quadword>, ptr, Reg(AX))
-        // mov(<quadword>, index, Reg(AX))
+        // mov(<quadword>, index, Reg(DX))
         // lea(Indexed(AX, DX, scale), dst)
 
-        // if scale is not one of 1,2,4,8
+        // if scale != 1,2,4,8
         // mov(<quadword>, ptr, Reg(AX))
-        // mov(<quadword>, index, Reg(AX))
-        // Binary(MUL, <quadword>, Imm(scale), Reg(AX))
+        // mov(<quadword>, index, Reg(DX))
+        // Binary(MUL, <quadword>, Imm(scale), Reg(DX))
         // lea(Indexed(AX, DX, 1), dst)
 
         // if index is a constant
         // mov(<quadword>, ptr, Reg(AX))
         // lea(Memory(AX, index*scale), dst)
 
+        MAKE_SHARED(scasm::scasm_operand, scasm_regAX);
+        scasm_regAX->set_type(scasm::operand_type::REG);
+        scasm_regAX->set_reg(scasm::register_type::AX);
+
+        MAKE_SHARED(scasm::scasm_operand, scasm_regDX);
+        scasm_regDX->set_type(scasm::operand_type::REG);
+        scasm_regDX->set_reg(scasm::register_type::DX);
+
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        SET_OPERAND(scasm_src, set_src, get_src1,
-                    scasm_inst); // check if pointer goes to the psuedo operand
-        MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-        scasm_dst->set_type(scasm::operand_type::REG);
-        scasm_dst->set_reg(scasm::register_type::AX);
-        scasm_inst->set_dst(std::move(scasm_dst));
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+
+        scasm_inst->set_dst(scasm_regAX);
         scasm_func->add_instruction(std::move(scasm_inst));
+
         if (inst->get_src2()->get_type() == scar::val_type::VAR) {
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
           scasm_inst2->set_type(scasm::instruction_type::MOV);
           scasm_inst2->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+
           MAKE_SHARED(scasm::scasm_operand, scasm_src2);
-          SET_OPERAND(scasm_src2, set_src, get_src2,
-                      scasm_inst2); // use index (in the src2 field)
-          MAKE_SHARED(scasm::scasm_operand, scasm_dst2);
-          scasm_dst2->set_type(scasm::operand_type::REG);
-          scasm_dst2->set_reg(scasm::register_type::DX);
-          scasm_inst2->set_dst(std::move(scasm_dst2));
+          SET_OPERAND(scasm_src2, set_src, get_src2, scasm_inst2);
+
+          scasm_inst2->set_dst(scasm_regDX);
+
           scasm_func->add_instruction(std::move(scasm_inst2));
-          if (inst->get_offset() == 1 or inst->get_offset() == 2 or
-              inst->get_offset() == 4 or inst->get_offset() == 8) {
+
+          if (inst->get_offset() <= 8 and
+              (inst->get_offset() & inst->get_offset() - 1) == 0) {
             MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
             scasm_inst3->set_type(scasm::instruction_type::LEA);
             scasm_inst3->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+
             MAKE_SHARED(scasm::scasm_operand, scasm_src3);
             scasm_src3->set_type(scasm::operand_type::INDEXED);
             scasm_src3->set_reg(scasm::register_type::AX);
             scasm_src3->set_index(scasm::register_type::DX);
-            // use scale 1 for indexed operand
             scasm_src3->set_offset(inst->get_offset());
             scasm_inst3->set_src(std::move(scasm_src3));
+
             MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
             SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst3);
-            scasm_func->add_instruction(std::move(scasm_inst3));
 
+            scasm_func->add_instruction(std::move(scasm_inst3));
           } else {
             // multipy offset with index
             MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
             scasm_inst3->set_type(scasm::instruction_type::BINARY);
             scasm_inst3->set_binop(scasm::Binop::MUL);
             scasm_inst3->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+
             MAKE_SHARED(scasm::scasm_operand, scasm_src3);
             scasm_src3->set_type(scasm::operand_type::IMM);
             constant::Constant offset;
@@ -384,24 +395,25 @@ void Codegen::gen_scasm() {
             offset.set_value({.l = inst->get_offset()});
             scasm_src3->set_imm(offset);
             scasm_inst3->set_src(std::move(scasm_src3));
-            MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
-            scasm_dst3->set_type(scasm::operand_type::REG);
-            scasm_dst3->set_reg(scasm::register_type::DX);
-            scasm_inst3->set_dst(std::move(scasm_dst3));
+
+            scasm_inst3->set_dst(scasm_regDX);
+
             scasm_func->add_instruction(std::move(scasm_inst3));
 
             MAKE_SHARED(scasm::scasm_instruction, scasm_inst4);
             scasm_inst4->set_type(scasm::instruction_type::LEA);
             scasm_inst4->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+
             MAKE_SHARED(scasm::scasm_operand, scasm_src4);
             scasm_src4->set_type(scasm::operand_type::INDEXED);
             scasm_src4->set_reg(scasm::register_type::AX);
             scasm_src4->set_index(scasm::register_type::DX);
-            // use scale 1 for indexed operand
             scasm_src4->set_offset(1);
             scasm_inst4->set_src(std::move(scasm_src4));
+
             MAKE_SHARED(scasm::scasm_operand, scasm_dst4);
             SET_OPERAND(scasm_dst4, set_dst, get_dst, scasm_inst4);
+
             scasm_func->add_instruction(std::move(scasm_inst4));
           }
         } else {
