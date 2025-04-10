@@ -63,6 +63,7 @@ void parser::parse_variable_declarator_suffix(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_declarator_Node> &declarator) {
   while (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+    isArrayDecl = true;
     tokens.erase(tokens.begin());
     if (token::is_integer_constant(tokens[0].get_token())) {
       try {
@@ -215,10 +216,12 @@ void parser::parse_variable_declaration(
     return;
   }
   EXPECT(token::TOKEN::ASSIGNMENT);
-  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
+  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE or (isArrayDecl and
+      tokens[0].get_token() == token::TOKEN::CHAR_ARR)) {
     MAKE_SHARED(ast::initializer, init);
     parse_initializer(tokens, init);
     decl->set_initializer(std::move(init));
+    isArrayDecl = false;
   } else {
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
@@ -229,9 +232,32 @@ void parser::parse_variable_declaration(
 
 void parser::parse_initializer(std::vector<token::Token> &tokens,
                                std::shared_ptr<ast::initializer> &init) {
+  if(tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+    std::string str = "";
+    while(tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+      str += tokens[0].get_value().value();
+      tokens.erase(tokens.begin());
+    }
+    char charArray[str.size() + 1];
+    std::strcpy(charArray, str.c_str());
+    for(auto i:charArray) {
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      MAKE_SHARED(ast::AST_const_Node, constNode);
+      MAKE_SHARED(ast::AST_factor_Node, factor);
+      constant::Constant con;
+      con.set_value({.c = i});
+      con.set_type(constant::Type::CHAR);
+      constNode->set_constant(con);
+      factor->set_const_node(std::move(constNode));
+      exp->set_factor_node(std::move(factor));
+      init->exp_list.emplace_back(std::move(exp));
+    }
+  }
+  else {
   tokens.erase(tokens.begin());
   while (tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
-    if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
+    if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE or 
+        tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
       // parse all nested initializers
       MAKE_SHARED(ast::initializer, child);
       parse_initializer(tokens, child);
@@ -254,6 +280,7 @@ void parser::parse_initializer(std::vector<token::Token> &tokens,
     success = false;
     error_messages.emplace_back("Expected a closing brace for initializer");
   }
+}
 }
 
 void parser::parse_function_declaration(

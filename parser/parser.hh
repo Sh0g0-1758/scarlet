@@ -12,6 +12,7 @@
 #include <tools/symbolTable/symbolTable.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
+#include <cstring>
 
 namespace scarlet {
 namespace parser {
@@ -30,6 +31,7 @@ private:
   int switch_counter = 0;
   int case_counter = 0;
   int goto_label_counter = 0;
+  bool isArrayDecl = false;
   // Used to annotate goto labels during parsing and explicitly cast
   // return expressions in a function to the correct type during semantic
   // analysis
