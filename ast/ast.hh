@@ -170,8 +170,8 @@ public:
   void set_op(binop::BINOP binop) { this->op = binop; }
 };
 
-class AST_exp_Node;
 
+class AST_exp_Node;
 enum class FactorType { BASIC, FUNCTION_CALL };
 class AST_declarator_Node;
 

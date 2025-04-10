@@ -446,6 +446,13 @@ void parser::assign_type_to_factor(
       }
       factor->set_type(factor->get_cast_type());
     }
+  }else if (factor->get_stringNode() != nullptr){
+    factor->set_type(ast::ElemType::DERIVED);
+    std::vector<long> derivedType;
+    string::StringType strType =
+        factor->get_stringNode()->get_string();
+    derivedType.push_back((long));
+    factor->set_derived_type();
   }
 }
 
