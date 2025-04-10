@@ -747,21 +747,12 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                              ast::ElemType type,
                              std::vector<long> derivedType) {
   if (exp->get_binop_node() == nullptr) {
-    MAKE_SHARED(ast::AST_exp_Node, copy_exp);
-    copy_exp->copy(exp);
-
     MAKE_SHARED(ast::AST_factor_Node, cast_factor);
     cast_factor->set_cast_type(type);
     cast_factor->set_type(type);
     cast_factor->set_derived_type(derivedType);
+    cast_factor->set_child(exp->get_factor_node());
 
-    MAKE_SHARED(ast::AST_factor_Node, child_factor);
-    child_factor->set_exp_node(std::move(copy_exp));
-    child_factor->set_type(exp->get_type());
-    child_factor->set_derived_type(exp->get_derived_type());
-    cast_factor->set_child(std::move(child_factor));
-
-    exp->purge();
     exp->set_factor_node(std::move(cast_factor));
     exp->set_type(type);
     exp->set_derived_type(derivedType);
