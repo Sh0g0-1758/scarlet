@@ -81,6 +81,9 @@ private:
                       std::shared_ptr<ast::AST_For_Statement_Node> &forstmt);
   void parse_factor(std::vector<token::Token> &tokens,
                     std::shared_ptr<ast::AST_factor_Node> &factor);
+  void
+  parse_factor_post_incr_decr(std::vector<token::Token> &tokens,
+                              std::shared_ptr<ast::AST_factor_Node> &factor);
   void parse_abstract_declarator(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_declarator_Node> &declarator);
