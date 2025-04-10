@@ -38,5 +38,10 @@ struct symbolInfo {
   std::map<int, std::vector<long>> derivedTypeMap{};
 };
 
+bool is_array(symbolInfo symInfo) {
+  return symInfo.typeDef[0] == ast::ElemType::DERIVED and
+         symInfo.derivedTypeMap[0][0] > 0;
+}
+
 } // namespace symbolTable
 } // namespace scarlet

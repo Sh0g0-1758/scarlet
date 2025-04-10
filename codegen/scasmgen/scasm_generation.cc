@@ -10,12 +10,8 @@ void Codegen::gen_scasm() {
       auto var = std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem);
       MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
       scasm_var->set_name(var->get_identifier()->get_value());
-      if (globalSymbolTable[var->get_identifier()->get_value()].typeDef[0] ==
-              ast::ElemType::DERIVED and
-          globalSymbolTable[var->get_identifier()->get_value()]
-                  .derivedTypeMap[0]
-                  .size() > 0) {
-        ; // for array the alignement is set later
+      if (is_array(globalSymbolTable[var->get_identifier()->get_value()])) {
+        // allignment for array is set later
       } else {
         switch (var->get_init()[0].get_type()) {
         case constant::Type::UINT:
@@ -29,9 +25,12 @@ void Codegen::gen_scasm() {
         case constant::Type::DOUBLE:
           backendSymbolTable[var->get_identifier()->get_value()].alignment = 8;
           break;
+        // These two cases should never be reached as constant type zero is only
+        // used to store information about uninitialized static arrays
         case constant::Type::ZERO:
         case constant::Type::NONE:
-          backendSymbolTable[var->get_identifier()->get_value()].alignment = 8;
+          backendSymbolTable[var->get_identifier()->get_value()].alignment =
+              INT_MIN;
           break;
         }
       }
