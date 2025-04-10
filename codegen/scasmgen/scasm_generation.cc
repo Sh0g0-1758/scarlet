@@ -298,15 +298,7 @@ void Codegen::gen_scasm() {
         scasm_inst->set_type(scasm::instruction_type::LEA);
         scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
         MAKE_SHARED(scasm::scasm_operand, scasm_src);
-        if (inst->get_src1()->get_type() == scar::val_type::VAR and
-            backendSymbolTable[inst->get_src1()->get_reg()].asmType ==
-                scasm::AssemblyType::BYTE_ARRAY) {
-          scasm_src->set_type(scasm::operand_type::PSEUDO_MEM);
-          scasm_src->set_offset(0);
-          scasm_src->set_identifier(inst->get_src1()->get_reg());
-        } else {
-          SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
-        }
+        SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
         scasm_func->add_instruction(std::move(scasm_inst));
