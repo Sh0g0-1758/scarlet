@@ -36,12 +36,12 @@ struct symbolInfo {
   // Here <= 0 corresponds to an ElemType and > 0 corrresponds to an array
   // dimension
   std::map<int, std::vector<long>> derivedTypeMap{};
-};
 
-bool is_array(symbolInfo symInfo) {
-  return symInfo.typeDef[0] == ast::ElemType::DERIVED and
-         symInfo.derivedTypeMap[0][0] > 0;
-}
+  static bool is_array(symbolInfo symInfo) {
+    return symInfo.typeDef[0] == ast::ElemType::DERIVED and
+           symInfo.derivedTypeMap[0][0] > 0;
+  }
+};
 
 } // namespace symbolTable
 } // namespace scarlet

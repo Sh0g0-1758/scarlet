@@ -338,7 +338,7 @@ void Codegen::gen_scasm() {
           scasm_func->add_instruction(std::move(scasm_inst2));
 
           if (inst->get_offset() <= 8 and
-              (inst->get_offset() & inst->get_offset() - 1) == 0) {
+              (inst->get_offset() & (inst->get_offset() - 1)) == 0) {
             MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
             scasm_inst3->set_type(scasm::instruction_type::LEA);
             scasm_inst3->set_asm_type(scasm::AssemblyType::QUAD_WORD);
@@ -421,7 +421,7 @@ void Codegen::gen_scasm() {
       scasm::backendSymbol sym;
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
       sym.asmType = elemToAsmType(baseType, derivedType);
-      if (symbolTable::is_array(it.second)) {
+      if (symbolTable::symbolInfo::is_array(it.second)) {
         sym.size = ast::getSizeOfArrayTypeOnArch(derivedType);
         if (sym.size > 16) {
           sym.alignment = 16;
