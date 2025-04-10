@@ -346,10 +346,10 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       constant::Constant one;
       if (baseType == ast::ElemType::DOUBLE) {
         one.set_type(constant::Type::DOUBLE);
-        one.set_value({.d = 1});
+        one.set_value({.d = 1.0});
       } else {
-        one.set_type(constant::Type::INT);
-        one.set_value({.i = 1});
+        one.set_type(constant::Type::LONG);
+        one.set_value({.l = 1});
         if (baseType == ast::ElemType::DERIVED) {
           constExp->set_type(ast::ElemType::INT);
           constExp->set_derived_type({});
