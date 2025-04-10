@@ -429,6 +429,14 @@ void parser::assign_type_to_factor(
       return;
     }
 
+    if (unop::is_incr_decr(unop)) {
+      if (ast::is_array(factor->get_child())) {
+        success = false;
+        error_messages.emplace_back(
+            "Increment / Decrement operator not allowed on array type");
+      }
+    }
+
     if (unop != unop::UNOP::ADDROF) {
       decay_arr_to_pointer(factor->get_child(), nullptr);
     }
@@ -508,11 +516,19 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     binop::BINOP binop = exp->get_binop_node()->get_op();
     decay_arr_to_pointer(nullptr, exp->get_left());
     decay_arr_to_pointer(nullptr, exp->get_right());
-    if (binop != binop::BINOP::ASSIGN or binop::is_compound(binop)) {
+    if (binop != binop::BINOP::ASSIGN and !binop::is_compound(binop)) {
       decay_arr_to_pointer(exp->get_factor_node(), nullptr);
     }
-    if (binop::is_compound(binop))
+
+    if (binop::is_compound(binop)) {
+      if (ast::is_array(exp->get_factor_node())) {
+        success = false;
+        error_messages.emplace_back(
+            "Assignment operator not allowed on array type");
+      }
+
       binop = binop::compound_to_base(binop);
+    }
     // Logical and / or depends on only one operand
     if (binop == binop::BINOP::LAND or binop == binop::BINOP::LOR) {
       exp->set_type(ast::ElemType::INT);
@@ -836,8 +852,7 @@ void parser::decay_arr_to_pointer(std::shared_ptr<ast::AST_factor_Node> factor,
   unop->set_op(unop::UNOP::DECAY);
 
   if (factor != nullptr) {
-    if (factor->get_type() == ast::ElemType::DERIVED and
-        factor->get_derived_type()[0] > 0) {
+    if (ast::is_array(factor)) {
       auto derivedType = factor->get_derived_type();
       derivedType[0] = (long)ast::ElemType::POINTER;
 
@@ -849,8 +864,7 @@ void parser::decay_arr_to_pointer(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 
   if (exp != nullptr) {
-    if (exp->get_type() == ast::ElemType::DERIVED and
-        exp->get_derived_type()[0] > 0) {
+    if (ast::is_array(exp)) {
       auto derivedType = exp->get_derived_type();
       derivedType[0] = (long)ast::ElemType::POINTER;
 
