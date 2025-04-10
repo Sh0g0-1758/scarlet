@@ -83,35 +83,36 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     return;
 
   if (factor->get_arrIdx().size() > 0) {
-    // expand subscripts to *(p + index), p is array/ pointer type
     /*
-    - start from the first index do *(*(p+arrIdx[0]) + arrIdx[1])
-    - factor->unop(*)->child(exp_node)->exp_node(*(p+arrIdx[0]) +  arrIdx[1])
-    - so make this thing and finally supply as child and make unop node
-    derefernce
-    */
+     * When we have array subscripts, we expand them by adding the subscript
+     * to the base type. The only base types allowed are array and pointers.
+     * So for instance, p[i][j] will expand to *(*(p + i) + j)
+     */
     auto arrIdx = factor->get_arrIdx();
     factor->set_arrIdx({});
     MAKE_SHARED(ast::AST_factor_Node, propogate_factor);
+
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    unop->set_op(unop::UNOP::DEREFERENCE);
+
     for (int i = 0; i < (int)arrIdx.size(); i++) {
+      MAKE_SHARED(ast::AST_factor_Node, deref_factor);
+      deref_factor->set_unop_node(unop);
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+
       MAKE_SHARED(ast::AST_exp_Node, exp);
       MAKE_SHARED(ast::AST_binop_Node, binop_node);
       binop_node->set_op(binop::BINOP::ADD);
       exp->set_binop_node(binop_node);
+      exp->set_right(arrIdx[i]);
 
-      MAKE_SHARED(ast::AST_factor_Node, deref_factor);
-      MAKE_SHARED(ast::AST_factor_Node, child_factor);
-      MAKE_SHARED(ast::AST_unop_Node, unop);
-      unop->set_op(unop::UNOP::DEREFERENCE);
-      deref_factor->set_unop_node(unop);
+      child_factor->set_exp_node(exp);
+      deref_factor->set_child(child_factor);
 
       if (i == 0) {
-        // set based on where you can see the initial pointer/array from
-
         exp->set_binop_node(binop_node);
         if (factor->get_exp_node() != nullptr) {
           exp->set_left(factor->get_exp_node());
-          exp->set_right(arrIdx[i]);
 
           factor->set_exp_node(nullptr);
         } else if (factor->get_identifier_node() != nullptr) {
@@ -129,40 +130,23 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
             func_call_factor->set_factor_type(ast::FactorType::BASIC);
             func_call_factor->set_arguments({});
 
-            exp->set_factor_node(
-                std::static_pointer_cast<ast::AST_factor_Node>(func_call));
-            add_cast_to_exp(arrIdx[i], ast::ElemType::LONG, {});
-            exp->set_right(arrIdx[i]);
+            exp->set_factor_node(func_call);
           } else {
             MAKE_SHARED(ast::AST_factor_Node, base_factor);
             base_factor->set_identifier_node(factor->get_identifier_node());
-            base_factor->set_type(factor->get_type());
 
             factor->set_identifier_node(nullptr);
-            factor->set_factor_type(ast::FactorType::BASIC);
 
             exp->set_factor_node(base_factor);
-            // add_cast_to_exp(arrIdx[i], ast::ElemType::LONG, {});
-            exp->set_right(arrIdx[i]);
           }
         }
-
-        child_factor->set_exp_node(exp);
-        deref_factor->set_child(child_factor);
-        propogate_factor = deref_factor;
-        continue;
+      } else {
+        exp->set_factor_node(propogate_factor);
       }
 
-      exp->set_factor_node(propogate_factor);
-      add_cast_to_exp(arrIdx[i], ast::ElemType::LONG, {});
-      exp->set_right(arrIdx[i]);
-
-      child_factor->set_exp_node(exp);
-      deref_factor->set_child(child_factor);
       propogate_factor = deref_factor;
     }
-    MAKE_SHARED(ast::AST_unop_Node, unop);
-    unop->set_op(unop::UNOP::DEREFERENCE);
+
     factor->set_unop_node(unop);
     factor->set_child(propogate_factor->get_child());
   }
