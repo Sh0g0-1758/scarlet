@@ -178,6 +178,33 @@ private:
   std::vector<long> derivedType{};
 
 public:
+  void copy(std::shared_ptr<AST_factor_Node> other) {
+    this->const_node = other->const_node;
+    this->identifier_node = other->identifier_node;
+    this->unop_node = other->unop_node;
+    this->exp_node = other->exp_node;
+    this->factorType = other->factorType;
+    this->castType = other->castType;
+    this->castDeclarator = other->castDeclarator;
+    this->child = other->child;
+    this->type = other->type;
+    this->arrIdx = other->arrIdx;
+    this->derivedType = other->derivedType;
+  }
+
+  void purge() {
+    this->const_node = nullptr;
+    this->identifier_node = nullptr;
+    this->unop_node = nullptr;
+    this->exp_node = nullptr;
+    this->factorType = FactorType::BASIC;
+    this->castType = ElemType::NONE;
+    this->castDeclarator = nullptr;
+    this->child = nullptr;
+    this->type = ElemType::NONE;
+    this->arrIdx.clear();
+    this->derivedType.clear();
+  }
   std::string get_AST_name() { return "Factor"; }
   std::shared_ptr<AST_const_Node> get_const_node() { return const_node; }
   void set_const_node(std::shared_ptr<AST_const_Node> const_node) {
@@ -289,6 +316,22 @@ private:
   std::vector<long> derivedType{};
 
 public:
+  void copy(std::shared_ptr<AST_exp_Node> other) {
+    this->binop = other->binop;
+    this->factor = other->factor;
+    this->right = other->right;
+    this->left = other->left;
+    this->type = other->type;
+    this->derivedType = other->derivedType;
+  }
+  void purge() {
+    this->binop = nullptr;
+    this->factor = nullptr;
+    this->right = nullptr;
+    this->left = nullptr;
+    this->type = ElemType::NONE;
+    this->derivedType.clear();
+  }
   std::string get_AST_name() { return "Exp"; }
 
   std::shared_ptr<AST_binop_Node> get_binop_node() { return binop; }

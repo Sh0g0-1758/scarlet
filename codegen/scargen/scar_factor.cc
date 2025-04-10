@@ -27,15 +27,15 @@ void Codegen::gen_scar_factor(
     // factor is an addrof and the child is a dereference.
     if (factor->get_child() != nullptr and
         factor->get_child()->get_unop_node() != nullptr) {
-      if (factor->get_child()->get_unop_node()->get_op() ==
-              unop::UNOP::ADDROF and
-          factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
+      auto prev_op = factor->get_child()->get_unop_node()->get_op();
+      auto curr_op = factor->get_unop_node()->get_op();
+      if (curr_op == unop::UNOP::DEREFERENCE and
+          prev_op == unop::UNOP::ADDROF) {
         gen_scar_factor(factor->get_child()->get_child(), scar_function);
         return;
       }
-      if (factor->get_child()->get_unop_node()->get_op() ==
-              unop::UNOP::DEREFERENCE and
-          factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
+      if (curr_op == unop::UNOP::ADDROF and
+          prev_op == unop::UNOP::DEREFERENCE) {
         gen_scar_factor(factor->get_child()->get_child(), scar_function);
         return;
       }
@@ -81,7 +81,7 @@ void Codegen::gen_scar_factor(
       scar_instruction->set_dst(std::move(scar_val_dst));
 
       scar_function->add_instruction(std::move(scar_instruction));
-    } else if (op == unop::UNOP::ADDROF) {
+    } else if (op == unop::UNOP::ADDROF or op == unop::UNOP::DECAY) {
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       scar_instruction->set_type(scar::instruction_type::GET_ADDRESS);
       MAKE_SHARED(scar::scar_Val_Node, scar_val_src);

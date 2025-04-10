@@ -218,6 +218,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
 
     for (auto it : func_call->get_arguments()) {
       analyze_exp(it, symbol_table, indx);
+      decay_arr_to_pointer(nullptr, it);
     }
 
     // Check that the function is being called with the correct number of
@@ -237,10 +238,10 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       // check that the function is being called with the correct type of
       //  arguments. If not we cast the arguments to the correct type
       for (int i = 0; i < (int)func_call->get_arguments().size(); i++) {
-        decay_arr_to_pointer(nullptr, func_call->get_arguments()[i]);
         auto funcArgType = func_call->get_arguments()[i]->get_type();
         auto funcArgDerivedType =
             func_call->get_arguments()[i]->get_derived_type();
+
         auto [castType, castDerivedType] = ast::getAssignType(
             gstTypeDef[i + 1], gstDerivedTypeDef[i + 1], funcArgType,
             funcArgDerivedType, func_call->get_arguments()[i]);
@@ -421,12 +422,20 @@ void parser::assign_type_to_factor(
     factor->set_type(exp->get_type());
     factor->set_derived_type(exp->get_derived_type());
   } else if (factor->get_unop_node() != nullptr) {
-    if (factor->get_unop_node()->get_op() != unop::UNOP::ADDROF) {
+    auto unop = factor->get_unop_node()->get_op();
+
+    if (unop == unop::UNOP::DECAY) {
+      // We have already taken care of the type that will be assigned
+      return;
+    }
+
+    if (unop != unop::UNOP::ADDROF) {
       decay_arr_to_pointer(factor->get_child(), nullptr);
     }
-    if (factor->get_unop_node()->get_op() == unop::UNOP::NOT) {
+
+    if (unop == unop::UNOP::NOT) {
       factor->set_type(ast::ElemType::INT);
-    } else if (factor->get_unop_node()->get_op() == unop::UNOP::DEREFERENCE) {
+    } else if (unop == unop::UNOP::DEREFERENCE) {
       if (factor->get_child()->get_type() == ast::ElemType::DERIVED and
           factor->get_child()->get_derived_type()[0] ==
               (long)ast::ElemType::POINTER) {
@@ -444,7 +453,7 @@ void parser::assign_type_to_factor(
         error_messages.emplace_back(
             "Dereference operator not allowed on non-pointer types");
       }
-    } else if (factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
+    } else if (unop == unop::UNOP::ADDROF) {
       factor->set_type(ast::ElemType::DERIVED);
       std::vector<long> derivedType;
       if (factor->get_child()->get_type() == ast::ElemType::DERIVED) {
@@ -739,9 +748,7 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                              std::vector<long> derivedType) {
   if (exp->get_binop_node() == nullptr) {
     MAKE_SHARED(ast::AST_exp_Node, copy_exp);
-    copy_exp->set_factor_node(exp->get_factor_node());
-    copy_exp->set_type(exp->get_type());
-    copy_exp->set_derived_type(exp->get_derived_type());
+    copy_exp->copy(exp);
 
     MAKE_SHARED(ast::AST_factor_Node, cast_factor);
     cast_factor->set_cast_type(type);
@@ -754,6 +761,7 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
     child_factor->set_derived_type(exp->get_derived_type());
     cast_factor->set_child(std::move(child_factor));
 
+    exp->purge();
     exp->set_factor_node(std::move(cast_factor));
     exp->set_type(type);
     exp->set_derived_type(derivedType);
@@ -761,18 +769,8 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
     if (exp->get_binop_node()->get_op() == binop::BINOP::TERNARY) {
       auto ternary = std::static_pointer_cast<ast::AST_ternary_exp_Node>(exp);
       MAKE_SHARED(ast::AST_ternary_exp_Node, copy_ternary);
-      copy_ternary->set_binop_node(exp->get_binop_node());
-      copy_ternary->set_factor_node(exp->get_factor_node());
-      copy_ternary->set_left(exp->get_left());
+      copy_ternary->copy(exp);
       copy_ternary->set_middle(ternary->get_middle());
-      copy_ternary->set_right(exp->get_right());
-      copy_ternary->set_type(exp->get_type());
-      copy_ternary->set_derived_type(exp->get_derived_type());
-
-      exp->set_binop_node(nullptr);
-      exp->set_left(nullptr);
-      ternary->set_middle(nullptr);
-      exp->set_right(nullptr);
 
       MAKE_SHARED(ast::AST_factor_Node, cast_factor);
       cast_factor->set_cast_type(type);
@@ -780,27 +778,19 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
       cast_factor->set_derived_type(derivedType);
 
       MAKE_SHARED(ast::AST_factor_Node, child_factor);
-      auto copy_exp = std::static_pointer_cast<ast::AST_exp_Node>(copy_ternary);
-      child_factor->set_exp_node(std::move(copy_exp));
+      child_factor->set_exp_node(std::move(copy_ternary));
       child_factor->set_type(exp->get_type());
       child_factor->set_derived_type(exp->get_derived_type());
       cast_factor->set_child(std::move(child_factor));
 
+      ternary->set_middle(nullptr);
+      exp->purge();
       exp->set_factor_node(std::move(cast_factor));
       exp->set_type(type);
       exp->set_derived_type(derivedType);
     } else {
       MAKE_SHARED(ast::AST_exp_Node, copy_exp);
-      copy_exp->set_binop_node(exp->get_binop_node());
-      copy_exp->set_factor_node(exp->get_factor_node());
-      copy_exp->set_left(exp->get_left());
-      copy_exp->set_right(exp->get_right());
-      copy_exp->set_type(exp->get_type());
-      copy_exp->set_derived_type(exp->get_derived_type());
-
-      exp->set_binop_node(nullptr);
-      exp->set_left(nullptr);
-      exp->set_right(nullptr);
+      copy_exp->copy(exp);
 
       MAKE_SHARED(ast::AST_factor_Node, cast_factor);
       cast_factor->set_cast_type(type);
@@ -813,6 +803,7 @@ void parser::add_cast_to_exp(std::shared_ptr<ast::AST_exp_Node> exp,
       child_factor->set_derived_type(exp->get_derived_type());
       cast_factor->set_child(std::move(child_factor));
 
+      exp->purge();
       exp->set_factor_node(std::move(cast_factor));
       exp->set_type(type);
       exp->set_derived_type(derivedType);
@@ -827,51 +818,55 @@ void parser::add_cast_to_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     auto funcCall =
         std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor);
     MAKE_SHARED(ast::AST_factor_function_call_Node, copy_factor);
-    copy_factor->set_const_node(factor->get_const_node());
-    copy_factor->set_identifier_node(factor->get_identifier_node());
-    copy_factor->set_unop_node(factor->get_unop_node());
-    copy_factor->set_exp_node(factor->get_exp_node());
-    copy_factor->set_factor_type(factor->get_factor_type());
-    copy_factor->set_cast_type(factor->get_cast_type());
-    copy_factor->set_child(factor->get_child());
-    copy_factor->set_type(factor->get_type());
+    copy_factor->copy(factor);
     copy_factor->set_arguments(funcCall->get_arguments());
-    copy_factor->set_derived_type(factor->get_derived_type());
 
-    factor->set_const_node(nullptr);
-    factor->set_identifier_node(nullptr);
-    factor->set_unop_node(nullptr);
-    factor->set_exp_node(nullptr);
-    factor->set_factor_type(ast::FactorType::BASIC);
-
+    funcCall->set_arguments({});
+    factor->purge();
     factor->set_cast_type(type);
     factor->set_type(type);
     factor->set_derived_type(derivedType);
     factor->set_child(std::move(copy_factor));
   } else {
     MAKE_SHARED(ast::AST_factor_Node, copy_factor);
-    copy_factor->set_const_node(factor->get_const_node());
-    copy_factor->set_identifier_node(factor->get_identifier_node());
-    copy_factor->set_unop_node(factor->get_unop_node());
-    copy_factor->set_exp_node(factor->get_exp_node());
-    copy_factor->set_factor_type(factor->get_factor_type());
-    copy_factor->set_cast_type(factor->get_cast_type());
-    copy_factor->set_child(factor->get_child());
-    copy_factor->set_type(factor->get_type());
-    copy_factor->set_derived_type(factor->get_derived_type());
-    copy_factor->set_arrIdx(factor->get_arrIdx());
+    copy_factor->copy(factor);
 
-    factor->set_const_node(nullptr);
-    factor->set_identifier_node(nullptr);
-    factor->set_unop_node(nullptr);
-    factor->set_exp_node(nullptr);
-    factor->set_factor_type(ast::FactorType::BASIC);
-
+    factor->purge();
     factor->set_cast_type(type);
     factor->set_type(type);
     factor->set_derived_type(derivedType);
     factor->set_child(std::move(copy_factor));
-    factor->set_arrIdx({});
+  }
+}
+
+void parser::decay_arr_to_pointer(std::shared_ptr<ast::AST_factor_Node> factor,
+                                  std::shared_ptr<ast::AST_exp_Node> exp) {
+  MAKE_SHARED(ast::AST_unop_Node, unop);
+  unop->set_op(unop::UNOP::DECAY);
+
+  if (factor != nullptr) {
+    if (factor->get_type() == ast::ElemType::DERIVED and
+        factor->get_derived_type()[0] > 0) {
+      auto derivedType = factor->get_derived_type();
+      derivedType[0] = (long)ast::ElemType::POINTER;
+
+      add_cast_to_factor(factor, ast::ElemType::DERIVED, derivedType);
+      factor->set_cast_type(ast::ElemType::NONE);
+      factor->set_unop_node(unop);
+    }
+    return;
+  }
+
+  if (exp != nullptr) {
+    if (exp->get_type() == ast::ElemType::DERIVED and
+        exp->get_derived_type()[0] > 0) {
+      auto derivedType = exp->get_derived_type();
+      derivedType[0] = (long)ast::ElemType::POINTER;
+
+      add_cast_to_exp(exp, ast::ElemType::DERIVED, derivedType);
+      exp->get_factor_node()->set_cast_type(ast::ElemType::NONE);
+      exp->get_factor_node()->set_unop_node(unop);
+    }
   }
 }
 
