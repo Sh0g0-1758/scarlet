@@ -284,20 +284,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   // since the factor can have its own exp as well, we recursively check that
   analyze_exp(factor->get_exp_node(), symbol_table, indx);
 
-  // if (factor->get_arrIdx().size() != 0) {
-  //   for (auto it : factor->get_arrIdx()) {
-  //     analyze_exp(it, symbol_table, indx);
-  //     if (it->get_type() == ast::ElemType::DERIVED or
-  //         it->get_type() == ast::ElemType::DOUBLE) {
-  //       success = false;
-  //       error_messages.emplace_back("Array index must be of type integer");
-  //     } else {
-  //       // cast to long
-  //       add_cast_to_exp(it, ast::ElemType::LONG, {});
-  //     }
-  //   }
-  // }
-
   // assign type to the factor
   assign_type_to_factor(factor);
 
@@ -425,29 +411,15 @@ void parser::assign_type_to_factor(
   if (factor->get_const_node() != nullptr) {
     factor->set_type(ast::constTypeToElemType(
         factor->get_const_node()->get_constant().get_type()));
-    // if (factor->get_arrIdx().size() != 0) {
-    //   success = false;
-    //   error_messages.emplace_back("subscipting a constant is not allowed");
-    // }
   } else if (factor->get_identifier_node() != nullptr) {
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];
-    // if (factor->get_arrIdx().size() != 0) {
-    //   assign_type_from_subscript(identInfo.typeDef[0],
-    //                              identInfo.derivedTypeMap[0], factor);
-    // } else {
     factor->set_type(identInfo.typeDef[0]);
     factor->set_derived_type(identInfo.derivedTypeMap[0]);
-    // }
   } else if (factor->get_exp_node() != nullptr) {
     auto exp = factor->get_exp_node();
-    // if (factor->get_arrIdx().size() != 0) {
-    //   assign_type_from_subscript(exp->get_type(), exp->get_derived_type(),
-    //                              factor);
-    // } else {
     factor->set_type(exp->get_type());
     factor->set_derived_type(exp->get_derived_type());
-    // }
   } else if (factor->get_unop_node() != nullptr) {
     if (factor->get_unop_node()->get_op() != unop::UNOP::ADDROF) {
       decay_arr_to_pointer(factor->get_child(), nullptr);
