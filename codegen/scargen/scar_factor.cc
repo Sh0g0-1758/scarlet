@@ -39,6 +39,13 @@ void Codegen::gen_scar_factor(
         gen_scar_factor(factor->get_child()->get_child(), scar_function);
         return;
       }
+      if (curr_op == unop::UNOP::DEREFERENCE and prev_op == unop::UNOP::DECAY) {
+        factor->get_child()->get_child()->set_type(factor->get_type());
+        factor->get_child()->get_child()->set_derived_type(
+            factor->get_derived_type());
+        gen_scar_factor(factor->get_child()->get_child(), scar_function);
+        return;
+      }
     }
 
     gen_scar_factor(factor->get_child(), scar_function);
