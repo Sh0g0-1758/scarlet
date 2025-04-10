@@ -116,6 +116,7 @@ enum class ElemType {
   DOUBLE = -7,
   CHAR = -8,
   UCHAR = -9,
+  SCHAR = -10,
 };
 
 class AST_const_Node {
@@ -189,7 +190,7 @@ private:
   std::shared_ptr<AST_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
-  std::vector<std::shared_ptr<ast::AST_string_Node>> stringLiteral;
+  std::shared_ptr<ast::AST_string_Node> stringNode;
   std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx;
   std::vector<long> derivedType{};
 
@@ -250,17 +251,12 @@ public:
   void set_derived_type(std::vector<long> derivedType) {
     this->derivedType = std::move(derivedType);
   }
-  std::vector<std::shared_ptr<ast::AST_string_Node>> get_stringLiteral() {
-    return stringLiteral;
+  std::shared_ptr<ast::AST_string_Node> get_string_node() {
+    return stringNode;
   }
-  void add_stringLiteral(std::shared_ptr<ast::AST_string_Node> stringLiteral) {
-    this->stringLiteral.emplace_back(stringLiteral);
+  void set_string_literal(std::shared_ptr<ast::AST_string_Node> stringNode) {
+    this->stringNode = std::move(stringNode);
   }
-  void set_stringLiteral(
-      std::vector<std::shared_ptr<ast::AST_string_Node>> stringLiteral) {
-    this->stringLiteral = stringLiteral;
-  }
-  void clear_stringLiteral() { this->stringLiteral.clear(); }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {

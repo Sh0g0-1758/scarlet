@@ -24,6 +24,7 @@ void Codegen::gen_scasm() {
         break;
       case constant::Type::CHAR:
       case constant::Type::UCHAR:
+      case constant::Type::SCHAR:
         scasm_var->set_alignment(1);
         break;
       // FIXME: For Arrays

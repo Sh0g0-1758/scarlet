@@ -24,6 +24,7 @@ enum class Type {
   ULONG,
   CHAR,
   UCHAR,
+  SCHAR,
   /* ZERO is a special type that can be used to store how many bytes need to be
      zeroed out. The value is stored as an unsigned long */
   ZERO,
@@ -60,6 +61,8 @@ public:
       return "char";
     case Type::UCHAR:
       return "unsigned char";
+    case Type::SCHAR:
+      return "signed char";
     case Type::ZERO:
       return "zero";
     case Type::NONE:
@@ -84,6 +87,7 @@ public:
       return value.ul < constant.value.ul;
     case Type::CHAR:
     case Type::UCHAR:
+    case Type::SCHAR:
       return value.i < constant.value.i;
     case Type::ZERO:
       return value.ul < constant.value.ul;
@@ -109,6 +113,7 @@ public:
       return value.ul == constant.value.ul;
     case Type::CHAR:
     case Type::UCHAR:
+    case Type::SCHAR:
       return value.i == constant.value.i;
     case Type::ZERO:
       return value.ul == constant.value.ul;
@@ -139,6 +144,9 @@ public:
       break;
     case Type::UCHAR:
       os << "'" << static_cast<unsigned char>(constant.value.i) << "'";
+      break;
+    case Type::SCHAR:
+      os << "'" << static_cast<signed char>(constant.value.i) << "'";
       break;
     case Type::ZERO:
       os << "Zero(" << constant.value.ul << ")";

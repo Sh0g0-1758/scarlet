@@ -18,6 +18,8 @@ ElemType constTypeToElemType(constant::Type t) {
     return ElemType::CHAR;
   case constant::Type::UCHAR:
     return ElemType::UCHAR;
+  case constant::Type::SCHAR:
+    return ElemType::SCHAR;
   // this case will never be reached, so we can safely ignore it
   case constant::Type::ZERO:
   case constant::Type::NONE:
@@ -42,6 +44,8 @@ constant::Type elemTypeToConstType(ElemType t) {
     return constant::Type::CHAR;
   case ElemType::UCHAR:
     return constant::Type::UCHAR;
+  case ElemType::SCHAR:
+    return constant::Type::SCHAR;
   case ElemType::DERIVED:
     return constant::Type::ULONG;
   // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
@@ -69,6 +73,8 @@ std::string to_string(ElemType type) {
     return "char";
   case ElemType::UCHAR:
     return "unsigned char";
+  case ElemType::SCHAR:
+    return "signed char";
   case ElemType::DERIVED:
     return "derived";
   case ElemType::POINTER:
@@ -101,6 +107,7 @@ int getSizeOfTypeOnArch(ElemType type) {
     return sizeof(long);
   case ast::ElemType::CHAR:
   case ast::ElemType::UCHAR:
+  case ast::ElemType::SCHAR:
     return sizeof(char);
   case ast::ElemType::DOUBLE:
     return sizeof(double);
@@ -257,6 +264,7 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
   case constant::Type::UCHAR:                                                  \
+  case constant::Type::SCHAR:                                                  \
     ret.set_value({.t = static_cast<T>(c.get_value().i)});                     \
     break;                                                                     \
   case constant::Type::ZERO:                                                   \
@@ -295,6 +303,10 @@ constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
   case ElemType::CHAR: {
     ret.set_type(constant::Type::CHAR);
     CASTCONST(c, ret, i, int);
+  } break;
+  case ElemType::SCHAR: {
+    ret.set_type(constant::Type::SCHAR);
+    CASTCONST(c, ret, i, signed char);
   } break;
   case ElemType::UCHAR: {
     ret.set_type(constant::Type::UCHAR);
