@@ -22,6 +22,8 @@ std::string to_string(UNOP unop) {
     return "Negate";
   case UNOP::NOT:
     return "Not";
+  case UNOP::DECAY:
+    return "Decay";
   case UNOP::UNKNOWN:
     return "";
   }

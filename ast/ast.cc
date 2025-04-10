@@ -304,5 +304,29 @@ bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp) {
   return true;
 }
 
+bool is_array(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor == nullptr)
+    return false;
+  if (factor->get_type() != ElemType::DERIVED)
+    return false;
+  if (factor->get_derived_type().size() == 0)
+    return false;
+  if (factor->get_derived_type()[0] <= 0)
+    return false;
+  return true;
+}
+
+bool is_array(std::shared_ptr<AST_exp_Node> exp) {
+  if (exp == nullptr)
+    return false;
+  if (exp->get_type() != ElemType::DERIVED)
+    return false;
+  if (exp->get_derived_type().size() == 0)
+    return false;
+  if (exp->get_derived_type()[0] <= 0)
+    return false;
+  return true;
+}
+
 } // namespace ast
 } // namespace scarlet

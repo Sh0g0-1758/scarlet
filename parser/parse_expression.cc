@@ -89,7 +89,22 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
                                 "or open parantheses but got " +
                                 token::to_string(tokens[0].get_token()));
   }
-  // NOTE THIS IS A SPECIAL CASE WHERE WE HAVE A POST INCREMENT OR DECREMENT
+  parse_factor_post_incr_decr(tokens, factor);
+  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+    while (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
+      tokens.erase(tokens.begin());
+      MAKE_SHARED(ast::AST_exp_Node, exp);
+      parse_exp(tokens, exp);
+      factor->add_arrIdx(exp);
+      EXPECT(token::TOKEN::CLOSE_BRACKET);
+    }
+  }
+  parse_factor_post_incr_decr(tokens, factor);
+}
+
+void parser::parse_factor_post_incr_decr(
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_factor_Node> &factor) {
   if (tokens[0].get_token() == token::TOKEN::INCREMENT_OPERATOR or
       tokens[0].get_token() == token::TOKEN::DECREMENT_OPERATOR) {
     if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
@@ -127,15 +142,6 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       }
       tokens.erase(tokens.begin());
       factor->set_unop_node(std::move(unop));
-    }
-  }
-  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
-    while (tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {
-      tokens.erase(tokens.begin());
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      factor->add_arrIdx(exp);
-      EXPECT(token::TOKEN::CLOSE_BRACKET);
     }
   }
 }
