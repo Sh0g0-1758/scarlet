@@ -153,7 +153,13 @@ private:
   std::shared_ptr<scar_Val_Node> src1;
   std::shared_ptr<scar_Val_Node> src2;
   std::shared_ptr<scar_Val_Node> dst;
-  // used by pointer and array instructions
+  /*
+   * For arrays, this offset is used when we want to copy the value of array
+   element into its correct location
+   * For pointers, offset is used during pointer arithmetic. So consider if we
+   have {pointer + int}, then we store the size of the referenced type of the
+   pointer in this variable.
+   */
   long offset;
 
 public:
