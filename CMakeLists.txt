@@ -99,14 +99,14 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 16 --stage lex
     COMMAND echo "Running parser test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 16 --stage parse
-    # COMMAND echo "Running semantic analysis test"
-    # COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --stage validate
-    # COMMAND echo "Running scar test"
-    # COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --stage tacky
-    # COMMAND echo "Running Codegen test"
-    # COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --stage codegen
-    # COMMAND echo "Running test asm"
-    # COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15
-    # COMMAND echo "Running bitwise, compound, increment/decrement, goto and switch-case test"
-    # COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --extra-credit
+    COMMAND echo "Running semantic analysis test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --stage validate
+    COMMAND echo "Running scar test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --stage tacky
+    COMMAND echo "Running Codegen test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --stage codegen
+    COMMAND echo "Running test asm"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15
+    COMMAND echo "Running bitwise, compound, increment/decrement, goto and switch-case test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 15 --extra-credit
 )

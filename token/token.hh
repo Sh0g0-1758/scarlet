@@ -23,7 +23,6 @@ enum class TOKEN {
   CONSTANTEND,
   // KEYWORDS
   KEYWORDSTART,
-  INT,
   VOID,
   RETURN,
   IF,
@@ -35,6 +34,7 @@ enum class TOKEN {
   CONTINUE,
   STATIC,
   EXTERN,
+  INT,
   LONG,
   SIGNED,
   UNSIGNED,
@@ -133,8 +133,7 @@ std::string get_token_type(TOKEN token);
 bool is_right_associative(TOKEN token);
 bool is_type_specifier(TOKEN token);
 bool is_storage_specifier(TOKEN token);
-bool is_constant_or_identifier(TOKEN token);
-bool is_numeric_constant(TOKEN token);
+bool is_constant(TOKEN token);
 bool is_integer_constant(TOKEN token);
 } // namespace token
 } // namespace scarlet

@@ -544,20 +544,16 @@ bool is_storage_specifier(TOKEN token) {
   return token == TOKEN::STATIC or token == TOKEN::EXTERN;
 }
 
-bool is_constant_or_identifier(TOKEN token) {
+bool is_constant(TOKEN token) {
   return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
          token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
-         token == TOKEN::IDENTIFIER;
-}
-
-bool is_numeric_constant(TOKEN token) {
-  return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
-         token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
-         token == TOKEN::DOUBLE_CONSTANT;
+         token == TOKEN::DOUBLE_CONSTANT or token == TOKEN::CHARACTER or
+         token == TOKEN::STRING;
 }
 
 bool is_integer_constant(TOKEN token) {
-  return is_numeric_constant(token) and !(token == TOKEN::DOUBLE_CONSTANT);
+  return is_constant(token) and !(token == TOKEN::DOUBLE_CONSTANT) and
+         !(token == TOKEN::STRING);
 }
 
 int get_binop_prec(TOKEN token) {

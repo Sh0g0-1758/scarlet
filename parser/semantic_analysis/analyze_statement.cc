@@ -73,6 +73,13 @@ void parser::analyze_statement(
       analyze_switch_case<unsigned long>(switch_statement,
                                          constant::Type::ULONG);
       break;
+    case ast::ElemType::CHAR:
+      analyze_switch_case<char>(switch_statement, constant::Type::CHAR);
+      break;
+    case ast::ElemType::UCHAR:
+      analyze_switch_case<unsigned char>(switch_statement,
+                                         constant::Type::UCHAR);
+      break;
     case ast::ElemType::DOUBLE: {
       success = false;
       error_messages.emplace_back(
@@ -248,6 +255,12 @@ void parser::analyze_switch_case(
         break;
       case constant::Type::ULONG:
         newConst.set_value({.ul = static_cast<unsigned long>(val)});
+        break;
+      case constant::Type::CHAR:
+        newConst.set_value({.c = static_cast<char>(val)});
+        break;
+      case constant::Type::UCHAR:
+        newConst.set_value({.uc = static_cast<unsigned char>(val)});
         break;
       default:
         break;
