@@ -264,26 +264,10 @@ void parser::analyze_local_variable_declaration(
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
       if (symbolTable::symbolInfo::is_array(varInfo)) {
-        std::vector<long> arrDim;
-        ast::ElemType baseElemType;
-        std::vector<long> derivedElemType;
-        int i = 0;
-        for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
-          if (varInfo.derivedTypeMap[0][i] > 0) {
-            arrDim.push_back(varInfo.derivedTypeMap[0][i]);
-          } else {
-            break;
-          }
-        }
-        baseElemType = (ast::ElemType)varInfo.derivedTypeMap[0][i];
-        i++;
-        for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
-          derivedElemType.push_back(varInfo.derivedTypeMap[0][i]);
-        }
-        if (!derivedElemType.empty()) {
-          derivedElemType.insert(derivedElemType.begin(), (long)baseElemType);
-          baseElemType = ast::ElemType::DERIVED;
-        }
+        std::vector<long> arrDim{};
+        ast::ElemType baseElemType{};
+        std::vector<long> derivedElemType{};
+        get_arrInfo(arrDim, baseElemType, derivedElemType, varInfo);
         analyze_array_initializer(varDecl->get_initializer(), symbol_table,
                                   indx, arrDim, baseElemType, derivedElemType);
       } else {
@@ -322,9 +306,9 @@ void parser::initialize_global_variable(
     std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
     std::string &var_name) {
   if (symbolTable::symbolInfo::is_array(varInfo)) {
-    std::vector<long> arrDim;
-    ast::ElemType baseElemType;
-    std::vector<long> derivedElemType;
+    std::vector<long> arrDim{};
+    ast::ElemType baseElemType{};
+    std::vector<long> derivedElemType{};
     get_arrInfo(arrDim, baseElemType, derivedElemType, varInfo);
 
     if (varDecl->get_exp() != nullptr) {
