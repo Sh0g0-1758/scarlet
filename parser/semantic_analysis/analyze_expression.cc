@@ -412,6 +412,11 @@ void parser::assign_type_from_subscript(
   }
 }
 
+#define CHAR_TO_INT(factor)                                                    \
+  if (factor->get_type() == ast::ElemType::CHAR) {                             \
+    add_cast_to_factor(factor, ast::ElemType::INT, {});                        \
+  }
+
 void parser::assign_type_to_factor(
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!success)
@@ -448,6 +453,8 @@ void parser::assign_type_to_factor(
     if (unop != unop::UNOP::ADDROF) {
       decay_arr_to_pointer(factor->get_child(), nullptr);
     }
+
+    CHAR_TO_INT(factor->get_child());
 
     if (unop == unop::UNOP::NOT) {
       factor->set_type(ast::ElemType::INT);
@@ -518,6 +525,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     return;
 
   if (exp->get_binop_node() == nullptr) {
+    CHAR_TO_INT(exp->get_factor_node());
     exp->set_type(exp->get_factor_node()->get_type());
     exp->set_derived_type(exp->get_factor_node()->get_derived_type());
   } else {
@@ -525,6 +533,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     decay_arr_to_pointer(nullptr, exp->get_left());
     decay_arr_to_pointer(nullptr, exp->get_right());
     if (binop != binop::BINOP::ASSIGN and !binop::is_compound(binop)) {
+      CHAR_TO_INT(exp->get_factor_node());
       decay_arr_to_pointer(exp->get_factor_node(), nullptr);
     }
 

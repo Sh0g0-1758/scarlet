@@ -295,6 +295,28 @@ void parser::analyze_local_variable_declaration(
   }
 }
 
+void parser::get_arrInfo(std::vector<long> arrDim, ast::ElemType baseElemType,
+                         std::vector<long> derivedElemType,
+                         symbolTable::symbolInfo &varInfo) {
+  int i = 0;
+  for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+    if (varInfo.derivedTypeMap[0][i] > 0) {
+      arrDim.push_back(varInfo.derivedTypeMap[0][i]);
+    } else {
+      break;
+    }
+  }
+  baseElemType = (ast::ElemType)varInfo.derivedTypeMap[0][i];
+  i++;
+  for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+    derivedElemType.push_back(varInfo.derivedTypeMap[0][i]);
+  }
+  if (!derivedElemType.empty()) {
+    derivedElemType.insert(derivedElemType.begin(), (long)baseElemType);
+    baseElemType = ast::ElemType::DERIVED;
+  }
+}
+
 void parser::initialize_global_variable(
     symbolTable::symbolInfo &varInfo,
     std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
@@ -303,23 +325,7 @@ void parser::initialize_global_variable(
     std::vector<long> arrDim;
     ast::ElemType baseElemType;
     std::vector<long> derivedElemType;
-    int i = 0;
-    for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
-      if (varInfo.derivedTypeMap[0][i] > 0) {
-        arrDim.push_back(varInfo.derivedTypeMap[0][i]);
-      } else {
-        break;
-      }
-    }
-    baseElemType = (ast::ElemType)varInfo.derivedTypeMap[0][i];
-    i++;
-    for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
-      derivedElemType.push_back(varInfo.derivedTypeMap[0][i]);
-    }
-    if (!derivedElemType.empty()) {
-      derivedElemType.insert(derivedElemType.begin(), (long)baseElemType);
-      baseElemType = ast::ElemType::DERIVED;
-    }
+    get_arrInfo(arrDim, baseElemType, derivedElemType, varInfo);
 
     if (varDecl->get_exp() != nullptr) {
       success = false;
