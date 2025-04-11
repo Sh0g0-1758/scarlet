@@ -279,8 +279,8 @@ void parser::analyze_local_variable_declaration(
   }
 }
 
-void parser::get_arrInfo(std::vector<long> arrDim, ast::ElemType baseElemType,
-                         std::vector<long> derivedElemType,
+void parser::get_arrInfo(std::vector<long> &arrDim, ast::ElemType &baseElemType,
+                         std::vector<long> &derivedElemType,
                          symbolTable::symbolInfo &varInfo) {
   int i = 0;
   for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {

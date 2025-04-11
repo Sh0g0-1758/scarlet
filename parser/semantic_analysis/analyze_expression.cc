@@ -423,8 +423,18 @@ void parser::assign_type_to_factor(
     return;
 
   if (factor->get_const_node() != nullptr) {
-    factor->set_type(ast::constTypeToElemType(
-        factor->get_const_node()->get_constant().get_type()));
+    if (factor->get_const_node()->get_constant().get_type() ==
+        constant::Type::STRING) {
+      std::vector<long> derivedType{};
+      derivedType.push_back(
+          factor->get_const_node()->get_constant().get_string().size() + 1);
+      derivedType.push_back((long)ast::ElemType::CHAR);
+      factor->set_type(ast::ElemType::DERIVED);
+      factor->set_derived_type(derivedType);
+    } else {
+      factor->set_type(ast::constTypeToElemType(
+          factor->get_const_node()->get_constant().get_type()));
+    }
   } else if (factor->get_identifier_node() != nullptr) {
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];

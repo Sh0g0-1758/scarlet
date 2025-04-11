@@ -140,8 +140,8 @@ private:
                                      ast::ElemType baseElemType,
                                      std::vector<long> derivedElemType,
                                      symbolTable::symbolInfo &varInfo);
-  void get_arrInfo(std::vector<long> arrDim, ast::ElemType baseElemType,
-                   std::vector<long> derivedElemType,
+  void get_arrInfo(std::vector<long> &arrDim, ast::ElemType &baseElemType,
+                   std::vector<long> &derivedElemType,
                    symbolTable::symbolInfo &varInfo);
   void initialize_global_variable(
       symbolTable::symbolInfo &varInfo,
