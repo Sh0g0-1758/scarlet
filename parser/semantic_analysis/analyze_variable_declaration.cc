@@ -343,9 +343,51 @@ void parser::initialize_global_variable(
     get_arrInfo(arrDim, baseElemType, derivedElemType, varInfo);
 
     if (varDecl->get_exp() != nullptr) {
-      success = false;
-      error_messages.emplace_back("Cannot initialize array with an expression, "
-                                  "need an initializer list");
+      if (ast::exp_is_string(varDecl->get_exp()) and
+          baseElemType == ast::ElemType::CHAR) {
+        if (arrDim.size() > 1) {
+          success = false;
+          error_messages.emplace_back("Cannot initialize multi-dimensional "
+                                      "array with a string literal");
+        }
+        std::string str = varDecl->get_exp()
+                              ->get_factor_node()
+                              ->get_const_node()
+                              ->get_constant()
+                              .get_string();
+        if ((int)str.size() > arrDim[0]) {
+          success = false;
+          error_messages.emplace_back(
+              "String literal is larger than the array size");
+        }
+
+        if (!success)
+          return;
+
+        MAKE_SHARED(ast::initializer, init);
+        for (auto ch : str) {
+          MAKE_SHARED(ast::AST_exp_Node, exp);
+          MAKE_SHARED(ast::AST_factor_Node, factor);
+          MAKE_SHARED(ast::AST_const_Node, constNode);
+          constant::Constant c;
+          c.set_type(constant::Type::CHAR);
+          c.set_value({.c = ch});
+          constNode->set_constant(c);
+          factor->set_const_node(std::move(constNode));
+          factor->set_type(ast::ElemType::CHAR);
+          exp->set_factor_node(std::move(factor));
+          exp->set_type(ast::ElemType::CHAR);
+          init->exp_list.emplace_back(std::move(exp));
+        }
+        varDecl->set_initializer(std::move(init));
+        varDecl->set_exp(nullptr);
+        init_static_array_initializer(varDecl->get_initializer(), arrDim,
+                                      baseElemType, derivedElemType, varInfo);
+      } else {
+        success = false;
+        error_messages.emplace_back("Cannot initialize array with an "
+                                    "expression, need an initializer list");
+      }
     } else if (varDecl->get_initializer() != nullptr) {
       varInfo.def = symbolTable::defType::TRUE;
       init_static_array_initializer(varDecl->get_initializer(), arrDim,
@@ -402,6 +444,52 @@ void parser::init_static_array_initializer(
     symbolTable::symbolInfo &varInfo) {
   if (init == nullptr)
     return;
+
+  if (!(init->initializer_list.empty()) and !(init->exp_list.empty())) {
+    //! ERROR
+    //! But should work when the exp is of type string and the array is of type
+    //! char
+    if (baseElemType == ast::ElemType::CHAR) {
+      for (int i = 0; i < (int)init->exp_list.size(); i++) {
+        auto exp = init->exp_list[i];
+        if (ast::exp_is_string(exp)) {
+          auto str = exp->get_factor_node()
+                         ->get_const_node()
+                         ->get_constant()
+                         .get_string();
+
+          MAKE_SHARED(ast::initializer, string_init);
+          for (auto ch : str) {
+            MAKE_SHARED(ast::AST_exp_Node, exp);
+            MAKE_SHARED(ast::AST_factor_Node, factor);
+            MAKE_SHARED(ast::AST_const_Node, constNode);
+            constant::Constant c;
+            c.set_type(constant::Type::CHAR);
+            c.set_value({.c = ch});
+            constNode->set_constant(c);
+            factor->set_const_node(std::move(constNode));
+            factor->set_type(ast::ElemType::CHAR);
+            exp->set_factor_node(std::move(factor));
+            exp->set_type(ast::ElemType::CHAR);
+            string_init->exp_list.emplace_back(std::move(exp));
+          }
+
+          init->initializer_list.insert(
+              init->initializer_list.begin() + init->exp_indx[i], string_init);
+        } else {
+          success = false;
+          error_messages.emplace_back(
+              "invalid initialization of a char array. Valid initializers are "
+              "string literals and char constants");
+        }
+      }
+    } else {
+      success = false;
+      error_messages.emplace_back("Invalid use of initializer list, it does "
+                                  "not respect the array dimensions");
+    }
+  }
+
   if (!(init->initializer_list.empty())) {
     long currDim = arrDim[0];
     if ((long)init->initializer_list.size() > currDim) {
