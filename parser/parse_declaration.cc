@@ -238,8 +238,10 @@ void parser::parse_initializer(std::vector<token::Token> &tokens,
       str += tokens[0].get_value().value();
       tokens.erase(tokens.begin());
     }
-    char charArray[str.size() + 1];
-    std::strcpy(charArray, str.c_str());
+    std::vector<char> charArray = {};
+    for (auto i : str) {
+      charArray.push_back(i);
+    }
     for (auto i : charArray) {
       MAKE_SHARED(ast::AST_exp_Node, exp);
       MAKE_SHARED(ast::AST_const_Node, constNode);
