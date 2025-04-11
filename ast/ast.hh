@@ -34,7 +34,7 @@ Grammar:
 
 <param> ::= { <type-specifier> }+ <declarator>
 
-<type-specifier> ::= "int" | "long" |"unsigned" | "signed" 
+<type-specifier> ::= "int" | "long" |"unsigned" | "signed" | "char"
 
 <specifier> ::= <type-specifier> | "static" | "extern"
 
@@ -86,9 +86,19 @@ Grammar:
 
 <identifier> ::= ? An identifier token ?
 
-<int> ::= ? A constant int token ?
+<string> ::= ? A string token ?
 
-<long> ::= ? A constant long token ?
+<char> ::= ? A char token ?
+
+<int> ::= ? An int token ?
+
+<uint> ::= ? An unsigned int token ?
+
+<long> ::= ? An int or long token ?
+
+<ulong> ::= ? An unsigned int or unsigned long token ?
+
+<double> ::= ? A floating-point constant token ?
 
 NOTE: in EBNF notation,
 1. {} means 0 or more instances of the enclosed expression
@@ -111,7 +121,9 @@ enum class ElemType {
   LONG = -4,
   ULONG = -5,
   UINT = -6,
-  DOUBLE = -7
+  DOUBLE = -7,
+  CHAR = -8,
+  UCHAR = -9
 };
 
 class AST_const_Node {

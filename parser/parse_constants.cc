@@ -84,13 +84,30 @@ void parser::parse_const(std::vector<token::Token> &tokens,
       return;
     }
   } break;
+  case token::TOKEN::CHARACTER: {
+    constant.set_type(constant::Type::CHAR);
+    v.c = tokens[0].get_value().value()[0];
+  }
   default:
     break;
   }
-  constant.set_value(v);
+
+  if (tokens[0].get_token() == token::TOKEN::STRING) {
+    constant.set_type(constant::Type::STRING);
+    std::string str = tokens[0].get_value().value();
+    tokens.erase(tokens.begin());
+    while (tokens.size() > 0 and
+           tokens[0].get_token() == token::TOKEN::STRING) {
+      str += tokens[0].get_value().value();
+      tokens.erase(tokens.begin());
+    }
+    constant.set_string(str);
+  } else {
+    constant.set_value(v);
+    tokens.erase(tokens.begin());
+  }
   const_node->set_constant(constant);
   factor->set_const_node(std::move(const_node));
-  tokens.erase(tokens.begin());
 }
 
 } // namespace parser

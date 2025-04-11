@@ -26,7 +26,7 @@ void parser::parse_abstract_declarator(
 
 void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> &factor) {
-  if (token::is_numeric_constant(tokens[0].get_token())) {
+  if (token::is_constant(tokens[0].get_token())) {
     parse_const(tokens, factor);
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();

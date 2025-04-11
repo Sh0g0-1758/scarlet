@@ -23,10 +23,10 @@ void print_token(TOKEN token) {
   case TOKEN::DOUBLE_CONSTANT:
     std::cerr << "double constant ";
     break;
-  case TOKEN::CHARACTER_CONSTANT:
-    std::cerr << "character constant ";
+  case TOKEN::CHARACTER:
+    std::cerr << "character ";
     break;
-  case TOKEN::CHAR_ARR:
+  case TOKEN::STRING:
     std::cerr << "string ";
     break;
   case TOKEN::INT:
@@ -268,9 +268,9 @@ std::string to_string(TOKEN token) {
     return "ulong constant";
   case TOKEN::DOUBLE_CONSTANT:
     return "double constant";
-  case TOKEN::CHARACTER_CONSTANT:
-    return "character constant";
-  case TOKEN::CHAR_ARR:
+  case TOKEN::CHARACTER:
+    return "character";
+  case TOKEN::STRING:
     return "string";
   case TOKEN::INT:
     return "int";
@@ -537,27 +537,23 @@ bool is_right_associative(TOKEN token) {
 bool is_type_specifier(TOKEN token) {
   return token == TOKEN::INT or token == TOKEN::LONG or
          token == TOKEN::SIGNED or token == TOKEN::UNSIGNED or
-         token == TOKEN::DOUBLE;
+         token == TOKEN::DOUBLE or token == TOKEN::CHAR;
 }
 
 bool is_storage_specifier(TOKEN token) {
   return token == TOKEN::STATIC or token == TOKEN::EXTERN;
 }
 
-bool is_constant_or_identifier(TOKEN token) {
+bool is_constant(TOKEN token) {
   return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
          token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
-         token == TOKEN::IDENTIFIER;
-}
-
-bool is_numeric_constant(TOKEN token) {
-  return token == TOKEN::INT_CONSTANT or token == TOKEN::LONG_CONSTANT or
-         token == TOKEN::UINT_CONSTANT or token == TOKEN::ULONG_CONSTANT or
-         token == TOKEN::DOUBLE_CONSTANT;
+         token == TOKEN::DOUBLE_CONSTANT or token == TOKEN::CHARACTER or
+         token == TOKEN::STRING;
 }
 
 bool is_integer_constant(TOKEN token) {
-  return is_numeric_constant(token) and !(token == TOKEN::DOUBLE_CONSTANT);
+  return is_constant(token) and !(token == TOKEN::DOUBLE_CONSTANT) and
+         !(token == TOKEN::STRING);
 }
 
 int get_binop_prec(TOKEN token) {

@@ -14,7 +14,12 @@ ElemType constTypeToElemType(constant::Type t) {
     return ElemType::ULONG;
   case constant::Type::DOUBLE:
     return ElemType::DOUBLE;
+  case constant::Type::CHAR:
+    return ElemType::CHAR;
+  case constant::Type::UCHAR:
+    return ElemType::UCHAR;
   // this case will never be reached, so we can safely ignore it
+  case constant::Type::STRING:
   case constant::Type::ZERO:
   case constant::Type::NONE:
     return ElemType::NONE;
@@ -36,6 +41,10 @@ constant::Type elemTypeToConstType(ElemType t) {
     return constant::Type::DOUBLE;
   case ElemType::DERIVED:
     return constant::Type::ULONG;
+  case ElemType::CHAR:
+    return constant::Type::CHAR;
+  case ElemType::UCHAR:
+    return constant::Type::UCHAR;
   // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
   // be something different ?
   case ElemType::POINTER:
@@ -61,6 +70,10 @@ std::string to_string(ElemType type) {
     return "derived";
   case ElemType::POINTER:
     return "pointer";
+  case ElemType::CHAR:
+    return "char";
+  case ElemType::UCHAR:
+    return "unsigned char";
   case ElemType::NONE:
     return "";
   }
@@ -226,6 +239,13 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
   case constant::Type::DOUBLE:                                                 \
     ret.set_value({.t = static_cast<T>(c.get_value().d)});                     \
     break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    ret.set_value({.t = static_cast<T>(c.get_value().c)});                     \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    ret.set_value({.t = static_cast<T>(c.get_value().uc)});                    \
+    break;                                                                     \
+  case constant::Type::STRING:                                                 \
   case constant::Type::ZERO:                                                   \
   case constant::Type::NONE:                                                   \
     break;                                                                     \
@@ -262,6 +282,14 @@ constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
   case ElemType::DERIVED: {
     ret.set_type(constant::Type::ULONG);
     CASTCONST(c, ret, ul, unsigned long);
+  } break;
+  case ElemType::CHAR: {
+    ret.set_type(constant::Type::CHAR);
+    CASTCONST(c, ret, c, char);
+  } break;
+  case ElemType::UCHAR: {
+    ret.set_type(constant::Type::UCHAR);
+    CASTCONST(c, ret, uc, unsigned char);
   } break;
   case ElemType::POINTER:
   case ElemType::NONE:
