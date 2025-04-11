@@ -83,6 +83,36 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       }
       EXPECT(token::TOKEN::CLOSE_PARANTHESES);
     }
+  } else if (tokens[0].get_token() == token::TOKEN::SIZEOF) {
+    tokens.erase(tokens.begin());
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    unop->set_op(unop::UNOP::SIZEOF);
+    factor->set_unop_node(std::move(unop));
+    if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      tokens.erase(tokens.begin());
+      if (token::is_type_specifier(tokens[0].get_token())) {
+        PARSE_TYPE(factor, set_cast_type);
+        MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);
+        parse_abstract_declarator(tokens, cast_declarator);
+        factor->set_cast_declarator(std::move(cast_declarator));
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      } else {
+        MAKE_SHARED(ast::AST_exp_Node, exp);
+        parse_exp(tokens, exp);
+        factor->set_exp_node(std::move(exp));
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      }
+    } else {
+      if (token::is_type_specifier(tokens[0].get_token())) {
+        success = false;
+        error_messages.emplace_back("Expected type in bracket");
+      } else {
+        MAKE_SHARED(ast::AST_exp_Node, exp);
+        parse_exp(tokens, exp);
+        factor->set_exp_node(std::move(exp));
+      }
+    }
+
   } else {
     success = false;
     error_messages.emplace_back("Expected constant, unary operator, semicolon "

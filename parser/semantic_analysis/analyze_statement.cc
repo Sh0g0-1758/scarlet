@@ -83,6 +83,8 @@ void parser::analyze_statement(
       error_messages.emplace_back("Switch expression cannot be a derived type");
     }
     case ast::ElemType::POINTER:
+    case ast::ElemType::VOID:
+    /*fixme? okay for void */
     case ast::ElemType::NONE:
       break;
     }

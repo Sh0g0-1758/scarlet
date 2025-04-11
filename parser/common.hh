@@ -98,6 +98,7 @@ namespace parser {
                type_specifiers.end()) {                                        \
       decl->func(ast::ElemType::DOUBLE);                                       \
     } else {                                                                   \
+      /*fixme?: add for void */                                                \
       decl->func(ast::ElemType::INT);                                          \
     }                                                                          \
   }

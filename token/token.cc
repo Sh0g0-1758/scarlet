@@ -537,7 +537,7 @@ bool is_right_associative(TOKEN token) {
 bool is_type_specifier(TOKEN token) {
   return token == TOKEN::INT or token == TOKEN::LONG or
          token == TOKEN::SIGNED or token == TOKEN::UNSIGNED or
-         token == TOKEN::DOUBLE;
+         token == TOKEN::DOUBLE or token == TOKEN::VOID;
 }
 
 bool is_storage_specifier(TOKEN token) {

@@ -451,6 +451,8 @@ void Codegen::gen_scasm() {
           sym.alignment = 8;
           break;
         case ast::ElemType::POINTER:
+        case ast::ElemType::VOID:
+          /*fixme? is this okay?*/
         case ast::ElemType::NONE:
           sym.alignment = INT_MIN;
           break;

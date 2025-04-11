@@ -32,6 +32,7 @@ namespace parser {
     constZero.set_value({.ul = 0});                                            \
     break;                                                                     \
   case ast::ElemType::NONE:                                                    \
+  case ast::ElemType::VOID:                                                    \
     UNREACHABLE();                                                             \
   }
 

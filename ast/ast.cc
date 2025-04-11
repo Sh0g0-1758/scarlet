@@ -40,6 +40,7 @@ constant::Type elemTypeToConstType(ElemType t) {
   // be something different ?
   case ElemType::POINTER:
   case ElemType::NONE:
+  case ElemType::VOID:
     return constant::Type::NONE;
   }
   return constant::Type::NONE;
@@ -61,6 +62,8 @@ std::string to_string(ElemType type) {
     return "derived";
   case ElemType::POINTER:
     return "pointer";
+  case ElemType::VOID:
+    return "void";
   case ElemType::NONE:
     return "";
   }
@@ -91,6 +94,7 @@ int getSizeOfTypeOnArch(ElemType type) {
     return sizeof(double);
   case ast::ElemType::POINTER:
     return sizeof(unsigned long);
+  case ast::ElemType::VOID:
   default:
     return 0;
   }
@@ -264,6 +268,8 @@ constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
     CASTCONST(c, ret, ul, unsigned long);
   } break;
   case ElemType::POINTER:
+  // fixme?:is this okay?
+  case ElemType::VOID:
   case ElemType::NONE:
     UNREACHABLE();
   }
