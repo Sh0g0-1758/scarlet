@@ -68,11 +68,11 @@ void parser::parse_variable_declarator_suffix(
     if (token::is_integer_constant(tokens[0].get_token())) {
       try {
         long dim;
-        if(tokens[0].get_token() == token::TOKEN::CHARACTER_CONSTANT) {
+        if (tokens[0].get_token() == token::TOKEN::CHARACTER_CONSTANT) {
           // convert character constant to int
-              dim = static_cast<long>(tokens[0].get_value().value()[0]);
+          dim = static_cast<long>(tokens[0].get_value().value()[0]);
         } else {
-        dim = std::stol(tokens[0].get_value().value());
+          dim = std::stol(tokens[0].get_value().value());
         }
         declarator->add_dim(dim);
       } catch (std::out_of_range &e) {
@@ -216,8 +216,8 @@ void parser::parse_variable_declaration(
     return;
   }
   EXPECT(token::TOKEN::ASSIGNMENT);
-  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE or (isArrayDecl and
-      tokens[0].get_token() == token::TOKEN::CHAR_ARR)) {
+  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE or
+      (isArrayDecl and tokens[0].get_token() == token::TOKEN::CHAR_ARR)) {
     MAKE_SHARED(ast::initializer, init);
     parse_initializer(tokens, init);
     decl->set_initializer(std::move(init));
@@ -232,15 +232,15 @@ void parser::parse_variable_declaration(
 
 void parser::parse_initializer(std::vector<token::Token> &tokens,
                                std::shared_ptr<ast::initializer> &init) {
-  if(tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+  if (tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
     std::string str = "";
-    while(tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+    while (tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
       str += tokens[0].get_value().value();
       tokens.erase(tokens.begin());
     }
     char charArray[str.size() + 1];
     std::strcpy(charArray, str.c_str());
-    for(auto i:charArray) {
+    for (auto i : charArray) {
       MAKE_SHARED(ast::AST_exp_Node, exp);
       MAKE_SHARED(ast::AST_const_Node, constNode);
       MAKE_SHARED(ast::AST_factor_Node, factor);
@@ -252,35 +252,34 @@ void parser::parse_initializer(std::vector<token::Token> &tokens,
       exp->set_factor_node(std::move(factor));
       init->exp_list.emplace_back(std::move(exp));
     }
-  }
-  else {
-  tokens.erase(tokens.begin());
-  while (tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
-    if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE or 
-        tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
-      // parse all nested initializers
-      MAKE_SHARED(ast::initializer, child);
-      parse_initializer(tokens, child);
-      init->initializer_list.emplace_back(std::move(child));
-    } else {
-      // parse a single expression
-      MAKE_SHARED(ast::AST_exp_Node, exp);
-      parse_exp(tokens, exp);
-      init->exp_list.emplace_back(std::move(exp));
+  } else {
+    tokens.erase(tokens.begin());
+    while (tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
+      if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE or
+          tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+        // parse all nested initializers
+        MAKE_SHARED(ast::initializer, child);
+        parse_initializer(tokens, child);
+        init->initializer_list.emplace_back(std::move(child));
+      } else {
+        // parse a single expression
+        MAKE_SHARED(ast::AST_exp_Node, exp);
+        parse_exp(tokens, exp);
+        init->exp_list.emplace_back(std::move(exp));
+      }
+      if (tokens[0].get_token() == token::TOKEN::COMMA) {
+        tokens.erase(tokens.begin());
+      } else {
+        break;
+      }
     }
-    if (tokens[0].get_token() == token::TOKEN::COMMA) {
+    if (tokens[0].get_token() == token::TOKEN::CLOSE_BRACE) {
       tokens.erase(tokens.begin());
     } else {
-      break;
+      success = false;
+      error_messages.emplace_back("Expected a closing brace for initializer");
     }
   }
-  if (tokens[0].get_token() == token::TOKEN::CLOSE_BRACE) {
-    tokens.erase(tokens.begin());
-  } else {
-    success = false;
-    error_messages.emplace_back("Expected a closing brace for initializer");
-  }
-}
 }
 
 void parser::parse_function_declaration(

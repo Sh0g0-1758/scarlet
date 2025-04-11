@@ -137,8 +137,7 @@ public:
   std::string get_AST_name() { return "String"; }
   std::string get_value() { return value; }
   void set_string(std::string value) { this->value = std::move(value); }
-
-};  
+};
 
 class AST_identifier_Node {
 private:
@@ -169,7 +168,6 @@ public:
   binop::BINOP get_op() { return op; }
   void set_op(binop::BINOP binop) { this->op = binop; }
 };
-
 
 class AST_exp_Node;
 enum class FactorType { BASIC, FUNCTION_CALL };
@@ -278,9 +276,7 @@ public:
   void set_derived_type(std::vector<long> derivedType) {
     this->derivedType = std::move(derivedType);
   }
-  std::shared_ptr<ast::AST_string_Node> get_string_node() {
-    return stringNode;
-  }
+  std::shared_ptr<ast::AST_string_Node> get_string_node() { return stringNode; }
   void set_string_literal(std::shared_ptr<ast::AST_string_Node> stringNode) {
     this->stringNode = std::move(stringNode);
   }

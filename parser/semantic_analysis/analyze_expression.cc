@@ -480,7 +480,9 @@ void parser::assign_type_to_factor(
         derivedType.push_back((long)factor->get_child()->get_type());
       }
       factor->set_derived_type(derivedType);
-    } else if(factor->get_type() == ast::ElemType::CHAR && (factor->get_unop_node()->get_op() == unop::UNOP::NEGATE || factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT)){
+    } else if (factor->get_type() == ast::ElemType::CHAR &&
+               (factor->get_unop_node()->get_op() == unop::UNOP::NEGATE ||
+                factor->get_unop_node()->get_op() == unop::UNOP::COMPLEMENT)) {
       factor->set_type(ast::ElemType::INT);
     } else {
       factor->set_type(factor->get_child()->get_type());
@@ -512,11 +514,11 @@ void parser::assign_type_to_factor(
       }
       factor->set_type(factor->get_cast_type());
     }
-  }else if (factor->get_string_node() != nullptr){
+  } else if (factor->get_string_node() != nullptr) {
     factor->set_type(ast::ElemType::DERIVED);
     std::vector<long> derivedType;
     std::string str = factor->get_string_node()->get_value();
-    derivedType.push_back((long)str.size()+1);
+    derivedType.push_back((long)str.size() + 1);
     derivedType.push_back((long)ast::ElemType::CHAR);
     factor->set_derived_type(derivedType);
   }

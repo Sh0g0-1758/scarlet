@@ -2,6 +2,7 @@
 
 #include <ast/ast.hh>
 #include <binary_operations/binop.hh>
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <set>
@@ -12,7 +13,6 @@
 #include <tools/symbolTable/symbolTable.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
-#include <cstring>
 
 namespace scarlet {
 namespace parser {

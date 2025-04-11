@@ -26,15 +26,15 @@ namespace parser {
     constZero.set_type(constant::Type::DOUBLE);                                \
     constZero.set_value({.d = 0});                                             \
     break;                                                                     \
-  case ast::ElemType::CHAR:                                                   \
+  case ast::ElemType::CHAR:                                                    \
     constZero.set_type(constant::Type::CHAR);                                  \
     constZero.set_value({.i = 0});                                             \
     break;                                                                     \
-  case ast::ElemType::UCHAR:                                                  \
+  case ast::ElemType::UCHAR:                                                   \
     constZero.set_type(constant::Type::UCHAR);                                 \
     constZero.set_value({.i = 0});                                             \
     break;                                                                     \
-  case ast::ElemType::SCHAR:                                                  \
+  case ast::ElemType::SCHAR:                                                   \
     constZero.set_type(constant::Type::SCHAR);                                 \
     constZero.set_value({.i = 0});                                             \
     break;                                                                     \
@@ -244,15 +244,27 @@ void parser::analyze_local_variable_declaration(
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
       if (symbolTable::symbolInfo::is_array(varInfo)) {
-        if(varDecl->get_exp()->get_factor_node() != nullptr) {
-          if(varDecl->get_exp()->get_factor_node()->get_string_node() != nullptr) {
-            ;
+        if (varDecl->get_exp()->get_factor_node() != nullptr) {
+          if (varDecl->get_exp()->get_factor_node()->get_string_node() !=
+              nullptr) {
+            if (varDecl->get_exp()
+                    ->get_factor_node()
+                    ->get_string_node()
+                    ->get_value()
+                    .size() == 1) {
+              success = false;
+              error_messages.emplace_back(
+                  "Cannot initialize array with a scalar");
+            }
+          } else {
+            success = false;
+            error_messages.emplace_back(
+                "Cannot initialize array with a scalar");
           }
-        }
-      else {
-        success = false;
-        error_messages.emplace_back("Cannot initialize array with an "
-                                    "expression, need an initializer list");
+        } else {
+          success = false;
+          error_messages.emplace_back("Cannot initialize array with an "
+                                      "expression, need an initializer list");
         }
       }
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
@@ -410,7 +422,8 @@ void parser::init_static_array_initializer(
       unsigned long num_bytes = ast::getSizeOfTypeOnArch(baseElemType);
       for (auto dim : arrDim) {
         num_bytes *= dim;
-      }// You can't initialize an array with a scalar, not even a null pointer constant
+      } // You can't initialize an array with a scalar, not even a null pointer
+        // constant
       num_bytes *= currDim;
       constant::Constant constZero;
       constZero.set_type(constant::Type::ZERO);

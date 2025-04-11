@@ -198,9 +198,9 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
       }
     }
   } else {
-    if(left == ElemType::CHAR || left == ElemType::UCHAR)
+    if (left == ElemType::CHAR || left == ElemType::UCHAR)
       left = ElemType::INT;
-    if(right == ElemType::CHAR || right == ElemType::UCHAR)
+    if (right == ElemType::CHAR || right == ElemType::UCHAR)
       right = ElemType::INT;
     if (left == right)
       return {left, {}};

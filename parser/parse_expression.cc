@@ -85,7 +85,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     }
   } else if (tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
     std::string str = "";
-    while(tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
+    while (tokens[0].get_token() == token::TOKEN::CHAR_ARR) {
       str += tokens[0].get_value().value();
       tokens.erase(tokens.begin());
     }
