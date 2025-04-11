@@ -87,22 +87,21 @@ sequence
   } else {                                                                     \
     if (type_specifiers.count(token::TOKEN::DOUBLE)) {                         \
       decl->func(ast::ElemType::DOUBLE);                                       \
-    }                                                                          \
-    if (type_specifiers.count(token::TOKEN::UNSIGNED)) {                       \
-      if (type_specifiers.count(token::TOKEN::INT)) {                          \
-        decl->func(ast::ElemType::UINT);                                       \
-      } else if (type_specifiers.count(token::TOKEN::LONG)) {                  \
+    } else if (type_specifiers.count(token::TOKEN::UNSIGNED)) {                \
+      if (type_specifiers.count(token::TOKEN::LONG)) {                         \
         decl->func(ast::ElemType::ULONG);                                      \
       } else if (type_specifiers.count(token::TOKEN::CHAR)) {                  \
         decl->func(ast::ElemType::UCHAR);                                      \
+      } else {                                                                 \
+        decl->func(ast::ElemType::UINT);                                       \
       }                                                                        \
     } else {                                                                   \
-      if (type_specifiers.count(token::TOKEN::INT)) {                          \
-        decl->func(ast::ElemType::INT);                                        \
-      } else if (type_specifiers.count(token::TOKEN::LONG)) {                  \
+      if (type_specifiers.count(token::TOKEN::LONG)) {                         \
         decl->func(ast::ElemType::LONG);                                       \
       } else if (type_specifiers.count(token::TOKEN::CHAR)) {                  \
         decl->func(ast::ElemType::CHAR);                                       \
+      } else {                                                                 \
+        decl->func(ast::ElemType::INT);                                        \
       }                                                                        \
     }                                                                          \
   }
