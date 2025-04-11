@@ -80,7 +80,7 @@ sequence
     error_messages.emplace_back("Double specifier found with other types");    \
   } else if (type_specifiers.count(token::TOKEN::CHAR) and                     \
              (type_specifiers.count(token::TOKEN::INT) or                      \
-              type_specifiersc.count(token::TOKEN::LONG) or                    \
+              type_specifiers.count(token::TOKEN::LONG) or                     \
               type_specifiers.count(token::TOKEN::DOUBLE))) {                  \
     success = false;                                                           \
     error_messages.emplace_back("Char specifier found with other types");      \
