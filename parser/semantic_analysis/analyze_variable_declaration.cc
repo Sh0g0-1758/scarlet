@@ -410,7 +410,7 @@ void parser::init_static_array_initializer(
       unsigned long num_bytes = ast::getSizeOfTypeOnArch(baseElemType);
       for (auto dim : arrDim) {
         num_bytes *= dim;
-      }
+      }// You can't initialize an array with a scalar, not even a null pointer constant
       num_bytes *= currDim;
       constant::Constant constZero;
       constZero.set_type(constant::Type::ZERO);

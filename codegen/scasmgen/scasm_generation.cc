@@ -453,7 +453,7 @@ void Codegen::gen_scasm() {
         case ast::ElemType::CHAR:
         case ast::ElemType::UCHAR:
         case ast::ElemType::SCHAR:
-          sys.alignment = 1;
+          sym.alignment = 1;
           break;
         case ast::ElemType::POINTER:
         case ast::ElemType::NONE:
