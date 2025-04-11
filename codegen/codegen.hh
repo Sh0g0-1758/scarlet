@@ -202,11 +202,15 @@ public:
       case constant::Type::LONG:
       case constant::Type::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
+      case constant::Type::CHAR:
+      case constant::Type::UCHAR:
+        return scasm::AssemblyType::BYTE;
       case constant::Type::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
       // Since ZERO Type will only ever be used in the initializer list
       // we can safely ignore it here
       case constant::Type::ZERO:
+      case constant::Type::STRING:
       case constant::Type::NONE:
         return scasm::AssemblyType::NONE;
       }
@@ -219,6 +223,9 @@ public:
       case ast::ElemType::LONG:
       case ast::ElemType::ULONG:
         return scasm::AssemblyType::QUAD_WORD;
+      case ast::ElemType::CHAR:
+      case ast::ElemType::UCHAR:
+        return scasm::AssemblyType::BYTE;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
       // FIXME: For Arrays
@@ -251,6 +258,10 @@ public:
       return scasm::AssemblyType::QUAD_WORD;
     case ast::ElemType::DOUBLE:
       return scasm::AssemblyType::DOUBLE;
+    case ast::ElemType::CHAR:
+      return scasm::AssemblyType::BYTE;
+    case ast::ElemType::UCHAR:
+      return scasm::AssemblyType::BYTE;
     case ast::ElemType::DERIVED: {
       if (derivedType[0] > 0) {
         return scasm::AssemblyType::BYTE_ARRAY;
@@ -289,6 +300,15 @@ public:
     int double_reg_count = 0;
     for (int i = 0; i < (int)param_types.size(); i++) {
       switch (param_types[i]) {
+      case constant::Type::CHAR:
+      case constant::Type::UCHAR: {
+        if (int_reg_count < 6) {
+          int_param_indx.push_back({scasm::AssemblyType::BYTE, i});
+          int_reg_count++;
+        } else {
+          stack_param_indx.push_back({scasm::AssemblyType::BYTE, i});
+        }
+      } break;
       case constant::Type::INT:
       case constant::Type::UINT: {
         if (int_reg_count < 6) {
@@ -317,6 +337,7 @@ public:
         break;
       // this case will never be reached, so we can safely ignore it
       case constant::Type::ZERO:
+      case constant::Type::STRING:
       case constant::Type::NONE:
         break;
       }

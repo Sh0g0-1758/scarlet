@@ -72,7 +72,12 @@ void parser::parse_variable_declarator_suffix(
     tokens.erase(tokens.begin());
     if (token::is_integer_constant(tokens[0].get_token())) {
       try {
-        long dim = std::stol(tokens[0].get_value().value());
+        long dim;
+        if (tokens[0].get_token() == token::TOKEN::CHARACTER) {
+          dim = static_cast<long>(tokens[0].get_value().value()[0]);
+        } else {
+          dim = std::stol(tokens[0].get_value().value());
+        }
         declarator->add_dim(dim);
       } catch (std::out_of_range &e) {
         success = false;

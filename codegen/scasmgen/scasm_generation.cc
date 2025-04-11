@@ -436,6 +436,10 @@ void Codegen::gen_scasm() {
         }
       } else {
         switch (baseType) {
+        case ast::ElemType::CHAR:
+        case ast::ElemType::UCHAR:
+          sym.alignment = 1;
+          break;
         case ast::ElemType::UINT:
         case ast::ElemType::INT:
           sym.alignment = 4;
