@@ -229,17 +229,21 @@ void parser::parse_variable_declaration(
 void parser::parse_initializer(std::vector<token::Token> &tokens,
                                std::shared_ptr<ast::initializer> &init) {
   tokens.erase(tokens.begin());
+  int indx = 0;
   while (tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
     if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
       // parse all nested initializers
       MAKE_SHARED(ast::initializer, child);
       parse_initializer(tokens, child);
       init->initializer_list.emplace_back(std::move(child));
+      indx++;
     } else {
       // parse a single expression
       MAKE_SHARED(ast::AST_exp_Node, exp);
       parse_exp(tokens, exp);
       init->exp_list.emplace_back(std::move(exp));
+      init->exp_indx.emplace_back(indx);
+      indx++;
     }
     if (tokens[0].get_token() == token::TOKEN::COMMA) {
       tokens.erase(tokens.begin());

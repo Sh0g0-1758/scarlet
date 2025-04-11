@@ -239,18 +239,71 @@ void parser::analyze_local_variable_declaration(
     if (varDecl->get_exp() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
+
       if (symbolTable::symbolInfo::is_array(varInfo)) {
-        success = false;
-        error_messages.emplace_back("Cannot initialize array with an "
-                                    "expression, need an initializer list");
+        std::vector<long> arrDim{};
+        ast::ElemType baseElemType{};
+        std::vector<long> derivedElemType{};
+        get_arrInfo(arrDim, baseElemType, derivedElemType, varInfo);
+        // It is possible to initialize an array with a string literal
+        if (ast::exp_is_string(varDecl->get_exp()) and
+            baseElemType == ast::ElemType::CHAR) {
+          if (arrDim.size() > 1) {
+            success = false;
+            error_messages.emplace_back("Cannot initialize multi-dimensional "
+                                        "array with a string literal");
+          }
+          std::string str = varDecl->get_exp()
+                                ->get_factor_node()
+                                ->get_const_node()
+                                ->get_constant()
+                                .get_string();
+          if ((int)str.size() > arrDim[0]) {
+            success = false;
+            error_messages.emplace_back(
+                "String literal is larger than the array size");
+          }
+
+          if (!success)
+            return;
+
+          MAKE_SHARED(ast::initializer, init);
+          for (auto ch : str) {
+            MAKE_SHARED(ast::AST_exp_Node, exp);
+            MAKE_SHARED(ast::AST_factor_Node, factor);
+            MAKE_SHARED(ast::AST_const_Node, constNode);
+            constant::Constant c;
+            c.set_type(constant::Type::CHAR);
+            c.set_value({.c = ch});
+            constNode->set_constant(c);
+            factor->set_const_node(std::move(constNode));
+            factor->set_type(ast::ElemType::CHAR);
+            exp->set_factor_node(std::move(factor));
+            exp->set_type(ast::ElemType::CHAR);
+            init->exp_list.emplace_back(std::move(exp));
+          }
+          varDecl->set_initializer(std::move(init));
+          varDecl->set_exp(nullptr);
+          analyze_array_initializer(varDecl->get_initializer(), symbol_table,
+                                    indx, arrDim, baseElemType,
+                                    derivedElemType);
+        } else {
+          success = false;
+          error_messages.emplace_back("Cannot initialize array with an "
+                                      "expression, need an initializer list");
+        }
+        return;
       }
+
       analyze_exp(varDecl->get_exp(), symbol_table, indx);
       decay_arr_to_pointer(nullptr, varDecl->get_exp());
+
       auto expType = varDecl->get_exp()->get_type();
       auto expDerivedType = varDecl->get_exp()->get_derived_type();
       auto [castType, castDerivedType] =
           ast::getAssignType(varInfo.typeDef[0], varInfo.derivedTypeMap[0],
                              expType, expDerivedType, varDecl->get_exp());
+
       if (castType == ast::ElemType::NONE) {
         success = false;
         error_messages.emplace_back("Invalid assignment to variable " +
@@ -276,28 +329,6 @@ void parser::analyze_local_variable_declaration(
                                     "only be used to initialize arrays");
       }
     }
-  }
-}
-
-void parser::get_arrInfo(std::vector<long> &arrDim, ast::ElemType &baseElemType,
-                         std::vector<long> &derivedElemType,
-                         symbolTable::symbolInfo &varInfo) {
-  int i = 0;
-  for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
-    if (varInfo.derivedTypeMap[0][i] > 0) {
-      arrDim.push_back(varInfo.derivedTypeMap[0][i]);
-    } else {
-      break;
-    }
-  }
-  baseElemType = (ast::ElemType)varInfo.derivedTypeMap[0][i];
-  i++;
-  for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
-    derivedElemType.push_back(varInfo.derivedTypeMap[0][i]);
-  }
-  if (!derivedElemType.empty()) {
-    derivedElemType.insert(derivedElemType.begin(), (long)baseElemType);
-    baseElemType = ast::ElemType::DERIVED;
   }
 }
 
@@ -450,6 +481,52 @@ void parser::analyze_array_initializer(
     std::vector<long> derivedElemType) {
   if (init == nullptr)
     return;
+
+  if (!(init->initializer_list.empty()) and !(init->exp_list.empty())) {
+    //! ERROR
+    //! But should work when the exp is of type string and the array is of type
+    //! char
+    if (baseElemType == ast::ElemType::CHAR) {
+      for (int i = 0; i < (int)init->exp_list.size(); i++) {
+        auto exp = init->exp_list[i];
+        if (ast::exp_is_string(exp)) {
+          auto str = exp->get_factor_node()
+                         ->get_const_node()
+                         ->get_constant()
+                         .get_string();
+
+          MAKE_SHARED(ast::initializer, string_init);
+          for (auto ch : str) {
+            MAKE_SHARED(ast::AST_exp_Node, exp);
+            MAKE_SHARED(ast::AST_factor_Node, factor);
+            MAKE_SHARED(ast::AST_const_Node, constNode);
+            constant::Constant c;
+            c.set_type(constant::Type::CHAR);
+            c.set_value({.c = ch});
+            constNode->set_constant(c);
+            factor->set_const_node(std::move(constNode));
+            factor->set_type(ast::ElemType::CHAR);
+            exp->set_factor_node(std::move(factor));
+            exp->set_type(ast::ElemType::CHAR);
+            string_init->exp_list.emplace_back(std::move(exp));
+          }
+
+          init->initializer_list.insert(
+              init->initializer_list.begin() + init->exp_indx[i], string_init);
+        } else {
+          success = false;
+          error_messages.emplace_back(
+              "invalid initialization of a char array. Valid initializers are "
+              "string literals and char constants");
+        }
+      }
+    } else {
+      success = false;
+      error_messages.emplace_back("Invalid use of initializer list, it does "
+                                  "not respect the array dimensions");
+    }
+  }
+
   if (!(init->initializer_list.empty())) {
     long currDim = arrDim[0];
     if ((long)init->initializer_list.size() > currDim) {
@@ -470,17 +547,18 @@ void parser::analyze_array_initializer(
       init->initializer_list.push_back(child_init);
     }
   } else if (!(init->exp_list.empty())) {
+    // it is possible that a char array has been initialized with a string
     if (arrDim.size() != 1) {
       success = false;
       error_messages.emplace_back("Invalid use of initializer list, it does "
                                   "not respect the array dimensions");
     }
-    long i = 0;
     if ((long)init->exp_list.size() > arrDim[0]) {
       success = false;
       error_messages.emplace_back(
           "Wrong number of elements in the initializer list");
     }
+    long i = 0;
     for (; i < (long)init->exp_list.size(); i++) {
       auto child_exp = init->exp_list[i];
       analyze_exp(child_exp, symbol_table, indx);
@@ -544,6 +622,28 @@ void parser::analyze_array_initializer(
 
       init->exp_list.push_back(child_exp);
     }
+  }
+}
+
+void parser::get_arrInfo(std::vector<long> &arrDim, ast::ElemType &baseElemType,
+                         std::vector<long> &derivedElemType,
+                         symbolTable::symbolInfo &varInfo) {
+  int i = 0;
+  for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+    if (varInfo.derivedTypeMap[0][i] > 0) {
+      arrDim.push_back(varInfo.derivedTypeMap[0][i]);
+    } else {
+      break;
+    }
+  }
+  baseElemType = (ast::ElemType)varInfo.derivedTypeMap[0][i];
+  i++;
+  for (; i < (int)varInfo.derivedTypeMap[0].size(); i++) {
+    derivedElemType.push_back(varInfo.derivedTypeMap[0][i]);
+  }
+  if (!derivedElemType.empty()) {
+    derivedElemType.insert(derivedElemType.begin(), (long)baseElemType);
+    baseElemType = ast::ElemType::DERIVED;
   }
 }
 
