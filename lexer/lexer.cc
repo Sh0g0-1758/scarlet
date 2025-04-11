@@ -241,7 +241,7 @@ void lexer::tokenize() {
                                "no end quote for character " + tmp,
                            "please add end quotes"));
       } else {
-        tokens.emplace_back(token::Token(token::TOKEN::CHAR, tmp));
+        tokens.emplace_back(token::Token(token::TOKEN::CHARACTER, tmp));
       }
       col_number++;
     } else if (ch == '\"') {
@@ -277,7 +277,7 @@ void lexer::tokenize() {
         col_number++;
       }
       if (ch == '\"') {
-        tokens.emplace_back(token::Token(token::TOKEN::CHAR_ARR, literal));
+        tokens.emplace_back(token::Token(token::TOKEN::STRING, literal));
       } else {
         success = false;
         tokens.emplace_back(token::TOKEN::UNKNOWN);

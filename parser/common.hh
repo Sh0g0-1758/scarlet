@@ -59,8 +59,7 @@ namespace parser {
   std::set<token::TOKEN> type_specifiers;                                      \
   while (!tokens.empty() and                                                   \
          token::is_type_specifier(tokens[0].get_token())) {                    \
-    if (type_specifiers.find(tokens[0].get_token()) !=                         \
-        type_specifiers.end()) {                                               \
+    if (type_specifiers.count(tokens[0].get_token())) {                        \
       success = false;                                                         \
       error_messages.emplace_back("Multiple same type specifiers found");      \
     } else {                                                                   \
@@ -71,35 +70,39 @@ namespace parser {
   if (type_specifiers.empty()) {                                               \
     success = false;                                                           \
     error_messages.emplace_back("No type specifiers found");                   \
-  } else if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                   \
-                 type_specifiers.end() and                                     \
-             type_specifiers.find(token::TOKEN::SIGNED) !=                     \
-                 type_specifiers.end()) {                                      \
+  } else if (type_specifiers.count(token::TOKEN::UNSIGNED) and                 \
+             type_specifiers.count(token::TOKEN::SIGNED))                      \
     success = false;                                                           \
-    error_messages.emplace_back(                                               \
-        "Unsigned and signed specifiers found together");                      \
-  } else if (type_specifiers.find(token::TOKEN::DOUBLE) !=                     \
-                 type_specifiers.end() and                                     \
-             type_specifiers.size() > 1) {                                     \
+  error_messages.emplace_back(                                                 \
+      "Unsigned and signed specifiers found together");                        \
+  }                                                                            \
+  else if (type_specifiers.count(token::TOKEN::DOUBLE) and                     \
+           type_specifiers.size() > 1) {                                       \
     success = false;                                                           \
     error_messages.emplace_back("Double specifier found with other types");    \
-  } else {                                                                     \
-    if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                        \
-            type_specifiers.end() and                                          \
-        type_specifiers.find(token::TOKEN::LONG) != type_specifiers.end()) {   \
-      decl->func(ast::ElemType::ULONG);                                        \
-    } else if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                 \
-               type_specifiers.end()) {                                        \
-      decl->func(ast::ElemType::UINT);                                         \
-    } else if (type_specifiers.find(token::TOKEN::LONG) !=                     \
-               type_specifiers.end()) {                                        \
-      decl->func(ast::ElemType::LONG);                                         \
-    } else if (type_specifiers.find(token::TOKEN::DOUBLE) !=                   \
-               type_specifiers.end()) {                                        \
+  }                                                                            \
+  else {                                                                       \
+    if (type_specifiers.cound(token::TOKEN::DOUBLE)) {                         \
       decl->func(ast::ElemType::DOUBLE);                                       \
+    }                                                                          \
+    if (type_specifiers.count(token::TOKEN::UNSIGNED)) {                       \
+      if (type_specifiers.count(token::TOKEN::INT)) {                          \
+        decl->func(ast::ElemType::UINT)                                        \
+      } else if (type_specifiers.count(token::TOKEN::LONG)) {                  \
+        decl->func(ast::ElemType::ULONG);                                      \
+      } else if (type_specifiers.count(token::TOKEN::CHAR)) {                  \
+        decl->func(ast::ElemType::UCHAR);                                      \
+      }                                                                        \
     } else {                                                                   \
-      decl->func(ast::ElemType::INT);                                          \
+      if (type_specifiers.count(token::TOKEN::INT)) {                          \
+        decl->func(ast::ElemType::INT);                                        \
+      } else if (type_specifiers.count(token::TOKEN::LONG)) {                  \
+        decl->func(ast::ElemType::LONG);                                       \
+      } else if (type_specifiers.count(token::TOKEN::CHAR)) {                  \
+        decl->func(ast::ElemType::CHAR);                                       \
+      }                                                                        \
     }                                                                          \
   }
+
 } // namespace parser
 } // namespace scarlet
