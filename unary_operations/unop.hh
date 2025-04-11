@@ -14,6 +14,7 @@ enum class UNOP {
   POSTDECREMENT,
   DEREFERENCE,
   ADDROF,
+  DECAY
 
 };
 std::string to_string(UNOP unop);

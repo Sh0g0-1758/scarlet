@@ -36,6 +36,7 @@ void Codegen::gen_scar_declaration(
         for (auto it : derivedType) {
           if (it < 0) {
             baseType = static_cast<ast::ElemType>(it);
+            break;
           }
         }
         long offset = 0;

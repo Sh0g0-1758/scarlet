@@ -133,17 +133,7 @@ long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType) {
 }
 
 long getSizeOfArrayTypeOnArch(std::vector<long> derivedType) {
-  long sizeOfArrayType = 1;
-  for (auto i : derivedType) {
-    if (i > 0) {
-      sizeOfArrayType *= i;
-    } else {
-      sizeOfArrayType *= getSizeOfTypeOnArch((ast::ElemType)i);
-      break;
-    }
-  }
-
-  return sizeOfArrayType;
+  return derivedType[0] * getSizeOfReferencedTypeOnArch(derivedType);
 }
 
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
@@ -353,6 +343,30 @@ bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp) {
   if (exp->get_right() != nullptr)
     return false;
   if (exp->get_factor_node() == nullptr)
+    return false;
+  return true;
+}
+
+bool is_array(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor == nullptr)
+    return false;
+  if (factor->get_type() != ElemType::DERIVED)
+    return false;
+  if (factor->get_derived_type().size() == 0)
+    return false;
+  if (factor->get_derived_type()[0] <= 0)
+    return false;
+  return true;
+}
+
+bool is_array(std::shared_ptr<AST_exp_Node> exp) {
+  if (exp == nullptr)
+    return false;
+  if (exp->get_type() != ElemType::DERIVED)
+    return false;
+  if (exp->get_derived_type().size() == 0)
+    return false;
+  if (exp->get_derived_type()[0] <= 0)
     return false;
   return true;
 }

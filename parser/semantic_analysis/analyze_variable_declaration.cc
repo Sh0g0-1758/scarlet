@@ -243,14 +243,13 @@ void parser::analyze_local_variable_declaration(
     if (varDecl->get_exp() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
-      if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
-          varInfo.derivedTypeMap[0][0] > 0) {
+      if (symbolTable::symbolInfo::is_array(varInfo)) {
         if(varDecl->get_exp()->get_factor_node() != nullptr) {
           if(varDecl->get_exp()->get_factor_node()->get_string_node() != nullptr) {
             ;
           }
         }
-        else {
+      else {
         success = false;
         error_messages.emplace_back("Cannot initialize array with an "
                                     "expression, need an initializer list");
@@ -275,8 +274,7 @@ void parser::analyze_local_variable_declaration(
     } else if (varDecl->get_initializer() != nullptr) {
       symbol_table[{var_name, indx}].def = symbolTable::defType::TRUE;
       globalSymbolTable[temp_name].def = symbolTable::defType::TRUE;
-      if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
-          varInfo.derivedTypeMap[0][0] > 0) {
+      if (symbolTable::symbolInfo::is_array(varInfo)) {
         std::vector<long> arrDim;
         ast::ElemType baseElemType;
         std::vector<long> derivedElemType;
@@ -312,9 +310,7 @@ void parser::initialize_global_variable(
     symbolTable::symbolInfo &varInfo,
     std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
     std::string &var_name) {
-  if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
-      varInfo.derivedTypeMap[0][0] > 0) {
-    // array type
+  if (symbolTable::symbolInfo::is_array(varInfo)) {
     std::vector<long> arrDim;
     ast::ElemType baseElemType;
     std::vector<long> derivedElemType;

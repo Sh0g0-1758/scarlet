@@ -16,7 +16,8 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   case unop::UNOP::PREDECREMENT:
   case unop::UNOP::POSTINCREMENT:
   case unop::UNOP::POSTDECREMENT:
-  // TODO: Handle ADDROF and DEREFERENCE
+  // ADDROF AND DEREFERENCE ARE HANDLED AS SEPARATE SCAR INSTRUCTION
+  case unop::UNOP::DECAY:
   case unop::UNOP::ADDROF:
   case unop::UNOP::DEREFERENCE:
   case unop::UNOP::UNKNOWN:
