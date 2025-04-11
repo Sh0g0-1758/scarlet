@@ -26,7 +26,6 @@ void parser::parse_statement(
     } else {
       exp = nullptr;
     }
-    parse_exp(tokens, exp);
     statement->set_exp(std::move(exp));
 
     EXPECT(token::TOKEN::SEMICOLON);

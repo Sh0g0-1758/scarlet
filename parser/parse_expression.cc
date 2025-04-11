@@ -92,9 +92,12 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       tokens.erase(tokens.begin());
       if (token::is_type_specifier(tokens[0].get_token())) {
         PARSE_TYPE(factor, set_cast_type);
-        MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);
-        parse_abstract_declarator(tokens, cast_declarator);
-        factor->set_cast_declarator(std::move(cast_declarator));
+        if (!tokens.empty() and
+            tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
+          MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);
+          parse_abstract_declarator(tokens, cast_declarator);
+          factor->set_cast_declarator(std::move(cast_declarator));
+        }
         EXPECT(token::TOKEN::CLOSE_PARANTHESES);
       } else {
         MAKE_SHARED(ast::AST_exp_Node, exp);
@@ -105,7 +108,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
     } else {
       if (token::is_type_specifier(tokens[0].get_token())) {
         success = false;
-        error_messages.emplace_back("Expected type in bracket");
+        error_messages.emplace_back("Expected type in bracket for sizeof");
       } else {
         MAKE_SHARED(ast::AST_exp_Node, exp);
         parse_exp(tokens, exp);

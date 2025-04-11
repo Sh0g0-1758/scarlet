@@ -84,9 +84,18 @@ namespace parser {
     success = false;                                                           \
     error_messages.emplace_back("Double specifier found with other types");    \
   } else {                                                                     \
-    if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                        \
-            type_specifiers.end() and                                          \
-        type_specifiers.find(token::TOKEN::LONG) != type_specifiers.end()) {   \
+    if (type_specifiers.find(token::TOKEN::VOID) != type_specifiers.end()) {   \
+      if (type_specifiers.size() == 1) {                                       \
+        decl->func(ast::ElemType::VOID);                                       \
+      } else {                                                                 \
+        success = false;                                                       \
+        error_messages.emplace_back(                                           \
+            "Can't have another type specifier with void");                    \
+      }                                                                        \
+    } else if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                 \
+                   type_specifiers.end() and                                   \
+               type_specifiers.find(token::TOKEN::LONG) !=                     \
+                   type_specifiers.end()) {                                    \
       decl->func(ast::ElemType::ULONG);                                        \
     } else if (type_specifiers.find(token::TOKEN::UNSIGNED) !=                 \
                type_specifiers.end()) {                                        \
