@@ -413,7 +413,7 @@ void parser::assign_type_from_subscript(
 }
 
 #define CHAR_TO_INT(factor)                                                    \
-  if (factor->get_type() == ast::ElemType::CHAR) {                             \
+  if (factor != nullptr and factor->get_type() == ast::ElemType::CHAR) {       \
     add_cast_to_factor(factor, ast::ElemType::INT, {});                        \
   }
 
