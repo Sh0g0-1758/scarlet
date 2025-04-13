@@ -140,19 +140,20 @@ bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
   return false;
 }
 
-bool ast::is_ptr_type(ast::ElemType type, std::vector<long> derivedType) {
+bool is_ptr_type(ast::ElemType type, std::vector<long> derivedType) {
   if (type == ast::ElemType::DERIVED and
       derivedType[0] == (long)ast::ElemType::POINTER)
     return true;
   return false;
 }
 
-bool ast::is_void_ptr(ast::ElemType type, std::vector<long> derivedType) {
+bool is_void_ptr(ast::ElemType type, std::vector<long> derivedType) {
   return is_ptr_type(type, derivedType) and
          derivedType[1] == (long)ast::ElemType::VOID;
 }
 
-bool ast::is_scalar_type(ast::ElemType type, std::vector<long> derivedType) {
+bool is_scalar_type(ast::ElemType type, std::vector<long> derivedType) {
+
   if ((type == ast::ElemType::DERIVED and derivedType[0] > 0) or
       (type == ast::ElemType::VOID))
     /*FIXME?:for functions, is for array required*/
@@ -160,24 +161,25 @@ bool ast::is_scalar_type(ast::ElemType type, std::vector<long> derivedType) {
   return true;
 }
 
-bool ast::is_complete(ast::ElemType type, std::vector<long> derivedType) {
+bool is_complete(ast::ElemType type, std::vector<long> derivedType) {
+  (void)derivedType;
   if (type == ast::ElemType::VOID)
     return false;
   return true;
 }
 
-bool ast::is_pointer_to_complete(ast::ElemType type,
-                                 std::vector<long> derivedType) {
+bool is_pointer_to_complete(ast::ElemType type, std::vector<long> derivedType) {
   if (type == ast::ElemType::DERIVED and
       derivedType[0] == (long)ast::ElemType::POINTER) {
     if (derivedType[1] == (long)ast::ElemType::VOID)
       return false;
     return true;
   }
+  return true;
 }
 
-bool ast::validate_type_specifier(ast::ElemType type,
-                                  std::vector<long> derivedType) {
+bool validate_type_specifier(ast::ElemType type,
+                             std::vector<long> derivedType) {
   if (type == ast::ElemType::DERIVED and derivedType[0] > 0) {
     if (derivedType[1] == (long)ast::ElemType::VOID) {
       return false;
@@ -196,8 +198,18 @@ bool ast::validate_type_specifier(ast::ElemType type,
       derivedType.erase(derivedType.begin());
       return validate_type_specifier(ast::ElemType::DERIVED, derivedType);
     }
+  } else if (type == ast::ElemType::VOID) {
+    return false;
   }
-  UNREACHABLE();
+  return true;
+}
+
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType) {
+  if (type == ast::ElemType::VOID or
+      (type == ast::ElemType::DERIVED and
+       !ast::validate_type_specifier(type, derivedType)))
+    return false;
+  return true;
 }
 
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
@@ -258,7 +270,12 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
       }
     }
   } else {
-    if (left == right)
+    if ((left == ElemType::VOID and right != ElemType::VOID) or
+        (left != ElemType::VOID and right == ElemType::VOID)) {
+      return {ElemType::NONE, {}};
+    } else if (left == ast::ElemType::VOID and right == ast::ElemType::VOID) {
+      return {ElemType::VOID, {}};
+    } else if (left == right)
       return {left, {}};
     else if (left == ElemType::DOUBLE or right == ElemType::DOUBLE)
       return {ElemType::DOUBLE, {}};
@@ -292,6 +309,9 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
       return {ElemType::NONE, {}};
     }
   } else {
+    if (src == ElemType::VOID) {
+      return {ElemType::NONE, {}};
+    }
     return {target, targetDerived};
   }
 }
@@ -368,6 +388,7 @@ constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
   case ElemType::POINTER:
   // fixme?:is this okay?
   case ElemType::VOID:
+    break;
   case ElemType::NONE:
     UNREACHABLE();
   }

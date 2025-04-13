@@ -110,9 +110,9 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
         success = false;
         error_messages.emplace_back("Expected type in bracket for sizeof");
       } else {
-        MAKE_SHARED(ast::AST_exp_Node, exp);
-        parse_exp(tokens, exp);
-        factor->set_exp_node(std::move(exp));
+        MAKE_SHARED(ast::AST_factor_Node, nested_factor);
+        parse_factor(tokens, nested_factor);
+        factor->set_child(std::move(nested_factor));
       }
     }
 

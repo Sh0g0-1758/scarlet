@@ -782,5 +782,6 @@ bool is_scalar_type(ast::ElemType type, std::vector<long> derivedType);
 bool is_complete(ast::ElemType type, std::vector<long> derivedType);
 bool is_pointer_to_complete(ast::ElemType type, std::vector<long> derivedType);
 bool validate_type_specifier(ast::ElemType type, std::vector<long> derivedType);
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType);
 } // namespace ast
 } // namespace scarlet

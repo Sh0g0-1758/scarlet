@@ -138,7 +138,14 @@ void parser::analyze_statement(
     auto while_statement =
         std::static_pointer_cast<ast::AST_while_statement_Node>(statement);
     analyze_exp(while_statement->get_exps(), symbol_table, indx);
+    if (while_statement->get_exps() != nullptr and
+        !ast::is_scalar_type(while_statement->get_exps()->get_type(),
+                             while_statement->get_exps()->get_derived_type())) {
+      success = false;
+      error_messages.emplace_back("while condition must be a scalar type");
+    }
     analyze_statement(while_statement->get_stmt(), symbol_table, indx);
+
   } break;
   case ast::statementType::FOR:
     analyze_for_statement(
@@ -194,7 +201,6 @@ void parser::analyze_for_statement(
     analyze_exp(for_statement->get_exps(), symbol_table, indx);
     analyze_exp(for_statement->get_exp2(), symbol_table, indx);
     if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
-      //[QUERY]:why this indirection?
       auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
           for_statement->get_stmt());
       analyze_for_statement(forstmt, symbol_table, indx);
@@ -230,7 +236,9 @@ void parser::analyze_for_statement(
     }
   }
   // check for scalar type
-  if (!ast::is_scalar_type(for_statement->get_exps()->get_type(),
+
+  if (for_statement->get_exps() != nullptr and
+      !ast::is_scalar_type(for_statement->get_exps()->get_type(),
                            for_statement->get_exps()->get_derived_type())) {
     success = false;
     error_messages.emplace_back(

@@ -319,15 +319,26 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       }
     }
 
-    if (!ast::is_scalar_type(factor->get_type(), factor->get_derived_type())) {
+    if (unop != unop::UNOP::SIZEOF and
+        factor->get_child()->get_type() == ast::ElemType::VOID) {
       success = false;
-      error_messages.emplace_back(
-          "Unary operator not allowed on non-scalar types");
+      error_messages.emplace_back("Void type not allowed for unary operator");
     }
 
     if (unop == unop::UNOP::SIZEOF) {
-      if (factor->get_exp_node() != nullptr) {
-        analyze_exp(factor->get_exp_node(), symbol_table, indx);
+      if (factor->get_child() != nullptr) {
+        // exp has been analyzed already
+        if (!ast::validate_type_specifier(
+                factor->get_child()->get_type(),
+                factor->get_child()->get_derived_type())) {
+          success = false;
+          error_messages.emplace_back(
+              "sizeof operator not allowed on incomplete type");
+        }
+        factor->set_type(ast::ElemType::ULONG);
+        factor->set_derived_type({});
+      } else if (factor->get_exp_node() != nullptr) {
+        // exp has been analyzed already
         if (!ast::validate_type_specifier(
                 factor->get_exp_node()->get_type(),
                 factor->get_exp_node()->get_derived_type())) {
@@ -340,8 +351,15 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       } else {
         std::vector<long> derivedType;
         unroll_derived_type(factor->get_cast_declarator(), derivedType);
-        if (!ast::validate_type_specifier(factor->get_cast_type(),
-                                          derivedType)) {
+        if (!derivedType.empty()) {
+          derivedType.push_back((long)factor->get_cast_type());
+          if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
+                                            derivedType)) {
+            success = false;
+            error_messages.emplace_back(
+                "sizeof operator not allowed on incomplete type");
+          }
+        } else if (factor->get_cast_type() == ast::ElemType::VOID) {
           success = false;
           error_messages.emplace_back(
               "sizeof operator not allowed on incomplete type");
@@ -497,12 +515,7 @@ void parser::assign_type_to_factor(
     decay_arr_to_pointer(factor->get_child(), nullptr);
     std::vector<long> derivedType;
     unroll_derived_type(factor->get_cast_declarator(), derivedType);
-    if (!ast::is_scalar_type(factor->get_child()->get_type(),
-                             factor->get_child()->get_derived_type())) {
-      success = false;
-      error_messages.emplace_back(
-          "Casting operator not allowed on non-scalar types");
-    }
+
     if (!derivedType.empty()) {
       if (factor->get_child()->get_type() == ast::ElemType::DOUBLE) {
         success = false;
@@ -516,6 +529,11 @@ void parser::assign_type_to_factor(
       derivedType.push_back((long)factor->get_cast_type());
       factor->set_derived_type(derivedType);
       factor->set_type(ast::ElemType::DERIVED);
+      if (!ast::validate_type_specifier(ast::ElemType::DERIVED, derivedType)) {
+        success = false;
+        error_messages.emplace_back(
+            "Casting operator not allowed on incomplete type");
+      }
     } else {
       if (factor->get_cast_type() == ast::ElemType::DOUBLE and
           factor->get_child()->get_type() == ast::ElemType::DERIVED) {
@@ -524,6 +542,12 @@ void parser::assign_type_to_factor(
             "Cannot cast pointer type to double precision");
       }
       factor->set_type(factor->get_cast_type());
+    }
+    if (factor->get_child()->get_type() == ast::ElemType::VOID and
+        factor->get_cast_type() != ast::ElemType::VOID) {
+      success = false;
+      error_messages.emplace_back(
+          "Casting operator not allowed on non-scalar types");
     }
   }
 }
@@ -568,7 +592,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         auto [expType, expDerivedType] =
             ast::getAssignType(leftType, leftDerivedType, rightType,
                                rightDerivedType, exp->get_right());
-        if (expType == ast::ElemType::NONE) {
+        if (expType == ast::ElemType::NONE or expType == ast::ElemType::VOID) {
           success = false;
           error_messages.emplace_back("Incompatible types in expression");
         } else {
@@ -657,7 +681,11 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         if (leftType == ast::ElemType::DERIVED and
             rightType != ast::ElemType::DERIVED and
             rightType != ast::ElemType::DOUBLE) {
-          if (rightType != ast::ElemType::LONG) {
+          if (rightType == ast::ElemType::VOID) {
+            success = false;
+            error_messages.emplace_back(
+                "void value not ignored as it ought to be");
+          } else if (rightType != ast::ElemType::LONG) {
             add_cast_to_exp(exp->get_right(), ast::ElemType::LONG, {});
           }
           exp->set_type(leftType);
@@ -666,7 +694,11 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                    rightType == ast::ElemType::DERIVED and
                    leftType != ast::ElemType::DERIVED and
                    leftType != ast::ElemType::DOUBLE) {
-          if (leftType != ast::ElemType::LONG) {
+          if (leftType == ast::ElemType::VOID) {
+            success = false;
+            error_messages.emplace_back(
+                "void value not ignored as it ought to be");
+          } else if (leftType != ast::ElemType::LONG) {
             exp->get_left() == nullptr
                 ? add_cast_to_factor(exp->get_factor_node(),
                                      ast::ElemType::LONG, {})
@@ -686,7 +718,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       } else {
         auto [expType, expDerivedType] = ast::getParentType(
             leftType, rightType, leftDerivedType, rightDerivedType, exp);
-        if (expType == ast::ElemType::NONE) {
+        if (expType == ast::ElemType::NONE or expType == ast::ElemType::VOID) {
           success = false;
           error_messages.emplace_back("Incompatible types in expression");
         }
@@ -746,31 +778,46 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       }
     }
     if (binop != binop::BINOP::TERNARY) {
-      if (exp->get_factor_node() != nullptr and
-          (!ast::is_complete(exp->get_factor_node()->get_type(),
-                             exp->get_factor_node()->get_derived_type()) or
-           !ast::is_pointer_to_complete(
-               exp->get_factor_node()->get_type(),
-               exp->get_factor_node()->get_derived_type()))) {
+      ast::ElemType leftType =
+          (exp->get_factor_node() != nullptr)
+              ? exp->get_factor_node()->get_type()
+              : (exp->get_left() != nullptr ? exp->get_left()->get_type()
+                                            : ast::ElemType::NONE);
+      auto leftDerivedType = (exp->get_factor_node() != nullptr)
+                                 ? exp->get_factor_node()->get_derived_type()
+                                 : (exp->get_left() != nullptr
+                                        ? exp->get_left()->get_derived_type()
+                                        : std::vector<long>{});
+
+      if (leftType == ast::ElemType::DERIVED and
+          leftDerivedType[0] == (long)ast::ElemType::POINTER and
+          !ast::is_pointer_to_complete(leftType, leftDerivedType) and
+          (binop == binop::BINOP::ADD or binop == binop::BINOP::SUB)) {
         success = false;
-        error_messages.emplace_back("Incomplete type in expression");
+        error_messages.emplace_back(
+            "Pointer arithmetic not allowed on incomplete type");
+      } else if (leftType == ast::ElemType::VOID) {
+        success = false;
+        error_messages.emplace_back("void value not ignored as it ought to be");
       }
-      if (exp->get_left() != nullptr and
-          (!ast::is_complete(exp->get_left()->get_type(),
-                             exp->get_left()->get_derived_type()) or
-           !ast::is_pointer_to_complete(exp->get_left()->get_type(),
-                                        exp->get_left()->get_derived_type()))) {
+
+      auto rightType = (exp->get_right() != nullptr)
+                           ? exp->get_right()->get_type()
+                           : ast::ElemType::NONE;
+      auto rightDerivedType = (exp->get_right() != nullptr)
+                                  ? exp->get_right()->get_derived_type()
+                                  : std::vector<long>{};
+
+      if (rightType == ast::ElemType::DERIVED and
+          rightDerivedType[0] == (long)ast::ElemType::POINTER and
+          !ast::is_pointer_to_complete(rightType, rightDerivedType) and
+          (binop == binop::BINOP::ADD or binop == binop::BINOP::SUB)) {
         success = false;
-        error_messages.emplace_back("Incomplete type in expression");
-      }
-      if (exp->get_right() != nullptr and
-          (!ast::is_complete(exp->get_right()->get_type(),
-                             exp->get_right()->get_derived_type()) or
-           !ast::is_pointer_to_complete(
-               exp->get_right()->get_type(),
-               exp->get_right()->get_derived_type()))) {
+        error_messages.emplace_back(
+            "Pointer arithmetic not allowed on incomplete type");
+      } else if (rightType == ast::ElemType::VOID) {
         success = false;
-        error_messages.emplace_back("Incomplete type in expression");
+        error_messages.emplace_back("void value not ignored as it ought to be");
       }
     }
     // left/right shift changed to logical left/right shift if the type is
