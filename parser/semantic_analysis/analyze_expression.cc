@@ -319,6 +319,38 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       }
     }
 
+    if (!ast::is_scalar_type(factor->get_type(), factor->get_derived_type())) {
+      success = false;
+      error_messages.emplace_back(
+          "Unary operator not allowed on non-scalar types");
+    }
+
+    if (unop == unop::UNOP::SIZEOF) {
+      if (factor->get_exp_node() != nullptr) {
+        analyze_exp(factor->get_exp_node(), symbol_table, indx);
+        if (!ast::validate_type_specifier(
+                factor->get_exp_node()->get_type(),
+                factor->get_exp_node()->get_derived_type())) {
+          success = false;
+          error_messages.emplace_back(
+              "sizeof operator not allowed on incomplete type");
+        }
+        factor->set_type(ast::ElemType::ULONG);
+        factor->set_derived_type({});
+      } else {
+        std::vector<long> derivedType;
+        unroll_derived_type(factor->get_cast_declarator(), derivedType);
+        if (!ast::validate_type_specifier(factor->get_cast_type(),
+                                          derivedType)) {
+          success = false;
+          error_messages.emplace_back(
+              "sizeof operator not allowed on incomplete type");
+        }
+        factor->set_type(ast::ElemType::ULONG);
+        factor->set_derived_type({});
+      }
+    }
+
     // convert pre increment / decrement to an expression
     if (unop::is_incr_decr(unop)) {
       auto base = factor->get_child();
@@ -385,33 +417,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
-void parser::assign_type_from_subscript(
-    scarlet::ast::ElemType TypeDef, std::vector<long> derivedType,
-    std::shared_ptr<ast::AST_factor_Node> factor) {
-  if (TypeDef == ast::ElemType::DERIVED) {
-    for (int i = 0; i < (long)factor->get_arrIdx().size(); i++) {
-      if (derivedType[0] > 0 or
-          derivedType[0] == (long)ast::ElemType::POINTER) {
-        derivedType.erase(derivedType.begin());
-      } else {
-        success = false;
-        error_messages.emplace_back("subscripting a non array or pointer type");
-        break;
-      }
-    }
-    if (derivedType.size() == 1) {
-      factor->set_type((ast::ElemType)derivedType[0]);
-      factor->set_derived_type({});
-    } else {
-      factor->set_type(ast::ElemType::DERIVED);
-      factor->set_derived_type(derivedType);
-    }
-  } else {
-    success = false;
-    error_messages.emplace_back("subscripting a non array or pointer type");
-  }
-}
-
 void parser::assign_type_to_factor(
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!success)
@@ -431,6 +436,10 @@ void parser::assign_type_to_factor(
     factor->set_derived_type(exp->get_derived_type());
   } else if (factor->get_unop_node() != nullptr) {
     auto unop = factor->get_unop_node()->get_op();
+    if (unop == unop::UNOP::SIZEOF) {
+      // dealt with later
+      return;
+    }
 
     if (unop == unop::UNOP::DECAY) {
       // We have already taken care of the type that will be assigned
@@ -488,6 +497,12 @@ void parser::assign_type_to_factor(
     decay_arr_to_pointer(factor->get_child(), nullptr);
     std::vector<long> derivedType;
     unroll_derived_type(factor->get_cast_declarator(), derivedType);
+    if (!ast::is_scalar_type(factor->get_child()->get_type(),
+                             factor->get_child()->get_derived_type())) {
+      success = false;
+      error_messages.emplace_back(
+          "Casting operator not allowed on non-scalar types");
+    }
     if (!derivedType.empty()) {
       if (factor->get_child()->get_type() == ast::ElemType::DOUBLE) {
         success = false;
@@ -573,6 +588,21 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       auto rightDerivedType = exp->get_right()->get_derived_type();
       auto [expType, expDerivedType] = ast::getParentType(
           leftType, rightType, leftDerivedType, rightDerivedType, exp);
+      if (exp->get_factor_node() != nullptr and
+          !ast::is_scalar_type(exp->get_factor_node()->get_type(),
+                               exp->get_factor_node()->get_derived_type())) {
+        success = false;
+        error_messages.emplace_back(
+            "Ternary operator not allowed on non-scalar types");
+      }
+      if (exp->get_left() != nullptr and
+          !ast::is_scalar_type(exp->get_left()->get_type(),
+                               exp->get_left()->get_derived_type())) {
+        success = false;
+        error_messages.emplace_back(
+            "Ternary operator not allowed on non-scalar types");
+      }
+
       if (expType == ast::ElemType::NONE) {
         success = false;
         error_messages.emplace_back("Incompatible types in expression");
@@ -715,7 +745,34 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
             "Right shift operator not allowed on derived types");
       }
     }
-
+    if (binop != binop::BINOP::TERNARY) {
+      if (exp->get_factor_node() != nullptr and
+          (!ast::is_complete(exp->get_factor_node()->get_type(),
+                             exp->get_factor_node()->get_derived_type()) or
+           !ast::is_pointer_to_complete(
+               exp->get_factor_node()->get_type(),
+               exp->get_factor_node()->get_derived_type()))) {
+        success = false;
+        error_messages.emplace_back("Incomplete type in expression");
+      }
+      if (exp->get_left() != nullptr and
+          (!ast::is_complete(exp->get_left()->get_type(),
+                             exp->get_left()->get_derived_type()) or
+           !ast::is_pointer_to_complete(exp->get_left()->get_type(),
+                                        exp->get_left()->get_derived_type()))) {
+        success = false;
+        error_messages.emplace_back("Incomplete type in expression");
+      }
+      if (exp->get_right() != nullptr and
+          (!ast::is_complete(exp->get_right()->get_type(),
+                             exp->get_right()->get_derived_type()) or
+           !ast::is_pointer_to_complete(
+               exp->get_right()->get_type(),
+               exp->get_right()->get_derived_type()))) {
+        success = false;
+        error_messages.emplace_back("Incomplete type in expression");
+      }
+    }
     // left/right shift changed to logical left/right shift if the type is
     // unsigned
     if (binop == binop::BINOP::LEFT_SHIFT or

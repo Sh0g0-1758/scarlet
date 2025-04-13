@@ -104,8 +104,19 @@ void parser::analyze_function_declaration(
         derivedType.push_back((long)param->base_type);
         funcType.push_back(ast::ElemType::DERIVED);
         funcDerivedTypeMap[i] = derivedType;
+        if (funcType[i] == ast::ElemType::DERIVED and
+            !ast::validate_type_specifier(funcType[i], funcDerivedTypeMap[i])) {
+          success = false;
+          error_messages.emplace_back("Variable " + var_name +
+                                      " cannot be declared as incomplete type");
+        }
       } else {
         funcType.push_back(param->base_type);
+        if (param->base_type == ast::ElemType::VOID) {
+          success = false;
+          error_messages.emplace_back("Function " + var_name +
+                                      " cannot take void argument");
+        }
       }
     }
   }

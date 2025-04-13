@@ -122,10 +122,9 @@ enum class ElemType {
   ULONG = -5,
   UINT = -6,
   DOUBLE = -7,
-  VOID = -8,
-  ,
   CHAR = -8,
-  UCHAR = -9
+  UCHAR = -9,
+  VOID = -10,
 };
 
 class AST_const_Node {
@@ -777,5 +776,11 @@ std::string get_lvalue_identifier(std::shared_ptr<AST_factor_Node> factor);
 bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp);
 bool is_array(std::shared_ptr<AST_factor_Node> factor);
 bool is_array(std::shared_ptr<AST_exp_Node> exp);
+bool is_void_ptr(ast::ElemType type, std::vector<long> derivedType);
+bool is_ptr_type(ast::ElemType type, std::vector<long> derivedType);
+bool is_scalar_type(ast::ElemType type, std::vector<long> derivedType);
+bool is_complete(ast::ElemType type, std::vector<long> derivedType);
+bool is_pointer_to_complete(ast::ElemType type, std::vector<long> derivedType);
+bool validate_type_specifier(ast::ElemType type, std::vector<long> derivedType);
 } // namespace ast
 } // namespace scarlet

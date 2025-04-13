@@ -22,18 +22,35 @@ void parser::analyze_statement(
     decay_arr_to_pointer(nullptr, statement->get_exps());
     auto funcType = globalSymbolTable[currFuncName].typeDef[0];
     auto funcDerivedType = globalSymbolTable[currFuncName].derivedTypeMap[0];
-    auto expType = statement->get_exps()->get_type();
-    auto expDerivedType = statement->get_exps()->get_derived_type();
-    auto [castType, castDerivedType] =
-        ast::getAssignType(funcType, funcDerivedType, expType, expDerivedType,
-                           statement->get_exps());
-    if (castType == ast::ElemType::NONE) {
-      success = false;
-      error_messages.emplace_back("Invalid return value of function " +
-                                  currFuncName);
+    if (funcType == ast::ElemType::VOID) {
+      if (statement->get_exps() == nullptr)
+        return;
+      else {
+        success = false;
+        error_messages.emplace_back("void function " + currFuncName +
+                                    " should not return any value");
+      }
+      return;
     } else {
-      if (castType != expType or castDerivedType != expDerivedType) {
-        add_cast_to_exp(statement->get_exps(), funcType, funcDerivedType);
+      if (statement->get_exps() == nullptr) {
+        success = false;
+        error_messages.emplace_back("function " + currFuncName +
+                                    " should return a value");
+        return;
+      }
+      auto expType = statement->get_exps()->get_type();
+      auto expDerivedType = statement->get_exps()->get_derived_type();
+      auto [castType, castDerivedType] =
+          ast::getAssignType(funcType, funcDerivedType, expType, expDerivedType,
+                             statement->get_exps());
+      if (castType == ast::ElemType::NONE) {
+        success = false;
+        error_messages.emplace_back("Invalid return value of function " +
+                                    currFuncName);
+      } else {
+        if (castType != expType or castDerivedType != expDerivedType) {
+          add_cast_to_exp(statement->get_exps(), funcType, funcDerivedType);
+        }
       }
     }
   } break;
@@ -44,18 +61,35 @@ void parser::analyze_statement(
     auto if_statement =
         std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
     analyze_exp(if_statement->get_exps(), symbol_table, indx);
+    if (!ast::is_scalar_type(if_statement->get_exps()->get_type(),
+                             if_statement->get_exps()->get_derived_type())) {
+      success = false;
+      error_messages.emplace_back(
+          "Second expression in for should be a scalar type");
+    }
     analyze_statement(if_statement->get_stmt1(), symbol_table, indx);
   } break;
   case ast::statementType::IFELSE: {
     auto if_else_statement =
         std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
     analyze_exp(if_else_statement->get_exps(), symbol_table, indx);
+    if (!ast::is_scalar_type(
+            if_else_statement->get_exps()->get_type(),
+            if_else_statement->get_exps()->get_derived_type())) {
+      success = false;
+      error_messages.emplace_back("if condition must be a scalar type");
+    }
     analyze_statement(if_else_statement->get_stmt1(), symbol_table, indx);
     analyze_statement(if_else_statement->get_stmt2(), symbol_table, indx);
   } break;
   case ast::statementType::SWITCH: {
     // iterate over case_exp_label and analyze the case expression
     analyze_exp(statement->get_exps(), symbol_table, indx);
+    if (!ast::is_scalar_type(statement->get_exps()->get_type(),
+                             statement->get_exps()->get_derived_type())) {
+      success = false;
+      error_messages.emplace_back("if condition must be a scalar type");
+    }
     ast::ElemType switchType = statement->get_exps()->get_type();
     auto switch_statement =
         std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
@@ -160,6 +194,7 @@ void parser::analyze_for_statement(
     analyze_exp(for_statement->get_exps(), symbol_table, indx);
     analyze_exp(for_statement->get_exp2(), symbol_table, indx);
     if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
+      //[QUERY]:why this indirection?
       auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
           for_statement->get_stmt());
       analyze_for_statement(forstmt, symbol_table, indx);
@@ -193,6 +228,13 @@ void parser::analyze_for_statement(
       analyze_statement(for_statement->get_stmt(), proxy_symbol_table,
                         indx + 1);
     }
+  }
+  // check for scalar type
+  if (!ast::is_scalar_type(for_statement->get_exps()->get_type(),
+                           for_statement->get_exps()->get_derived_type())) {
+    success = false;
+    error_messages.emplace_back(
+        "Second expression in for should be a scalar type");
   }
 }
 

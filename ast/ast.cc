@@ -140,6 +140,66 @@ bool is_const_zero(std::shared_ptr<AST_factor_Node> factor) {
   return false;
 }
 
+bool ast::is_ptr_type(ast::ElemType type, std::vector<long> derivedType) {
+  if (type == ast::ElemType::DERIVED and
+      derivedType[0] == (long)ast::ElemType::POINTER)
+    return true;
+  return false;
+}
+
+bool ast::is_void_ptr(ast::ElemType type, std::vector<long> derivedType) {
+  return is_ptr_type(type, derivedType) and
+         derivedType[1] == (long)ast::ElemType::VOID;
+}
+
+bool ast::is_scalar_type(ast::ElemType type, std::vector<long> derivedType) {
+  if ((type == ast::ElemType::DERIVED and derivedType[0] > 0) or
+      (type == ast::ElemType::VOID))
+    /*FIXME?:for functions, is for array required*/
+    return false;
+  return true;
+}
+
+bool ast::is_complete(ast::ElemType type, std::vector<long> derivedType) {
+  if (type == ast::ElemType::VOID)
+    return false;
+  return true;
+}
+
+bool ast::is_pointer_to_complete(ast::ElemType type,
+                                 std::vector<long> derivedType) {
+  if (type == ast::ElemType::DERIVED and
+      derivedType[0] == (long)ast::ElemType::POINTER) {
+    if (derivedType[1] == (long)ast::ElemType::VOID)
+      return false;
+    return true;
+  }
+}
+
+bool ast::validate_type_specifier(ast::ElemType type,
+                                  std::vector<long> derivedType) {
+  if (type == ast::ElemType::DERIVED and derivedType[0] > 0) {
+    if (derivedType[1] == (long)ast::ElemType::VOID) {
+      return false;
+    } else if (derivedType.size() == 2) {
+      return true;
+    } else {
+      derivedType.erase(derivedType.begin());
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType);
+    }
+
+  } else if (type == ast::ElemType::DERIVED and
+             derivedType[0] == (long)ast::ElemType::POINTER) {
+    if (derivedType.size() == 2) {
+      return true;
+    } else {
+      derivedType.erase(derivedType.begin());
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType);
+    }
+  }
+  UNREACHABLE();
+}
+
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
   if (factor == nullptr)
     return false;
@@ -178,16 +238,21 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
       bool isTernary =
           (exp->get_binop_node() != nullptr and
            exp->get_binop_node()->get_op() == binop::BINOP::TERNARY);
-      if (isTernary)
-        leftFactor = (std::static_pointer_cast<AST_ternary_exp_Node>(exp))
-                         ->get_middle()
-                         ->get_factor_node();
-      else
-        leftFactor = exp->get_factor_node();
+      leftFactor = isTernary
+                       ? (std::static_pointer_cast<AST_ternary_exp_Node>(exp))
+                             ->get_middle()
+                             ->get_factor_node()
+                       : exp->get_factor_node();
       if (is_const_zero(leftFactor)) {
         return {right, rightDerivedType};
       } else if (is_const_zero(exp->get_right()->get_factor_node())) {
         return {left, leftDerivedType};
+      } else if (is_void_ptr(left, leftDerivedType) and
+                 is_ptr_type(right, rightDerivedType)) {
+        return {left, leftDerivedType};
+      } else if (is_ptr_type(left, leftDerivedType) and
+                 is_void_ptr(right, rightDerivedType)) {
+        return {right, rightDerivedType};
       } else {
         return {ElemType::NONE, {}};
       }
@@ -217,6 +282,11 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
     if (targetDerived == srcDerived) {
       return {target, targetDerived};
     } else if (is_const_zero(srcExp->get_factor_node())) {
+      return {target, targetDerived};
+    } else if ((is_void_ptr(target, targetDerived) and
+                is_ptr_type(src, srcDerived)) or
+               (is_ptr_type(target, targetDerived) and
+                is_void_ptr(src, srcDerived))) {
       return {target, targetDerived};
     } else {
       return {ElemType::NONE, {}};

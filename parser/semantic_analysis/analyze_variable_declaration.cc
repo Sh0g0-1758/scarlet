@@ -128,6 +128,19 @@ void parser::analyze_global_variable_declaration(
     } else {
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
+
+    if (varDecl->get_base_type() == ast::ElemType::VOID) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as void");
+    } else if (varDecl->get_base_type() == ast::ElemType::DERIVED and
+               !ast::validate_type_specifier(varInfo.typeDef[0],
+                                             varInfo.derivedTypeMap[0])) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as incomplete type");
+    }
+
     if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
       varInfo.link = symbolTable::linkage::INTERNAL;
     } else if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
@@ -194,6 +207,18 @@ void parser::analyze_local_variable_declaration(
       } else {
         varInfo.typeDef.push_back(varDecl->get_base_type());
       }
+
+      if (varDecl->get_base_type() == ast::ElemType::VOID) {
+        success = false;
+        error_messages.emplace_back("Variable " + var_name +
+                                    " cannot be declared as void");
+      } else if (varDecl->get_base_type() == ast::ElemType::DERIVED and
+                 !ast::validate_type_specifier(varInfo.typeDef[0],
+                                               varInfo.derivedTypeMap[0])) {
+        success = false;
+        error_messages.emplace_back("Variable " + var_name +
+                                    " cannot be declared as incomplete type");
+      }
       symbol_table[{var_name, indx}] = varInfo;
       globalSymbolTable[var_name] = varInfo;
     }
@@ -214,6 +239,19 @@ void parser::analyze_local_variable_declaration(
     } else {
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
+
+    if (varDecl->get_base_type() == ast::ElemType::VOID) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as void");
+    } else if (varDecl->get_base_type() == ast::ElemType::DERIVED and
+               !ast::validate_type_specifier(varInfo.typeDef[0],
+                                             varInfo.derivedTypeMap[0])) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as incomplete type");
+    }
+
     varInfo.def = symbolTable::defType::TRUE;
     initialize_global_variable(varInfo, varDecl, temp_name);
     symbol_table[{var_name, indx}] = varInfo;
@@ -235,6 +273,19 @@ void parser::analyze_local_variable_declaration(
     } else {
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
+
+    if (varDecl->get_base_type() == ast::ElemType::VOID) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as void");
+    } else if (varDecl->get_base_type() == ast::ElemType::DERIVED and
+               !ast::validate_type_specifier(varInfo.typeDef[0],
+                                             varInfo.derivedTypeMap[0])) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as incomplete type");
+    }
+
     symbol_table[{var_name, indx}] = varInfo;
     globalSymbolTable[temp_name] = varInfo;
     if (varDecl->get_exp() != nullptr) {
