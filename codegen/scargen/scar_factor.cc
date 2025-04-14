@@ -18,21 +18,27 @@ void Codegen::gen_scar_factor(
       std::string label_string{};
       if (stringLabelMap.find(original_string) == stringLabelMap.end()) {
         label_string = get_const_label_name();
+
         MAKE_SHARED(scar::scar_StaticConstant_Node, scar_constant);
+
         scar_constant->set_init(factor->get_const_node()->get_constant());
         MAKE_SHARED(scar::scar_Identifier_Node, scar_identifier);
-        scar_identifier->set_value(get_const_label_name());
+        scar_identifier->set_value(label_string);
+
         scar_constant->set_identifier(scar_identifier);
         scar_constant->set_type(scar::topLevelType::STATIC_CONSTANT);
         scar_constant->set_global(false);
         scar.add_elem(std::move(scar_constant));
+
         symbolTable::symbolInfo constSymbol;
         constSymbol.type = symbolTable::symbolType::VARIABLE;
         constSymbol.name = label_string;
         constSymbol.link = symbolTable::linkage::NONE;
         constSymbol.def = symbolTable::defType::TRUE;
         constSymbol.value.push_back(factor->get_const_node()->get_constant());
-
+        constSymbol.typeDef.emplace_back(factor->get_type());
+        constSymbol.derivedTypeMap[0] = factor->get_derived_type();
+        globalSymbolTable[label_string] = constSymbol;
       } else {
         label_string = stringLabelMap[original_string];
       }
