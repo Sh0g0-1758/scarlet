@@ -180,6 +180,17 @@ bool exp_is_string(std::shared_ptr<AST_exp_Node> exp) {
   return true;
 }
 
+bool factor_is_string(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor == nullptr)
+    return false;
+  if (factor->get_const_node() == nullptr)
+    return false;
+  if (factor->get_const_node()->get_constant().get_type() !=
+      constant::Type::STRING)
+    return false;
+  return true;
+}
+
 std::pair<ElemType, std::vector<long>>
 getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
               std::vector<long> &rightDerivedType,

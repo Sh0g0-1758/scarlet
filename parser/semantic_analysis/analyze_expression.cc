@@ -147,6 +147,13 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
           factor->set_unop_node(nullptr);
           factor->set_child(nullptr);
           exp->set_factor_node(base_factor);
+        } else if (ast::factor_is_string(factor)) {
+          MAKE_SHARED(ast::AST_factor_Node, base_factor);
+          base_factor->set_const_node(factor->get_const_node());
+
+          factor->set_const_node(nullptr);
+
+          exp->set_factor_node(base_factor);
         }
       } else {
         exp->set_factor_node(propogate_factor);
@@ -282,7 +289,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     }
 
     if (factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
-      if (!ast::is_lvalue(factor->get_child())) {
+      if (!ast::is_lvalue(factor->get_child()) and
+          !ast::factor_is_string(factor->get_child())) {
         success = false;
         error_messages.emplace_back(
             "Expected an lvalue for AddressOf (&) operator");
@@ -385,33 +393,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
-void parser::assign_type_from_subscript(
-    scarlet::ast::ElemType TypeDef, std::vector<long> derivedType,
-    std::shared_ptr<ast::AST_factor_Node> factor) {
-  if (TypeDef == ast::ElemType::DERIVED) {
-    for (int i = 0; i < (long)factor->get_arrIdx().size(); i++) {
-      if (derivedType[0] > 0 or
-          derivedType[0] == (long)ast::ElemType::POINTER) {
-        derivedType.erase(derivedType.begin());
-      } else {
-        success = false;
-        error_messages.emplace_back("subscripting a non array or pointer type");
-        break;
-      }
-    }
-    if (derivedType.size() == 1) {
-      factor->set_type((ast::ElemType)derivedType[0]);
-      factor->set_derived_type({});
-    } else {
-      factor->set_type(ast::ElemType::DERIVED);
-      factor->set_derived_type(derivedType);
-    }
-  } else {
-    success = false;
-    error_messages.emplace_back("subscripting a non array or pointer type");
-  }
-}
-
 #define CHAR_TO_INT(factor)                                                    \
   if (factor != nullptr and factor->get_type() == ast::ElemType::CHAR) {       \
     add_cast_to_factor(factor, ast::ElemType::INT, {});                        \
@@ -423,8 +404,7 @@ void parser::assign_type_to_factor(
     return;
 
   if (factor->get_const_node() != nullptr) {
-    if (factor->get_const_node()->get_constant().get_type() ==
-        constant::Type::STRING) {
+    if (ast::factor_is_string(factor)) {
       std::vector<long> derivedType{};
       derivedType.push_back(
           factor->get_const_node()->get_constant().get_string().size() + 1);

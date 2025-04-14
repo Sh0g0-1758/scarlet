@@ -777,5 +777,6 @@ bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp);
 bool is_array(std::shared_ptr<AST_factor_Node> factor);
 bool is_array(std::shared_ptr<AST_exp_Node> exp);
 bool exp_is_string(std::shared_ptr<AST_exp_Node> exp);
+bool factor_is_string(std::shared_ptr<AST_factor_Node> factor);
 } // namespace ast
 } // namespace scarlet
