@@ -247,7 +247,8 @@ void parser::analyze_local_variable_declaration(
         get_arrInfo(arrDim, baseElemType, derivedElemType, varInfo);
         // It is possible to initialize an array with a string literal
         if (ast::exp_is_string(varDecl->get_exp()) and
-            baseElemType == ast::ElemType::CHAR) {
+            (baseElemType == ast::ElemType::CHAR or
+             baseElemType == ast::ElemType::UCHAR)) {
           if (arrDim.size() > 1) {
             success = false;
             error_messages.emplace_back("Cannot initialize multi-dimensional "
@@ -344,7 +345,8 @@ void parser::initialize_global_variable(
 
     if (varDecl->get_exp() != nullptr) {
       if (ast::exp_is_string(varDecl->get_exp()) and
-          baseElemType == ast::ElemType::CHAR) {
+          (baseElemType == ast::ElemType::CHAR or
+           baseElemType == ast::ElemType::UCHAR)) {
         if (arrDim.size() > 1) {
           success = false;
           error_messages.emplace_back("Cannot initialize multi-dimensional "
@@ -464,7 +466,8 @@ void parser::init_static_array_initializer(
   if (init == nullptr)
     return;
 
-  if (baseElemType == ast::ElemType::CHAR) {
+  if (baseElemType == ast::ElemType::CHAR or
+      baseElemType == ast::ElemType::UCHAR) {
     for (int i = 0; i < (int)init->exp_list.size(); i++) {
       auto exp = init->exp_list[i];
       if (ast::exp_is_string(exp)) {
@@ -575,7 +578,8 @@ void parser::analyze_array_initializer(
   if (init == nullptr)
     return;
 
-  if (baseElemType == ast::ElemType::CHAR) {
+  if (baseElemType == ast::ElemType::CHAR or
+      baseElemType == ast::ElemType::UCHAR) {
     for (int i = 0; i < (int)init->exp_list.size(); i++) {
       auto exp = init->exp_list[i];
       if (ast::exp_is_string(exp)) {
