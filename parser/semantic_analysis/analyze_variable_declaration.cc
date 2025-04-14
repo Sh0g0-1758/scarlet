@@ -417,16 +417,35 @@ void parser::initialize_global_variable(
             "Global variable " + var_name +
             " is not initialized with a constant integer");
       } else {
-        varInfo.value[0] = ast::castConstToElemType(varDecl->get_exp()
-                                                        ->get_factor_node()
-                                                        ->get_const_node()
-                                                        ->get_constant(),
-                                                    varInfo.typeDef[0]);
-        if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
-            varInfo.value[0].get_value().i != 0) {
-          success = false;
-          error_messages.emplace_back(
-              "Invalid initialization of derived type " + var_name);
+        if (ast::exp_is_string(varDecl->get_exp())) {
+          // string literal can only be used to assign to a pointer to a char or
+          // an array of char
+          if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+              varInfo.derivedTypeMap[0][0] == (long)ast::ElemType::POINTER and
+              varInfo.derivedTypeMap[0][1] == (long)ast::ElemType::CHAR) {
+            varInfo.value[0] = varDecl->get_exp()
+                                   ->get_factor_node()
+                                   ->get_const_node()
+                                   ->get_constant();
+          } else {
+            success = false;
+            error_messages.emplace_back(
+                "Invalid initialization of " + var_name +
+                ". String literal can only be used to assign to a pointer to a "
+                "char or an array of char");
+          }
+        } else {
+          varInfo.value[0] = ast::castConstToElemType(varDecl->get_exp()
+                                                          ->get_factor_node()
+                                                          ->get_const_node()
+                                                          ->get_constant(),
+                                                      varInfo.typeDef[0]);
+          if (varInfo.typeDef[0] == ast::ElemType::DERIVED and
+              varInfo.value[0].get_value().i != 0) {
+            success = false;
+            error_messages.emplace_back(
+                "Invalid initialization of derived type " + var_name);
+          }
         }
       }
     } else {
