@@ -72,9 +72,7 @@ void parser::pretty_print_initializer(std::shared_ptr<ast::initializer> init) {
       pretty_print_initializer(child);
     }
     std::cout << "\t\t\t]," << std::endl;
-  }
-
-  if (!(init->exp_list.empty())) {
+  } else if (!(init->exp_list.empty())) {
     std::cout << "\t\t\tExpList=[" << std::endl;
     for (auto child : init->exp_list) {
       pretty_print_exp(child);
