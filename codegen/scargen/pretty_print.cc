@@ -177,15 +177,35 @@ void Codegen::pretty_print_static_variable(
   std::cout << std::endl;
 }
 
+void Codegen::pretty_print_static_constant(
+    std::shared_ptr<scar::scar_StaticConstant_Node> static_constant) {
+  std::cout << "\tStaticConstant(" << std::endl;
+  std::cout << "\t\tname=\"" << static_constant->get_identifier()->get_value()
+            << "\"," << std::endl;
+  std::cout << "\t\tglobal="
+            << (static_constant->is_global() ? "True" : "False") << ","
+            << std::endl;
+  std::cout << "\t\tinit=";
+  if (static_constant->get_init().get_type() == constant::Type::STRING) {
+    std::cout << "String(" << static_constant->get_init().get_string() << ")";
+  } else {
+    std::cout << "Constant(" << static_constant->get_init() << ")";
+  }
+  std::cout << "\t)" << std::endl;
+}
+
 void Codegen::pretty_print() {
   std::cout << "Program(" << std::endl;
   for (auto elem : scar.get_elems()) {
     if (elem->get_type() == scar::topLevelType::FUNCTION) {
       pretty_print_function(
           std::static_pointer_cast<scar::scar_Function_Node>(elem));
-    } else {
+    } else if (elem->get_type() == scar::topLevelType::STATIC_VARIABLE) {
       pretty_print_static_variable(
           std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem));
+    } else if (elem->get_type() == scar::topLevelType::STATIC_CONSTANT) {
+      pretty_print_static_constant(
+          std::static_pointer_cast<scar::scar_StaticConstant_Node>(elem));
     }
   }
   std::cout << ")" << std::endl;

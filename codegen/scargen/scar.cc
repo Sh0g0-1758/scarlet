@@ -4,7 +4,6 @@ namespace scarlet {
 namespace codegen {
 
 void Codegen::gen_scar() {
-  scar::scar_Program_Node scar_program;
   for (auto it : program.get_declarations()) {
     if (it->get_type() == ast::DeclarationType::FUNCTION) {
       // If its a function declaration (no body) skip it
@@ -48,7 +47,7 @@ void Codegen::gen_scar() {
           std::static_pointer_cast<scar::scar_Top_Level_Node>(scar_function);
       top_level->set_type(scar::topLevelType::FUNCTION);
 
-      scar_program.add_elem(std::move(top_level));
+      scar.add_elem(std::move(top_level));
     }
   }
 
@@ -66,12 +65,10 @@ void Codegen::gen_scar() {
       }
       auto top_level =
           std::static_pointer_cast<scar::scar_Top_Level_Node>(static_variable);
-      top_level->set_type(scar::topLevelType::STATICVARIABLE);
-      scar_program.add_elem(std::move(top_level));
+      top_level->set_type(scar::topLevelType::STATIC_VARIABLE);
+      scar.add_elem(std::move(top_level));
     }
   }
-
-  this->scar = scar_program;
 }
 
 } // namespace codegen

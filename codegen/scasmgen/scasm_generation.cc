@@ -7,7 +7,7 @@ void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto elem : scar.get_elems()) {
 
-    if (elem->get_type() == scar::topLevelType::STATICVARIABLE) {
+    if (elem->get_type() == scar::topLevelType::STATIC_VARIABLE) {
       auto var = std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem);
       MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
       scasm_var->set_name(var->get_identifier()->get_value());

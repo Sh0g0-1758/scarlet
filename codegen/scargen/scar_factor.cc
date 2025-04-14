@@ -12,7 +12,34 @@ void Codegen::gen_scar_factor(
   }
 
   if (factor->get_const_node() != nullptr) {
-    constant_buffer = factor->get_const_node()->get_constant();
+    if (ast::factor_is_string(factor)) {
+      std::string original_string =
+          factor->get_const_node()->get_constant().get_string();
+      std::string label_string{};
+      if (stringLabelMap.find(original_string) == stringLabelMap.end()) {
+        label_string = get_const_label_name();
+        MAKE_SHARED(scar::scar_StaticConstant_Node, scar_constant);
+        scar_constant->set_init(factor->get_const_node()->get_constant());
+        MAKE_SHARED(scar::scar_Identifier_Node, scar_identifier);
+        scar_identifier->set_value(get_const_label_name());
+        scar_constant->set_identifier(scar_identifier);
+        scar_constant->set_type(scar::topLevelType::STATIC_CONSTANT);
+        scar_constant->set_global(false);
+        scar.add_elem(std::move(scar_constant));
+        symbolTable::symbolInfo constSymbol;
+        constSymbol.type = symbolTable::symbolType::VARIABLE;
+        constSymbol.name = label_string;
+        constSymbol.link = symbolTable::linkage::NONE;
+        constSymbol.def = symbolTable::defType::TRUE;
+        constSymbol.value.push_back(factor->get_const_node()->get_constant());
+
+      } else {
+        label_string = stringLabelMap[original_string];
+      }
+      variable_buffer = label_string;
+    } else {
+      constant_buffer = factor->get_const_node()->get_constant();
+    }
   } else if (factor->get_identifier_node() != nullptr) {
     if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
       gen_scar_factor_function_call(
@@ -161,14 +188,16 @@ void Codegen::gen_scar_factor(
 
       if (typeCast_type == ast::ElemType::DOUBLE) {
         if (inner_type == ast::ElemType::INT or
-            inner_type == ast::ElemType::LONG) {
+            inner_type == ast::ElemType::LONG or
+            inner_type == ast::ElemType::CHAR) {
           scar_instruction->set_type(scar::instruction_type::INT_TO_DOUBLE);
         } else {
           scar_instruction->set_type(scar::instruction_type::UINT_TO_DOUBLE);
         }
       } else if (inner_type == ast::ElemType::DOUBLE) {
         if (typeCast_type == ast::ElemType::INT or
-            typeCast_type == ast::ElemType::LONG) {
+            typeCast_type == ast::ElemType::LONG or
+            typeCast_type == ast::ElemType::CHAR) {
           scar_instruction->set_type(scar::instruction_type::DOUBLE_TO_INT);
         } else {
           scar_instruction->set_type(scar::instruction_type::DOUBLE_TO_UINT);
@@ -181,7 +210,8 @@ void Codegen::gen_scar_factor(
                    ast::getSizeOfTypeOnArch(inner_type)) {
           scar_instruction->set_type(scar::instruction_type::TRUNCATE);
         } else if (inner_type == ast::ElemType::INT or
-                   inner_type == ast::ElemType::LONG) {
+                   inner_type == ast::ElemType::LONG or
+                   inner_type == ast::ElemType::CHAR) {
           scar_instruction->set_type(scar::instruction_type::SIGN_EXTEND);
         } else {
           scar_instruction->set_type(scar::instruction_type::ZERO_EXTEND);

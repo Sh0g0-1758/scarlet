@@ -205,7 +205,7 @@ public:
   }
 };
 
-enum class topLevelType { FUNCTION, STATICVARIABLE };
+enum class topLevelType { FUNCTION, STATIC_VARIABLE, STATIC_CONSTANT };
 
 class scar_Top_Level_Node {
 private:
@@ -267,6 +267,21 @@ public:
   void set_init(std::vector<constant::Constant> init) {
     this->init = std::move(init);
   }
+};
+
+class scar_StaticConstant_Node : public scar_Top_Level_Node {
+private:
+  std::shared_ptr<scar_Identifier_Node> identifier;
+  constant::Constant init;
+
+public:
+  std::string get_scar_name() { return "StaticConstant"; }
+  std::shared_ptr<scar_Identifier_Node> get_identifier() { return identifier; }
+  void set_identifier(std::shared_ptr<scar_Identifier_Node> identifier) {
+    this->identifier = std::move(identifier);
+  }
+  constant::Constant get_init() { return init; }
+  void set_init(constant::Constant init) { this->init = std::move(init); }
 };
 
 class scar_Program_Node {
