@@ -152,22 +152,6 @@ bool is_void_ptr(ast::ElemType type, std::vector<long> derivedType) {
          derivedType[1] == (long)ast::ElemType::VOID;
 }
 
-bool is_scalar_type(ast::ElemType type, std::vector<long> derivedType) {
-
-  if ((type == ast::ElemType::DERIVED and derivedType[0] > 0) or
-      (type == ast::ElemType::VOID))
-    /*FIXME?:for functions, is for array required*/
-    return false;
-  return true;
-}
-
-bool is_complete(ast::ElemType type, std::vector<long> derivedType) {
-  (void)derivedType;
-  if (type == ast::ElemType::VOID)
-    return false;
-  return true;
-}
-
 bool is_pointer_to_complete(ast::ElemType type, std::vector<long> derivedType) {
   if (type == ast::ElemType::DERIVED and
       derivedType[0] == (long)ast::ElemType::POINTER) {
@@ -386,7 +370,6 @@ constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
     CASTCONST(c, ret, uc, unsigned char);
   } break;
   case ElemType::POINTER:
-  // fixme?:is this okay?
   case ElemType::VOID:
     break;
   case ElemType::NONE:

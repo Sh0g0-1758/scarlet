@@ -778,8 +778,6 @@ bool is_array(std::shared_ptr<AST_factor_Node> factor);
 bool is_array(std::shared_ptr<AST_exp_Node> exp);
 bool is_void_ptr(ast::ElemType type, std::vector<long> derivedType);
 bool is_ptr_type(ast::ElemType type, std::vector<long> derivedType);
-bool is_scalar_type(ast::ElemType type, std::vector<long> derivedType);
-bool is_complete(ast::ElemType type, std::vector<long> derivedType);
 bool is_pointer_to_complete(ast::ElemType type, std::vector<long> derivedType);
 bool validate_type_specifier(ast::ElemType type, std::vector<long> derivedType);
 bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType);

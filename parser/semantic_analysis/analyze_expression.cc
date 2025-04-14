@@ -613,15 +613,13 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       auto [expType, expDerivedType] = ast::getParentType(
           leftType, rightType, leftDerivedType, rightDerivedType, exp);
       if (exp->get_factor_node() != nullptr and
-          !ast::is_scalar_type(exp->get_factor_node()->get_type(),
-                               exp->get_factor_node()->get_derived_type())) {
+          exp->get_factor_node()->get_type() == ast::ElemType::VOID) {
         success = false;
         error_messages.emplace_back(
             "Ternary operator not allowed on non-scalar types");
       }
       if (exp->get_left() != nullptr and
-          !ast::is_scalar_type(exp->get_left()->get_type(),
-                               exp->get_left()->get_derived_type())) {
+          exp->get_left()->get_type() == ast::ElemType::VOID) {
         success = false;
         error_messages.emplace_back(
             "Ternary operator not allowed on non-scalar types");

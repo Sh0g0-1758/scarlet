@@ -61,8 +61,8 @@ void parser::analyze_statement(
     auto if_statement =
         std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
     analyze_exp(if_statement->get_exps(), symbol_table, indx);
-    if (!ast::is_scalar_type(if_statement->get_exps()->get_type(),
-                             if_statement->get_exps()->get_derived_type())) {
+    if (if_statement->get_exps() != nullptr and
+        if_statement->get_exps()->get_type() == ast::ElemType::VOID) {
       success = false;
       error_messages.emplace_back(
           "Second expression in for should be a scalar type");
@@ -73,9 +73,8 @@ void parser::analyze_statement(
     auto if_else_statement =
         std::static_pointer_cast<ast::AST_if_else_statement_Node>(statement);
     analyze_exp(if_else_statement->get_exps(), symbol_table, indx);
-    if (!ast::is_scalar_type(
-            if_else_statement->get_exps()->get_type(),
-            if_else_statement->get_exps()->get_derived_type())) {
+    if (if_else_statement->get_exps() != nullptr and
+        if_else_statement->get_exps()->get_type() == ast::ElemType::VOID) {
       success = false;
       error_messages.emplace_back("if condition must be a scalar type");
     }
@@ -85,8 +84,8 @@ void parser::analyze_statement(
   case ast::statementType::SWITCH: {
     // iterate over case_exp_label and analyze the case expression
     analyze_exp(statement->get_exps(), symbol_table, indx);
-    if (!ast::is_scalar_type(statement->get_exps()->get_type(),
-                             statement->get_exps()->get_derived_type())) {
+    if (statement->get_exps() != nullptr and
+        statement->get_exps()->get_type() == ast::ElemType::VOID) {
       success = false;
       error_messages.emplace_back("if condition must be a scalar type");
     }
@@ -139,8 +138,7 @@ void parser::analyze_statement(
         std::static_pointer_cast<ast::AST_while_statement_Node>(statement);
     analyze_exp(while_statement->get_exps(), symbol_table, indx);
     if (while_statement->get_exps() != nullptr and
-        !ast::is_scalar_type(while_statement->get_exps()->get_type(),
-                             while_statement->get_exps()->get_derived_type())) {
+        while_statement->get_exps()->get_type() == ast::ElemType::VOID) {
       success = false;
       error_messages.emplace_back("while condition must be a scalar type");
     }
@@ -238,8 +236,7 @@ void parser::analyze_for_statement(
   // check for scalar type
 
   if (for_statement->get_exps() != nullptr and
-      !ast::is_scalar_type(for_statement->get_exps()->get_type(),
-                           for_statement->get_exps()->get_derived_type())) {
+      for_statement->get_exps()->get_type() == ast::ElemType::VOID) {
     success = false;
     error_messages.emplace_back(
         "Second expression in for should be a scalar type");
