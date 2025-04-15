@@ -506,8 +506,7 @@ void parser::init_static_array_initializer(
           "Wrong number of elements in the initializer list");
     }
     arrDim.erase(arrDim.begin());
-    long i = 0;
-    for (; i < (long)init->initializer_list.size(); i++) {
+    for (int i = 0; i < (long)init->initializer_list.size(); i++) {
       currDim--;
       init_static_array_initializer(init->initializer_list[i], arrDim,
                                     baseElemType, derivedElemType, varInfo);
@@ -566,6 +565,15 @@ void parser::init_static_array_initializer(
       constZero.set_value({.ul = num_bytes});
       varInfo.value.push_back(constZero);
     }
+  } else {
+    unsigned long num_bytes = ast::getSizeOfTypeOnArch(baseElemType);
+    for (auto dim : arrDim) {
+      num_bytes *= dim;
+    }
+    constant::Constant constZero;
+    constZero.set_type(constant::Type::ZERO);
+    constZero.set_value({.ul = num_bytes});
+    varInfo.value.push_back(constZero);
   }
 }
 
