@@ -157,7 +157,8 @@ bool is_void_ptr(ast::ElemType type, std::vector<long> derivedType) {
          derivedType[1] == (long)ast::ElemType::VOID;
 }
 
-bool is_pointer_to_complete(ast::ElemType type, std::vector<long> derivedType) {
+bool is_pointer_to_complete_type(ast::ElemType type,
+                                 std::vector<long> derivedType) {
   if (type == ast::ElemType::DERIVED and
       derivedType[0] == (long)ast::ElemType::POINTER) {
     if (derivedType[1] == (long)ast::ElemType::VOID)
@@ -167,6 +168,9 @@ bool is_pointer_to_complete(ast::ElemType type, std::vector<long> derivedType) {
   return true;
 }
 
+// Check type specifiers which have void arrays void[3] or void(*[4])[2]
+// This will check for void array and if not found either check nested or return
+// based on size of the remaining type specifiers
 bool validate_type_specifier(ast::ElemType type,
                              std::vector<long> derivedType) {
   if (type == ast::ElemType::DERIVED and derivedType[0] > 0) {

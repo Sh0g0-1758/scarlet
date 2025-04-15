@@ -838,7 +838,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
 
       if (leftType == ast::ElemType::DERIVED and
           leftDerivedType[0] == (long)ast::ElemType::POINTER and
-          !ast::is_pointer_to_complete(leftType, leftDerivedType) and
+          !ast::is_pointer_to_complete_type(leftType, leftDerivedType) and
           (binop == binop::BINOP::ADD or binop == binop::BINOP::SUB)) {
         success = false;
         error_messages.emplace_back(
@@ -857,7 +857,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
 
       if (rightType == ast::ElemType::DERIVED and
           rightDerivedType[0] == (long)ast::ElemType::POINTER and
-          !ast::is_pointer_to_complete(rightType, rightDerivedType) and
+          !ast::is_pointer_to_complete_type(rightType, rightDerivedType) and
           (binop == binop::BINOP::ADD or binop == binop::BINOP::SUB)) {
         success = false;
         error_messages.emplace_back(
