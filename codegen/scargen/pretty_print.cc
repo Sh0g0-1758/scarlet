@@ -185,12 +185,7 @@ void Codegen::pretty_print_static_constant(
   std::cout << "\t\tglobal="
             << (static_constant->is_global() ? "True" : "False") << ","
             << std::endl;
-  std::cout << "\t\tinit=";
-  if (static_constant->get_init().get_type() == constant::Type::STRING) {
-    std::cout << "String(" << static_constant->get_init().get_string() << ")";
-  } else {
-    std::cout << "Constant(" << static_constant->get_init() << ")";
-  }
+  std::cout << "\t\tinit=" << static_constant->get_init() << std::endl;
   std::cout << "\t)" << std::endl;
 }
 

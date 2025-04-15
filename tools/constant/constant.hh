@@ -159,37 +159,37 @@ public:
       for (char c : constant.s) {
         switch (c) {
         case '\a':
-          escaped += "\\a";
+          escaped += "\\007";
           break;
         case '\n':
-          escaped += "\\n";
+          escaped += "\\012";
           break;
         case '\f':
-          escaped += "\\f";
+          escaped += "\\014";
           break;
         case '\b':
-          escaped += "\\b";
+          escaped += "\\010";
           break;
         case '\r':
-          escaped += "\\r";
+          escaped += "\\015";
           break;
         case '\t':
-          escaped += "\\t";
+          escaped += "\\011";
           break;
         case '\v':
-          escaped += "\\v";
+          escaped += "\\013";
           break;
         case '\'':
-          escaped += "\\\'";
+          escaped += "\\047";
           break;
         case '\"':
-          escaped += "\\\"";
+          escaped += "\\042";
           break;
         case '\?':
-          escaped += "\\\?";
+          escaped += "\\077";
           break;
         case '\\':
-          escaped += "\\\\";
+          escaped += "\\134";
           break;
         default:
           escaped += c;
