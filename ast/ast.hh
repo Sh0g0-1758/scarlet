@@ -551,6 +551,7 @@ public:
 struct initializer {
   std::vector<std::shared_ptr<initializer>> initializer_list;
   std::vector<std::shared_ptr<AST_exp_Node>> exp_list;
+  std::vector<int> exp_indx;
 };
 
 class AST_variable_declaration_Node : public AST_Declaration_Node {
@@ -775,5 +776,7 @@ std::string get_lvalue_identifier(std::shared_ptr<AST_factor_Node> factor);
 bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp);
 bool is_array(std::shared_ptr<AST_factor_Node> factor);
 bool is_array(std::shared_ptr<AST_exp_Node> exp);
+bool exp_is_string(std::shared_ptr<AST_exp_Node> exp);
+bool factor_is_string(std::shared_ptr<AST_factor_Node> factor);
 } // namespace ast
 } // namespace scarlet

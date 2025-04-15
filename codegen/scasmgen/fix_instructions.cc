@@ -180,35 +180,71 @@ void Codegen::fix_instructions() {
         it = funcs->get_instructions().insert(it, std::move(scasm_inst));
         it++;
       } else if ((*it)->get_type() == scasm::instruction_type::MOVZX) {
-        // NOTE: MovZeroExtend simply uses movl because movl zeroes out the
-        // upper 32 bits of the register
-        if ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
-            (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
-          // MovZeroExtend(Stack/Data/Reg , Stack/Data)
-          //      |
-          //      v
-          // movl Stack/Data/Reg, %r10d
-          // movq %r10d, Stack/Data
-          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-          scasm_inst->set_type(scasm::instruction_type::MOV);
-          scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
-          scasm_inst->set_src((*it)->get_src());
-          MAKE_SHARED(scasm::scasm_operand, dst);
-          dst->set_type(scasm::operand_type::REG);
-          dst->set_reg(scasm::register_type::R10);
-          scasm_inst->set_dst(dst);
-          (*it)->set_src(std::move(dst));
-          (*it)->set_type(scasm::instruction_type::MOV);
-          (*it)->set_asm_type(scasm::AssemblyType::QUAD_WORD);
-          it = funcs->get_instructions().insert(it, std::move(scasm_inst));
-          it++;
-        } else {
-          // MovZeroExtend(Stack/Data/Reg , Reg)
+        if ((*it)->get_asm_type() == scasm::AssemblyType::BYTE) {
+          // MovZeroExtend imm, Stack/Data
           //     |
           //     v
-          // movl Stack/Data/Reg, Reg
-          (*it)->set_type(scasm::instruction_type::MOV);
-          (*it)->set_asm_type(scasm::AssemblyType::LONG_WORD);
+          // mov  imm, %r10
+          // movz %r10, %r11
+          // mov  %r11, Stack/Data
+
+          if ((*it)->get_src()->get_type() == scasm::operand_type::IMM) {
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+            scasm_inst->set_type(scasm::instruction_type::MOV);
+            scasm_inst->set_asm_type((*it)->get_asm_type());
+            scasm_inst->set_src((*it)->get_src());
+            MAKE_SHARED(scasm::scasm_operand, dst);
+            dst->set_type(scasm::operand_type::REG);
+            dst->set_reg(scasm::register_type::R10);
+            scasm_inst->set_dst(dst);
+            (*it)->set_src(std::move(dst));
+            it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+            it++;
+          }
+
+          if ((*it)->get_dst()->get_type() != scasm::operand_type::REG) {
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+            scasm_inst->set_type(scasm::instruction_type::MOV);
+            scasm_inst->set_asm_type((*it)->get_dst_type());
+            scasm_inst->set_dst((*it)->get_dst());
+            MAKE_SHARED(scasm::scasm_operand, src);
+            src->set_type(scasm::operand_type::REG);
+            src->set_reg(scasm::register_type::R11);
+            scasm_inst->set_src(src);
+            (*it)->set_dst(std::move(src));
+            it =
+                funcs->get_instructions().insert(it + 1, std::move(scasm_inst));
+          }
+        } else {
+          // NOTE: MovZeroExtend simply uses movl because movl zeroes out the
+          // upper 32 bits of the register
+          if ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
+              (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
+            // MovZeroExtend(Stack/Data/Reg , Stack/Data)
+            //      |
+            //      v
+            // movl Stack/Data/Reg, %r10d
+            // movq %r10d, Stack/Data
+            MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+            scasm_inst->set_type(scasm::instruction_type::MOV);
+            scasm_inst->set_asm_type((*it)->get_asm_type());
+            scasm_inst->set_src((*it)->get_src());
+            MAKE_SHARED(scasm::scasm_operand, dst);
+            dst->set_type(scasm::operand_type::REG);
+            dst->set_reg(scasm::register_type::R10);
+            scasm_inst->set_dst(dst);
+            (*it)->set_src(std::move(dst));
+            (*it)->set_type(scasm::instruction_type::MOV);
+            (*it)->set_asm_type((*it)->get_dst_type());
+            it = funcs->get_instructions().insert(it, std::move(scasm_inst));
+            it++;
+          } else {
+            // MovZeroExtend(Stack/Data/Reg , Reg)
+            //     |
+            //     v
+            // mov Stack/Data/Reg, Reg
+            (*it)->set_type(scasm::instruction_type::MOV);
+          }
         }
       } else if ((*it)->get_type() == scasm::instruction_type::BINARY and
                  (*it)->get_binop() == scasm::Binop::MUL and
@@ -246,13 +282,13 @@ void Codegen::fix_instructions() {
         // Movsx $10, STACK/DATA
         //       |
         //       v
-        // <<LONGWORD>>  movl $10, %r10l
+        // <<SRC_TYPE>>  mov $10, %r10l
         //               movsx %r10l, %r10d
-        // <<QUADWORD>>  movq %r10d, STACK/DATA
+        // <<DST_TYPE>>  mov %r10d, STACK/DATA
         if ((*it)->get_src()->get_type() == scasm::operand_type::IMM) {
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
-          scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+          scasm_inst->set_asm_type((*it)->get_asm_type());
 
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
@@ -266,15 +302,14 @@ void Codegen::fix_instructions() {
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
         }
-        if ((*it)->get_dst()->get_type() == scasm::operand_type::MEMORY or
-            (*it)->get_dst()->get_type() == scasm::operand_type::DATA) {
+        if ((*it)->get_dst()->get_type() != scasm::operand_type::REG) {
           MAKE_SHARED(scasm::scasm_operand, src);
           src->set_type(scasm::operand_type::REG);
           src->set_reg(scasm::register_type::R10);
 
           MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
           scasm_inst->set_type(scasm::instruction_type::MOV);
-          scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          scasm_inst->set_asm_type((*it)->get_dst_type());
           scasm_inst->set_src(src);
           scasm_inst->set_dst((*it)->get_dst());
 
@@ -475,6 +510,18 @@ void Codegen::fix_instructions() {
 
           (*it)->get_src()->set_imm(trunc);
         }
+      }
+
+      // If the source of a movb instruction is an immediate value that can’t
+      // fit in a single byte, we will reduce it modulo 256
+      if (NOTNULL((*it)->get_src()) and
+          (*it)->get_asm_type() == scasm::AssemblyType::BYTE and
+          (*it)->get_type() == scasm::instruction_type::MOV and
+          (*it)->get_src()->get_type() == scasm::operand_type::IMM and
+          (*it)->get_src()->get_imm().get_type() != constant::Type::CHAR and
+          (*it)->get_src()->get_imm().get_type() != constant::Type::UCHAR) {
+        (*it)->get_src()->set_imm(ast::castConstToElemType(
+            (*it)->get_src()->get_imm(), ast::ElemType::UCHAR));
       }
     }
   }

@@ -7,7 +7,7 @@ void Codegen::gen_scasm() {
   scasm::scasm_program scasm_program{};
   for (auto elem : scar.get_elems()) {
 
-    if (elem->get_type() == scar::topLevelType::STATICVARIABLE) {
+    if (elem->get_type() == scar::topLevelType::STATIC_VARIABLE) {
       auto var = std::static_pointer_cast<scar::scar_StaticVariable_Node>(elem);
       MAKE_SHARED(scasm::scasm_static_variable, scasm_var);
       scasm_var->set_name(var->get_identifier()->get_value());
@@ -15,6 +15,19 @@ void Codegen::gen_scasm() {
       scasm_var->set_global(elem->is_global());
       scasm_var->set_type(scasm::scasm_top_level_type::STATIC_VARIABLE);
       scasm_program.add_elem(std::move(scasm_var));
+      continue;
+    }
+
+    if (elem->get_type() == scar::topLevelType::STATIC_CONSTANT) {
+      auto const_var =
+          std::static_pointer_cast<scar::scar_StaticConstant_Node>(elem);
+      MAKE_SHARED(scasm::scasm_static_constant, scasm_const);
+      scasm_const->set_name(const_var->get_identifier()->get_value());
+      scasm_const->set_init(const_var->get_init());
+      scasm_const->set_alignment(1);
+      scasm_const->set_global(elem->is_global());
+      scasm_const->set_type(scasm::scasm_top_level_type::STATIC_CONSTANT);
+      scasm_program.add_elem(std::move(scasm_const));
       continue;
     }
 

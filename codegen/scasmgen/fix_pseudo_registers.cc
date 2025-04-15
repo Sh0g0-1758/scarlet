@@ -43,6 +43,9 @@ namespace codegen {
                    scasm::AssemblyType::BYTE_ARRAY) {                          \
           offset += backendSymbolTable[temp].size;                             \
           MAKE_ALIGNED(offset, backendSymbolTable[temp].alignment);            \
+        } else if (backendSymbolTable[temp].asmType ==                         \
+                   scasm::AssemblyType::BYTE) {                                \
+          offset += 1;                                                         \
         }                                                                      \
         if (inst->get_##target()->get_type() ==                                \
             scasm::operand_type::PSEUDO_MEM) {                                 \

@@ -7,11 +7,13 @@ void Codegen::gen_type_cast_scasm(
     std::shared_ptr<scar::scar_Instruction_Node> inst,
     std::shared_ptr<scasm::scasm_function> scasm_func,
     scasm::scasm_program &scasm_program) {
-  scasm::AssemblyType instType = valToAsmType(inst->get_src1());
+  scasm::AssemblyType srcType = valToAsmType(inst->get_src1());
+  scasm::AssemblyType dstType = valToAsmType(inst->get_dst());
   if (inst->get_type() == scar::instruction_type::SIGN_EXTEND) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOVSX);
-    scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+    scasm_inst->set_asm_type(srcType);
+    scasm_inst->set_dst_type(dstType);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
@@ -20,7 +22,7 @@ void Codegen::gen_type_cast_scasm(
   } else if (inst->get_type() == scar::instruction_type::TRUNCATE) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOV);
-    scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+    scasm_inst->set_asm_type(dstType);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
@@ -29,38 +31,55 @@ void Codegen::gen_type_cast_scasm(
   } else if (inst->get_type() == scar::instruction_type::ZERO_EXTEND) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOVZX);
-    scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+    scasm_inst->set_asm_type(srcType);
+    scasm_inst->set_dst_type(dstType);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
     SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
     scasm_func->add_instruction(std::move(scasm_inst));
   } else if (inst->get_type() == scar::instruction_type::DOUBLE_TO_INT) {
-    MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-    scasm_inst->set_type(scasm::instruction_type::CVTTS2DI);
-    scasm_inst->set_asm_type(valToAsmType(inst->get_dst()));
-    MAKE_SHARED(scasm::scasm_operand, scasm_src);
-    SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
-    MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-    SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
-    scasm_func->add_instruction(std::move(scasm_inst));
-  } else if (inst->get_type() == scar::instruction_type::INT_TO_DOUBLE) {
-    MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-    scasm_inst->set_type(scasm::instruction_type::CVTSI2SD);
-    scasm_inst->set_asm_type(instType);
-    MAKE_SHARED(scasm::scasm_operand, scasm_src);
-    SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
-    MAKE_SHARED(scasm::scasm_operand, scasm_dst);
-    SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
-    scasm_func->add_instruction(std::move(scasm_inst));
-  } else if (inst->get_type() == scar::instruction_type::UINT_TO_DOUBLE) {
-    if (instType == scasm::AssemblyType::LONG_WORD) {
-      // MovZeroExtend(src, Reg(<R>))
-      // Cvtsi2sd(Quadword, Reg(<R>), dst)
+    if (dstType == scasm::AssemblyType::BYTE) {
+      // Cvttsd2si(Longword, src, Reg(AX))
+      // Mov(Byte, Reg(AX), dst)
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-      scasm_inst->set_type(scasm::instruction_type::MOVZX);
-      scasm_inst->set_asm_type(instType);
+      scasm_inst->set_type(scasm::instruction_type::CVTTS2DI);
+      scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
+      MAKE_SHARED(scasm::scasm_operand, scasm_src);
+      SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+      MAKE_SHARED(scasm::scasm_operand, scasm_reg);
+      scasm_reg->set_type(scasm::operand_type::REG);
+      scasm_reg->set_reg(scasm::register_type::AX);
+      scasm_inst->set_dst(scasm_reg);
+      scasm_func->add_instruction(std::move(scasm_inst));
+
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+      scasm_inst2->set_type(scasm::instruction_type::MOV);
+      scasm_inst2->set_asm_type(dstType);
+      scasm_inst2->set_src(scasm_reg);
+      MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+      SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst2);
+      scasm_func->add_instruction(std::move(scasm_inst2));
+    } else {
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+      scasm_inst->set_type(scasm::instruction_type::CVTTS2DI);
+      scasm_inst->set_asm_type(dstType);
+      MAKE_SHARED(scasm::scasm_operand, scasm_src);
+      SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+      MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+      SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
+      scasm_func->add_instruction(std::move(scasm_inst));
+    }
+  } else if (inst->get_type() == scar::instruction_type::INT_TO_DOUBLE) {
+    if (srcType == scasm::AssemblyType::BYTE) {
+      // Movsx(Byte, Longword, src, Reg(AX))
+      // Cvtsi2sd(Longword, Reg(AX), dst)
+
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+      scasm_inst->set_type(scasm::instruction_type::MOVSX);
+      scasm_inst->set_asm_type(srcType);
+      scasm_inst->set_dst_type(scasm::AssemblyType::LONG_WORD);
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
       SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
       MAKE_SHARED(scasm::scasm_operand, scasm_reg);
@@ -71,7 +90,50 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
       scasm_inst2->set_type(scasm::instruction_type::CVTSI2SD);
-      scasm_inst2->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+      scasm_inst2->set_asm_type(scasm::AssemblyType::LONG_WORD);
+      scasm_inst2->set_src(scasm_reg);
+      MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+      SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst2);
+      scasm_func->add_instruction(std::move(scasm_inst2));
+    } else {
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+      scasm_inst->set_type(scasm::instruction_type::CVTSI2SD);
+      scasm_inst->set_asm_type(srcType);
+      MAKE_SHARED(scasm::scasm_operand, scasm_src);
+      SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+      MAKE_SHARED(scasm::scasm_operand, scasm_dst);
+      SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst);
+      scasm_func->add_instruction(std::move(scasm_inst));
+    }
+  } else if (inst->get_type() == scar::instruction_type::UINT_TO_DOUBLE) {
+    if (srcType == scasm::AssemblyType::LONG_WORD or
+        srcType == scasm::AssemblyType::BYTE) {
+      // clang-format off
+      // MovZeroExtend(Longword, Quadword, src, Reg(<R>)) | MovZeroExtend(Byte, Longword, src, Reg(<R>))
+      // Cvtsi2sd(Quadword, Reg(<R>), dst)                | Cvtsi2sd(Longword, Reg(<R>), dst)
+      // clang-format on
+
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+      scasm_inst->set_type(scasm::instruction_type::MOVZX);
+      scasm_inst->set_asm_type(srcType);
+      if (srcType == scasm::AssemblyType::LONG_WORD)
+        scasm_inst->set_dst_type(scasm::AssemblyType::QUAD_WORD);
+      else
+        scasm_inst->set_dst_type(scasm::AssemblyType::LONG_WORD);
+      MAKE_SHARED(scasm::scasm_operand, scasm_src);
+      SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
+      MAKE_SHARED(scasm::scasm_operand, scasm_reg);
+      scasm_reg->set_type(scasm::operand_type::REG);
+      scasm_reg->set_reg(scasm::register_type::AX);
+      scasm_inst->set_dst(scasm_reg);
+      scasm_func->add_instruction(std::move(scasm_inst));
+
+      MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
+      scasm_inst2->set_type(scasm::instruction_type::CVTSI2SD);
+      if (srcType == scasm::AssemblyType::LONG_WORD)
+        scasm_inst2->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+      else
+        scasm_inst2->set_asm_type(scasm::AssemblyType::LONG_WORD);
       scasm_inst2->set_src(scasm_reg);
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst2);
@@ -120,7 +182,7 @@ void Codegen::gen_type_cast_scasm(
       /* SCASM GEN */
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::CMP);
-      scasm_inst->set_asm_type(instType);
+      scasm_inst->set_asm_type(srcType);
       MAKE_SHARED(scasm::scasm_operand, scasm_zero);
       scasm_zero->set_type(scasm::operand_type::IMM);
       constant::Constant zero;
@@ -142,7 +204,7 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
       scasm_inst3->set_type(scasm::instruction_type::CVTSI2SD);
-      scasm_inst3->set_asm_type(instType);
+      scasm_inst3->set_asm_type(srcType);
       scasm_inst3->set_src(scasm_src);
       scasm_inst3->set_dst(scasm_dst);
       scasm_func->add_instruction(std::move(scasm_inst3));
@@ -159,28 +221,28 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst6);
       scasm_inst6->set_type(scasm::instruction_type::MOV);
-      scasm_inst6->set_asm_type(instType);
+      scasm_inst6->set_asm_type(srcType);
       scasm_inst6->set_src(scasm_src);
       scasm_inst6->set_dst(scasm_reg1);
       scasm_func->add_instruction(std::move(scasm_inst6));
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst7);
       scasm_inst7->set_type(scasm::instruction_type::MOV);
-      scasm_inst7->set_asm_type(instType);
+      scasm_inst7->set_asm_type(srcType);
       scasm_inst7->set_src(scasm_reg1);
       scasm_inst7->set_dst(scasm_reg2);
       scasm_func->add_instruction(std::move(scasm_inst7));
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst8);
       scasm_inst8->set_type(scasm::instruction_type::UNARY);
-      scasm_inst8->set_asm_type(instType);
+      scasm_inst8->set_asm_type(srcType);
       scasm_inst8->set_unop(scasm::Unop::SHR);
       scasm_inst8->set_dst(scasm_reg2);
       scasm_func->add_instruction(std::move(scasm_inst8));
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst9);
       scasm_inst9->set_type(scasm::instruction_type::BINARY);
-      scasm_inst9->set_asm_type(instType);
+      scasm_inst9->set_asm_type(srcType);
       scasm_inst9->set_binop(scasm::Binop::AAND);
       MAKE_SHARED(scasm::scasm_operand, scasm_src9);
       scasm_src9->set_type(scasm::operand_type::IMM);
@@ -194,7 +256,7 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst10);
       scasm_inst10->set_type(scasm::instruction_type::BINARY);
-      scasm_inst10->set_asm_type(instType);
+      scasm_inst10->set_asm_type(srcType);
       scasm_inst10->set_binop(scasm::Binop::AOR);
       scasm_inst10->set_src(scasm_reg1);
       scasm_inst10->set_dst(scasm_reg2);
@@ -202,7 +264,7 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst11);
       scasm_inst11->set_type(scasm::instruction_type::CVTSI2SD);
-      scasm_inst11->set_asm_type(instType);
+      scasm_inst11->set_asm_type(srcType);
       scasm_inst11->set_src(scasm_reg2);
       scasm_inst11->set_dst(scasm_dst);
       scasm_func->add_instruction(std::move(scasm_inst11));
@@ -221,14 +283,17 @@ void Codegen::gen_type_cast_scasm(
       scasm_func->add_instruction(std::move(scasm_inst13));
     }
   } else if (inst->get_type() == scar::instruction_type::DOUBLE_TO_UINT) {
-    instType = valToAsmType(inst->get_dst());
-    if (instType == scasm::AssemblyType::LONG_WORD) {
-      // Cvttsd2si(Quadword, src, Reg(<R>))
-      // Mov(Longword, Reg(<R>), dst)
+    if (dstType == scasm::AssemblyType::LONG_WORD or
+        dstType == scasm::AssemblyType::BYTE) {
+      // Cvttsd2si(Quadword, src, Reg(<R>)) | Cvttsd2si(Longword, src, Reg(<R>))
+      // Mov(Longword, Reg(<R>), dst)       | Mov(Byte, Reg(<R>), dst)
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::CVTTS2DI);
-      scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+      if (dstType == scasm::AssemblyType::LONG_WORD)
+        scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+      else
+        scasm_inst->set_asm_type(scasm::AssemblyType::LONG_WORD);
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
       SET_OPERAND(scasm_src, set_src, get_src1, scasm_inst);
       MAKE_SHARED(scasm::scasm_operand, scasm_reg);
@@ -239,7 +304,7 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
       scasm_inst2->set_type(scasm::instruction_type::MOV);
-      scasm_inst2->set_asm_type(instType);
+      scasm_inst2->set_asm_type(dstType);
       scasm_inst2->set_src(std::move(scasm_reg));
       MAKE_SHARED(scasm::scasm_operand, scasm_dst);
       SET_OPERAND(scasm_dst, set_dst, get_dst, scasm_inst2);
@@ -338,7 +403,7 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
       scasm_inst3->set_type(scasm::instruction_type::CVTTS2DI);
-      scasm_inst3->set_asm_type(instType);
+      scasm_inst3->set_asm_type(dstType);
       scasm_inst3->set_src(scasm_src);
       scasm_inst3->set_dst(scasm_dst);
       scasm_func->add_instruction(std::move(scasm_inst3));
@@ -373,14 +438,14 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst8);
       scasm_inst8->set_type(scasm::instruction_type::CVTTS2DI);
-      scasm_inst8->set_asm_type(instType);
+      scasm_inst8->set_asm_type(dstType);
       scasm_inst8->set_src(scasm_regx);
       scasm_inst8->set_dst(scasm_dst);
       scasm_func->add_instruction(std::move(scasm_inst8));
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst9);
       scasm_inst9->set_type(scasm::instruction_type::MOV);
-      scasm_inst9->set_asm_type(instType);
+      scasm_inst9->set_asm_type(dstType);
       MAKE_SHARED(scasm::scasm_operand, scasm_src9);
       scasm_src9->set_type(scasm::operand_type::IMM);
       constant::Constant constVal2;
@@ -393,7 +458,7 @@ void Codegen::gen_type_cast_scasm(
 
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst10);
       scasm_inst10->set_type(scasm::instruction_type::BINARY);
-      scasm_inst10->set_asm_type(instType);
+      scasm_inst10->set_asm_type(dstType);
       scasm_inst10->set_binop(scasm::Binop::ADD);
       scasm_inst10->set_src(scasm_regr);
       scasm_inst10->set_dst(scasm_dst);

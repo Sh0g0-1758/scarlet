@@ -454,47 +454,33 @@ bool is_binary_op(TOKEN token) {
          token == TOKEN::COMPOUND_RIGHTSHIFT or token == TOKEN::COMPOUND_XOR;
 }
 
-std::string char_to_esc(char c) {
-  std::string ret;
+char char_to_esc(char c) {
   switch (c) {
   case 'a':
-    ret = "\\a";
-    break;
+    return '\a';
   case 'n':
-    ret = "\\n";
-    break;
+    return '\n';
   case 'f':
-    ret = "\\f";
-    break;
+    return '\f';
   case 'b':
-    ret = "\\b";
-    break;
+    return '\b';
   case 'r':
-    ret = "\\r";
-    break;
+    return '\r';
   case 't':
-    ret = "\\t";
-    break;
+    return '\t';
   case 'v':
-    ret = "\\v";
-    break;
+    return '\v';
   case '\'':
-    ret = "\\\'";
-    break;
+    return '\'';
   case '"':
-    ret = "\\";
-    break;
+    return '\"';
   case '?':
-    ret = "\\?";
-    break;
+    return '\?';
   case '\\':
-    ret = "\\\\";
-    break;
+    return '\\';
   default:
-    ret = "\\0";
-    break;
+    return '\0';
   }
-  return ret;
 }
 
 std::string get_token_type(TOKEN token) {

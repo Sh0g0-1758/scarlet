@@ -89,8 +89,6 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   UNREACHABLE()
 }
 
-// If small is set, return the 8-bit version of the register
-// else return the 32-bit version of the register
 std::string to_string(register_type reg, register_size size) {
   switch (reg) {
   case register_type::AX:
