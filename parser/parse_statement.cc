@@ -21,7 +21,11 @@ void parser::parse_statement(
     statement->set_type(ast::statementType::RETURN);
 
     MAKE_SHARED(ast::AST_exp_Node, exp);
-    parse_exp(tokens, exp);
+    if (tokens[0].get_token() != token::TOKEN::SEMICOLON) {
+      parse_exp(tokens, exp);
+    } else {
+      exp = nullptr;
+    }
     statement->set_exp(std::move(exp));
 
     EXPECT(token::TOKEN::SEMICOLON);

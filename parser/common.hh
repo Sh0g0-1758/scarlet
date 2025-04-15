@@ -74,6 +74,14 @@ sequence
     success = false;                                                           \
     error_messages.emplace_back(                                               \
         "Unsigned and signed specifiers found together");                      \
+  }                                                                            \
+  if (type_specifiers.find(token::TOKEN::VOID) != type_specifiers.end()) {     \
+    if (type_specifiers.size() == 1) {                                         \
+      decl->func(ast::ElemType::VOID);                                         \
+    } else {                                                                   \
+      success = false;                                                         \
+      error_messages.emplace_back("Void specifier found with other types");    \
+    }                                                                          \
   } else if (type_specifiers.count(token::TOKEN::DOUBLE) and                   \
              type_specifiers.size() > 1) {                                     \
     success = false;                                                           \

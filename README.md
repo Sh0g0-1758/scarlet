@@ -79,13 +79,21 @@ Scarlet currently supports the following architectures:
 - [x] Add support for Pointer Arithmetic
 - [x] Add support for Arrays
 - [x] Add support for characters and strings
-- [ ] Add support for dynamic memory allocation
+- [x] Add support for dynamic memory allocation
 - [ ] Add support for user defined structures
 - [ ] Add support for NaN
 
 ## Resources
 
 Our compiler implementation draws primarily from Nora Sandler's 'How to Write a Compiler in C' guide, supplemented with concepts from the Dragon Book. Both resources are highly recommended for anyone studying compiler design.
+
+## What we do not support
+We try to be as close to the C standard as possible but there are a few features we do not support as it is in the standard because quite frankly it does not make much sense. 
+
+- We do not support subscripting of type `1[a]` where `a` is an array or a pointer.
+- Compound operations and increment/decrement are just syntactic sugars. (They get exapanded to their base expressions ie. `a+=2` will become `a = a + 2` and `b++` will become `b = b + 1`. Note that in post increment/decrement operations, the correct ie. un-updated value will be returned).
+- For comparing pointers the base type needs to be the same. So you need to cast a `long*` to a `void*` before comparing it with a `void*`
+- The expression `sizeof 'a'` get's evaluated to 1, although gcc and clang say its 4. (come on its a character) 
 
 ## Contributing Guidelines
 

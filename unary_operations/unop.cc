@@ -24,6 +24,8 @@ std::string to_string(UNOP unop) {
     return "Not";
   case UNOP::DECAY:
     return "Decay";
+  case UNOP::SIZEOF:
+    return "SizeOf";
   case UNOP::UNKNOWN:
     return "";
   }

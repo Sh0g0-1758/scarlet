@@ -244,22 +244,28 @@ void Codegen::gen_scar_ternary_exp(
   gen_scar_exp(texp->get_middle(), scar_function);
 
   // copy this result in a new register
-  MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
-  scar_instruction2->set_type(scar::instruction_type::COPY);
-  SETVARCONSTANTREG(scar_val_src2);
-  scar_instruction2->set_src1(std::move(scar_val_src2));
-  scar_val_dst2->set_type(scar::val_type::VAR);
   // Doing this so that we can use the same scar register to
   // store the result of the second expression as well.
   // We cannot simply use get_prev_reg_name() since we need to
   // parse the second expression first and that will change the
   // register counter
-  std::string result = get_reg_name(exp->get_type(), exp->get_derived_type());
-  scar_val_dst2->set_reg_name(result);
-  scar_instruction2->set_dst(std::move(scar_val_dst2));
-  scar_function->add_instruction(std::move(scar_instruction2));
+  std::string result;
+  if (texp->get_middle()->get_type() == ast::ElemType::VOID) {
+    // if it's a void expression, we don't need to copy
+    PURGEVOID();
+  } else {
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction2);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src2);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst2);
+    scar_instruction2->set_type(scar::instruction_type::COPY);
+    SETVARCONSTANTREG(scar_val_src2);
+    scar_instruction2->set_src1(std::move(scar_val_src2));
+    scar_val_dst2->set_type(scar::val_type::VAR);
+    result = get_reg_name(exp->get_type(), exp->get_derived_type());
+    scar_val_dst2->set_reg_name(result);
+    scar_instruction2->set_dst(std::move(scar_val_dst2));
+    scar_function->add_instruction(std::move(scar_instruction2));
+  }
 
   // jump to the end
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction3);
@@ -283,16 +289,20 @@ void Codegen::gen_scar_ternary_exp(
   gen_scar_exp(texp->get_right(), scar_function);
 
   // copy this result in the register we used for the first expression
-  MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction5);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_src5);
-  MAKE_SHARED(scar::scar_Val_Node, scar_val_dst5);
-  scar_instruction5->set_type(scar::instruction_type::COPY);
-  SETVARCONSTANTREG(scar_val_src5);
-  scar_instruction5->set_src1(std::move(scar_val_src5));
-  scar_val_dst5->set_type(scar::val_type::VAR);
-  scar_val_dst5->set_reg_name(result);
-  scar_instruction5->set_dst(std::move(scar_val_dst5));
-  scar_function->add_instruction(std::move(scar_instruction5));
+  if (texp->get_right()->get_type() == ast::ElemType::VOID) {
+    PURGEVOID();
+  } else {
+    MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction5);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_src5);
+    MAKE_SHARED(scar::scar_Val_Node, scar_val_dst5);
+    scar_instruction5->set_type(scar::instruction_type::COPY);
+    SETVARCONSTANTREG(scar_val_src5);
+    scar_instruction5->set_src1(std::move(scar_val_src5));
+    scar_val_dst5->set_type(scar::val_type::VAR);
+    scar_val_dst5->set_reg_name(result);
+    scar_instruction5->set_dst(std::move(scar_val_dst5));
+    scar_function->add_instruction(std::move(scar_instruction5));
+  }
 
   // generate the final label
   MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction6);
@@ -305,7 +315,11 @@ void Codegen::gen_scar_ternary_exp(
 
   // make sure that the result is propagated ahead. gen_scar_exp
   // could have changed the current register name
-  reg_name = result;
+  if (texp->get_type() == ast::ElemType::VOID) {
+    reg_name = "DUMMY";
+  } else {
+    reg_name = result;
+  }
 }
 
 void Codegen::gen_scar_pointer_exp(
@@ -375,7 +389,7 @@ void Codegen::gen_scar_pointer_exp(
       scar_val_src4->set_type(scar::val_type::CONSTANT);
       constant::Constant sortc;
       sortc.set_type(constant::Type::LONG);
-      sortc.set_value({.l = ast::getSizeOfReferencedTypeOnArch(
+      sortc.set_value({.l = (long)ast::getSizeOfReferencedTypeOnArch(
                            exp->get_right()->get_derived_type())});
       scar_val_src4->set_const_val(sortc);
       scar_instruction2->set_src2(std::move(scar_val_src4));
@@ -388,7 +402,7 @@ void Codegen::gen_scar_pointer_exp(
     } else {
       scar_instruction->set_type(scar::instruction_type::ADD_PTR);
       scar_instruction->set_offset(
-          ast::getSizeOfReferencedTypeOnArch(exp->get_derived_type()));
+          (long)ast::getSizeOfReferencedTypeOnArch(exp->get_derived_type()));
       scar_function->add_instruction(std::move(scar_instruction));
     }
   } else {
@@ -431,7 +445,7 @@ void Codegen::gen_scar_pointer_exp(
 
     scar_instruction->set_type(scar::instruction_type::ADD_PTR);
     scar_instruction->set_offset(
-        ast::getSizeOfReferencedTypeOnArch(exp->get_derived_type()));
+        (long)ast::getSizeOfReferencedTypeOnArch(exp->get_derived_type()));
     scar_function->add_instruction(std::move(scar_instruction));
   }
 }

@@ -66,14 +66,21 @@ void Codegen::pretty_print_function(
         PRINT_VAR_CONST(arg);
         std::cout << ", ";
       }
-      std::cout << "], Dst=Var(" << callStmt->get_dst()->get_reg() << "))"
-                << std::endl;
+      if (callStmt->get_dst() != nullptr) {
+        std::cout << "], Dst=Var(" << callStmt->get_dst()->get_reg() << "))"
+                  << std::endl;
+      } else {
+        std::cout << "], Dst=None)" << std::endl;
+      }
       continue;
     }
     std::cout << "\t\t\t" << scar::to_string(statement->get_type()) << "(";
     if (statement->get_type() == scar::instruction_type::RETURN) {
-      PRINT_VAR_CONST(statement->get_src1());
+      if (statement->get_src1() != nullptr) {
+        PRINT_VAR_CONST(statement->get_src1());
+      }
       std::cout << ")" << std::endl;
+
     } else if (statement->get_type() == scar::instruction_type::UNARY) {
       std::cout << unop::to_string(statement->get_unop()) << ", ";
       PRINT_VAR_CONST(statement->get_src1());

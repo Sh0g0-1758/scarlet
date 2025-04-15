@@ -34,8 +34,14 @@ void parser::parse_declaration(
     }
 
     // If we find more than one identifier, then this is a function declaration
-    if (tokens[iter].get_token() == token::TOKEN::IDENTIFIER or
-        tokens[iter].get_token() == token::TOKEN::VOID) {
+    if (tokens[iter].get_token() == token::TOKEN::IDENTIFIER) {
+      num_identifiers++;
+      if (num_identifiers > 1) {
+        isFuncDecl = true;
+        break;
+      }
+    } else if (num_identifiers > 0 and
+               tokens[iter].get_token() == token::TOKEN::VOID) {
       num_identifiers++;
       if (num_identifiers > 1) {
         isFuncDecl = true;
@@ -303,8 +309,10 @@ void parser::parse_param_list(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_function_declaration_Node> decl) {
   if (tokens[0].get_token() == token::TOKEN::VOID) {
-    tokens.erase(tokens.begin());
-    return;
+    if (tokens[1].get_token() == token::TOKEN::CLOSE_PARANTHESES) {
+      tokens.erase(tokens.begin());
+      return;
+    }
   }
   MAKE_SHARED(ast::Param, param);
 

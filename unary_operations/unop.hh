@@ -14,8 +14,8 @@ enum class UNOP {
   POSTDECREMENT,
   DEREFERENCE,
   ADDROF,
-  DECAY
-
+  DECAY,
+  SIZEOF
 };
 std::string to_string(UNOP unop);
 bool is_incr_decr(UNOP unop);

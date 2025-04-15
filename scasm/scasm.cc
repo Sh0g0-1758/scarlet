@@ -21,6 +21,8 @@ Unop scar_unop_to_scasm_unop(unop::UNOP unop) {
   case unop::UNOP::ADDROF:
   case unop::UNOP::DEREFERENCE:
   case unop::UNOP::UNKNOWN:
+  // sizeof is compile time operation
+  case unop::UNOP::SIZEOF:
     UNREACHABLE()
   }
   UNREACHABLE()

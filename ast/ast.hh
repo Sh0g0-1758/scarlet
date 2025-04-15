@@ -123,7 +123,8 @@ enum class ElemType {
   UINT = -6,
   DOUBLE = -7,
   CHAR = -8,
-  UCHAR = -9
+  UCHAR = -9,
+  VOID = -10,
 };
 
 class AST_const_Node {
@@ -770,12 +771,20 @@ bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 bool is_const_zero(std::shared_ptr<AST_factor_Node> factor);
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor);
 int getSizeOfTypeOnArch(ElemType type);
-long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType);
-long getSizeOfArrayTypeOnArch(std::vector<long> derivedType);
+unsigned long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType);
+unsigned long getSizeOfArrayTypeOnArch(std::vector<long> derivedType);
 std::string get_lvalue_identifier(std::shared_ptr<AST_factor_Node> factor);
 bool exp_is_factor(std::shared_ptr<AST_exp_Node> exp);
 bool is_array(std::shared_ptr<AST_factor_Node> factor);
 bool is_array(std::shared_ptr<AST_exp_Node> exp);
+bool is_void_ptr(ast::ElemType type, std::vector<long> derivedType);
+bool is_ptr_type(ast::ElemType type, std::vector<long> derivedType);
+bool is_pointer_to_complete_type(ast::ElemType type,
+                                 std::vector<long> derivedType);
+bool validate_type_specifier(ast::ElemType type, std::vector<long> derivedType);
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType);
+void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
+                         std::vector<long> &derivedType);
 bool exp_is_string(std::shared_ptr<AST_exp_Node> exp);
 bool factor_is_string(std::shared_ptr<AST_factor_Node> factor);
 } // namespace ast

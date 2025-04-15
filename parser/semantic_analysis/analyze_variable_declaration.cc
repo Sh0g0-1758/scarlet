@@ -39,6 +39,8 @@ namespace parser {
     constZero.set_type(constant::Type::ULONG);                                 \
     constZero.set_value({.ul = 0});                                            \
     break;                                                                     \
+  case ast::ElemType::VOID:                                                    \
+    break;                                                                     \
   case ast::ElemType::NONE:                                                    \
     UNREACHABLE();                                                             \
   }
@@ -66,6 +68,13 @@ void parser::analyze_global_variable_declaration(
         error_messages.emplace_back(
             var_name + " redeclared as a different kind of symbol");
       }
+    }
+
+    if (!ast::validate_type_specifier(varInfo.typeDef[0],
+                                      varInfo.derivedTypeMap[0])) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as incomplete type");
     }
 
     // If the symbol has been redefined, throw an error
@@ -119,7 +128,7 @@ void parser::analyze_global_variable_declaration(
     varInfo.type = symbolTable::symbolType::VARIABLE;
     varInfo.def = symbolTable::defType::TENTATIVE;
     std::vector<long> derivedType;
-    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
     if (!derivedType.empty()) {
       derivedType.push_back((long)varDecl->get_base_type());
       varInfo.typeDef.push_back(ast::ElemType::DERIVED);
@@ -127,6 +136,14 @@ void parser::analyze_global_variable_declaration(
     } else {
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
+
+    if (!ast::validate_type_specifier(varInfo.typeDef[0],
+                                      varInfo.derivedTypeMap[0])) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as incomplete type");
+    }
+
     if (varDecl->get_specifier() == ast::SpecifierType::STATIC) {
       varInfo.link = symbolTable::linkage::INTERNAL;
     } else if (varDecl->get_specifier() == ast::SpecifierType::EXTERN) {
@@ -185,13 +202,20 @@ void parser::analyze_local_variable_declaration(
       varInfo.link = symbolTable::linkage::EXTERNAL;
       varInfo.type = symbolTable::symbolType::VARIABLE;
       std::vector<long> derivedType;
-      unroll_derived_type(varDecl->get_declarator(), derivedType);
+      ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
       if (!derivedType.empty()) {
         derivedType.push_back((long)varDecl->get_base_type());
         varInfo.typeDef.push_back(ast::ElemType::DERIVED);
         varInfo.derivedTypeMap[0] = derivedType;
       } else {
         varInfo.typeDef.push_back(varDecl->get_base_type());
+      }
+
+      if (!ast::validate_type_specifier(varInfo.typeDef[0],
+                                        varInfo.derivedTypeMap[0])) {
+        success = false;
+        error_messages.emplace_back("Variable " + var_name +
+                                    " cannot be declared as incomplete type");
       }
       symbol_table[{var_name, indx}] = varInfo;
       globalSymbolTable[var_name] = varInfo;
@@ -205,7 +229,7 @@ void parser::analyze_local_variable_declaration(
     varInfo.link = symbolTable::linkage::INTERNAL;
     varInfo.type = symbolTable::symbolType::VARIABLE;
     std::vector<long> derivedType;
-    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
     if (!derivedType.empty()) {
       derivedType.push_back((long)varDecl->get_base_type());
       varInfo.typeDef.push_back(ast::ElemType::DERIVED);
@@ -213,6 +237,14 @@ void parser::analyze_local_variable_declaration(
     } else {
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
+
+    if (!ast::validate_type_specifier(varInfo.typeDef[0],
+                                      varInfo.derivedTypeMap[0])) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as incomplete type");
+    }
+
     varInfo.def = symbolTable::defType::TRUE;
     initialize_global_variable(varInfo, varDecl, temp_name);
     symbol_table[{var_name, indx}] = varInfo;
@@ -226,13 +258,20 @@ void parser::analyze_local_variable_declaration(
     varInfo.link = symbolTable::linkage::NONE;
     varInfo.type = symbolTable::symbolType::VARIABLE;
     std::vector<long> derivedType;
-    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
     if (!derivedType.empty()) {
       derivedType.push_back((long)varDecl->get_base_type());
       varInfo.typeDef.push_back(ast::ElemType::DERIVED);
       varInfo.derivedTypeMap[0] = derivedType;
     } else {
       varInfo.typeDef.push_back(varDecl->get_base_type());
+    }
+
+    if (!ast::is_valid_declarator(varInfo.typeDef[0],
+                                  varInfo.derivedTypeMap[0])) {
+      success = false;
+      error_messages.emplace_back("Variable " + var_name +
+                                  " cannot be declared as void");
     }
     symbol_table[{var_name, indx}] = varInfo;
     globalSymbolTable[temp_name] = varInfo;

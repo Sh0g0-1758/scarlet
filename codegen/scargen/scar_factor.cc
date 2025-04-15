@@ -88,10 +88,39 @@ void Codegen::gen_scar_factor(
       }
     }
 
-    gen_scar_factor(factor->get_child(), scar_function);
-
     auto op = factor->get_unop_node()->get_op();
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
+    if (op == unop::UNOP::SIZEOF) {
+      constant::Constant sortc;
+      sortc.set_type(constant::Type::ULONG);
+      ast::ElemType baseType{};
+      std::vector<long> derivedType;
+      if (factor->get_child() != nullptr) {
+        baseType = factor->get_child()->get_type();
+        derivedType = factor->get_child()->get_derived_type();
+      } else {
+        baseType = factor->get_cast_type();
+        ast::unroll_derived_type(factor->get_cast_declarator(), derivedType);
+        if (derivedType.size() != 0) {
+          derivedType.push_back((long)baseType);
+          baseType = ast::ElemType::DERIVED;
+        }
+      }
+      if (derivedType.size() == 0) {
+        sortc.set_value(
+            {.ul = (unsigned long)ast::getSizeOfTypeOnArch(baseType)});
+      } else {
+        if (derivedType[0] == (long)ast::ElemType::POINTER) {
+          sortc.set_value({.ul = 8});
+        } else if (derivedType[0] > 0) {
+          sortc.set_value({.ul = ast::getSizeOfArrayTypeOnArch(derivedType)});
+        }
+      }
+      constant_buffer = sortc;
+      return;
+    }
+
+    gen_scar_factor(factor->get_child(), scar_function);
 
     if (op == unop::UNOP::POSTDECREMENT or op == unop::UNOP::POSTINCREMENT) {
       // copy the original value into a scar register
@@ -166,6 +195,9 @@ void Codegen::gen_scar_factor(
     auto inner_derived_type = factor->get_child()->get_derived_type();
     auto typeCast_type = factor->get_type();
     auto typeCast_derived_type = factor->get_derived_type();
+
+    if (typeCast_type == ast::ElemType::VOID)
+      return;
 
     if (inner_type != typeCast_type or
         inner_derived_type != typeCast_derived_type) {
@@ -259,6 +291,12 @@ void Codegen::gen_scar_factor_function_call(
       scar_val->set_reg_name(get_prev_reg_name());
       scar_instruction->add_arg(scar_val);
     }
+  }
+
+  if (globalSymbolTable[factor->get_identifier_node()->get_value()]
+          .typeDef[0] == ast::ElemType::VOID) {
+    scar_function->add_instruction(scar_instruction);
+    return;
   }
 
   std::string dstReg =

@@ -83,6 +83,41 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       }
       EXPECT(token::TOKEN::CLOSE_PARANTHESES);
     }
+  } else if (tokens[0].get_token() == token::TOKEN::SIZEOF) {
+    tokens.erase(tokens.begin());
+    MAKE_SHARED(ast::AST_unop_Node, unop);
+    unop->set_op(unop::UNOP::SIZEOF);
+    factor->set_unop_node(std::move(unop));
+    if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      tokens.erase(tokens.begin());
+      if (token::is_type_specifier(tokens[0].get_token())) {
+        PARSE_TYPE(factor, set_cast_type);
+        if (!tokens.empty() and
+            tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
+          MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);
+          parse_abstract_declarator(tokens, cast_declarator);
+          factor->set_cast_declarator(std::move(cast_declarator));
+        }
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      } else {
+        MAKE_SHARED(ast::AST_exp_Node, exp);
+        parse_exp(tokens, exp);
+        MAKE_SHARED(ast::AST_factor_Node, child_factor);
+        child_factor->set_exp_node(std::move(exp));
+        factor->set_child(std::move(child_factor));
+        EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      }
+    } else {
+      if (token::is_type_specifier(tokens[0].get_token())) {
+        success = false;
+        error_messages.emplace_back("Expected type in bracket for sizeof");
+      } else {
+        MAKE_SHARED(ast::AST_factor_Node, nested_factor);
+        parse_factor(tokens, nested_factor);
+        factor->set_child(std::move(nested_factor));
+      }
+    }
+
   } else {
     success = false;
     error_messages.emplace_back("Expected constant, unary operator, semicolon "
@@ -155,7 +190,8 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
     // Handle right associative operators by reducing the new precedence by 1
-    if (token::is_right_associative(tokens[0].get_token()))
+    if (token::is_right_associative(tokens[0].get_token()) or
+        tokens[0].get_token() == token::TOKEN::QUESTION_MARK)
       new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);

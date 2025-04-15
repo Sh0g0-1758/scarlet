@@ -49,31 +49,12 @@ void parser::analyze_declaration(
   }
 }
 
-void parser::unroll_derived_type(
-    std::shared_ptr<ast::AST_declarator_Node> declarator,
-    std::vector<long> &derivedType) {
-  if (declarator == nullptr)
-    return;
-
-  unroll_derived_type(declarator->get_child(), derivedType);
-
-  if (declarator->is_pointer()) {
-    derivedType.push_back((long)ast::ElemType::POINTER);
-  }
-
-  if (!declarator->get_arrDim().empty()) {
-    for (auto dim : declarator->get_arrDim()) {
-      derivedType.push_back(dim);
-    }
-  }
-}
-
 bool parser::previous_declaration_has_same_type(
     ast::ElemType prev_base_type, std::vector<long> prev_derived_type,
     std::shared_ptr<ast::AST_declarator_Node> curr_declarator,
     ast::ElemType curr_base_type) {
   std::vector<long> derivedType;
-  unroll_derived_type(curr_declarator, derivedType);
+  ast::unroll_derived_type(curr_declarator, derivedType);
   if (!derivedType.empty()) {
     derivedType.push_back((long)curr_base_type);
     curr_base_type = ast::ElemType::DERIVED;

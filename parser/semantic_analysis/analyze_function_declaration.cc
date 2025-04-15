@@ -26,6 +26,14 @@ void parser::analyze_global_function_declaration(
       auto paramType = globalSymbolTable[currFuncName].typeDef[i + 1];
       auto paramDerivedType =
           globalSymbolTable[currFuncName].derivedTypeMap[i + 1];
+
+      if (!ast::validate_type_specifier(paramType, paramDerivedType)) {
+        success = false;
+        error_messages.emplace_back("Variable " +
+                                    param->identifier->get_value() +
+                                    " cannot be declared as incomplete type");
+      }
+
       std::string paramName = param->identifier->get_value();
       std::string temp_name = get_temp_name(paramName);
 
@@ -78,7 +86,7 @@ void parser::analyze_function_declaration(
   for (int i = 0; i <= (int)funcDecl->get_params().size(); i++) {
     if (i == 0) {
       std::vector<long> derivedType;
-      unroll_derived_type(funcDecl->get_declarator(), derivedType);
+      ast::unroll_derived_type(funcDecl->get_declarator(), derivedType);
       if (!derivedType.empty()) {
         // function cannot return an array
         if (derivedType[0] > 0) {
@@ -94,18 +102,31 @@ void parser::analyze_function_declaration(
     } else {
       std::vector<long> derivedType;
       auto param = funcDecl->get_params()[i - 1];
-      unroll_derived_type(param->declarator, derivedType);
+      ast::unroll_derived_type(param->declarator, derivedType);
       if (!derivedType.empty()) {
+        derivedType.push_back((long)param->base_type);
+        if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
+                                          derivedType)) {
+          success = false;
+          error_messages.emplace_back("Variable " +
+                                      param->identifier->get_value() +
+                                      " cannot be declared as incomplete type");
+        }
         if (derivedType[0] > 0) {
           // implicit conversion from array to pointer
           derivedType.erase(derivedType.begin());
           derivedType.insert(derivedType.begin(), (long)ast::ElemType::POINTER);
         }
-        derivedType.push_back((long)param->base_type);
         funcType.push_back(ast::ElemType::DERIVED);
         funcDerivedTypeMap[i] = derivedType;
       } else {
         funcType.push_back(param->base_type);
+        if (param->base_type == ast::ElemType::VOID) {
+          success = false;
+          error_messages.emplace_back("Function " +
+                                      param->identifier->get_value() +
+                                      " cannot take void argument");
+        }
       }
     }
   }

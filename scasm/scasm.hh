@@ -381,8 +381,8 @@ struct backendSymbol {
   bool isTopLevel;
   /* Use for Functions */
   bool isDefined;
-  /* use for array */
-  int size = 0;
+  /*use for array*/
+  long size = 0;
   int alignment = 0;
 };
 

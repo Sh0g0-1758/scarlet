@@ -189,6 +189,10 @@ void Codegen::gen_funcall_scasm(
     scasm_func->add_instruction(std::move(scasm_inst));
   }
 
+  if (globalSymbolTable[funcCall->get_name()->get_value()].typeDef[0] ==
+      ast::ElemType::VOID) {
+    return;
+  }
   MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
   scasm_inst3->set_type(scasm::instruction_type::MOV);
   scasm_inst3->set_asm_type(valToAsmType(inst->get_dst()));
