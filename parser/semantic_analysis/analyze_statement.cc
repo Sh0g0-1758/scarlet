@@ -233,6 +233,16 @@ void parser::analyze_switch_case(
       case constant::Type::ULONG:
         val = static_cast<T>(constVal.get_value().ul);
         break;
+      case constant::Type::CHAR:
+        val = static_cast<T>(constVal.get_value().c);
+        break;
+      case constant::Type::UCHAR:
+        val = static_cast<T>(constVal.get_value().uc);
+        break;
+      case constant::Type::STRING: {
+        success = false;
+        error_messages.emplace_back("Case expression cannot be a derived type");
+      } break;
       default:
         break;
       }
@@ -245,11 +255,6 @@ void parser::analyze_switch_case(
       case constant::Type::LONG:
         newConst.set_value({.l = static_cast<long>(val)});
         break;
-      case constant::Type::DOUBLE: {
-        success = false;
-        error_messages.emplace_back(
-            "Case expression cannot be a double precision");
-      } break;
       case constant::Type::UINT:
         newConst.set_value({.ui = static_cast<unsigned int>(val)});
         break;
