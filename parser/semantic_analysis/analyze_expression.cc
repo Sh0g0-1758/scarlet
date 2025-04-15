@@ -589,6 +589,19 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    ? exp->get_left()->get_type()
                                    : exp->get_factor_node()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
+      // implicit promotion of char to int
+      if (leftType == ast::ElemType::CHAR or leftType == ast::ElemType::UCHAR) {
+        leftType = ast::ElemType::INT;
+        (exp->get_left() != nullptr)
+            ? add_cast_to_exp(exp->get_left(), ast::ElemType::INT, {})
+            : add_cast_to_factor(exp->get_factor_node(), ast::ElemType::INT,
+                                 {});
+      }
+      if (rightType == ast::ElemType::CHAR or
+          rightType == ast::ElemType::UCHAR) {
+        rightType = ast::ElemType::INT;
+        add_cast_to_exp(exp->get_right(), ast::ElemType::INT, {});
+      }
       if (leftType == ast::ElemType::DOUBLE or
           rightType == ast::ElemType::DOUBLE) {
         success = false;
