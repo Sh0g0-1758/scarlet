@@ -4,6 +4,25 @@ namespace scarlet {
 namespace codegen {
 
 void Codegen::gen_scar() {
+  for (auto symbol : globalSymbolTable) {
+    if (symbol.second.type == symbolTable::symbolType::VARIABLE and
+        symbol.second.def != symbolTable::defType::FALSE and
+        symbol.second.link != symbolTable::linkage::NONE) {
+      MAKE_SHARED(scar::scar_StaticVariable_Node, static_variable);
+      MAKE_SHARED(scar::scar_Identifier_Node, identifier);
+      identifier->set_value(symbol.second.name);
+      static_variable->set_identifier(std::move(identifier));
+      static_variable->set_init(symbol.second.value);
+      if (symbol.second.link == symbolTable::linkage::INTERNAL) {
+        static_variable->set_global(false);
+      }
+      auto top_level =
+          std::static_pointer_cast<scar::scar_Top_Level_Node>(static_variable);
+      top_level->set_type(scar::topLevelType::STATIC_VARIABLE);
+      scar.add_elem(std::move(top_level));
+    }
+  }
+
   for (auto it : program.get_declarations()) {
     if (it->get_type() == ast::DeclarationType::FUNCTION) {
       // If its a function declaration (no body) skip it
@@ -47,25 +66,6 @@ void Codegen::gen_scar() {
           std::static_pointer_cast<scar::scar_Top_Level_Node>(scar_function);
       top_level->set_type(scar::topLevelType::FUNCTION);
 
-      scar.add_elem(std::move(top_level));
-    }
-  }
-
-  for (auto symbol : globalSymbolTable) {
-    if (symbol.second.type == symbolTable::symbolType::VARIABLE and
-        symbol.second.def != symbolTable::defType::FALSE and
-        symbol.second.link != symbolTable::linkage::NONE) {
-      MAKE_SHARED(scar::scar_StaticVariable_Node, static_variable);
-      MAKE_SHARED(scar::scar_Identifier_Node, identifier);
-      identifier->set_value(symbol.second.name);
-      static_variable->set_identifier(std::move(identifier));
-      static_variable->set_init(symbol.second.value);
-      if (symbol.second.link == symbolTable::linkage::INTERNAL) {
-        static_variable->set_global(false);
-      }
-      auto top_level =
-          std::static_pointer_cast<scar::scar_Top_Level_Node>(static_variable);
-      top_level->set_type(scar::topLevelType::STATIC_VARIABLE);
       scar.add_elem(std::move(top_level));
     }
   }
