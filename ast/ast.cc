@@ -195,6 +195,16 @@ std::pair<ElemType, std::vector<long>>
 getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
               std::vector<long> &rightDerivedType,
               std::shared_ptr<AST_exp_Node> exp) {
+  // implicit promotion of char to int
+  if (left == ElemType::CHAR)
+    left = ElemType::INT;
+  if (left == ElemType::UCHAR)
+    left = ElemType::UINT;
+  if (right == ElemType::CHAR)
+    right = ElemType::INT;
+  if (right == ElemType::UCHAR)
+    right = ElemType::UINT;
+
   if (left == ElemType::DERIVED or right == ElemType::DERIVED) {
     if (leftDerivedType == rightDerivedType) {
       return {left, leftDerivedType};

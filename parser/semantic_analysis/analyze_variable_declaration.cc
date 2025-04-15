@@ -630,7 +630,6 @@ void parser::analyze_array_initializer(
       init->initializer_list.push_back(child_init);
     }
   } else if (!(init->exp_list.empty())) {
-    // it is possible that a char array has been initialized with a string
     if (arrDim.size() != 1) {
       success = false;
       error_messages.emplace_back("Invalid use of initializer list, it does "
