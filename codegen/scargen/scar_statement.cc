@@ -83,9 +83,11 @@ void Codegen::gen_scar_statement(
     gen_scar_exp(statement->get_exps(), scar_function);
     MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
     scar_instruction->set_type(scar::instruction_type::RETURN);
-    MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-    SETVARCONSTANTREG(scar_val_src);
-    scar_instruction->set_src1(scar_val_src);
+    if (statement->get_exps() != nullptr) {
+      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+      SETVARCONSTANTREG(scar_val_src);
+      scar_instruction->set_src1(scar_val_src);
+    }
     scar_function->add_instruction(scar_instruction);
   } break;
   case ast::statementType::EXP: {

@@ -128,7 +128,7 @@ void parser::analyze_global_variable_declaration(
     varInfo.type = symbolTable::symbolType::VARIABLE;
     varInfo.def = symbolTable::defType::TENTATIVE;
     std::vector<long> derivedType;
-    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
     if (!derivedType.empty()) {
       derivedType.push_back((long)varDecl->get_base_type());
       varInfo.typeDef.push_back(ast::ElemType::DERIVED);
@@ -202,7 +202,7 @@ void parser::analyze_local_variable_declaration(
       varInfo.link = symbolTable::linkage::EXTERNAL;
       varInfo.type = symbolTable::symbolType::VARIABLE;
       std::vector<long> derivedType;
-      unroll_derived_type(varDecl->get_declarator(), derivedType);
+      ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
       if (!derivedType.empty()) {
         derivedType.push_back((long)varDecl->get_base_type());
         varInfo.typeDef.push_back(ast::ElemType::DERIVED);
@@ -229,7 +229,7 @@ void parser::analyze_local_variable_declaration(
     varInfo.link = symbolTable::linkage::INTERNAL;
     varInfo.type = symbolTable::symbolType::VARIABLE;
     std::vector<long> derivedType;
-    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
     if (!derivedType.empty()) {
       derivedType.push_back((long)varDecl->get_base_type());
       varInfo.typeDef.push_back(ast::ElemType::DERIVED);
@@ -258,7 +258,7 @@ void parser::analyze_local_variable_declaration(
     varInfo.link = symbolTable::linkage::NONE;
     varInfo.type = symbolTable::symbolType::VARIABLE;
     std::vector<long> derivedType;
-    unroll_derived_type(varDecl->get_declarator(), derivedType);
+    ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
     if (!derivedType.empty()) {
       derivedType.push_back((long)varDecl->get_base_type());
       varInfo.typeDef.push_back(ast::ElemType::DERIVED);

@@ -146,8 +146,6 @@ private:
       symbolTable::symbolInfo &varInfo,
       std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
       std::string &var_name);
-  void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
-                           std::vector<long> &derivedType);
   bool previous_declaration_has_same_type(
       ast::ElemType prev_base_type, std::vector<long> prev_derived_type,
       std::shared_ptr<ast::AST_declarator_Node> curr_declarator,

@@ -34,13 +34,16 @@ void Codegen::gen_scar() {
       // in case there is no return statement
       MAKE_SHARED(scar::scar_Instruction_Node, scar_instruction);
       scar_instruction->set_type(scar::instruction_type::RETURN);
-      MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
-      scar_val_src->set_type(scar::val_type::CONSTANT);
-      constant::Constant ret_0;
-      ret_0.set_type(constant::Type::INT);
-      ret_0.set_value({.i = 0});
-      scar_val_src->set_const_val(ret_0);
-      scar_instruction->set_src1(scar_val_src);
+      if (globalSymbolTable[funDecl->get_identifier()->get_value()]
+              .typeDef[0] != ast::ElemType::VOID) {
+        MAKE_SHARED(scar::scar_Val_Node, scar_val_src);
+        scar_val_src->set_type(scar::val_type::CONSTANT);
+        constant::Constant ret_0;
+        ret_0.set_type(constant::Type::INT);
+        ret_0.set_value({.i = 0});
+        scar_val_src->set_const_val(ret_0);
+        scar_instruction->set_src1(scar_val_src);
+      }
       scar_function->add_instruction(scar_instruction);
 
       MAKE_SHARED(scar::scar_Top_Level_Node, top_level);

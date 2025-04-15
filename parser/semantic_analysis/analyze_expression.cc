@@ -350,7 +350,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         factor->set_derived_type({});
       } else {
         std::vector<long> derivedType;
-        unroll_derived_type(factor->get_cast_declarator(), derivedType);
+        ast::unroll_derived_type(factor->get_cast_declarator(), derivedType);
         if (!derivedType.empty()) {
           derivedType.push_back((long)factor->get_cast_type());
           if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
@@ -514,7 +514,7 @@ void parser::assign_type_to_factor(
   } else if (factor->get_cast_type() != ast::ElemType::NONE) {
     decay_arr_to_pointer(factor->get_child(), nullptr);
     std::vector<long> derivedType;
-    unroll_derived_type(factor->get_cast_declarator(), derivedType);
+    ast::unroll_derived_type(factor->get_cast_declarator(), derivedType);
 
     if (!derivedType.empty()) {
       if (factor->get_child()->get_type() == ast::ElemType::DOUBLE) {

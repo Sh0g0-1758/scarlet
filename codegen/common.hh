@@ -21,6 +21,13 @@ namespace codegen {
     src->set_reg_name(get_prev_reg_name());                                    \
   }
 
+#define PURGEVOID()                                                            \
+  if (!variable_buffer.empty()) {                                              \
+    variable_buffer.clear();                                                   \
+  } else if (!constant_buffer.empty()) {                                       \
+    constant_buffer.clear();                                                   \
+  }
+
 /* COMMON MACROS FOR SCASM GENERATION */
 
 #define MAKE_DOUBLE_CONSTANT(target, constVal, alignment)                      \

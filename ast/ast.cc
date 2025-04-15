@@ -115,7 +115,7 @@ int getSizeOfTypeOnArch(ElemType type) {
 
 // WARNING: Use this function when you want to find the size of the type
 //          a pointer points to
-long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType) {
+unsigned long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType) {
   long sizeOfReferencedType = 1;
   int i = 1;
   while (derivedType[i] > 0) {
@@ -127,7 +127,7 @@ long getSizeOfReferencedTypeOnArch(std::vector<long> derivedType) {
   return sizeOfReferencedType;
 }
 
-long getSizeOfArrayTypeOnArch(std::vector<long> derivedType) {
+unsigned long getSizeOfArrayTypeOnArch(std::vector<long> derivedType) {
   return derivedType[0] * getSizeOfReferencedTypeOnArch(derivedType);
 }
 
@@ -194,6 +194,24 @@ bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType) {
        !ast::validate_type_specifier(type, derivedType)))
     return false;
   return true;
+}
+
+void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
+                         std::vector<long> &derivedType) {
+  if (declarator == nullptr)
+    return;
+
+  unroll_derived_type(declarator->get_child(), derivedType);
+
+  if (declarator->is_pointer()) {
+    derivedType.push_back((long)ast::ElemType::POINTER);
+  }
+
+  if (!declarator->get_arrDim().empty()) {
+    for (auto dim : declarator->get_arrDim()) {
+      derivedType.push_back(dim);
+    }
+  }
 }
 
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {

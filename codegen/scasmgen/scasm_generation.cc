@@ -98,6 +98,12 @@ void Codegen::gen_scasm() {
       if (inst->get_type() == scar::instruction_type::RETURN) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
 
+        if (inst->get_src1() == nullptr) {
+          scasm_inst->set_type(scasm::instruction_type::RET);
+          scasm_func->add_instruction(std::move(scasm_inst));
+          continue;
+        }
+
         scasm_inst->set_type(scasm::instruction_type::MOV);
         scasm_inst->set_asm_type(instType);
 
@@ -422,7 +428,7 @@ void Codegen::gen_scasm() {
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
       sym.asmType = elemToAsmType(baseType, derivedType);
       if (symbolTable::symbolInfo::is_array(it.second)) {
-        sym.size = ast::getSizeOfArrayTypeOnArch(derivedType);
+        sym.size = (long)ast::getSizeOfArrayTypeOnArch(derivedType);
         if (sym.size > 16) {
           sym.alignment = 16;
         } else {

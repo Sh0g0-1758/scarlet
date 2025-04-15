@@ -86,7 +86,7 @@ void parser::analyze_function_declaration(
   for (int i = 0; i <= (int)funcDecl->get_params().size(); i++) {
     if (i == 0) {
       std::vector<long> derivedType;
-      unroll_derived_type(funcDecl->get_declarator(), derivedType);
+      ast::unroll_derived_type(funcDecl->get_declarator(), derivedType);
       if (!derivedType.empty()) {
         // function cannot return an array
         if (derivedType[0] > 0) {
@@ -102,7 +102,7 @@ void parser::analyze_function_declaration(
     } else {
       std::vector<long> derivedType;
       auto param = funcDecl->get_params()[i - 1];
-      unroll_derived_type(param->declarator, derivedType);
+      ast::unroll_derived_type(param->declarator, derivedType);
       if (!derivedType.empty()) {
         derivedType.push_back((long)param->base_type);
         if (!ast::validate_type_specifier(ast::ElemType::DERIVED,

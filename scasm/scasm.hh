@@ -378,7 +378,7 @@ struct backendSymbol {
   /* Use for Functions */
   bool isDefined;
   /*use for array*/
-  int size = 0;
+  long size = 0;
   int alignment = 0;
   // std::vector<constant::Constant> value;
 };
