@@ -56,6 +56,11 @@ void parser::analyze_statement(
   case ast::statementType::SWITCH: {
     // iterate over case_exp_label and analyze the case expression
     analyze_exp(statement->get_exps(), symbol_table, indx);
+    // implicit promotion of char to int
+    if (statement->get_exps()->get_type() == ast::ElemType::CHAR or
+        statement->get_exps()->get_type() == ast::ElemType::UCHAR) {
+      add_cast_to_exp(statement->get_exps(), ast::ElemType::INT, {});
+    }
     ast::ElemType switchType = statement->get_exps()->get_type();
     auto switch_statement =
         std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
