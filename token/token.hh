@@ -127,7 +127,7 @@ void print_token(TOKEN token);
 std::string to_string(TOKEN token);
 bool is_unary_op(TOKEN token);
 bool is_binary_op(TOKEN token);
-std::string char_to_esc(char c);
+char char_to_esc(char c);
 int get_binop_prec(TOKEN token);
 std::string get_token_type(TOKEN token);
 bool is_right_associative(TOKEN token);

@@ -52,20 +52,21 @@ struct DoubleCompare {
 class Codegen {
 private:
   ast::AST_Program_Node program;
-  scar::scar_Program_Node scar;
+  scar::scar_Program_Node scar{};
   scasm::scasm_program scasm;
   std::string file_name;
   constant::Constant constant_buffer;
   std::string variable_buffer;
   bool success = true;
   int curr_regNum;
-  int doubleLabelCounter = 0;
+  int constLabelCounter = 0;
   int doubleCastCounter = 0;
   std::string reg_name;
   std::map<std::string, long> pseudoRegToMemOffset;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
   std::map<std::string, scasm::backendSymbol> backendSymbolTable;
   std::map<double, std::string, DoubleCompare> doubleLabelMap;
+  std::map<std::string, std::string> stringLabelMap;
   void gen_scar_exp(std::shared_ptr<ast::AST_exp_Node> exp,
                     std::shared_ptr<scar::scar_Function_Node> scar_function);
   void gen_scar_def_assign_exp(
@@ -121,6 +122,8 @@ private:
   pretty_print_function(std::shared_ptr<scar::scar_Function_Node> function);
   void pretty_print_static_variable(
       std::shared_ptr<scar::scar_StaticVariable_Node> static_variable);
+  void pretty_print_static_constant(
+      std::shared_ptr<scar::scar_StaticConstant_Node> static_constant);
   void pretty_print_type(ast::ElemType type, std::vector<long> derivedType);
 
 public:
@@ -186,7 +189,7 @@ public:
   }
 
   std::string get_const_label_name() {
-    return "C." + std::to_string(doubleLabelCounter++);
+    return "LC." + std::to_string(constLabelCounter++);
   }
 
   scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {

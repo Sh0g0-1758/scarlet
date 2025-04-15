@@ -149,10 +149,10 @@ public:
       os << constant.value.ul;
       break;
     case Type::CHAR:
-      os << "'" << constant.value.c << "'";
+      os << (int)constant.value.c;
       break;
     case Type::UCHAR:
-      os << "'" << constant.value.uc << "'";
+      os << (int)constant.value.uc;
       break;
     case Type::STRING:
       os << "\"" << constant.s << "\"";

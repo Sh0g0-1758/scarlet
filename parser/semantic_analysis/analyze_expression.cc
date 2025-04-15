@@ -147,6 +147,13 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
           factor->set_unop_node(nullptr);
           factor->set_child(nullptr);
           exp->set_factor_node(base_factor);
+        } else if (ast::factor_is_string(factor)) {
+          MAKE_SHARED(ast::AST_factor_Node, base_factor);
+          base_factor->set_const_node(factor->get_const_node());
+
+          factor->set_const_node(nullptr);
+
+          exp->set_factor_node(base_factor);
         }
       } else {
         exp->set_factor_node(propogate_factor);
@@ -282,7 +289,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     }
 
     if (factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
-      if (!ast::is_lvalue(factor->get_child())) {
+      if (!ast::is_lvalue(factor->get_child()) and
+          !ast::factor_is_string(factor->get_child())) {
         success = false;
         error_messages.emplace_back(
             "Expected an lvalue for AddressOf (&) operator");
@@ -435,14 +443,28 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
+#define CHAR_TO_INT(factor)                                                    \
+  if (factor != nullptr and factor->get_type() == ast::ElemType::CHAR) {       \
+    add_cast_to_factor(factor, ast::ElemType::INT, {});                        \
+  }
+
 void parser::assign_type_to_factor(
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!success)
     return;
 
   if (factor->get_const_node() != nullptr) {
-    factor->set_type(ast::constTypeToElemType(
-        factor->get_const_node()->get_constant().get_type()));
+    if (ast::factor_is_string(factor)) {
+      std::vector<long> derivedType{};
+      derivedType.push_back(
+          factor->get_const_node()->get_constant().get_string().size() + 1);
+      derivedType.push_back((long)ast::ElemType::CHAR);
+      factor->set_type(ast::ElemType::DERIVED);
+      factor->set_derived_type(derivedType);
+    } else {
+      factor->set_type(ast::constTypeToElemType(
+          factor->get_const_node()->get_constant().get_type()));
+    }
   } else if (factor->get_identifier_node() != nullptr) {
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];
@@ -508,6 +530,7 @@ void parser::assign_type_to_factor(
       }
       factor->set_derived_type(derivedType);
     } else {
+      CHAR_TO_INT(factor->get_child());
       factor->set_type(factor->get_child()->get_type());
       factor->set_derived_type(factor->get_child()->get_derived_type());
     }
