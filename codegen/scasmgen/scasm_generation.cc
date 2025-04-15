@@ -18,6 +18,19 @@ void Codegen::gen_scasm() {
       continue;
     }
 
+    if (elem->get_type() == scar::topLevelType::STATIC_CONSTANT) {
+      auto const_var =
+          std::static_pointer_cast<scar::scar_StaticConstant_Node>(elem);
+      MAKE_SHARED(scasm::scasm_static_constant, scasm_const);
+      scasm_const->set_name(const_var->get_identifier()->get_value());
+      scasm_const->set_init(const_var->get_init());
+      scasm_const->set_alignment(1);
+      scasm_const->set_global(elem->is_global());
+      scasm_const->set_type(scasm::scasm_top_level_type::STATIC_CONSTANT);
+      scasm_program.add_elem(std::move(scasm_const));
+      continue;
+    }
+
     auto func = std::static_pointer_cast<scar::scar_Function_Node>(elem);
     MAKE_SHARED(scasm::scasm_function, scasm_func);
     scasm_func->set_name(func->get_identifier()->get_value());

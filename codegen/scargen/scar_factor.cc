@@ -33,7 +33,7 @@ void Codegen::gen_scar_factor(
         symbolTable::symbolInfo constSymbol;
         constSymbol.type = symbolTable::symbolType::VARIABLE;
         constSymbol.name = label_string;
-        constSymbol.link = symbolTable::linkage::NONE;
+        constSymbol.link = symbolTable::linkage::INTERNAL;
         constSymbol.def = symbolTable::defType::TRUE;
         constSymbol.value.push_back(factor->get_const_node()->get_constant());
         constSymbol.typeDef.emplace_back(factor->get_type());
