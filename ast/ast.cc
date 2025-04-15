@@ -292,16 +292,15 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
                              ->get_middle()
                              ->get_factor_node()
                        : exp->get_factor_node();
+      if (isTernary and (is_void_ptr(left, leftDerivedType) or
+                         is_void_ptr(right, rightDerivedType))) {
+        return {ElemType::DERIVED,
+                {(long)ElemType::POINTER, (long)ElemType::VOID}};
+      }
       if (is_const_zero(leftFactor)) {
         return {right, rightDerivedType};
       } else if (is_const_zero(exp->get_right()->get_factor_node())) {
         return {left, leftDerivedType};
-      } else if (is_void_ptr(left, leftDerivedType) and
-                 is_ptr_type(right, rightDerivedType)) {
-        return {left, leftDerivedType};
-      } else if (is_ptr_type(left, leftDerivedType) and
-                 is_void_ptr(right, rightDerivedType)) {
-        return {right, rightDerivedType};
       } else {
         return {ElemType::NONE, {}};
       }

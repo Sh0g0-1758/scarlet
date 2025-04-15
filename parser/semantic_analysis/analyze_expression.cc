@@ -67,6 +67,9 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
 
       add_cast_to_exp(base_exp, baseType, baseDerivedType);
 
+      exp->set_type(baseType);
+      exp->set_derived_type(baseDerivedType);
+
       exp->set_factor_node(factor->get_child());
     }
 
@@ -286,6 +289,12 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         error_messages.emplace_back(
             "Expected an lvalue for the increment / decrement operator");
       }
+      if (ast::is_void_ptr(factor->get_child()->get_type(),
+                           factor->get_child()->get_derived_type())) {
+        success = false;
+        error_messages.emplace_back(
+            "Increment / Decrement operator not allowed on void type");
+      }
     }
 
     if (factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
@@ -339,17 +348,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         if (!ast::validate_type_specifier(
                 factor->get_child()->get_type(),
                 factor->get_child()->get_derived_type())) {
-          success = false;
-          error_messages.emplace_back(
-              "sizeof operator not allowed on incomplete type");
-        }
-        factor->set_type(ast::ElemType::ULONG);
-        factor->set_derived_type({});
-      } else if (factor->get_exp_node() != nullptr) {
-        // exp has been analyzed already
-        if (!ast::validate_type_specifier(
-                factor->get_exp_node()->get_type(),
-                factor->get_exp_node()->get_derived_type())) {
           success = false;
           error_messages.emplace_back(
               "sizeof operator not allowed on incomplete type");
@@ -481,7 +479,6 @@ void parser::assign_type_to_factor(
   } else if (factor->get_unop_node() != nullptr) {
     auto unop = factor->get_unop_node()->get_op();
     if (unop == unop::UNOP::SIZEOF) {
-      // dealt with later
       return;
     }
 
@@ -703,6 +700,11 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
         success = false;
         error_messages.emplace_back(
             "Shift operator is not allowed on derived types");
+      } else if (leftType == ast::ElemType::VOID or
+                 rightType == ast::ElemType::VOID) {
+        success = false;
+        error_messages.emplace_back(
+            "Shift operator is not allowed on void types");
       } else {
         ast::ElemType expType = leftType;
         if (expType != rightType) {

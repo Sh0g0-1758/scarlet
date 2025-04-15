@@ -95,10 +95,7 @@ void Codegen::gen_scar_factor(
       sortc.set_type(constant::Type::ULONG);
       ast::ElemType baseType{};
       std::vector<long> derivedType;
-      if (factor->get_exp_node() != nullptr) {
-        baseType = factor->get_exp_node()->get_type();
-        derivedType = factor->get_exp_node()->get_derived_type();
-      } else if (factor->get_child() != nullptr) {
+      if (factor->get_child() != nullptr) {
         baseType = factor->get_child()->get_type();
         derivedType = factor->get_child()->get_derived_type();
       } else {

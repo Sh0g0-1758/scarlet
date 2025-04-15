@@ -102,7 +102,9 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       } else {
         MAKE_SHARED(ast::AST_exp_Node, exp);
         parse_exp(tokens, exp);
-        factor->set_exp_node(std::move(exp));
+        MAKE_SHARED(ast::AST_factor_Node, child_factor);
+        child_factor->set_exp_node(std::move(exp));
+        factor->set_child(std::move(child_factor));
         EXPECT(token::TOKEN::CLOSE_PARANTHESES);
       }
     } else {
@@ -188,7 +190,8 @@ void parser::parse_exp(std::vector<token::Token> &tokens,
          token::get_binop_prec(tokens[0].get_token()) >= prec) {
     int new_prec = token::get_binop_prec(tokens[0].get_token()) + 1;
     // Handle right associative operators by reducing the new precedence by 1
-    if (token::is_right_associative(tokens[0].get_token()))
+    if (token::is_right_associative(tokens[0].get_token()) or
+        tokens[0].get_token() == token::TOKEN::QUESTION_MARK)
       new_prec--;
     MAKE_SHARED(ast::AST_binop_Node, binop);
     parse_binop(tokens, binop);
