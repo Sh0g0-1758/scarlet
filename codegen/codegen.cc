@@ -299,6 +299,9 @@ void Codegen::asm_gen_static_variable(
     } else if (varType == scasm::AssemblyType::DOUBLE) {
       assembly << "\t.quad ";
       assembly << init[0].get_value().l << "\n";
+    } else if (varType == scasm::AssemblyType::BYTE) {
+      assembly << "\t.byte ";
+      assembly << init[0] << "\n";
     } else if (varType == scasm::AssemblyType::BYTE_ARRAY) {
       for (auto it : init) {
         if (it.get_type() == constant::Type::ZERO) {
