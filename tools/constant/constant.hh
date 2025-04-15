@@ -44,50 +44,7 @@ public:
   Type get_type() { return type; }
   void set_type(Type type) { this->type = type; }
   std::string get_string() { return s; }
-  void set_string(std::string s) {
-    std::string escaped{};
-    for (char c : s) {
-      switch (c) {
-      case '\a':
-        escaped += "\\a";
-        break;
-      case '\n':
-        escaped += "\\n";
-        break;
-      case '\f':
-        escaped += "\\f";
-        break;
-      case '\b':
-        escaped += "\\b";
-        break;
-      case '\r':
-        escaped += "\\r";
-        break;
-      case '\t':
-        escaped += "\\t";
-        break;
-      case '\v':
-        escaped += "\\v";
-        break;
-      case '\'':
-        escaped += "\\\'";
-        break;
-      case '\"':
-        escaped += "\\\"";
-        break;
-      case '\?':
-        escaped += "\\\?";
-        break;
-      case '\\':
-        escaped += "\\\\";
-        break;
-      default:
-        escaped += c;
-        break;
-      }
-    }
-    this->s = escaped;
-  }
+  void set_string(std::string s) { this->s = s; }
   bool empty() { return type == Type::NONE; }
   void clear() {
     type = Type::NONE;
@@ -197,9 +154,50 @@ public:
     case Type::UCHAR:
       os << (int)constant.value.uc;
       break;
-    case Type::STRING:
-      os << "\"" << constant.s << "\"";
-      break;
+    case Type::STRING: {
+      std::string escaped{};
+      for (char c : constant.s) {
+        switch (c) {
+        case '\a':
+          escaped += "\\a";
+          break;
+        case '\n':
+          escaped += "\\n";
+          break;
+        case '\f':
+          escaped += "\\f";
+          break;
+        case '\b':
+          escaped += "\\b";
+          break;
+        case '\r':
+          escaped += "\\r";
+          break;
+        case '\t':
+          escaped += "\\t";
+          break;
+        case '\v':
+          escaped += "\\v";
+          break;
+        case '\'':
+          escaped += "\\\'";
+          break;
+        case '\"':
+          escaped += "\\\"";
+          break;
+        case '\?':
+          escaped += "\\\?";
+          break;
+        case '\\':
+          escaped += "\\\\";
+          break;
+        default:
+          escaped += c;
+          break;
+        }
+      }
+      os << "\"" << escaped << "\"";
+    } break;
     case Type::ZERO:
       os << "Zero(" << constant.value.ul << ")";
       break;
