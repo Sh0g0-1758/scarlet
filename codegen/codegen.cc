@@ -9,8 +9,8 @@ namespace codegen {
 #define ARCHPREFIX ""
 #endif
 
-#define PRINT_REG(target)                                                      \
-  switch (instr->get_asm_type()) {                                             \
+#define PRINT_REG(target, type)                                                \
+  switch (type) {                                                              \
   case scasm::AssemblyType::DOUBLE:                                            \
   case scasm::AssemblyType::QUAD_WORD:                                         \
     assembly << scasm::to_string(instr->get_##target()->get_reg(),             \
@@ -37,7 +37,7 @@ namespace codegen {
                                scasm::register_size::QWORD);                   \
   assembly << ", " << instr->get_##target()->get_offset() << ")";
 
-#define CODEGEN_SRC()                                                          \
+#define CODEGEN_SRC(type)                                                      \
   if (instr->get_src()->get_type() == scasm::operand_type::IMM) {              \
     assembly << "$" << instr->get_src()->get_imm();                            \
   } else if (instr->get_src()->get_type() == scasm::operand_type::MEMORY) {    \
@@ -48,12 +48,12 @@ namespace codegen {
   } else if (instr->get_src()->get_type() == scasm::operand_type::DATA) {      \
     assembly << ARCHPREFIX << instr->get_src()->get_identifier() << "(%rip)";  \
   } else if (instr->get_src()->get_type() == scasm::operand_type::REG) {       \
-    PRINT_REG(src);                                                            \
+    PRINT_REG(src, type);                                                      \
   } else if (instr->get_src()->get_type() == scasm::operand_type::INDEXED) {   \
     PRINT_INDEXED(src)                                                         \
   }
 
-#define CODEGEN_DST()                                                          \
+#define CODEGEN_DST(type)                                                      \
   if (instr->get_dst()->get_type() == scasm::operand_type::MEMORY) {           \
     assembly << instr->get_dst()->get_offset() << "(";                         \
     assembly << scasm::to_string(instr->get_dst()->get_reg(),                  \
@@ -62,16 +62,16 @@ namespace codegen {
   } else if (instr->get_dst()->get_type() == scasm::operand_type::DATA) {      \
     assembly << ARCHPREFIX << instr->get_dst()->get_identifier() << "(%rip)";  \
   } else if (instr->get_dst()->get_type() == scasm::operand_type::REG) {       \
-    PRINT_REG(dst);                                                            \
+    PRINT_REG(dst, type);                                                      \
   }
 
 #define CODEGEN_SRC_DST()                                                      \
-  CODEGEN_SRC();                                                               \
+  CODEGEN_SRC(instr->get_asm_type());                                          \
   assembly << ", ";                                                            \
-  CODEGEN_DST();
+  CODEGEN_DST(instr->get_asm_type());
 
-#define POSTFIX_ASM_TYPE()                                                     \
-  switch (instr->get_asm_type()) {                                             \
+#define POSTFIX_ASM_TYPE(type)                                                 \
+  switch (type) {                                                              \
   case scasm::AssemblyType::QUAD_WORD:                                         \
     assembly << "q";                                                           \
     break;                                                                     \
@@ -80,6 +80,9 @@ namespace codegen {
     break;                                                                     \
   case scasm::AssemblyType::DOUBLE:                                            \
     assembly << "sd";                                                          \
+    break;                                                                     \
+  case scasm::AssemblyType::BYTE:                                              \
+    assembly << "b";                                                           \
     break;                                                                     \
   default:                                                                     \
     break;                                                                     \
@@ -111,9 +114,9 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
 #endif
     } else if (instr->get_type() == scasm::instruction_type::PUSH) {
       assembly << "\tpush";
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
-      CODEGEN_SRC();
+      CODEGEN_SRC(instr->get_asm_type());
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::RET) {
       assembly << "\tmovq %rbp, %rsp\n";
@@ -121,16 +124,16 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << "\tret\n";
     } else if (instr->get_type() == scasm::instruction_type::MOV) {
       assembly << "\tmov";
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
       CODEGEN_SRC_DST();
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::UNARY) {
       assembly << "\t";
       assembly << scasm::to_string(instr->get_unop());
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
-      CODEGEN_DST();
+      CODEGEN_DST(instr->get_asm_type());
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::CDQ) {
       switch (instr->get_asm_type()) {
@@ -145,15 +148,15 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       }
     } else if (instr->get_type() == scasm::instruction_type::IDIV) {
       assembly << "\tidiv";
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
-      CODEGEN_SRC();
+      CODEGEN_SRC(instr->get_asm_type());
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::DIV) {
       assembly << "\tdiv";
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
-      CODEGEN_SRC();
+      CODEGEN_SRC(instr->get_asm_type());
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::BINARY) {
       assembly << "\t";
@@ -164,11 +167,11 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
           assembly << "mulsd";
         } else {
           assembly << scasm::to_string(instr->get_binop());
-          POSTFIX_ASM_TYPE();
+          POSTFIX_ASM_TYPE(instr->get_asm_type());
         }
       } else {
         assembly << scasm::to_string(instr->get_binop());
-        POSTFIX_ASM_TYPE();
+        POSTFIX_ASM_TYPE(instr->get_asm_type());
       }
       assembly << " ";
       CODEGEN_SRC_DST();
@@ -192,7 +195,7 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       } else {
         assembly << "\tcmp";
       }
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
       CODEGEN_SRC_DST();
       assembly << "\n";
@@ -207,30 +210,41 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
     } else if (instr->get_type() == scasm::instruction_type::SETCC) {
       assembly << "\tset";
       assembly << scasm::to_string(instr->get_src()->get_cond()) << " ";
-      CODEGEN_DST();
+      CODEGEN_DST(instr->get_asm_type());
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::MOVSX) {
-      assembly << "\tmovslq ";
-      CODEGEN_SRC();
+      assembly << "\tmovs";
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
+      POSTFIX_ASM_TYPE(instr->get_dst_type());
+      assembly << " ";
+      CODEGEN_SRC(instr->get_asm_type());
       assembly << ", ";
-      instr->set_asm_type(scasm::AssemblyType::QUAD_WORD);
-      CODEGEN_DST();
+      CODEGEN_DST(instr->get_dst_type());
+      assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::MOVZX) {
+      assembly << "\tmovz";
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
+      POSTFIX_ASM_TYPE(instr->get_dst_type());
+      assembly << " ";
+      CODEGEN_SRC(instr->get_asm_type());
+      assembly << ", ";
+      CODEGEN_DST(instr->get_dst_type());
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::CVTSI2SD) {
       assembly << "\tcvtsi2sd";
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
       CODEGEN_SRC_DST();
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::CVTTS2DI) {
       assembly << "\tcvttsd2si";
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
       CODEGEN_SRC_DST();
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::LEA) {
       assembly << "\tlea";
-      POSTFIX_ASM_TYPE();
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
       assembly << " ";
       CODEGEN_SRC_DST();
       assembly << "\n";
@@ -288,18 +302,20 @@ void Codegen::asm_gen_static_variable(
     } else if (varType == scasm::AssemblyType::BYTE_ARRAY) {
       for (auto it : init) {
         if (it.get_type() == constant::Type::ZERO) {
-          assembly << "\t.zero " + std::to_string(it.get_value().ul) + '\n';
-        } else if (it.get_type() == constant::Type::INT) {
-          assembly << "\t.long " + std::to_string(it.get_value().i) + '\n';
-        } else if (it.get_type() == constant::Type::UINT) {
-          assembly << "\t.long " + std::to_string(it.get_value().ui) + '\n';
-        } else if (it.get_type() == constant::Type::LONG) {
-          assembly << "\t.quad " + std::to_string(it.get_value().l) + '\n';
-        } else if (it.get_type() == constant::Type::ULONG) {
-          assembly << "\t.quad " + std::to_string(it.get_value().ul) + '\n';
+          assembly << "\t.zero ";
+        } else if (it.get_type() == constant::Type::INT or
+                   it.get_type() == constant::Type::UINT) {
+          assembly << "\t.long ";
+        } else if (it.get_type() == constant::Type::LONG or
+                   it.get_type() == constant::Type::ULONG) {
+          assembly << "\t.quad ";
         } else if (it.get_type() == constant::Type::DOUBLE) {
-          assembly << "\t.quad " + std::to_string(it.get_value().ul) + '\n';
+          assembly << "\t.quad ";
+        } else if (it.get_type() == constant::Type::CHAR or
+                   it.get_type() == constant::Type::UCHAR) {
+          assembly << "\t.byte ";
         }
+        assembly << it << '\n';
       }
     }
   } else {
@@ -315,8 +331,12 @@ void Codegen::asm_gen_static_constant(
   auto vars = std::static_pointer_cast<scasm::scasm_static_constant>(elem);
   auto varType = backendSymbolTable[vars->get_name()].asmType;
 #ifdef __APPLE__
-  assembly << "\t.literal" + std::to_string(vars->get_alignment()) + '\n';
-  assembly << "\t.balign " + std::to_string(vars->get_alignment()) + '\n';
+  if (varType == scasm::AssemblyType::BYTE_ARRAY) {
+    assembly << "\t.cstring\n";
+  } else {
+    assembly << "\t.literal" + std::to_string(vars->get_alignment()) + '\n';
+    assembly << "\t.balign " + std::to_string(vars->get_alignment()) + '\n';
+  }
 #else
   assembly << "\t.section .rodata\n";
   assembly << "\t.align " + std::to_string(vars->get_alignment()) + '\n';
@@ -324,18 +344,16 @@ void Codegen::asm_gen_static_constant(
   assembly << ARCHPREFIX << vars->get_name() << ":\n";
   if (varType == scasm::AssemblyType::QUAD_WORD) {
     assembly << "\t.quad ";
-    assembly << vars->get_init() << "\n";
   } else if (varType == scasm::AssemblyType::LONG_WORD) {
     assembly << "\t.long ";
-    assembly << vars->get_init() << "\n";
   } else if (varType == scasm::AssemblyType::DOUBLE) {
     assembly << "\t.quad ";
-    assembly << vars->get_init().get_value().l << "\n";
+  } else if (varType == scasm::AssemblyType::BYTE) {
+    assembly << "\t.byte ";
+  } else if (varType == scasm::AssemblyType::BYTE_ARRAY) {
+    assembly << "\t.asciz ";
   }
-#ifdef __APPLE__
-  if (vars->get_alignment() == 16)
-    assembly << "\t.quad 0\n";
-#endif
+  assembly << vars->get_init() << "\n";
 }
 
 void Codegen::codegen() {
