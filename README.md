@@ -94,3 +94,10 @@ We ask all contributors to adhere to the following guidelines:
 - Please follow the Conventional Commits specification: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 - Make your changes on a separate branch.
 - Ensure that your Pull Requests (PRs) are atomic, addressing one change or feature at a time.
+
+## What we do not support
+We try to be as close to the C standard as possible but there are a few features we do not support as it is in the standard because quite frankly it does not make much sense. 
+
+- We do not support subscripting of type `1[a]` where `a` is an array or a pointer.
+- Compound operations and increment/decrement are just syntactic sugars. (They get exapanded to their base expressions ie. `a+=2` will become `a = a + 2` and `b++` will become `b = b + 1`. Note that in post increment/decrement operations, the correct ie. un-updated value will be returned).
+- For comparing pointer the type needs to be same. So you need to cast a `long*` to a `void*` before comparing with a `void*`
