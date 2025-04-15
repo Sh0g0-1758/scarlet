@@ -393,11 +393,6 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   }
 }
 
-#define CHAR_TO_INT(factor)                                                    \
-  if (factor != nullptr and factor->get_type() == ast::ElemType::CHAR) {       \
-    add_cast_to_factor(factor, ast::ElemType::INT, {});                        \
-  }
-
 void parser::assign_type_to_factor(
     std::shared_ptr<ast::AST_factor_Node> factor) {
   if (!success)
@@ -476,7 +471,11 @@ void parser::assign_type_to_factor(
       }
       factor->set_derived_type(derivedType);
     } else {
-      CHAR_TO_INT(factor->get_child());
+      // implicit promotion of char to int
+      if (factor->get_child()->get_type() == ast::ElemType::CHAR or
+          factor->get_child()->get_type() == ast::ElemType::UCHAR) {
+        add_cast_to_factor(factor->get_child(), ast::ElemType::INT, {});
+      }
       factor->set_type(factor->get_child()->get_type());
       factor->set_derived_type(factor->get_child()->get_derived_type());
     }
