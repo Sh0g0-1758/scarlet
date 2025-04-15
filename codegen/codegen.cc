@@ -302,20 +302,19 @@ void Codegen::asm_gen_static_variable(
     } else if (varType == scasm::AssemblyType::BYTE_ARRAY) {
       for (auto it : init) {
         if (it.get_type() == constant::Type::ZERO) {
-          assembly << "\t.zero ";
+          assembly << "\t.zero " << it.get_value().ul << '\n';
         } else if (it.get_type() == constant::Type::INT or
                    it.get_type() == constant::Type::UINT) {
-          assembly << "\t.long ";
+          assembly << "\t.long " << it << '\n';
         } else if (it.get_type() == constant::Type::LONG or
                    it.get_type() == constant::Type::ULONG) {
-          assembly << "\t.quad ";
+          assembly << "\t.quad " << it << '\n';
         } else if (it.get_type() == constant::Type::DOUBLE) {
-          assembly << "\t.quad ";
+          assembly << "\t.quad " << it.get_value().l << '\n';
         } else if (it.get_type() == constant::Type::CHAR or
                    it.get_type() == constant::Type::UCHAR) {
-          assembly << "\t.byte ";
+          assembly << "\t.byte " << it << '\n';
         }
-        assembly << it << '\n';
       }
     }
   } else {
@@ -344,16 +343,20 @@ void Codegen::asm_gen_static_constant(
   assembly << ARCHPREFIX << vars->get_name() << ":\n";
   if (varType == scasm::AssemblyType::QUAD_WORD) {
     assembly << "\t.quad ";
+    assembly << vars->get_init() << "\n";
   } else if (varType == scasm::AssemblyType::LONG_WORD) {
     assembly << "\t.long ";
+    assembly << vars->get_init() << "\n";
   } else if (varType == scasm::AssemblyType::DOUBLE) {
     assembly << "\t.quad ";
+    assembly << vars->get_init().get_value().l << "\n";
   } else if (varType == scasm::AssemblyType::BYTE) {
     assembly << "\t.byte ";
+    assembly << vars->get_init() << "\n";
   } else if (varType == scasm::AssemblyType::BYTE_ARRAY) {
     assembly << "\t.asciz ";
+    assembly << vars->get_init() << "\n";
   }
-  assembly << vars->get_init() << "\n";
 }
 
 void Codegen::codegen() {
