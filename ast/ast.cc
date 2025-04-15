@@ -107,10 +107,15 @@ int getSizeOfTypeOnArch(ElemType type) {
     return sizeof(double);
   case ast::ElemType::POINTER:
     return sizeof(unsigned long);
+  case ast::ElemType::CHAR:
+  case ast::ElemType::UCHAR:
+    return sizeof(char);
   case ast::ElemType::VOID:
-  default:
+  case ast::ElemType::DERIVED:
+  case ast::ElemType::NONE:
     return 0;
   }
+  return 0;
 }
 
 // WARNING: Use this function when you want to find the size of the type
@@ -240,10 +245,40 @@ bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
               : false);
 }
 
+bool exp_is_string(std::shared_ptr<AST_exp_Node> exp) {
+  if (exp == nullptr)
+    return false;
+  if (exp->get_factor_node() == nullptr)
+    return false;
+  if (exp->get_factor_node()->get_const_node() == nullptr)
+    return false;
+  if (exp->get_factor_node()->get_const_node()->get_constant().get_type() !=
+      constant::Type::STRING)
+    return false;
+  return true;
+}
+
+bool factor_is_string(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor == nullptr)
+    return false;
+  if (factor->get_const_node() == nullptr)
+    return false;
+  if (factor->get_const_node()->get_constant().get_type() !=
+      constant::Type::STRING)
+    return false;
+  return true;
+}
+
 std::pair<ElemType, std::vector<long>>
 getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
               std::vector<long> &rightDerivedType,
               std::shared_ptr<AST_exp_Node> exp) {
+  // implicit promotion of char to int
+  if (left == ElemType::CHAR or left == ElemType::UCHAR)
+    left = ElemType::INT;
+  if (right == ElemType::CHAR or right == ElemType::UCHAR)
+    right = ElemType::INT;
+
   if (left == ElemType::DERIVED or right == ElemType::DERIVED) {
     if (leftDerivedType == rightDerivedType) {
       return {left, leftDerivedType};
@@ -318,28 +353,28 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
   }
 }
 
-#define CASTCONST(c, ret, t, T)                                                \
-  switch (c.get_type()) {                                                      \
+#define CASTCONST(Const, ret, t, T)                                            \
+  switch (Const.get_type()) {                                                  \
   case constant::Type::INT:                                                    \
-    ret.set_value({.t = static_cast<T>(c.get_value().i)});                     \
+    ret.set_value({.t = static_cast<T>(Const.get_value().i)});                 \
     break;                                                                     \
   case constant::Type::LONG:                                                   \
-    ret.set_value({.t = static_cast<T>(c.get_value().l)});                     \
+    ret.set_value({.t = static_cast<T>(Const.get_value().l)});                 \
     break;                                                                     \
   case constant::Type::UINT:                                                   \
-    ret.set_value({.t = static_cast<T>(c.get_value().ui)});                    \
+    ret.set_value({.t = static_cast<T>(Const.get_value().ui)});                \
     break;                                                                     \
   case constant::Type::ULONG:                                                  \
-    ret.set_value({.t = static_cast<T>(c.get_value().ul)});                    \
+    ret.set_value({.t = static_cast<T>(Const.get_value().ul)});                \
     break;                                                                     \
   case constant::Type::DOUBLE:                                                 \
-    ret.set_value({.t = static_cast<T>(c.get_value().d)});                     \
+    ret.set_value({.t = static_cast<T>(Const.get_value().d)});                 \
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
-    ret.set_value({.t = static_cast<T>(c.get_value().c)});                     \
+    ret.set_value({.t = static_cast<T>(Const.get_value().c)});                 \
     break;                                                                     \
   case constant::Type::UCHAR:                                                  \
-    ret.set_value({.t = static_cast<T>(c.get_value().uc)});                    \
+    ret.set_value({.t = static_cast<T>(Const.get_value().uc)});                \
     break;                                                                     \
   case constant::Type::STRING:                                                 \
   case constant::Type::ZERO:                                                   \
@@ -347,9 +382,10 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
     break;                                                                     \
   }
 
-constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
-  if (constTypeToElemType(c.get_type()) == type) {
-    return c;
+constant::Constant castConstToElemType(constant::Constant Const,
+                                       ElemType type) {
+  if (constTypeToElemType(Const.get_type()) == type) {
+    return Const;
   }
 
   constant::Constant ret;
@@ -357,35 +393,35 @@ constant::Constant castConstToElemType(constant::Constant c, ElemType type) {
   switch (type) {
   case ElemType::INT: {
     ret.set_type(constant::Type::INT);
-    CASTCONST(c, ret, i, int);
+    CASTCONST(Const, ret, i, int);
   } break;
   case ElemType::LONG: {
     ret.set_type(constant::Type::LONG);
-    CASTCONST(c, ret, l, long);
+    CASTCONST(Const, ret, l, long);
   } break;
   case ElemType::UINT: {
     ret.set_type(constant::Type::UINT);
-    CASTCONST(c, ret, ui, unsigned int);
+    CASTCONST(Const, ret, ui, unsigned int);
   } break;
   case ElemType::ULONG: {
     ret.set_type(constant::Type::ULONG);
-    CASTCONST(c, ret, ul, unsigned long);
+    CASTCONST(Const, ret, ul, unsigned long);
   } break;
   case ElemType::DOUBLE: {
     ret.set_type(constant::Type::DOUBLE);
-    CASTCONST(c, ret, d, double);
+    CASTCONST(Const, ret, d, double);
   } break;
   case ElemType::DERIVED: {
     ret.set_type(constant::Type::ULONG);
-    CASTCONST(c, ret, ul, unsigned long);
+    CASTCONST(Const, ret, ul, unsigned long);
   } break;
   case ElemType::CHAR: {
     ret.set_type(constant::Type::CHAR);
-    CASTCONST(c, ret, c, char);
+    CASTCONST(Const, ret, c, char);
   } break;
   case ElemType::UCHAR: {
     ret.set_type(constant::Type::UCHAR);
-    CASTCONST(c, ret, uc, unsigned char);
+    CASTCONST(Const, ret, uc, unsigned char);
   } break;
   case ElemType::POINTER:
   case ElemType::VOID:

@@ -552,6 +552,7 @@ public:
 struct initializer {
   std::vector<std::shared_ptr<initializer>> initializer_list;
   std::vector<std::shared_ptr<AST_exp_Node>> exp_list;
+  std::vector<int> exp_indx;
 };
 
 class AST_variable_declaration_Node : public AST_Declaration_Node {
@@ -783,5 +784,7 @@ bool validate_type_specifier(ast::ElemType type, std::vector<long> derivedType);
 bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType);
 void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
                          std::vector<long> &derivedType);
+bool exp_is_string(std::shared_ptr<AST_exp_Node> exp);
+bool factor_is_string(std::shared_ptr<AST_factor_Node> factor);
 } // namespace ast
 } // namespace scarlet

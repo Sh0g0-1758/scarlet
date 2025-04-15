@@ -147,6 +147,13 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
           factor->set_unop_node(nullptr);
           factor->set_child(nullptr);
           exp->set_factor_node(base_factor);
+        } else if (ast::factor_is_string(factor)) {
+          MAKE_SHARED(ast::AST_factor_Node, base_factor);
+          base_factor->set_const_node(factor->get_const_node());
+
+          factor->set_const_node(nullptr);
+
+          exp->set_factor_node(base_factor);
         }
       } else {
         exp->set_factor_node(propogate_factor);
@@ -282,7 +289,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     }
 
     if (factor->get_unop_node()->get_op() == unop::UNOP::ADDROF) {
-      if (!ast::is_lvalue(factor->get_child())) {
+      if (!ast::is_lvalue(factor->get_child()) and
+          !ast::factor_is_string(factor->get_child())) {
         success = false;
         error_messages.emplace_back(
             "Expected an lvalue for AddressOf (&) operator");
@@ -386,7 +394,16 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       MAKE_SHARED(ast::AST_exp_Node, right);
       right->set_type(factor->get_type());
       right->set_derived_type(factor->get_derived_type());
-      right->set_factor_node(base);
+      /* It is possible that the baseType is {u}char in which case we will have
+       * to cast it to int */
+      if (baseType == ast::ElemType::CHAR or baseType == ast::ElemType::UCHAR) {
+        MAKE_SHARED(ast::AST_factor_Node, rightFactor);
+        rightFactor->copy(base);
+        add_cast_to_factor(rightFactor, ast::ElemType::INT, {});
+        right->set_factor_node(rightFactor);
+      } else {
+        right->set_factor_node(base);
+      }
       MAKE_SHARED(ast::AST_binop_Node, binop_node2);
       if (unop == unop::UNOP::PREDECREMENT or unop == unop::UNOP::POSTDECREMENT)
         binop_node2->set_op(binop::BINOP::SUB);
@@ -441,8 +458,17 @@ void parser::assign_type_to_factor(
     return;
 
   if (factor->get_const_node() != nullptr) {
-    factor->set_type(ast::constTypeToElemType(
-        factor->get_const_node()->get_constant().get_type()));
+    if (ast::factor_is_string(factor)) {
+      std::vector<long> derivedType{};
+      derivedType.push_back(
+          factor->get_const_node()->get_constant().get_string().size() + 1);
+      derivedType.push_back((long)ast::ElemType::CHAR);
+      factor->set_type(ast::ElemType::DERIVED);
+      factor->set_derived_type(derivedType);
+    } else {
+      factor->set_type(ast::constTypeToElemType(
+          factor->get_const_node()->get_constant().get_type()));
+    }
   } else if (factor->get_identifier_node() != nullptr) {
     auto identInfo =
         globalSymbolTable[factor->get_identifier_node()->get_value()];
@@ -507,7 +533,15 @@ void parser::assign_type_to_factor(
         derivedType.push_back((long)factor->get_child()->get_type());
       }
       factor->set_derived_type(derivedType);
+    } else if (unop::is_incr_decr(unop)) {
+      factor->set_type(factor->get_child()->get_type());
+      factor->set_derived_type(factor->get_child()->get_derived_type());
     } else {
+      // implicit promotion of char to int
+      if (factor->get_child()->get_type() == ast::ElemType::CHAR or
+          factor->get_child()->get_type() == ast::ElemType::UCHAR) {
+        add_cast_to_factor(factor->get_child(), ast::ElemType::INT, {});
+      }
       factor->set_type(factor->get_child()->get_type());
       factor->set_derived_type(factor->get_child()->get_derived_type());
     }
@@ -646,6 +680,19 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
                                    ? exp->get_left()->get_type()
                                    : exp->get_factor_node()->get_type();
       ast::ElemType rightType = exp->get_right()->get_type();
+      // implicit promotion of char to int
+      if (leftType == ast::ElemType::CHAR or leftType == ast::ElemType::UCHAR) {
+        leftType = ast::ElemType::INT;
+        (exp->get_left() != nullptr)
+            ? add_cast_to_exp(exp->get_left(), ast::ElemType::INT, {})
+            : add_cast_to_factor(exp->get_factor_node(), ast::ElemType::INT,
+                                 {});
+      }
+      if (rightType == ast::ElemType::CHAR or
+          rightType == ast::ElemType::UCHAR) {
+        rightType = ast::ElemType::INT;
+        add_cast_to_exp(exp->get_right(), ast::ElemType::INT, {});
+      }
       if (leftType == ast::ElemType::DOUBLE or
           rightType == ast::ElemType::DOUBLE) {
         success = false;

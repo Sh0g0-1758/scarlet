@@ -149,14 +149,55 @@ public:
       os << constant.value.ul;
       break;
     case Type::CHAR:
-      os << "'" << constant.value.c << "'";
+      os << (int)constant.value.c;
       break;
     case Type::UCHAR:
-      os << "'" << constant.value.uc << "'";
+      os << (int)constant.value.uc;
       break;
-    case Type::STRING:
-      os << "\"" << constant.s << "\"";
-      break;
+    case Type::STRING: {
+      std::string escaped{};
+      for (char c : constant.s) {
+        switch (c) {
+        case '\a':
+          escaped += "\\007";
+          break;
+        case '\n':
+          escaped += "\\012";
+          break;
+        case '\f':
+          escaped += "\\014";
+          break;
+        case '\b':
+          escaped += "\\010";
+          break;
+        case '\r':
+          escaped += "\\015";
+          break;
+        case '\t':
+          escaped += "\\011";
+          break;
+        case '\v':
+          escaped += "\\013";
+          break;
+        case '\'':
+          escaped += "\\047";
+          break;
+        case '\"':
+          escaped += "\\042";
+          break;
+        case '\?':
+          escaped += "\\077";
+          break;
+        case '\\':
+          escaped += "\\134";
+          break;
+        default:
+          escaped += c;
+          break;
+        }
+      }
+      os << "\"" << escaped << "\"";
+    } break;
     case Type::ZERO:
       os << "Zero(" << constant.value.ul << ")";
       break;

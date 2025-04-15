@@ -89,6 +89,11 @@ void parser::analyze_statement(
       success = false;
       error_messages.emplace_back("if condition must be a scalar type");
     }
+    // implicit promotion of char to int
+    if (statement->get_exps()->get_type() == ast::ElemType::CHAR or
+        statement->get_exps()->get_type() == ast::ElemType::UCHAR) {
+      add_cast_to_exp(statement->get_exps(), ast::ElemType::INT, {});
+    }
     ast::ElemType switchType = statement->get_exps()->get_type();
     auto switch_statement =
         std::static_pointer_cast<ast::AST_switch_statement_Node>(statement);
@@ -282,6 +287,16 @@ void parser::analyze_switch_case(
       case constant::Type::ULONG:
         val = static_cast<T>(constVal.get_value().ul);
         break;
+      case constant::Type::CHAR:
+        val = static_cast<T>(constVal.get_value().c);
+        break;
+      case constant::Type::UCHAR:
+        val = static_cast<T>(constVal.get_value().uc);
+        break;
+      case constant::Type::STRING: {
+        success = false;
+        error_messages.emplace_back("Case expression cannot be a derived type");
+      } break;
       default:
         break;
       }
@@ -294,11 +309,6 @@ void parser::analyze_switch_case(
       case constant::Type::LONG:
         newConst.set_value({.l = static_cast<long>(val)});
         break;
-      case constant::Type::DOUBLE: {
-        success = false;
-        error_messages.emplace_back(
-            "Case expression cannot be a double precision");
-      } break;
       case constant::Type::UINT:
         newConst.set_value({.ui = static_cast<unsigned int>(val)});
         break;

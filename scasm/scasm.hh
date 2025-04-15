@@ -267,6 +267,8 @@ private:
   std::shared_ptr<scasm_operand> src;
   std::shared_ptr<scasm_operand> dst;
   AssemblyType asmType;
+  // Used for MOVSX and MOVZX
+  AssemblyType dstType;
 
 public:
   std::string get_scasm_name() { return "Instruction"; }
@@ -287,6 +289,8 @@ public:
   }
   AssemblyType get_asm_type() { return asmType; }
   void set_asm_type(AssemblyType asmType) { this->asmType = asmType; }
+  AssemblyType get_dst_type() { return dstType; }
+  void set_dst_type(AssemblyType dstType) { this->dstType = dstType; }
 };
 
 enum class scasm_top_level_type { FUNCTION, STATIC_VARIABLE, STATIC_CONSTANT };
@@ -380,7 +384,6 @@ struct backendSymbol {
   /*use for array*/
   long size = 0;
   int alignment = 0;
-  // std::vector<constant::Constant> value;
 };
 
 } // namespace scasm
