@@ -24,6 +24,14 @@ void parser::pretty_print_factor(std::shared_ptr<ast::AST_factor_Node> factor) {
   }
 
   if (factor->get_unop_node() != nullptr) {
+    if (factor->get_unop_node()->get_op() == unop::UNOP::SIZEOF) {
+      std::cout << "Sizeof(";
+      pretty_print_factor(factor->get_child());
+      pretty_print_exp(factor->get_exp_node());
+      pretty_print_declarator(factor->get_cast_declarator());
+      std::cout << ")";
+      return;
+    }
     std::cout << "Unop(" << unop::to_string(factor->get_unop_node()->get_op())
               << "(";
     pretty_print_factor(factor->get_child());

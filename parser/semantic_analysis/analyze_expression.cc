@@ -68,6 +68,8 @@ void parser::analyze_exp(std::shared_ptr<ast::AST_exp_Node> exp,
       add_cast_to_exp(base_exp, baseType, baseDerivedType);
 
       exp->set_factor_node(factor->get_child());
+      exp->set_type(baseType);
+      exp->set_derived_type(baseDerivedType);
     }
 
     exp->get_binop_node()->set_op(binop::BINOP::ASSIGN);
@@ -333,55 +335,18 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
       error_messages.emplace_back("Void type not allowed for unary operator");
     }
 
-    if (unop == unop::UNOP::SIZEOF) {
-      if (factor->get_child() != nullptr) {
-        // exp has been analyzed already
-        if (!ast::validate_type_specifier(
-                factor->get_child()->get_type(),
-                factor->get_child()->get_derived_type())) {
-          success = false;
-          error_messages.emplace_back(
-              "sizeof operator not allowed on incomplete type");
-        }
-        factor->set_type(ast::ElemType::ULONG);
-        factor->set_derived_type({});
-      } else if (factor->get_exp_node() != nullptr) {
-        // exp has been analyzed already
-        if (!ast::validate_type_specifier(
-                factor->get_exp_node()->get_type(),
-                factor->get_exp_node()->get_derived_type())) {
-          success = false;
-          error_messages.emplace_back(
-              "sizeof operator not allowed on incomplete type");
-        }
-        factor->set_type(ast::ElemType::ULONG);
-        factor->set_derived_type({});
-      } else {
-        std::vector<long> derivedType;
-        ast::unroll_derived_type(factor->get_cast_declarator(), derivedType);
-        if (!derivedType.empty()) {
-          derivedType.push_back((long)factor->get_cast_type());
-          if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
-                                            derivedType)) {
-            success = false;
-            error_messages.emplace_back(
-                "sizeof operator not allowed on incomplete type");
-          }
-        } else if (factor->get_cast_type() == ast::ElemType::VOID) {
-          success = false;
-          error_messages.emplace_back(
-              "sizeof operator not allowed on incomplete type");
-        }
-        factor->set_type(ast::ElemType::ULONG);
-        factor->set_derived_type({});
-      }
-    }
-
     // convert pre increment / decrement to an expression
     if (unop::is_incr_decr(unop)) {
       auto base = factor->get_child();
       auto baseType = base->get_type();
       auto baseDerivedType = base->get_derived_type();
+
+      if (!ast::is_pointer_to_complete(baseType, baseDerivedType) or
+          baseType == ast::ElemType::VOID) {
+        success = false;
+        error_messages.emplace_back(
+            "Increment / Decrement operator not allowed on void pointers");
+      }
 
       MAKE_SHARED(ast::AST_exp_Node, exp);
       exp->set_type(factor->get_type());
@@ -439,6 +404,50 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         factor->set_child(nullptr);
       }
       factor->set_exp_node(exp);
+    }
+
+    if (unop == unop::UNOP::SIZEOF) {
+      if (factor->get_child() != nullptr) {
+        // exp has been analyzed already
+        if (!ast::validate_type_specifier(
+                factor->get_child()->get_type(),
+                factor->get_child()->get_derived_type())) {
+          success = false;
+          error_messages.emplace_back(
+              "sizeof operator not allowed on incomplete type");
+        }
+        factor->set_type(ast::ElemType::ULONG);
+        factor->set_derived_type({});
+      } else if (factor->get_exp_node() != nullptr) {
+        // exp has been analyzed already
+        if (!ast::validate_type_specifier(
+                factor->get_exp_node()->get_type(),
+                factor->get_exp_node()->get_derived_type())) {
+          success = false;
+          error_messages.emplace_back(
+              "sizeof operator not allowed on incomplete type");
+        }
+        factor->set_type(ast::ElemType::ULONG);
+        factor->set_derived_type({});
+      } else {
+        std::vector<long> derivedType;
+        ast::unroll_derived_type(factor->get_cast_declarator(), derivedType);
+        if (!derivedType.empty()) {
+          derivedType.push_back((long)factor->get_cast_type());
+          if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
+                                            derivedType)) {
+            success = false;
+            error_messages.emplace_back(
+                "sizeof operator not allowed on incomplete type");
+          }
+        } else if (factor->get_cast_type() == ast::ElemType::VOID) {
+          success = false;
+          error_messages.emplace_back(
+              "sizeof operator not allowed on incomplete type");
+        }
+        factor->set_type(ast::ElemType::ULONG);
+        factor->set_derived_type({});
+      }
     }
   }
 }
@@ -681,6 +690,12 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
             "Shift operator is not allowed on derived types");
       } else {
         ast::ElemType expType = leftType;
+        if (leftType == ast::ElemType::VOID or
+            rightType == ast::ElemType::VOID) {
+          success = false;
+          error_messages.emplace_back(
+              "void value not ignored as it ought to be");
+        }
         if (expType != rightType) {
           add_cast_to_exp(exp->get_right(), expType, {});
         }
