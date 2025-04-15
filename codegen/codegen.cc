@@ -276,7 +276,6 @@ void Codegen::asm_gen_static_variable(
   assembly << ARCHPREFIX << varName << ":\n";
 
   if (InDataSection) {
-    // FIXME
     if (varType == scasm::AssemblyType::QUAD_WORD) {
       assembly << "\t.quad ";
       assembly << init[0] << "\n";
