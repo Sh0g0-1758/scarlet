@@ -453,8 +453,7 @@ class TestChapter(unittest.TestCase):
         parts = list(compiled_file_under_test.parts)
         idx = parts.index("tests")
         compiled_file_under_test = Path(*parts[:idx], "build", parts[-1])
-        
-        print("Compiling and running: ", compiled_file_under_test)
+
         source_files = [compiled_file_under_test] + other_files
         options = []
         if needs_mathlib(file_under_test) or any(needs_mathlib(f) for f in other_files):
