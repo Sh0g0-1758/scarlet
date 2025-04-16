@@ -98,4 +98,10 @@ public:
   template <typename T> T get_option(const std::string &option) const {
     return vm[option].as<T>();
   }
+
+  bool run_opt() {
+    return has_option("fold-constants") || has_option("propagate-copies") ||
+           has_option("eliminate-unreachable-code") ||
+           has_option("eliminate-dead-stores") || has_option("optimize");
+  }
 };
