@@ -135,6 +135,10 @@ private:
   void optInit(scarcmd &cmd);
   void constant_folding(
       std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+  void fold_binop(constant::Constant src1, constant::Constant src2,
+                  constant::Constant &result, binop::BINOP op);
+  void fold_unop(constant::Constant src, constant::Constant &result,
+                 unop::UNOP op);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,
