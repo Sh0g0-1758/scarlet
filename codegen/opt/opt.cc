@@ -12,7 +12,7 @@ void Codegen::optimize(scarcmd &cmd) {
       if (funcBody.empty())
         continue;
       while (true) {
-        bool ran_constant_folding;
+        bool ran_constant_folding{};
         if (enable_constant_folding or enable_all) {
           ran_constant_folding = constant_folding(funcBody);
         }
