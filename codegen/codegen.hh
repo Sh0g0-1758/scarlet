@@ -2,6 +2,7 @@
 
 #include <ast/ast.hh>
 #include <cmath>
+#include <cmd/cmd.hh>
 #include <fstream>
 #include <map>
 #include <scar/scar.hh>
@@ -133,6 +134,8 @@ public:
   // ###### COMPILER PASSES ######
   // IR PASS
   void gen_scar();
+  // OPT PASS
+  void optimize(scarcmd &cmd);
   // ASM PASS
   void gen_scasm();
   void asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,

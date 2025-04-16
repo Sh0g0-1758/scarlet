@@ -28,6 +28,11 @@ public:
       ("parse", "run only till the parser stage and print the AST")
       ("validate", "run semantic analysis and print the AST")
       ("scar", "print scar(IR for scarlet)")
+      ("fold-constants", "Enable constant folding")
+      ("propagate-copies","Enable copy propagation")
+      ("eliminate-unreachable-code", "Enable unreachable code elimination")
+      ("eliminate-dead-stores", "Enable dead store elimination")
+      ("optimize,O", "Enable all optimizations")
       ("asm,S", "generate .s file containing X86-64 assembly")
       (",c", "Complie and assemble, but do not link")
       ("output-file,o", po::value<std::string>(), "output file");
