@@ -32,7 +32,7 @@ public:
       ("propagate-copies","Enable copy propagation")
       ("eliminate-unreachable-code", "Enable unreachable code elimination")
       ("eliminate-dead-stores", "Enable dead store elimination")
-      ("optimize", "Enable all optimizations")
+      ("optimize,O", "Enable all optimizations")
       ("asm,S", "generate .s file containing X86-64 assembly")
       (",c", "Complie and assemble, but do not link")
       ("output-file,o", po::value<std::string>(), "output file");
