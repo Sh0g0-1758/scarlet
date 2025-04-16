@@ -1,5 +1,3 @@
-/* Snake Game - No includes, No struct, Single file C */
-
 int putchar(int c);
 int getchar(void);
 void *malloc(unsigned int size);
@@ -9,18 +7,16 @@ int WIDTH = 40;
 int HEIGHT = 20;
 int MAX_LEN = 100;
 
-/* Globals */
 int snake_x[100];
 int snake_y[100];
 int snake_len = 5;
-int snake_dir = 3; /* 0=Up, 1=Down, 2=Left, 3=Right */
+int snake_dir = 3;
 
 int food_x = 10;
 int food_y = 5;
 int score = 0;
 int over = 0;
 
-/* Delay loop */
 void delay(int ms) {
   int i;
   int j;
@@ -30,13 +26,11 @@ void delay(int ms) {
   }
 }
 
-/* Print string */
 void print(char *s) {
   while (*s)
     putchar(*s++);
 }
 
-/* Clear screen */
 void clear_screen(void) {
   int i;
   for (i = 0; i < 50; i++) {
@@ -44,7 +38,6 @@ void clear_screen(void) {
   }
 }
 
-/* Print number */
 void print_num(int n) {
   int rev = 0;
   if (n == 0) {
@@ -61,14 +54,12 @@ void print_num(int n) {
   }
 }
 
-/* Random number */
 unsigned int rand_seed = 123456789;
 int randmod(int m) {
   rand_seed = rand_seed * 1103515245U + 12345U;
   return ((rand_seed >> 16) & 32767) % m;
 }
 
-/* Place food */
 void place_food(void) {
   int i;
   int clash;
@@ -85,7 +76,6 @@ void place_food(void) {
   } while (clash);
 }
 
-/* Draw board */
 void draw(void) {
   int x;
   int y;
@@ -119,7 +109,6 @@ void draw(void) {
   putchar('\n');
 }
 
-/* Move snake */
 void move(void) {
   int i;
   for (i = snake_len - 1; i > 0; i--) {
@@ -160,7 +149,6 @@ void move(void) {
   }
 }
 
-/* Input handling */
 void input(void) {
   int c;
   print("Move (WASD or Q to quit): ");
@@ -177,7 +165,6 @@ void input(void) {
     over = 1;
 }
 
-/* Game over */
 void gameover(void) {
   print("GAME OVER\nFinal Score: ");
   print_num(score);
@@ -185,7 +172,6 @@ void gameover(void) {
   getchar();
 }
 
-/* Main function */
 int main(void) {
   int i;
   for (i = 0; i < snake_len; i++) {
