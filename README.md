@@ -98,6 +98,7 @@ We try to be as close to the C standard as possible but there are a few features
 - We do not support empty parameter lists. You have to explicitly add void to the function parameter list. So `int foo(){}` should be changed to `int foo(void){}`
 - Declaration like `int x,y;` are not supported. You have to write `int x` and `int y` in seperate lines.
 - Array function parameters are not supported, as they are anyway decayed to pointers. You should rewrite `int foo(int a[])` to `int foo(int *a)`.
+
 ## Contributing Guidelines
 
 We ask all contributors to adhere to the following guidelines:
