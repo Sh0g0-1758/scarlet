@@ -244,44 +244,53 @@ void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
 bool Codegen::constant_folding(
     std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
   bool isChanged{};
-  for (auto &inst : funcBody) {
-    if (inst->get_type() == scar::instruction_type::BINARY) {
-      if (IS_CONSTANT(inst->get_src1()) and IS_CONSTANT(inst->get_src2())) {
+  for (auto inst = funcBody.begin(); inst != funcBody.end(); ++inst) {
+    if ((*inst)->get_type() == scar::instruction_type::BINARY) {
+      if (IS_CONSTANT((*inst)->get_src1()) and
+          IS_CONSTANT((*inst)->get_src2())) {
         isChanged = true;
         constant::Constant result;
-        fold_binop(inst->get_src1()->get_const_val(),
-                   inst->get_src2()->get_const_val(), result,
-                   inst->get_binop());
-        inst->set_type(scar::instruction_type::COPY);
-        inst->get_src1()->set_const_val(result);
-        inst->set_src2(nullptr);
+        fold_binop((*inst)->get_src1()->get_const_val(),
+                   (*inst)->get_src2()->get_const_val(), result,
+                   (*inst)->get_binop());
+        (*inst)->set_type(scar::instruction_type::COPY);
+        (*inst)->get_src1()->set_const_val(result);
+        (*inst)->set_src2(nullptr);
       }
-    } else if (inst->get_type() == scar::instruction_type::UNARY) {
-      if (IS_CONSTANT(inst->get_src1())) {
+    } else if ((*inst)->get_type() == scar::instruction_type::UNARY) {
+      if (IS_CONSTANT((*inst)->get_src1())) {
         isChanged = true;
         constant::Constant result;
-        fold_unop(inst->get_src1()->get_const_val(), result, inst->get_unop());
-        inst->set_type(scar::instruction_type::COPY);
-        inst->get_src1()->set_const_val(result);
+        fold_unop((*inst)->get_src1()->get_const_val(), result,
+                  (*inst)->get_unop());
+        (*inst)->set_type(scar::instruction_type::COPY);
+        (*inst)->get_src1()->set_const_val(result);
       }
-    } else if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO) {
-      if (IS_CONSTANT(inst->get_src1())) {
+    } else if ((*inst)->get_type() == scar::instruction_type::JUMP_IF_ZERO) {
+      if (IS_CONSTANT((*inst)->get_src1())) {
+        isChanged = true;
         bool modify{};
-        IS_ZERO(inst->get_src1()->get_const_val(), modify);
+        IS_ZERO((*inst)->get_src1()->get_const_val(), modify);
         if (modify) {
-          isChanged = true;
-          inst->set_type(scar::instruction_type::JUMP);
-          inst->set_src1(inst->get_dst());
+          (*inst)->set_type(scar::instruction_type::JUMP);
+          (*inst)->set_src1((*inst)->get_dst());
+        } else {
+          inst = funcBody.erase(inst);
+          --inst;
         }
       }
-    } else if (inst->get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO) {
-      if (IS_CONSTANT(inst->get_src1())) {
-        bool modify{};
-        IS_ZERO(inst->get_src1()->get_const_val(), modify);
-        if (!modify) {
-          isChanged = true;
-          inst->set_type(scar::instruction_type::JUMP);
-          inst->set_src1(inst->get_dst());
+    } else if ((*inst)->get_type() ==
+               scar::instruction_type::JUMP_IF_NOT_ZERO) {
+      if (IS_CONSTANT((*inst)->get_src1())) {
+        isChanged = true;
+        bool erase{};
+        IS_ZERO((*inst)->get_src1()->get_const_val(), erase);
+        if (erase) {
+          inst = funcBody.erase(inst);
+          --inst;
+        } else {
+          (*inst)->set_type(scar::instruction_type::JUMP);
+          (*inst)->set_src1((*inst)->get_dst());
         }
       }
     }

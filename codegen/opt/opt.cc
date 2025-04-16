@@ -5,10 +5,10 @@ namespace codegen {
 void Codegen::optimize(scarcmd &cmd) {
   optInit(cmd);
 
-  for (auto elem : scar.get_elems()) {
+  for (auto &elem : scar.get_elems()) {
     if (elem->get_type() == scar::topLevelType::FUNCTION) {
-      auto funcBody = std::static_pointer_cast<scar::scar_Function_Node>(elem)
-                          ->get_instructions();
+      auto &funcBody = std::static_pointer_cast<scar::scar_Function_Node>(elem)
+                           ->get_instructions();
       if (funcBody.empty())
         continue;
       while (true) {
