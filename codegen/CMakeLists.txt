@@ -11,6 +11,9 @@ add_library(scarCodegen STATIC
     scargen/scar_block.cc
     scargen/pretty_print.cc
 
+    opt/opt.cc
+    opt/constant_folding.cc
+
     scasmgen/scasm_generation.cc
     scasmgen/binop_scasm_generation.cc
     scasmgen/unop_scasm_generation.cc

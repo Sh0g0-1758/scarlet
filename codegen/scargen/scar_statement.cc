@@ -346,6 +346,8 @@ void Codegen::gen_scar_statement(
                              scar_function);
       } else {
         gen_scar_exp(for_statement->get_for_init()->get_exp(), scar_function);
+        variable_buffer.clear();
+        constant_buffer.clear();
       }
     }
 

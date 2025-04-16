@@ -450,6 +450,10 @@ class TestChapter(unittest.TestCase):
 
         # compile other files, link with object file produced by compiler under test,
         # and run resulting executable
+        parts = list(compiled_file_under_test.parts)
+        idx = parts.index("tests")
+        compiled_file_under_test = Path(*parts[:idx], "build", parts[-1])
+
         source_files = [compiled_file_under_test] + other_files
         options = []
         if needs_mathlib(file_under_test) or any(needs_mathlib(f) for f in other_files):

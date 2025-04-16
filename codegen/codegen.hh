@@ -2,6 +2,7 @@
 
 #include <ast/ast.hh>
 #include <cmath>
+#include <cmd/cmd.hh>
 #include <fstream>
 #include <map>
 #include <scar/scar.hh>
@@ -126,6 +127,20 @@ private:
       std::shared_ptr<scar::scar_StaticConstant_Node> static_constant);
   void pretty_print_type(ast::ElemType type, std::vector<long> derivedType);
 
+  /* OPT VARS */
+  bool enable_constant_folding{};
+  bool enable_unreachable_code_elimination{};
+  bool enable_copy_propagation{};
+  bool enable_dead_store_elimination{};
+  bool enable_all{};
+  void optInit(scarcmd &cmd);
+  bool constant_folding(
+      std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+  void fold_binop(constant::Constant src1, constant::Constant src2,
+                  constant::Constant &result, binop::BINOP op);
+  void fold_unop(constant::Constant src, constant::Constant &result,
+                 unop::UNOP op);
+
 public:
   Codegen(ast::AST_Program_Node program, int counter,
           std::map<std::string, symbolTable::symbolInfo> gst)
@@ -133,6 +148,8 @@ public:
   // ###### COMPILER PASSES ######
   // IR PASS
   void gen_scar();
+  // OPT PASS
+  void optimize(scarcmd &cmd);
   // ASM PASS
   void gen_scasm();
   void asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,

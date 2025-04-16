@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
   }
   std::filesystem::path path(cmd.get_input_file());
   std::string file_name = path.stem().string();
-  std::string directory_path = path.parent_path().string();
 
   if (path.extension().string() != ".sc" and
       path.extension().string() != ".c" and
@@ -113,11 +112,18 @@ int main(int argc, char *argv[]) {
   codegen.gen_scar();
 
   if (cmd.has_option("tacky") or cmd.has_option("scar")) {
+    if (cmd.run_opt())
+      codegen.optimize(cmd);
     std::cout << "[LOG]: Successfully generated scar" << std::endl;
     codegen.pretty_print();
     return 0;
   }
-  codegen.set_file_name(std::format("{}.s", file_name));
+
+  if (cmd.run_opt())
+    codegen.optimize(cmd);
+
+  std::string asm_file_name = file_name + ".s";
+  codegen.set_file_name(asm_file_name);
   codegen.codegen();
 
   if (!codegen.is_success()) {
@@ -144,17 +150,17 @@ int main(int argc, char *argv[]) {
     linkopts = linkopts.substr(0, linkopts.length() - 1);
 
   if (cmd.has_option("-c")) {
-    result = system(std::format("gcc -c {}.s -o {}/{}.o {}", file_name,
-                                directory_path, output_file_name, linkopts)
+    result = system(std::format("gcc -c {} -o {}.o {}", asm_file_name,
+                                output_file_name, linkopts)
                         .c_str());
     if (result != 0) {
       std::cerr << "[ERROR]: Failed to generate the object file" << std::endl;
       return 1;
     }
   } else {
-    result = system(
-        std::format("gcc {}.s -o {} {}", file_name, output_file_name, linkopts)
-            .c_str());
+    result = system(std::format("gcc {} -o {} {}", asm_file_name,
+                                output_file_name, linkopts)
+                        .c_str());
     if (result != 0) {
       std::cerr << "[ERROR]: Failed to generate the executable" << std::endl;
       return 1;
@@ -162,7 +168,7 @@ int main(int argc, char *argv[]) {
   }
 
   // delete the intermediate assembly file
-  result = system(std::format("rm {}.s", file_name).c_str());
+  result = system(std::format("rm {}", asm_file_name).c_str());
   if (result != 0) {
     std::cerr << "[ERROR]: Unable to delete the intermediate assembly file"
               << std::endl;
