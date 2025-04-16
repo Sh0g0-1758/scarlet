@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
   }
   std::filesystem::path path(cmd.get_input_file());
   std::string file_name = path.stem().string();
-  std::string directory_path = path.parent_path().string();
 
   if (path.extension().string() != ".sc" and
       path.extension().string() != ".c" and
@@ -123,8 +122,7 @@ int main(int argc, char *argv[]) {
   if (cmd.run_opt())
     codegen.optimize(cmd);
 
-  std::string asm_file_name = std::format(
-      "{}/{}.s", directory_path.empty() ? "." : directory_path, file_name);
+  std::string asm_file_name = file_name + ".s";
   codegen.set_file_name(asm_file_name);
   codegen.codegen();
 
@@ -143,8 +141,6 @@ int main(int argc, char *argv[]) {
   if (cmd.has_option("output-file")) {
     output_file_name = cmd.get_option<std::string>("output-file");
   }
-  output_file_name = std::format(
-      "{}/{}", directory_path.empty() ? "." : directory_path, output_file_name);
 
   std::string linkopts = "";
   for (auto it : cmd.get_extra_args()) {
