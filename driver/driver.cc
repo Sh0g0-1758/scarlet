@@ -118,6 +118,13 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   codegen.set_file_name(std::format("{}.s", file_name));
+
+  if (cmd.has_option("fold-constants") or cmd.has_option("propagate-copies") or
+      cmd.has_option("eliminate-unreachable-code") or
+      cmd.has_option("eliminate-dead-stores") or cmd.has_option("optimize")) {
+    codegen.optimize(cmd);
+  }
+
   codegen.codegen();
 
   if (!codegen.is_success()) {
