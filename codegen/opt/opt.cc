@@ -3,10 +3,33 @@
 namespace scarlet {
 namespace codegen {
 void Codegen::optimize(scarcmd &cmd) {
-  (void)cmd;
-  for (auto function : scar.get_elems()) {
-    // body
+  optInit(cmd);
+
+  for (auto elem : scar.get_elems()) {
+    if (elem->get_type() == scar::topLevelType::FUNCTION) {
+      auto funcBody = std::static_pointer_cast<scar::scar_Function_Node>(elem)
+                          ->get_instructions();
+      if (funcBody.empty())
+        continue;
+      while (true) {
+        if (enable_constant_folding) {
+          constant_folding(funcBody);
+        }
+      }
+    }
   }
 }
+
+void Codegen::optInit(scarcmd &cmd) {
+  if (cmd.has_option("fold-constants"))
+    enable_constant_folding = true;
+  if (cmd.has_option("eliminate-unreachable-code"))
+    enable_unreachable_code_elimination = true;
+  if (cmd.has_option("propagate-copies"))
+    enable_copy_propagation = true;
+  if (cmd.has_option("eliminate-dead-stores"))
+    enable_dead_store_elimination = true;
+}
+
 } // namespace codegen
 } // namespace scarlet

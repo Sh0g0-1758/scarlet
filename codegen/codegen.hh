@@ -127,6 +127,15 @@ private:
       std::shared_ptr<scar::scar_StaticConstant_Node> static_constant);
   void pretty_print_type(ast::ElemType type, std::vector<long> derivedType);
 
+  /* OPT VARS */
+  bool enable_constant_folding{};
+  bool enable_unreachable_code_elimination{};
+  bool enable_copy_propagation{};
+  bool enable_dead_store_elimination{};
+  void optInit(scarcmd &cmd);
+  void constant_folding(
+      std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+
 public:
   Codegen(ast::AST_Program_Node program, int counter,
           std::map<std::string, symbolTable::symbolInfo> gst)
