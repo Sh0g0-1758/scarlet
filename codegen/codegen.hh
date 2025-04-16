@@ -132,8 +132,9 @@ private:
   bool enable_unreachable_code_elimination{};
   bool enable_copy_propagation{};
   bool enable_dead_store_elimination{};
+  bool enable_all{};
   void optInit(scarcmd &cmd);
-  void constant_folding(
+  bool constant_folding(
       std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
   void fold_binop(constant::Constant src1, constant::Constant src2,
                   constant::Constant &result, binop::BINOP op);

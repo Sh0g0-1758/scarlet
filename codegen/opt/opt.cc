@@ -12,9 +12,12 @@ void Codegen::optimize(scarcmd &cmd) {
       if (funcBody.empty())
         continue;
       while (true) {
-        if (enable_constant_folding) {
-          constant_folding(funcBody);
+        bool ran_constant_folding;
+        if (enable_constant_folding or enable_all) {
+          ran_constant_folding = constant_folding(funcBody);
         }
+        if (!ran_constant_folding)
+          break;
       }
     }
   }
@@ -29,6 +32,8 @@ void Codegen::optInit(scarcmd &cmd) {
     enable_copy_propagation = true;
   if (cmd.has_option("eliminate-dead-stores"))
     enable_dead_store_elimination = true;
+  if (cmd.has_option("optimize"))
+    enable_all = true;
 }
 
 } // namespace codegen

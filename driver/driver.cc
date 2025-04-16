@@ -113,6 +113,12 @@ int main(int argc, char *argv[]) {
   codegen.gen_scar();
 
   if (cmd.has_option("tacky") or cmd.has_option("scar")) {
+    if (cmd.has_option("fold-constants") or
+        cmd.has_option("propagate-copies") or
+        cmd.has_option("eliminate-unreachable-code") or
+        cmd.has_option("eliminate-dead-stores") or cmd.has_option("optimize")) {
+      codegen.optimize(cmd);
+    }
     std::cout << "[LOG]: Successfully generated scar" << std::endl;
     codegen.pretty_print();
     return 0;

@@ -60,8 +60,43 @@ namespace codegen {
     break;                                                                     \
   }
 
+#define IS_ZERO(src, flag)                                                     \
+  switch (src.get_type()) {                                                    \
+  case constant::Type::INT:                                                    \
+    if (src.get_value().i == 0)                                                \
+      flag = true;                                                             \
+    break;                                                                     \
+  case constant::Type::UINT:                                                   \
+    if (src.get_value().ui == 0)                                               \
+      flag = true;                                                             \
+    break;                                                                     \
+  case constant::Type::LONG:                                                   \
+    if (src.get_value().l == 0)                                                \
+      flag = true;                                                             \
+    break;                                                                     \
+  case constant::Type::ULONG:                                                  \
+    if (src.get_value().ul == 0)                                               \
+      flag = true;                                                             \
+    break;                                                                     \
+  case constant::Type::DOUBLE:                                                 \
+    if (src.get_value().d == 0.0 or src.get_value().d == -0.0)                 \
+      flag = true;                                                             \
+    break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    if (src.get_value().c == 0)                                                \
+      flag = true;                                                             \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    if (src.get_value().uc == 0)                                               \
+      flag = true;                                                             \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
 void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
                          constant::Constant &result, binop::BINOP op) {
+  result.set_type(src1.get_type());
   switch (op) {
   case binop::BINOP::ADD:
     CALC_BINOP(src1, src2, +);
@@ -72,12 +107,24 @@ void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
   case binop::BINOP::MUL:
     CALC_BINOP(src1, src2, *);
     break;
-  case binop::BINOP::DIV:
-    CALC_BINOP(src1, src2, /);
-    break;
-  case binop::BINOP::MOD:
-    CALC_BINOP_INT(src1, src2, %);
-    break;
+  case binop::BINOP::DIV: {
+    bool divisionByZero{};
+    IS_ZERO(src2, divisionByZero);
+    if (divisionByZero) {
+      result.set_value({.i = 0});
+    } else {
+      CALC_BINOP(src1, src2, /);
+    }
+  } break;
+  case binop::BINOP::MOD: {
+    bool ModByZero{};
+    IS_ZERO(src2, ModByZero);
+    if (ModByZero) {
+      result.set_value({.i = 0});
+    } else {
+      CALC_BINOP_INT(src1, src2, %);
+    }
+  } break;
   case binop::BINOP::AAND:
     CALC_BINOP_INT(src1, src2, &);
     break;
@@ -177,11 +224,13 @@ void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
 
 void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
                         unop::UNOP op) {
+  result.set_type(src.get_type());
   switch (op) {
   case unop::UNOP::NEGATE:
     CALC_UNOP(src, -);
     break;
   case unop::UNOP::NOT:
+    result.set_type(constant::Type::INT);
     CALC_UNOP_INT(src, !);
     break;
   case unop::UNOP::COMPLEMENT:
@@ -192,11 +241,13 @@ void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
   }
 }
 
-void Codegen::constant_folding(
+bool Codegen::constant_folding(
     std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
+  bool isChanged{};
   for (auto &inst : funcBody) {
     if (inst->get_type() == scar::instruction_type::BINARY) {
       if (IS_CONSTANT(inst->get_src1()) and IS_CONSTANT(inst->get_src2())) {
+        isChanged = true;
         constant::Constant result;
         fold_binop(inst->get_src1()->get_const_val(),
                    inst->get_src2()->get_const_val(), result,
@@ -207,6 +258,7 @@ void Codegen::constant_folding(
       }
     } else if (inst->get_type() == scar::instruction_type::UNARY) {
       if (IS_CONSTANT(inst->get_src1())) {
+        isChanged = true;
         constant::Constant result;
         fold_unop(inst->get_src1()->get_const_val(), result, inst->get_unop());
         inst->set_type(scar::instruction_type::COPY);
@@ -214,74 +266,27 @@ void Codegen::constant_folding(
       }
     } else if (inst->get_type() == scar::instruction_type::JUMP_IF_ZERO) {
       if (IS_CONSTANT(inst->get_src1())) {
-        bool modify = false;
-        auto src = inst->get_src1()->get_const_val();
-        switch (src.get_type()) {
-        case constant::Type::INT:
-          modify = src.get_value().i == 0;
-          break;
-        case constant::Type::UINT:
-          modify = src.get_value().ui == 0;
-          break;
-        case constant::Type::LONG:
-          modify = src.get_value().l == 0;
-          break;
-        case constant::Type::ULONG:
-          modify = src.get_value().ul == 0;
-          break;
-        case constant::Type::DOUBLE:
-          modify = src.get_value().d == 0;
-          break;
-        case constant::Type::CHAR:
-          modify = src.get_value().c == 0;
-          break;
-        case constant::Type::UCHAR:
-          modify = src.get_value().uc == 0;
-          break;
-        default:
-          break;
-        }
+        bool modify{};
+        IS_ZERO(inst->get_src1()->get_const_val(), modify);
         if (modify) {
+          isChanged = true;
           inst->set_type(scar::instruction_type::JUMP);
           inst->set_src1(inst->get_dst());
         }
       }
     } else if (inst->get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO) {
       if (IS_CONSTANT(inst->get_src1())) {
-        bool modify = false;
-        auto src = inst->get_src1()->get_const_val();
-        switch (src.get_type()) {
-        case constant::Type::INT:
-          modify = src.get_value().i != 0;
-          break;
-        case constant::Type::UINT:
-          modify = src.get_value().ui != 0;
-          break;
-        case constant::Type::LONG:
-          modify = src.get_value().l != 0;
-          break;
-        case constant::Type::ULONG:
-          modify = src.get_value().ul != 0;
-          break;
-        case constant::Type::DOUBLE:
-          modify = src.get_value().d != 0;
-          break;
-        case constant::Type::CHAR:
-          modify = src.get_value().c != 0;
-          break;
-        case constant::Type::UCHAR:
-          modify = src.get_value().uc != 0;
-          break;
-        default:
-          break;
-        }
-        if (modify) {
+        bool modify{};
+        IS_ZERO(inst->get_src1()->get_const_val(), modify);
+        if (!modify) {
+          isChanged = true;
           inst->set_type(scar::instruction_type::JUMP);
           inst->set_src1(inst->get_dst());
         }
       }
     }
   }
+  return isChanged;
 }
 
 } // namespace codegen
