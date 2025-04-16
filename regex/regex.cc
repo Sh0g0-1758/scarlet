@@ -23,7 +23,7 @@ bool Regex::matchASCIIPrintable(char c) {
 
 bool Regex::matchEscape(char c) {
   if (c == '\'' or c == '\"' or c == '?' or c == 'a' or c == 'b' or c == 'f' or
-      c == 'n' or c == 'r' or c == 't' or c == 'v' or c == '\\')
+      c == 'n' or c == 'r' or c == 't' or c == 'v' or c == '\\' or c == '0')
     return true;
   return false;
 }

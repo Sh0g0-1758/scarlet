@@ -191,6 +191,9 @@ public:
         case '\\':
           escaped += "\\134";
           break;
+        case '\0':
+          escaped += "\\000";
+          break;
         default:
           escaped += c;
           break;

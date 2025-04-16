@@ -478,6 +478,8 @@ char char_to_esc(char c) {
     return '\?';
   case '\\':
     return '\\';
+  case '0':
+    return '\0';
   default:
     return '\0';
   }
