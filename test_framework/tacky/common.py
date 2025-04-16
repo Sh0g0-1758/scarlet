@@ -49,7 +49,7 @@ class TackyOptimizationTest(basic.TestChapter):
         """
 
         # first compile to assembly
-        compile_result = self.invoke_compiler(source_file, cc_opt="-s")
+        compile_result = self.invoke_compiler(source_file, cc_opt="-S")
         self.assertEqual(
             compile_result.returncode,
             0,
@@ -59,6 +59,9 @@ class TackyOptimizationTest(basic.TestChapter):
             compile_result
         )  # print compiler warnings even if it succeeded
         asm_file = source_file.with_suffix(".s")
+        parts = list(asm_file.parts)
+        idx = parts.index("tests")
+        asm_file = Path(*parts[:idx], "build", parts[-1])
         libs = basic.get_libs(source_file)
         # assemble/link asm_file, run it, and make sure it gives expected result
         actual_result = basic.gcc_compile_and_run([asm_file] + libs, [])
