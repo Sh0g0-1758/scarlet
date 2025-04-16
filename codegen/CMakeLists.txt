@@ -12,6 +12,7 @@ add_library(scarCodegen STATIC
     scargen/pretty_print.cc
 
     opt/opt.cc
+    opt/constant_folding.cc
 
     scasmgen/scasm_generation.cc
     scasmgen/binop_scasm_generation.cc
