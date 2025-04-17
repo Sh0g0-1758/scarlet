@@ -21,7 +21,6 @@ jobs:
         brew install clang-build-analyzer
         brew install --cask clay
         brew install boost
-        brew link --overwrite python@3.13
         echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Build scarlet
