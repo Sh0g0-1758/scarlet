@@ -28,6 +28,7 @@ void parser::parse_declaration(
     decl->set_type(ast::DeclarationType::STRUCT);
     tokens.erase(tokens.begin());
     parse_struct_declaration(tokens, decl);
+    EXPECT(token::TOKEN::SEMICOLON);
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     return;
   }
@@ -95,6 +96,7 @@ void parser::parse_struct_declaration (
     MAKE_SHARED(ast::AST_declarator_Node, declarator);
     MAKE_SHARED(ast::AST_identifier_Node, identifier);
     parse_declarator(tokens, declarator, identifier);
+    EXPECT(token::TOKEN::SEMICOLON);
     if (identifier->get_value().empty()) {
       success = false;
       error_messages.emplace_back(

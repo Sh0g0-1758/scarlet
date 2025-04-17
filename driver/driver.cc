@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 
   if (cmd.has_option("parse")) {
     std::cout << "[LOG]: Parsing done successfully" << std::endl;
-    gnu.pretty_print();
+    // gnu.pretty_print();
     return 0;
   }
 
