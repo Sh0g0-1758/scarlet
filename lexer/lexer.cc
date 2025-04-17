@@ -28,17 +28,17 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::DOT);
         col_number++;
         file.get(ch);
-        if(regex.matchDigit(ch)){
+        if (regex.matchDigit(ch)) {
           // error as we have digit after the member access operator
           success = false;
           error_recovery.emplace_back(std::make_pair(
               ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
                   "invalid token after member access operator",
               "Please check the code"));
-        while (regex.matchWord(ch) || regex.matchDigit(ch)) {
-        file.get(ch);
-        }
-        tokens.emplace_back(token::TOKEN::UNKNOWN);
+          while (regex.matchWord(ch) || regex.matchDigit(ch)) {
+            file.get(ch);
+          }
+          tokens.emplace_back(token::TOKEN::UNKNOWN);
         }
         file.seekg(-1, std::ios::cur);
       } else {
@@ -62,17 +62,17 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::DOT);
         col_number++;
         file.get(ch);
-        if(regex.matchDigit(ch)){
+        if (regex.matchDigit(ch)) {
           // error as we have digit after the member access operator
           success = false;
           error_recovery.emplace_back(std::make_pair(
               ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
                   "invalid token after member access operator",
               "Please check the code"));
-        while (regex.matchWord(ch) || regex.matchDigit(ch)) {
-        file.get(ch);
-        }
-        tokens.emplace_back(token::TOKEN::UNKNOWN);
+          while (regex.matchWord(ch) || regex.matchDigit(ch)) {
+            file.get(ch);
+          }
+          tokens.emplace_back(token::TOKEN::UNKNOWN);
         }
         file.seekg(-1, std::ios::cur);
       } else {
@@ -400,17 +400,17 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::DOT);
         col_number++;
         file.get(ch);
-        if(regex.matchDigit(ch)){
+        if (regex.matchDigit(ch)) {
           // error as we have digit after the member access operator
           success = false;
           error_recovery.emplace_back(std::make_pair(
               ERROR_LOCATION + " " + RED + "error:" + RESET + " " +
                   "invalid token after member access operator",
               "Please check the code"));
-        while (regex.matchWord(ch) || regex.matchDigit(ch)) {
-        file.get(ch);
-        }
-        tokens.emplace_back(token::TOKEN::UNKNOWN);
+          while (regex.matchWord(ch) || regex.matchDigit(ch)) {
+            file.get(ch);
+          }
+          tokens.emplace_back(token::TOKEN::UNKNOWN);
         }
         file.seekg(-1, std::ios::cur);
       } else {
