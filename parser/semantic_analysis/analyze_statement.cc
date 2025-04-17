@@ -111,6 +111,10 @@ void parser::analyze_statement(
       analyze_switch_case<unsigned long>(switch_statement,
                                          constant::Type::ULONG);
       break;
+    case ast::ElemType::STRUCT:
+      analyze_switch_case<unsigned long>(switch_statement,
+                                         constant::Type::ULONG);
+      break;
     case ast::ElemType::CHAR:
       analyze_switch_case<char>(switch_statement, constant::Type::CHAR);
       break;

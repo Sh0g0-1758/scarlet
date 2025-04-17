@@ -28,6 +28,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> &factor) {
   if (token::is_constant(tokens[0].get_token())) {
     parse_const(tokens, factor);
+    EXPECT_POSTFIX_OP();
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();
     if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
@@ -49,8 +50,10 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       }
       EXPECT(token::TOKEN::CLOSE_PARANTHESES);
       factor = std::static_pointer_cast<ast::AST_factor_Node>(function_call);
+      EXPECT_POSTFIX_OP();
     } else {
       factor->set_identifier_node(std::move(identifier));
+      EXPECT_POSTFIX_OP();
     }
   } else if (token::is_unary_op(tokens[0].get_token())) {
     parse_unary_op(tokens, factor);
@@ -71,6 +74,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       MAKE_SHARED(ast::AST_factor_Node, nested_factor);
       parse_factor(tokens, nested_factor);
       factor->set_child(std::move(nested_factor));
+      EXPECT_POSTFIX_OP();
     } else {
       MAKE_SHARED(ast::AST_exp_Node, exp);
       parse_exp(tokens, exp);

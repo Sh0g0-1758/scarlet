@@ -34,6 +34,7 @@ namespace parser {
     constZero.set_type(constant::Type::UCHAR);                                 \
     constZero.set_value({.uc = 0});                                            \
     break;                                                                     \
+  case ast::ElemType::STRUCT:                                                  \
   case ast::ElemType::DERIVED:                                                 \
   case ast::ElemType::POINTER:                                                 \
     constZero.set_type(constant::Type::ULONG);                                 \

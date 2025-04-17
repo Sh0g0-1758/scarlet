@@ -39,6 +39,9 @@ private:
   std::stack<std::string> loop_switch_end_labels;
   std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
+  void parse_struct_declaration(
+      std::vector<token::Token> &tokens,
+      std::shared_ptr<ast::AST_struct_declaration_Node> decl);
   void
   parse_param_list(std::vector<token::Token> &tokens,
                    std::shared_ptr<ast::AST_function_declaration_Node> decl);

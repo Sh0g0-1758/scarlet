@@ -473,6 +473,7 @@ void Codegen::gen_scasm() {
         case ast::ElemType::DERIVED:
           sym.alignment = 8;
           break;
+        case ast::ElemType::STRUCT:
         case ast::ElemType::POINTER:
         case ast::ElemType::VOID:
           /*fixme? is this okay?*/

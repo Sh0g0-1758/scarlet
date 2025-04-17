@@ -45,6 +45,40 @@ namespace parser {
   identifier->set_identifier(tokens[0].get_value().value());                   \
   tokens.erase(tokens.begin());
 
+#define EXPECT_POSTFIX_OP() \
+  if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {\
+    MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
+    MAKE_SHARED(ast::AST_exp_Node, exp);\
+    parse_exp(tokens, exp);\
+    postfix->set_postfix_exp(std::move(exp));\
+    factor->set_postfix_op_node(std::move(postfix));\
+    EXPECT(token::TOKEN::CLOSE_BRACKET);\
+  } else if(tokens[0].get_token() == token::TOKEN::DOT) {\
+    MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
+    MAKE_SHARED(ast::AST_identifier_Node, identifier);\
+    if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {\
+      identifier->set_identifier(tokens[0].get_value().value());\
+      tokens.erase(tokens.begin());\
+    } else {\
+      success = false;\
+      error_messages.emplace_back("Expected identifier after dot");\
+    }\
+    postfix->set_dot_identifier(std::move(identifier));\
+    factor->set_postfix_op_node(std::move(postfix));\
+  } else if(tokens[0].get_token() == token::TOKEN::ARROW_OPERATOR) {\
+    MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
+    MAKE_SHARED(ast::AST_identifier_Node, identifier);\
+    if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {\
+      identifier->set_identifier(tokens[0].get_value().value());\
+      tokens.erase(tokens.begin());\
+    } else {\
+      success = false;\
+      error_messages.emplace_back("Expected identifier after arrow");\
+    }\
+    postfix->set_arrow_identifier(std::move(identifier));\
+    factor->set_postfix_op_node(std::move(postfix));\
+  }\
+
 /*
 - Error: Multiple identical type specifiers in the same declaration are invalid
 - Error: Declarations with no type specifiers are considered invalid
@@ -74,8 +108,16 @@ sequence
     success = false;                                                           \
     error_messages.emplace_back(                                               \
         "Unsigned and signed specifiers found together");                      \
-  }                                                                            \
-  if (type_specifiers.find(token::TOKEN::VOID) != type_specifiers.end()) {     \
+  } \
+  if (type_specifiers.find(token::TOKEN::STRUCT) != type_specifiers.end()) {                           \
+    if (type_specifiers.size() == 1) {                                         \
+      decl->func(ast::ElemType::STRUCT);                           \
+    } \
+    else {                                                                   \
+      success = false;                                                         \
+      error_messages.emplace_back("Struct specifier found with other types");  \
+    }                                                                          \
+  } else if (type_specifiers.find(token::TOKEN::VOID) != type_specifiers.end()) {     \
     if (type_specifiers.size() == 1) {                                         \
       decl->func(ast::ElemType::VOID);                                         \
     } else {                                                                   \

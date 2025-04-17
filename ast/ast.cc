@@ -47,6 +47,7 @@ constant::Type elemTypeToConstType(ElemType t) {
     return constant::Type::UCHAR;
   // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
   // be something different ?
+  case ElemType::STRUCT:
   case ElemType::POINTER:
   case ElemType::NONE:
   case ElemType::VOID:
@@ -77,6 +78,8 @@ std::string to_string(ElemType type) {
     return "char";
   case ElemType::UCHAR:
     return "unsigned char";
+  case ElemType::STRUCT:
+    return "struct";
   case ElemType::NONE:
     return "";
   }
@@ -110,6 +113,7 @@ int getSizeOfTypeOnArch(ElemType type) {
   case ast::ElemType::CHAR:
   case ast::ElemType::UCHAR:
     return sizeof(char);
+  case ast::ElemType::STRUCT: //TODO: FIXME, this should be the size of the struct
   case ast::ElemType::VOID:
   case ast::ElemType::DERIVED:
   case ast::ElemType::NONE:
@@ -426,6 +430,7 @@ constant::Constant castConstToElemType(constant::Constant Const,
     ret.set_type(constant::Type::UCHAR);
     CASTCONST(Const, ret, uc, unsigned char);
   } break;
+  case ElemType::STRUCT: 
   case ElemType::POINTER:
   case ElemType::VOID:
     break;

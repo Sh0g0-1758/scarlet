@@ -235,6 +235,7 @@ public:
       case ast::ElemType::DERIVED:
         return scasm::AssemblyType::QUAD_WORD;
       // this case will never be reached
+      case ast::ElemType::STRUCT:
       case ast::ElemType::POINTER:
       case ast::ElemType::VOID:
       /*fixme? is this okay*/
@@ -272,6 +273,7 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       }
     } break;
+    case ast::ElemType::STRUCT: 
     case ast::ElemType::POINTER:
     case ast::ElemType::VOID:
     /*fixme? is this okay*/

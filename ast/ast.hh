@@ -17,11 +17,15 @@ Grammar:
 
 <program> ::= { <declaration> }
 
-<declaration> ::= <variable-declaration> | <function-declaration>
+<declaration> ::= <variable-declaration> | <function-declaration> | <struct-declaration>
 
 <variable-declaration> ::= { <specifier> }+ <declarator> [ "=" <exp> ] ";"
 
 <function-declaration> ::= { <specifier> }+ <declarator> ( <block> | ";" )
+
+<struct-declaration> ::= "struct" <identifier> [ "{" { <member-declaration> }+ "}" ] ";"
+
+<member-declaration> ::= { <type-specifier> }+ <declarator> ";"
 
 <declarator> ::= "*" <declarator>
                | <identifier> [ <declarator-suffix> ]
@@ -34,7 +38,7 @@ Grammar:
 
 <param> ::= { <type-specifier> }+ <declarator>
 
-<type-specifier> ::= "int" | "long" |"unsigned" | "signed" | "char"
+<type-specifier> ::= "int" | "long" |"unsigned" | "signed" | "char" | "double" | "void" | "struct" <identifier>
 
 <specifier> ::= <type-specifier> | "static" | "extern"
 
@@ -61,13 +65,18 @@ Grammar:
 
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 
-<factor> ::= <const> 
-           | <identifier> 
+<factor> ::= <const> { <postfix-op> }
+           | <identifier> { <postfix-op> }
            | "(" { <type-specifier> }+ [ <abstract-declarator> ] ")" <factor> 
            | <unop> <factor> 
-           | "(" <exp> ")" 
-           | <identifier> "(" [ <argument-list> ] ")"
+           | "(" <exp> ")" { <postfix-op> }
+           | <identifier> "(" [ <argument-list> ] ")" { <postfix-op> }
            | <postfix-exp>
+           | { <string> }+ { <postfix-op> }
+
+<postfix-op> ::= "[" <exp> "]"
+                | "." <identifier>
+                | "->" <identifier>
 
 <postfix-exp> ::= <identifier> { "[" <const> "]" }+
                 | "(" <exp> ")" { "[" <const> "]" }+
@@ -125,6 +134,35 @@ enum class ElemType {
   CHAR = -8,
   UCHAR = -9,
   VOID = -10,
+  STRUCT = -11,
+};
+
+class AST_exp_Node;
+class AST_identifier_Node;
+
+class AST_postfix_op_Node {
+private:
+  std::shared_ptr<AST_exp_Node> postfix_exp;
+  std::shared_ptr<AST_identifier_Node> arrow_identifier;
+  std::shared_ptr<AST_identifier_Node> dot_identifier;
+public:
+  std::string get_AST_name() { return "PostfixOp"; }
+  std::shared_ptr<AST_exp_Node> get_postfix_exp() { return postfix_exp; }
+  void set_postfix_exp(std::shared_ptr<AST_exp_Node> postfix_exp) {
+    this->postfix_exp = std::move(postfix_exp);
+  }
+  std::shared_ptr<AST_identifier_Node> get_arrow_identifier() {
+    return arrow_identifier;
+  }
+  void set_arrow_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->arrow_identifier = std::move(identifier);
+  }
+  std::shared_ptr<AST_identifier_Node> get_dot_identifier() {
+    return dot_identifier;
+  }
+  void set_dot_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->dot_identifier = std::move(identifier);
+  }
 };
 
 class AST_const_Node {
@@ -167,8 +205,6 @@ public:
   void set_op(binop::BINOP binop) { this->op = binop; }
 };
 
-class AST_exp_Node;
-
 enum class FactorType { BASIC, FUNCTION_CALL };
 class AST_declarator_Node;
 
@@ -177,6 +213,7 @@ private:
   std::shared_ptr<AST_const_Node> const_node;
   std::shared_ptr<AST_identifier_Node> identifier_node;
   std::shared_ptr<AST_unop_Node> unop_node;
+  std::shared_ptr<AST_postfix_op_Node> postfix_op_node;
   // No need to make this a weak pointer because if an object of exp a points to
   // factor b then factor b can never point to exp a. It can only point to
   // another object of exp, say c. exp -> factor -> exp
@@ -203,6 +240,7 @@ public:
     this->type = other->type;
     this->arrIdx = other->arrIdx;
     this->derivedType = other->derivedType;
+    this->postfix_op_node = other->postfix_op_node;
   }
 
   void purge() {
@@ -217,6 +255,7 @@ public:
     this->type = ElemType::NONE;
     this->arrIdx.clear();
     this->derivedType.clear();
+    this->postfix_op_node = nullptr;
   }
   std::string get_AST_name() { return "Factor"; }
   std::shared_ptr<AST_const_Node> get_const_node() { return const_node; }
@@ -273,6 +312,12 @@ public:
   std::vector<long> get_derived_type() { return derivedType; }
   void set_derived_type(std::vector<long> derivedType) {
     this->derivedType = std::move(derivedType);
+  }
+  std::shared_ptr<AST_postfix_op_Node> get_postfix_op_node() {
+    return postfix_op_node;
+  }
+  void set_postfix_op_node(std::shared_ptr<AST_postfix_op_Node> postfix_op_node) {
+    this->postfix_op_node = std::move(postfix_op_node);
   }
 };
 
@@ -503,7 +548,7 @@ public:
   }
 };
 
-enum class DeclarationType { VARIABLE, FUNCTION };
+enum class DeclarationType { VARIABLE, FUNCTION, STRUCT};
 
 class AST_declarator_Node {
 private:
@@ -521,6 +566,20 @@ public:
   }
   std::vector<long> get_arrDim() { return arrDim; }
   void add_dim(long dim) { arrDim.emplace_back(dim); }
+};
+
+class AST_member_declaration_Node {
+private:
+  std::shared_ptr<AST_declarator_Node> declarator;
+  ElemType base_type;
+public:
+  std::string get_AST_name() { return "MemberDeclaration"; }
+  std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
+  void set_declarator(std::shared_ptr<AST_declarator_Node> declarator) {
+    this->declarator = std::move(declarator);
+  }
+  void set_base_type(ElemType type) { this->base_type = type; }
+  ElemType get_base_type() { return base_type; }
 };
 
 class AST_Declaration_Node {
@@ -547,6 +606,22 @@ public:
 
   SpecifierType get_specifier() { return specifier; }
   void set_specifier(SpecifierType specifier) { this->specifier = specifier; }
+};
+
+class AST_struct_declaration_Node : public AST_Declaration_Node {
+private:
+  std::vector<std::shared_ptr<AST_member_declaration_Node>> members;
+public:
+  std::string get_AST_name() { return "StructDeclaration"; }
+  std::vector<std::shared_ptr<AST_member_declaration_Node>> get_members() {
+    return members;
+  }
+  void add_member(std::shared_ptr<AST_member_declaration_Node> member) {
+    members.emplace_back(std::move(member));
+  }
+  void set_members(std::vector<std::shared_ptr<AST_member_declaration_Node>> members) {
+    this->members = std::move(members);
+  }
 };
 
 struct initializer {

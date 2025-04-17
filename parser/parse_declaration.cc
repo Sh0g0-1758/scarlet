@@ -23,11 +23,19 @@ void parser::parse_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_Declaration_Node> &declaration,
     bool atGlobalLevel) {
+  if(tokens[0].get_token() == token::TOKEN::STRUCT) {
+    MAKE_SHARED(ast::AST_struct_declaration_Node, decl);
+    decl->set_type(ast::DeclarationType::STRUCT);
+    tokens.erase(tokens.begin());
+    parse_struct_declaration(tokens, decl);
+    declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
+    return;
+  }
   bool isFuncDecl = false;
   int iter = 0;
   int num_identifiers = 0;
   while (tokens[iter].get_token() != token::TOKEN::SEMICOLON and
-         iter < (int)tokens.size()) {
+        iter < (int)tokens.size()) {
     // If we find an assignment token, then this is a variable declaration
     if (tokens[iter].get_token() == token::TOKEN::ASSIGNMENT) {
       break;
@@ -41,7 +49,7 @@ void parser::parse_declaration(
         break;
       }
     } else if (num_identifiers > 0 and
-               tokens[iter].get_token() == token::TOKEN::VOID) {
+              tokens[iter].get_token() == token::TOKEN::VOID) {
       num_identifiers++;
       if (num_identifiers > 1) {
         isFuncDecl = true;
@@ -63,6 +71,39 @@ void parser::parse_declaration(
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
     declaration->set_type(ast::DeclarationType::VARIABLE);
   }
+}
+
+void parser::parse_struct_declaration (
+    std::vector<token::Token> &tokens,
+    std::shared_ptr<ast::AST_struct_declaration_Node> decl) {
+  if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+    MAKE_SHARED(ast::AST_identifier_Node, identifier);
+    identifier->set_identifier(tokens[0].get_value().value());
+    decl->set_identifier(identifier);
+    tokens.erase(tokens.begin());
+  } else {
+    success = false;
+    error_messages.emplace_back("Expected a struct name");
+  }
+  EXPECT(token::TOKEN::OPEN_BRACE);
+  while (tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
+    MAKE_SHARED(ast::AST_member_declaration_Node, memberDecl);
+    PARSE_TYPE(memberDecl, set_base_type);
+    if(memberDecl->get_base_type() == ast::ElemType::STRUCT) {
+      EXPECT(token::TOKEN::IDENTIFIER);
+    }
+    MAKE_SHARED(ast::AST_declarator_Node, declarator);
+    MAKE_SHARED(ast::AST_identifier_Node, identifier);
+    parse_declarator(tokens, declarator, identifier);
+    if (identifier->get_value().empty()) {
+      success = false;
+      error_messages.emplace_back(
+          "Identifier is necessary to declare a variable");
+    }
+    memberDecl->set_declarator(std::move(declarator));
+    decl->add_member(std::move(memberDecl));
+  }
+  EXPECT(token::TOKEN::CLOSE_BRACE);
 }
 
 void parser::parse_variable_declarator_suffix(
