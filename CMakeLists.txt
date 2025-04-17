@@ -60,7 +60,6 @@ include_directories(${CMAKE_SOURCE_DIR})
 find_package(Boost REQUIRED COMPONENTS program_options)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
-    target_link_libraries(scarMain PRIVATE ${Boost_LIBRARIES})
 endif()
 
 add_executable(scarlet ${SOURCES})
