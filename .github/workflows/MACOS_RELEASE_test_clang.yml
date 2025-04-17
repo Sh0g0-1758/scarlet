@@ -12,9 +12,6 @@ jobs:
       
     steps:
     - uses: actions/checkout@v3
-    - uses: jwlawson/actions-setup-cmake@v2
-      with:
-        cmake-version: 3.25.2
     - name: Install deps
       run: |
         brew update || true
