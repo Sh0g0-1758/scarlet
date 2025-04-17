@@ -16,6 +16,7 @@ jobs:
     - name: Install deps
       run: |
         brew update
+        brew install lld
         brew install llvm
         brew install clang-build-analyzer
         brew install --cask clay
