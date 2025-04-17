@@ -6,7 +6,7 @@ Scarlet is a custom compiler developed in C++, designed with the primary goal of
 
 [![ubuntu](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_RELEASE_test_gcc.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_RELEASE_test_gcc.yml)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![ubuntu](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_DEBUG_test_gcc.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_DEBUG_test_gcc.yml)
 
-[![macos](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_RELEASE_test_clang.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_RELEASE_test_clang.yml)&nbsp;&nbsp;&nbsp;[![macos](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_DEBUG_test_clang.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/MACOS_DEBUG_test_clang.yml)
+[![ubuntu](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_RELEASE_test_clang.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_RELEASE_test_clang.yml)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![ubuntu](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_DEBUG_test_clang.yml/badge.svg)](https://github.com/Sh0g0-1758/scarlet/actions/workflows/UBUNTU_DEBUG_test_clang.yml)
 
 To build Scarlet, invoke `cmake` with the `DCMAKE_CXX_COMPILER` flag within the build directory and then run `make`. By default, scarlet builds in `Release` mode (-O3).
 
