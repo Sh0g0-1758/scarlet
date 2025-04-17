@@ -20,6 +20,7 @@ jobs:
       run: |
         brew update
         brew install llvm
+        brew install lld
         brew install clang-build-analyzer
         brew install --cask clay
         brew install boost
@@ -27,8 +28,8 @@ jobs:
 
     - name: Build scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ .. && make -j4'
+        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" .. && make -j4'
     
     - name: Test scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ .. && make -j4 test-scarlet'
+        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" .. && make -j4 test-scarlet'
