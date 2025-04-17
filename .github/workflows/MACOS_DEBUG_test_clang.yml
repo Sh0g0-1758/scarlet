@@ -12,7 +12,9 @@ jobs:
       
     steps:
     - uses: actions/checkout@v3
-    
+    - uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: 3.25.2
     - name: Install deps
       run: |
         brew update || true
@@ -25,9 +27,9 @@ jobs:
 
     - name: Build scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ \
+        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ \
         -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" .. && make'
     
     - name: Test scarlet
       run: |
-        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ .. && make test-scarlet'
+        arch -x86_64 /bin/zsh -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ .. && make test-scarlet'
