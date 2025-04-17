@@ -57,7 +57,10 @@ add_subdirectory(codegen)
 set(SOURCES ./driver/driver.cc)
 
 include_directories(${CMAKE_SOURCE_DIR})
-add_executable(scarMain codegen/scargen/scar.cc cmd/cmd.hh) 
+add_executable(scarMain 
+                driver/driver.cc
+                codegen/scargen/scar.cc 
+                cmd/cmd.hh) 
 find_package(Boost REQUIRED COMPONENTS program_options)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
