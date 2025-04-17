@@ -24,7 +24,7 @@ jobs:
         
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release .. && make -j4
 
     - name: Test scarlet
       run: |

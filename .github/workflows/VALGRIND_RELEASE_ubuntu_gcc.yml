@@ -24,7 +24,7 @@ jobs:
 
     - name: Build scarlet
       run: |
-        mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ .. && make
+        mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ .. && make -j4
 
     - name: Test memory leaks
       run: |
