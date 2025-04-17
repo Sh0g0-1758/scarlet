@@ -94,6 +94,10 @@ We try to be as close to the C standard as possible but there are a few features
 - Compound operations and increment/decrement are just syntactic sugars. (They get exapanded to their base expressions ie. `a+=2` will become `a = a + 2` and `b++` will become `b = b + 1`. Note that in post increment/decrement operations, the correct ie. un-updated value will be returned).
 - For comparing pointers the base type needs to be the same. So you need to cast a `long*` to a `void*` before comparing it with a `void*`
 - The expression `sizeof 'a'` get's evaluated to 1, although gcc and clang say its 4. (come on its a character) 
+- We do not support variable length arrays (`int arr[b];`, b known at runtime) or array length initialization using expressions(`int arr[1+1];`)
+- We do not support empty parameter lists. You have to explicitly add void to the function parameter list. So `int foo(){}` should be changed to `int foo(void){}`
+- Declaration like `int x,y;` are not supported. You have to write `int x` and `int y` in seperate lines.
+- Array function parameters are not supported, as they are anyway decayed to pointers. You should rewrite `int foo(int a[])` to `int foo(int *a)`.
 
 ## Contributing Guidelines
 
