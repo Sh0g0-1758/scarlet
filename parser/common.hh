@@ -47,6 +47,7 @@ namespace parser {
 
 #define EXPECT_POSTFIX_OP() \
   if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {\
+    tokens.erase(tokens.begin());\
     MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
     MAKE_SHARED(ast::AST_exp_Node, exp);\
     parse_exp(tokens, exp);\
@@ -54,6 +55,7 @@ namespace parser {
     factor->set_postfix_op_node(std::move(postfix));\
     EXPECT(token::TOKEN::CLOSE_BRACKET);\
   } else if(tokens[0].get_token() == token::TOKEN::DOT) {\
+    tokens.erase(tokens.begin());\
     MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
     MAKE_SHARED(ast::AST_identifier_Node, identifier);\
     if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {\
@@ -66,6 +68,7 @@ namespace parser {
     postfix->set_dot_identifier(std::move(identifier));\
     factor->set_postfix_op_node(std::move(postfix));\
   } else if(tokens[0].get_token() == token::TOKEN::ARROW_OPERATOR) {\
+    tokens.erase(tokens.begin());\
     MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
     MAKE_SHARED(ast::AST_identifier_Node, identifier);\
     if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {\

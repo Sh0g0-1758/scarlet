@@ -86,6 +86,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
         factor->set_exp_node(std::move(exp));
       }
       EXPECT(token::TOKEN::CLOSE_PARANTHESES);
+      EXPECT_POSTFIX_OP();
     }
   } else if (tokens[0].get_token() == token::TOKEN::SIZEOF) {
     tokens.erase(tokens.begin());
@@ -96,6 +97,14 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       tokens.erase(tokens.begin());
       if (token::is_type_specifier(tokens[0].get_token())) {
         PARSE_TYPE(factor, set_cast_type);
+        if(factor->get_cast_type() == ast::ElemType::STRUCT) {
+          if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+            EXPECT_IDENTIFIER();
+          } else {
+            success = false;
+            error_messages.emplace_back("Expected a struct name");
+          }
+        }
         if (!tokens.empty() and
             tokens[0].get_token() != token::TOKEN::CLOSE_PARANTHESES) {
           MAKE_SHARED(ast::AST_declarator_Node, cast_declarator);

@@ -657,6 +657,7 @@ struct Param {
 
   // This lets us use a macro which simplifies function params parsing
   void set_type(ElemType type) { this->base_type = type; }
+  ElemType get_type() { return base_type; }
 };
 
 class AST_Block_Node;
