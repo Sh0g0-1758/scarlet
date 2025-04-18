@@ -30,17 +30,24 @@ void parser::parse_declaration(
   if(tokens[0].get_token() == token::TOKEN::STRUCT or (is_storage_specifier(tokens[0].get_token()) and
      tokens[1].get_token() == token::TOKEN::STRUCT)) {
     isStructDecl = true;
-    iter++;
+    iter += 2;
     if(is_storage_specifier(tokens[0].get_token())) {
-      iter++;
+      iter += 1;
     }
     while(tokens[iter].get_token() != token::TOKEN::SEMICOLON and
           iter < (int)tokens.size()) {
+
+      if(tokens[iter].get_token() == token::TOKEN::OPEN_BRACE and num_identifiers == 0) {
+        isStructDecl = true;
+        break;
+      }
       if(tokens[iter].get_token() == token::TOKEN::ASSIGNMENT) {
         isStructDecl = false;
+        break;
       }
       if (tokens[iter].get_token() == token::TOKEN::IDENTIFIER) {
         num_identifiers++;
+        isStructDecl = false;
         if (num_identifiers > 1) {
           isFuncDecl = true;
           break;
@@ -48,8 +55,10 @@ void parser::parse_declaration(
       } else if (num_identifiers > 0 and
                 tokens[iter].get_token() == token::TOKEN::VOID) {
         num_identifiers++;
+        isStructDecl = false;
         if (num_identifiers > 1) {
           isFuncDecl = true;
+          break;
         }
       }
       iter++;
@@ -76,6 +85,7 @@ void parser::parse_declaration(
         num_identifiers++;
         if (num_identifiers > 1) {
           isFuncDecl = true;
+          break;
         }
       }
       iter++;
@@ -373,7 +383,6 @@ void parser::parse_function_declaration(
     error_messages.emplace_back(
         "Identifier is necessary to declare a variable");
   }
-  std::cout << "Function name: " << identifier->get_value() << std::endl;
   decl->set_identifier(std::move(identifier));
   decl->set_declarator(std::move(declarator));
 
