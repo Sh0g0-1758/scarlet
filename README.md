@@ -79,6 +79,7 @@ Scarlet currently supports the following architectures:
 - [ ] Add support for user defined structures
 - [ ] Add support for NaN
 - [x] Add constant folding optimization
+- [x] Add a construct for control flow graph
 - [x] Add unreachable code elimination optimization
 
 ## Resources
