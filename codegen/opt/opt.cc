@@ -35,6 +35,8 @@ void Codegen::gen_funcBody_from_cfg(
     std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
   funcBody.clear();
   for (auto block = cfg.begin(); block != cfg.end(); ++block) {
+    if (block->is_empty())
+      continue;
     auto body = block->get_body();
     for (auto it : body) {
       funcBody.emplace_back(it);

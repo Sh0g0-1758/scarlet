@@ -52,6 +52,8 @@ bool Codegen::unreachable_code_elimination(std::vector<cfg::node> &cfg) {
 
   // eliminate useless jumps
   for (auto block = cfg.begin(); block != cfg.end(); ++block) {
+    if (block->is_empty())
+      continue;
     auto instr = block->get_body().back();
     if (instr->get_type() == scar::instruction_type::JUMP or
         instr->get_type() == scar::instruction_type::JUMP_IF_ZERO or
@@ -73,6 +75,8 @@ bool Codegen::unreachable_code_elimination(std::vector<cfg::node> &cfg) {
 
   // eliminate useless labels
   for (auto block = cfg.begin(); block != cfg.end(); ++block) {
+    if (block->is_empty())
+      continue;
     auto instr = block->get_body().front();
     if (instr->get_type() == scar::instruction_type::LABEL) {
       bool keepLabel = false;
