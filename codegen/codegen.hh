@@ -3,8 +3,10 @@
 #include <ast/ast.hh>
 #include <cmath>
 #include <cmd/cmd.hh>
+#include <codegen/cfg/cfg.hh>
 #include <fstream>
 #include <map>
+#include <queue>
 #include <scar/scar.hh>
 #include <scasm/scasm.hh>
 #include <sstream>
@@ -13,9 +15,7 @@
 #include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
 #include <tools/symbolTable/symbolTable.hh>
-#include <codegen/cfg/cfg.hh>
 #include <vector>
-#include <queue>
 
 // clang-format off
 /*
@@ -142,8 +142,12 @@ private:
   void fold_unop(constant::Constant src, constant::Constant &result,
                  unop::UNOP op);
   void fold_typecast(constant::Constant src, constant::Constant &result);
-  void gen_cfg_from_funcBody(std::vector<cfg::node> &cfg, std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
-  void gen_funcBody_from_cfg(std::vector<cfg::node> &cfg, std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+  void gen_cfg_from_funcBody(
+      std::vector<cfg::node> &cfg,
+      std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+  void gen_funcBody_from_cfg(
+      std::vector<cfg::node> &cfg,
+      std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
   std::map<std::string, int> NodeLabelToId;
   bool unreachable_code_elimination(std::vector<cfg::node> &cfg);
 
