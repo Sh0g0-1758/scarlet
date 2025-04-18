@@ -37,8 +37,10 @@ namespace codegen {
     MAKE_SHARED(scasm::scasm_static_constant, doubleConst);                    \
     doubleConst->set_name(doubleName);                                         \
     doubleConst->set_init(constVal);                                           \
-    if(constVal.get_value().d == -0.0) doubleConst->set_alignment(16);         \
-    else doubleConst->set_alignment(8);                                        \
+    if (constVal.get_value().d == -0.0)                                        \
+      doubleConst->set_alignment(16);                                          \
+    else                                                                       \
+      doubleConst->set_alignment(8);                                           \
     auto top_level_elem =                                                      \
         std::static_pointer_cast<scasm::scasm_top_level>(doubleConst);         \
     top_level_elem->set_type(scasm::scasm_top_level_type::STATIC_CONSTANT);    \

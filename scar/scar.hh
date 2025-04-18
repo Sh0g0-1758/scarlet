@@ -133,7 +133,7 @@ public:
   std::string get_scar_name() { return "Val"; }
   val_type get_type() { return type; }
   void set_type(val_type type) { this->type = std::move(type); }
-  constant::Constant& get_const_val() { return const_val; }
+  constant::Constant &get_const_val() { return const_val; }
   void set_const_val(constant::Constant const_val) {
     this->const_val = const_val;
   }

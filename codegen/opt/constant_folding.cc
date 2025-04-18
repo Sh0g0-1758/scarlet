@@ -23,8 +23,7 @@ namespace codegen {
     result.set_value({.d = src1.get_value().d op src2.get_value().d});         \
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
-    result.set_value(                                                          \
-        {.c = (char)(src1.get_value().c op src2.get_value().c)});              \
+    result.set_value({.c = (char)(src1.get_value().c op src2.get_value().c)}); \
     break;                                                                     \
   case constant::Type::UCHAR:                                                  \
     result.set_value(                                                          \
@@ -49,8 +48,7 @@ namespace codegen {
     result.set_value({.ul = src1.get_value().ul op src2.get_value().ul});      \
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
-    result.set_value(                                                          \
-        {.c = (char)(src1.get_value().c op src2.get_value().c)});              \
+    result.set_value({.c = (char)(src1.get_value().c op src2.get_value().c)}); \
     break;                                                                     \
   case constant::Type::UCHAR:                                                  \
     result.set_value(                                                          \
@@ -79,12 +77,10 @@ namespace codegen {
     result.set_value({.i = src1.get_value().d op src2.get_value().d});         \
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
-    result.set_value(                                                          \
-        {.i = src1.get_value().c op src2.get_value().c});                      \
+    result.set_value({.i = src1.get_value().c op src2.get_value().c});         \
     break;                                                                     \
   case constant::Type::UCHAR:                                                  \
-    result.set_value(                                                          \
-        {.i = src1.get_value().uc op src2.get_value().uc});                    \
+    result.set_value({.i = src1.get_value().uc op src2.get_value().uc});       \
     break;                                                                     \
   default:                                                                     \
     break;                                                                     \
@@ -320,31 +316,32 @@ void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
   }
 }
 
-void Codegen::fold_typecast(constant::Constant src, constant::Constant &result) {
+void Codegen::fold_typecast(constant::Constant src,
+                            constant::Constant &result) {
   switch (result.get_type()) {
-    case constant::Type::DOUBLE:
-      CALC_TYPECAST(src, result, double, d);
-      break;
-    case constant::Type::INT:
-      CALC_TYPECAST(src, result, int, i);
-      break;
-    case constant::Type::UINT:
-      CALC_TYPECAST(src, result, unsigned int, ui);
-      break;
-    case constant::Type::LONG:
-      CALC_TYPECAST(src, result, long, l);
-      break;
-    case constant::Type::ULONG:
-      CALC_TYPECAST(src, result, unsigned long, ul);
-      break;
-    case constant::Type::CHAR:
-      CALC_TYPECAST(src, result, char, c);
-      break;
-    case constant::Type::UCHAR:
-      CALC_TYPECAST(src, result, unsigned char, uc);
-      break;
-    default:
-      break;
+  case constant::Type::DOUBLE:
+    CALC_TYPECAST(src, result, double, d);
+    break;
+  case constant::Type::INT:
+    CALC_TYPECAST(src, result, int, i);
+    break;
+  case constant::Type::UINT:
+    CALC_TYPECAST(src, result, unsigned int, ui);
+    break;
+  case constant::Type::LONG:
+    CALC_TYPECAST(src, result, long, l);
+    break;
+  case constant::Type::ULONG:
+    CALC_TYPECAST(src, result, unsigned long, ul);
+    break;
+  case constant::Type::CHAR:
+    CALC_TYPECAST(src, result, char, c);
+    break;
+  case constant::Type::UCHAR:
+    CALC_TYPECAST(src, result, unsigned char, uc);
+    break;
+  default:
+    break;
   }
 }
 
@@ -411,7 +408,8 @@ bool Codegen::constant_folding(
       }
     } else if (instType == scar::instruction_type::COPY) {
       auto dstType = scarValTypeToConstType((*inst)->get_dst());
-      if (IS_CONSTANT((*inst)->get_src1()) and dstType != (*inst)->get_src1()->get_const_val().get_type()) {
+      if (IS_CONSTANT((*inst)->get_src1()) and
+          dstType != (*inst)->get_src1()->get_const_val().get_type()) {
         isChanged = true;
         (*inst)->get_src1()->get_const_val().set_type(dstType);
       }

@@ -210,7 +210,8 @@ public:
     return "LC." + std::to_string(constLabelCounter++);
   }
 
-  scasm::AssemblyType scarValTypeToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
+  scasm::AssemblyType
+  scarValTypeToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
     if (val == nullptr) {
       return scasm::AssemblyType::NONE;
     }
@@ -264,7 +265,7 @@ public:
   }
 
   scasm::AssemblyType elemTypeToAsmType(ast::ElemType type,
-                                    std::vector<long> derivedType) {
+                                        std::vector<long> derivedType) {
     switch (type) {
     case ast::ElemType::INT:
       return scasm::AssemblyType::LONG_WORD;
@@ -295,7 +296,8 @@ public:
     UNREACHABLE();
   }
 
-  constant::Type scarValTypeToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
+  constant::Type
+  scarValTypeToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       return val->get_const_val().get_type();
