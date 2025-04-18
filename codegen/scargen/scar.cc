@@ -1,4 +1,4 @@
-#include <codegen/codegen.hh>
+#include <codegen/common.hh>
 
 namespace scarlet {
 namespace codegen {

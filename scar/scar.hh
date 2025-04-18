@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "binary_operations/binop.hh"
-#include "unary_operations/unop.hh"
+#include <binary_operations/binop.hh>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
+#include <unary_operations/unop.hh>
 #include <vector>
 
 // clang-format off

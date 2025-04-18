@@ -345,74 +345,87 @@ void Codegen::fold_typecast(constant::Constant src,
   }
 }
 
-bool Codegen::constant_folding(
-    std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
+bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
   bool isChanged{};
-  for (auto inst = funcBody.begin(); inst != funcBody.end(); ++inst) {
-    auto instType = (*inst)->get_type();
-    if (instType == scar::instruction_type::BINARY) {
-      if (IS_CONSTANT((*inst)->get_src1()) and
-          IS_CONSTANT((*inst)->get_src2())) {
-        isChanged = true;
-        constant::Constant result;
-        fold_binop((*inst)->get_src1()->get_const_val(),
-                   (*inst)->get_src2()->get_const_val(), result,
-                   (*inst)->get_binop());
-        (*inst)->set_type(scar::instruction_type::COPY);
-        (*inst)->get_src1()->set_const_val(result);
-        (*inst)->set_src2(nullptr);
-      }
-    } else if (instType == scar::instruction_type::UNARY) {
-      if (IS_CONSTANT((*inst)->get_src1())) {
-        isChanged = true;
-        constant::Constant result;
-        fold_unop((*inst)->get_src1()->get_const_val(), result,
-                  (*inst)->get_unop());
-        (*inst)->set_type(scar::instruction_type::COPY);
-        (*inst)->get_src1()->set_const_val(result);
-      }
-    } else if (instType == scar::instruction_type::JUMP_IF_ZERO) {
-      if (IS_CONSTANT((*inst)->get_src1())) {
-        isChanged = true;
-        bool modify{};
-        IS_ZERO((*inst)->get_src1()->get_const_val(), modify);
-        if (modify) {
-          (*inst)->set_type(scar::instruction_type::JUMP);
-          (*inst)->set_src1((*inst)->get_dst());
-        } else {
-          inst = funcBody.erase(inst);
-          --inst;
+  for (auto block = cfg.begin(); block != cfg.end(); ++block) {
+    if (block->is_empty())
+      continue;
+    for (auto inst = block->get_body().begin(); inst != block->get_body().end();
+         ++inst) {
+      auto instType = (*inst)->get_type();
+      if (instType == scar::instruction_type::BINARY) {
+        if (IS_CONSTANT((*inst)->get_src1()) and
+            IS_CONSTANT((*inst)->get_src2())) {
+          isChanged = true;
+          constant::Constant result;
+          fold_binop((*inst)->get_src1()->get_const_val(),
+                     (*inst)->get_src2()->get_const_val(), result,
+                     (*inst)->get_binop());
+          (*inst)->set_type(scar::instruction_type::COPY);
+          (*inst)->get_src1()->set_const_val(result);
+          (*inst)->set_src2(nullptr);
+        }
+      } else if (instType == scar::instruction_type::UNARY) {
+        if (IS_CONSTANT((*inst)->get_src1())) {
+          isChanged = true;
+          constant::Constant result;
+          fold_unop((*inst)->get_src1()->get_const_val(), result,
+                    (*inst)->get_unop());
+          (*inst)->set_type(scar::instruction_type::COPY);
+          (*inst)->get_src1()->set_const_val(result);
+        }
+      } else if (instType == scar::instruction_type::JUMP_IF_ZERO) {
+        if (IS_CONSTANT((*inst)->get_src1())) {
+          isChanged = true;
+          bool modify{};
+          IS_ZERO((*inst)->get_src1()->get_const_val(), modify);
+          if (modify) {
+            (*inst)->set_type(scar::instruction_type::JUMP);
+            (*inst)->set_src1((*inst)->get_dst());
+            block->get_succ().clear();
+            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
+            (block + 1)->remove_pred(block->get_id());
+          } else {
+            inst = block->get_body().erase(inst);
+            --inst;
+          }
+        }
+      } else if (instType == scar::instruction_type::JUMP_IF_NOT_ZERO) {
+        if (IS_CONSTANT((*inst)->get_src1())) {
+          isChanged = true;
+          bool erase{};
+          IS_ZERO((*inst)->get_src1()->get_const_val(), erase);
+          if (erase) {
+            inst = block->get_body().erase(inst);
+            --inst;
+          } else {
+            (*inst)->set_type(scar::instruction_type::JUMP);
+            (*inst)->set_src1((*inst)->get_dst());
+            block->get_succ().clear();
+            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
+            (block + 1)->remove_pred(block->get_id());
+          }
+        }
+      } else if (scar::is_type_cast(instType)) {
+        if (IS_CONSTANT((*inst)->get_src1())) {
+          isChanged = true;
+          constant::Constant result;
+          result.set_type(scarValTypeToConstType((*inst)->get_dst()));
+          fold_typecast((*inst)->get_src1()->get_const_val(), result);
+          (*inst)->set_type(scar::instruction_type::COPY);
+          (*inst)->get_src1()->set_const_val(result);
+        }
+      } else if (instType == scar::instruction_type::COPY) {
+        auto dstType = scarValTypeToConstType((*inst)->get_dst());
+        if (IS_CONSTANT((*inst)->get_src1()) and
+            dstType != (*inst)->get_src1()->get_const_val().get_type()) {
+          isChanged = true;
+          (*inst)->get_src1()->get_const_val().set_type(dstType);
         }
       }
-    } else if (instType == scar::instruction_type::JUMP_IF_NOT_ZERO) {
-      if (IS_CONSTANT((*inst)->get_src1())) {
-        isChanged = true;
-        bool erase{};
-        IS_ZERO((*inst)->get_src1()->get_const_val(), erase);
-        if (erase) {
-          inst = funcBody.erase(inst);
-          --inst;
-        } else {
-          (*inst)->set_type(scar::instruction_type::JUMP);
-          (*inst)->set_src1((*inst)->get_dst());
-        }
-      }
-    } else if (scar::is_type_cast(instType)) {
-      if (IS_CONSTANT((*inst)->get_src1())) {
-        isChanged = true;
-        constant::Constant result;
-        result.set_type(scarValTypeToConstType((*inst)->get_dst()));
-        fold_typecast((*inst)->get_src1()->get_const_val(), result);
-        (*inst)->set_type(scar::instruction_type::COPY);
-        (*inst)->get_src1()->set_const_val(result);
-      }
-    } else if (instType == scar::instruction_type::COPY) {
-      auto dstType = scarValTypeToConstType((*inst)->get_dst());
-      if (IS_CONSTANT((*inst)->get_src1()) and
-          dstType != (*inst)->get_src1()->get_const_val().get_type()) {
-        isChanged = true;
-        (*inst)->get_src1()->get_const_val().set_type(dstType);
-      }
+    }
+    if (block->get_body().empty()) {
+      REMOVE_BLOCK();
     }
   }
   return isChanged;

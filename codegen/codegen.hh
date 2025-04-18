@@ -3,8 +3,10 @@
 #include <ast/ast.hh>
 #include <cmath>
 #include <cmd/cmd.hh>
+#include <codegen/cfg/cfg.hh>
 #include <fstream>
 #include <map>
+#include <queue>
 #include <scar/scar.hh>
 #include <scasm/scasm.hh>
 #include <sstream>
@@ -134,13 +136,28 @@ private:
   bool enable_dead_store_elimination{};
   bool enable_all{};
   void optInit(scarcmd &cmd);
-  bool constant_folding(
-      std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+  bool constant_folding(std::vector<cfg::node> &cfg);
   void fold_binop(constant::Constant src1, constant::Constant src2,
                   constant::Constant &result, binop::BINOP op);
   void fold_unop(constant::Constant src, constant::Constant &result,
                  unop::UNOP op);
   void fold_typecast(constant::Constant src, constant::Constant &result);
+  void gen_cfg_from_funcBody(
+      std::vector<cfg::node> &cfg,
+      std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+  void gen_funcBody_from_cfg(
+      std::vector<cfg::node> &cfg,
+      std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
+  std::map<std::string, int> NodeLabelToId;
+  bool unreachable_code_elimination(std::vector<cfg::node> &cfg);
+  cfg::node &getNodeFromID(std::vector<cfg::node> &cfg, unsigned int id) {
+    for (auto &node : cfg) {
+      if (node.get_id() == id) {
+        return node;
+      }
+    }
+    throw std::runtime_error("Block not found");
+  }
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

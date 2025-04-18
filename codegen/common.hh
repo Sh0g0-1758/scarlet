@@ -28,6 +28,25 @@ namespace codegen {
     constant_buffer.clear();                                                   \
   }
 
+/* COMMON MACROS FOR OPTIMIZATIONS */
+
+#define REMOVE_BLOCK()                                                         \
+  auto prevID = (block - 1)->get_id();                                         \
+  auto currID = block->get_id();                                               \
+  auto nextID = (block + 1)->get_id();                                         \
+  if (block->is_pred(prevID) and block->is_succ(nextID)) {                     \
+    (block + 1)->add_pred(prevID);                                             \
+    (block - 1)->add_succ(nextID);                                             \
+  }                                                                            \
+  for (auto succID : block->get_succ()) {                                      \
+    getNodeFromID(cfg, succID).remove_pred(currID);                            \
+  }                                                                            \
+  for (auto predID : block->get_pred()) {                                      \
+    getNodeFromID(cfg, predID).remove_succ(currID);                            \
+  }                                                                            \
+  block = cfg.erase(block);                                                    \
+  --block;
+
 /* COMMON MACROS FOR SCASM GENERATION */
 
 #define MAKE_DOUBLE_CONSTANT(target, constVal)                                 \
