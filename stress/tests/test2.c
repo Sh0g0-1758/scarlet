@@ -1,147 +1,90 @@
-int main(void) {
-  int current_temp = 0;
-  int target_temp = 0;
-  int heat_power = 0;
-  int fan_speed = 0;
-  int humidity = 0;
-  int pressure = 0;
-  int safety_threshold = 0;
-  int emergency_limit = 0;
-  int system_status = 0;
-  int error_code = 0;
-  int valve_position = 0;
-  int flow_rate = 0;
-  int sensor1 = 0;
-  int sensor2 = 0;
-  int sensor3 = 0;
-  int alert_level = 0;
-  int warning_code = 0;
-  int backup_power = 0;
-  int efficiency = 0;
-  int delta_t = 0;
-  int time_remaining = 0;
+/* Prototypes for dynamic memory */
+void* malloc(unsigned long size);
+void  free(void* ptr);
 
-start:
-  if ((current_temp = 72) < 100) {
-    if ((target_temp = current_temp + 5) > 65) {
-      heat_power = 80;
-      goto check_fan;
-    } else {
-      heat_power = 40;
-      goto check_pressure;
+/* Global/static state */
+static int magic_seed = 42424242;
+
+/* Function prototypes */
+int   transform(char* text, int key);
+char* scramble(char* src);
+
+int transform(char* text, int key) {
+    char* p = text;
+loop_char:
+    if (*p == '\0') goto done_char;
+    int mod4 = (*p) % 4;
+    switch (mod4) {
+      case 0:
+        *p = *p + key;
+        break;
+      case 1:
+        *p = *p - key;
+        break;
+      case 2:
+        *p = *p ^ key;
+        break;
+      default: {
+        int anded = *p & key;
+        int shifted = *p << 1;
+        *p = anded | shifted;
+      }
     }
-  } else {
-    heat_power = 0;
-    goto emergency;
-  }
+    p = p + 1;
+    goto loop_char;
+done_char:
+    key = key ^ magic_seed;
+    return key;
+}
 
-check_fan:
-  if ((fan_speed = heat_power / 2) > 0) {
-    humidity = fan_speed + 30;
-    if (humidity > 60)
-      goto check_pressure;
-    else
-      goto check_sensors;
-  }
-  goto emergency;
+char* scramble(char* src) {
+    int len = 0;
+count_len:
+    if (src[len] == '\0') goto alloc;
+    len = len + 1;
+    goto count_len;
 
-check_pressure:
-  pressure = humidity * 2;
-  if (pressure < 120)
-    goto check_sensors;
-  else {
-    pressure = pressure / 2;
-    goto check_sensors;
-  }
+alloc:
+    if(1) {}
+    char* dest = (char*)malloc((long)(len + 1));
+    int i = len;
+copy_loop:
+    if (i <= 0) goto null_term;
+    int shift = magic_seed >> (i % 8);
+    dest[len - i] = src[i - 1] ^ (char)shift;
+    i = i - 1;
+    goto copy_loop;
 
-check_sensors:
-  sensor1 = (heat_power + fan_speed) * 2;
-  if (sensor1 > 200) {
-    sensor2 = sensor1 / 2;
-    goto compute_status;
-  } else {
-    sensor2 = sensor1 * 2;
-    if (sensor2 < 100)
-      goto emergency;
-    goto compute_status;
-  }
+null_term:
+    dest[len] = '\0';
+    return dest;
+}
 
-compute_status:
-  sensor3 = sensor1 + sensor2;
-  if (sensor3 > 300) {
-    system_status = sensor3 / 2;
-    error_code = system_status - 100;
-    goto check_valves;
-  } else {
-    system_status = sensor3 * 2;
-    error_code = system_status + 50;
-    if (error_code > 500)
-      goto emergency;
-    goto check_valves;
-  }
+int main(void) {
+    char original[37] = "TheQuickBrownFoxJumpsOver13LazyDogs!";
+    char* text = scramble(original);
 
-check_valves:
-  valve_position = system_status + error_code;
-  flow_rate = valve_position - 200;
-  if (valve_position > flow_rate) {
-    alert_level = valve_position / 2;
-    warning_code = flow_rate * 2;
-    goto compute_efficiency;
-  } else {
-    goto emergency;
-  }
+    int key = transform(text, magic_seed % 26);
 
-compute_efficiency:
-  backup_power = alert_level + warning_code;
-  efficiency = backup_power - 75;
-  goto final;
+    for (int pass = 0; pass < 3; pass = pass + 1) {
+        int t = transform(text, key);
+        int sign = (pass % 2) ? -1 : 1;
+        key = key + (t * sign);
+    }
 
-emergency:
-  return -1;
+    int km = key % 4;
+    switch (km) {
+      case 0:
+        key = key << 2;
+        break;
+      case 1:
+        key = key >> 1;
+        break;
+      default:
+        key = ~key;
+    }
 
-final:
-#ifdef __clang__
-  // clang gives undefined behavior for unsequenced modification and access to
-  // the same variable. gcc seems to respect the precedence of C operators (like
-  // scarlet) and thus gives a defined result.
-  return 104;
-#else
-  return (pressure = 243) +
-         ((((((((((((((((((((current_temp = 180) * (heat_power = 450)) /
-                           ((target_temp = 200) + 1)) %
-                          ((fan_speed = 1200) * (humidity = 85))) *
-                         (((pressure = 340) << 6) >>
-                          ((safety_threshold = 95) % 4))) +
-                        (((emergency_limit = 500) * 11) % 23)) /
-                       ((error_code = 7) ? (error_code = 12) : 1))
-                      << ((valve_position = 78) % 7)) ^
-                     (((flow_rate = 156) * (sensor1 = 342)) /
-                      ((sensor2 = 267) + 1))) %
-                    (((sensor3 = 289) + 5) * (alert_level = 4))) *
-                   (((warning_code = 23) >> 3) + (backup_power = 890))) +
-                  (((efficiency = 78) % 19) * ((delta_t = 45) + 7))) *
-                 (((time_remaining = 360) - (current_temp = 185)) /
-                  ((heat_power = 460) + 1))) *
-                (((pressure = 350) <= (safety_threshold = 100)) !=
-                 ((humidity = 82) >= (emergency_limit = 510)))) *
-               (((flow_rate = 160) < (sensor1 = 345)) ==
-                ((sensor2 = 270) > (sensor3 = 292)))) *
-              ((((valve_position = 82) << 4) | ((fan_speed = 1250) >> 2)) ^
-               ((warning_code = 25) + -(backup_power = 900)))) *
-             (((current_temp = 190) * (target_temp = 205) / (heat_power = 470) %
-               (fan_speed = 1300)) +
-              (alert_level = 5))) *
-            (((error_code = 15) <= (warning_code = 28)) !=
-             ((efficiency = 82) >= (delta_t = 48)))) *
-           ((((pressure = 360) + (humidity = 88))
-             << ((safety_threshold = 105) % 3)) /
-            (((flow_rate = 165) + 1) * ((sensor1 = 348) - (sensor2 = 273))))) *
-          (((((backup_power = 910) >> 2) ^ ((efficiency = 85) << 3)) +
-            ((delta_t = 50) * (time_remaining = 370))) %
-           ((alert_level = 6) + (warning_code = 30)))) *
-             ((((system_status = 1) | (error_code = 18)) &
-               ((valve_position = 85) ^ (flow_rate = 170))) +
-              (((sensor3 = 295) - (sensor2 = 275)) *
-               ((sensor1 = 350) + (sensor2 = 278))));
-#endif
+    free(text);
+    int ret = (key < 0) ? -key : key;
+    return ret;
 }
