@@ -415,8 +415,8 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
       }
     }
   }
-  return isChanged;
 }
+return isChanged;
 }
 
 } // namespace codegen
