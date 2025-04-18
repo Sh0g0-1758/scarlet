@@ -2,6 +2,7 @@ add_library(scarCodegen STATIC
     codegen.cc
     codegen.hh
     common.hh
+    cfg/cfg.hh
 
     scargen/scar.cc
     scargen/scar_statement.cc
@@ -13,6 +14,7 @@ add_library(scarCodegen STATIC
 
     opt/opt.cc
     opt/constant_folding.cc
+    opt/unreachable_code_elimination.cc
 
     scasmgen/scasm_generation.cc
     scasmgen/binop_scasm_generation.cc

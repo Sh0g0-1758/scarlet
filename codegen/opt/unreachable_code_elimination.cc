@@ -21,7 +21,6 @@ namespace codegen {
 bool Codegen::unreachable_code_elimination(std::vector<cfg::node> &cfg) {
   bool isChanged{};
   // eliminate unreachable blocks
-  unsigned int numBlocks = cfg.size();
   std::map<unsigned int, bool> visited;
   std::map<unsigned int, bool> reachable;
 
