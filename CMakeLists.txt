@@ -111,4 +111,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 17 --extra-credit
     COMMAND echo "Running constant-folding optimization test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19 --fold-constants
+    COMMAND echo "Running unreachable-code elimination optimization test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19 --eliminate-unreachable-code
 )
