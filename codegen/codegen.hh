@@ -140,6 +140,7 @@ private:
                   constant::Constant &result, binop::BINOP op);
   void fold_unop(constant::Constant src, constant::Constant &result,
                  unop::UNOP op);
+  void fold_typecast(constant::Constant src, constant::Constant &result);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,
@@ -262,7 +263,7 @@ public:
     UNREACHABLE();
   }
 
-  scasm::AssemblyType elemToAsmType(ast::ElemType type,
+  scasm::AssemblyType elemTypeToAsmType(ast::ElemType type,
                                     std::vector<long> derivedType) {
     switch (type) {
     case ast::ElemType::INT:
@@ -294,7 +295,7 @@ public:
     UNREACHABLE();
   }
 
-  constant::Type valToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
+  constant::Type scarValTypeToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       return val->get_const_val().get_type();

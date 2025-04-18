@@ -439,7 +439,7 @@ void Codegen::gen_scasm() {
       auto derivedType = it.second.derivedTypeMap[0];
       scasm::backendSymbol sym;
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
-      sym.asmType = elemToAsmType(baseType, derivedType);
+      sym.asmType = elemTypeToAsmType(baseType, derivedType);
       if (symbolTable::symbolInfo::is_array(it.second)) {
         sym.size = (long)ast::getSizeOfArrayTypeOnArch(derivedType);
         if (sym.size > 16) {

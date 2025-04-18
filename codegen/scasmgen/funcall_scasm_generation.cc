@@ -14,7 +14,7 @@ void Codegen::gen_funcall_scasm(
   std::vector<constant::Type> param_types;
 
   for (int i = 0; i < numArgs; i++) {
-    param_types.push_back(valToConstType(funcCall->get_args()[i]));
+    param_types.push_back(scarValTypeToConstType(funcCall->get_args()[i]));
   }
 
   std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
@@ -198,7 +198,7 @@ void Codegen::gen_funcall_scasm(
   scasm_inst3->set_asm_type(scarValTypeToAsmType(inst->get_dst()));
   MAKE_SHARED(scasm::scasm_operand, scasm_src3);
   scasm_src3->set_type(scasm::operand_type::REG);
-  if (valToConstType(inst->get_dst()) == constant::Type::DOUBLE) {
+  if (scarValTypeToConstType(inst->get_dst()) == constant::Type::DOUBLE) {
     scasm_src3->set_reg(scasm::register_type::XMM0);
   } else {
     scasm_src3->set_reg(scasm::register_type::AX);

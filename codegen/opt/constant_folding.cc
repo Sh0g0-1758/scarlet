@@ -241,6 +241,61 @@ void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
   }
 }
 
+#define CALC_TYPECAST(src, result, type, t)                      \
+  switch (src.get_type()) {                                                    \
+  case constant::Type::INT:                                                    \
+    result.set_value({.t = (type)src.get_value().i});            \
+    break;                                                                     \
+  case constant::Type::UINT:                                                   \
+    result.set_value({.t = (type)src.get_value().ui});           \
+    break;                                                                     \
+  case constant::Type::LONG:                                                   \
+    result.set_value({.t = (type)src.get_value().l});            \
+    break;                                                                     \
+  case constant::Type::ULONG:                                                  \
+    result.set_value({.t = (type)src.get_value().ul});           \
+    break;                                                                     \
+  case constant::Type::DOUBLE:                                                 \
+    result.set_value({.t = (type)src.get_value().d});            \
+    break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    result.set_value({.t = (type)src.get_value().c});            \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    result.set_value({.t = (type)src.get_value().uc});           \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
+void Codegen::fold_typecast(constant::Constant src, constant::Constant &result) {
+  switch (result.get_type()) {
+    case constant::Type::DOUBLE:
+      CALC_TYPECAST(src, result, double, d);
+      break;
+    case constant::Type::INT:
+      CALC_TYPECAST(src, result, int, i);
+      break;
+    case constant::Type::UINT:
+      CALC_TYPECAST(src, result, unsigned int, ui);
+      break;
+    case constant::Type::LONG:
+      CALC_TYPECAST(src, result, long, l);
+      break;
+    case constant::Type::ULONG:
+      CALC_TYPECAST(src, result, unsigned long, ul);
+      break;
+    case constant::Type::CHAR:
+      CALC_TYPECAST(src, result, char, c);
+      break;
+    case constant::Type::UCHAR:
+      CALC_TYPECAST(src, result, unsigned char, uc);
+      break;
+    default:
+      break;
+  }
+}
+
 bool Codegen::constant_folding(
     std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
   bool isChanged{};
@@ -297,19 +352,16 @@ bool Codegen::constant_folding(
       if (IS_CONSTANT((*inst)->get_src1())) {
         isChanged = true;
         constant::Constant result;
-        fold_unop((*inst)->get_src1()->get_const_val(), result,
-                  (*inst)->get_unop());
+        result.set_type(scarValTypeToConstType((*inst)->get_dst()));
+        fold_typecast((*inst)->get_src1()->get_const_val(), result);
         (*inst)->set_type(scar::instruction_type::COPY);
         (*inst)->get_src1()->set_const_val(result);
       }
     } else if (instType == scar::instruction_type::COPY) {
-      if (IS_CONSTANT((*inst)->get_src1())) {
+      if (IS_CONSTANT((*inst)->get_src1()) and scarValTypeToConstType(
+              (*inst)->get_dst()) != (*inst)->get_src1()->get_const_val().get_type()) {
         isChanged = true;
-        constant::Constant result;
-        fold_unop((*inst)->get_src1()->get_const_val(), result,
-                  (*inst)->get_unop());
-        (*inst)->set_type(scar::instruction_type::COPY);
-        (*inst)->get_src1()->set_const_val(result);
+        (*inst)->get_src1()->get_const_val().set_type(scarValTypeToConstType((*inst)->get_dst()));
       }
     }
   }
