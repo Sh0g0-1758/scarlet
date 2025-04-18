@@ -29,6 +29,7 @@ namespace codegen {
   }
 
 /* COMMON MACROS FOR OPTIMIZATIONS */
+
 #define REMOVE_BLOCK()                                                         \
   auto prevID = (block - 1)->get_id();                                         \
   auto currID = block->get_id();                                               \
