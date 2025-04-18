@@ -124,7 +124,7 @@ namespace codegen {
     break;                                                                     \
   }
 
-  #define CALC_UNOP(src, op)                                                     \
+#define CALC_UNOP(src, op)                                                     \
   switch (src.get_type()) {                                                    \
   case constant::Type::INT:                                                    \
     result.set_value({.i = op src.get_value().i});                             \
@@ -203,7 +203,7 @@ namespace codegen {
     break;                                                                     \
   }
 
-  #define CALC_TYPECAST(src, result, type, t)                                    \
+#define CALC_TYPECAST(src, result, type, t)                                    \
   switch (src.get_type()) {                                                    \
   case constant::Type::INT:                                                    \
     result.set_value({.t = (type)src.get_value().i});                          \
