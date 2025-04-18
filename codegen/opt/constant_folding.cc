@@ -348,6 +348,8 @@ void Codegen::fold_typecast(constant::Constant src,
 bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
   bool isChanged{};
   for (auto block = cfg.begin(); block != cfg.end(); ++block) {
+    if (block->is_empty())
+      continue;
     for (auto inst = block->get_body().begin(); inst != block->get_body().end();
          ++inst) {
       auto instType = (*inst)->get_type();
@@ -415,6 +417,9 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           (*inst)->get_src1()->get_const_val().set_type(dstType);
         }
       }
+    }
+    if (block->get_body().empty()) {
+      REMOVE_BLOCK();
     }
   }
   return isChanged;

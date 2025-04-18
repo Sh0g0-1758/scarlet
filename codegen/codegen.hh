@@ -150,6 +150,14 @@ private:
       std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
   std::map<std::string, int> NodeLabelToId;
   bool unreachable_code_elimination(std::vector<cfg::node> &cfg);
+  cfg::node &getNodeFromID(std::vector<cfg::node> &cfg, unsigned int id) {
+    for (auto &block : cfg) {
+      if (block.get_id() == id) {
+        return block;
+      }
+    }
+    throw std::runtime_error("Block not found");
+  }
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

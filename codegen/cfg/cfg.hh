@@ -1,6 +1,5 @@
 #pragma once
 
-#include <codegen/common.hh>
 #include <scar/scar.hh>
 
 namespace scarlet {
