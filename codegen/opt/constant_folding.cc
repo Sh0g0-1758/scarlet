@@ -345,10 +345,10 @@ void Codegen::fold_typecast(constant::Constant src,
   }
 }
 
-bool Codegen::constant_folding(
-    std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
+bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
   bool isChanged{};
-  for (auto inst = funcBody.begin(); inst != funcBody.end(); ++inst) {
+  for(auto block = cfg.begin(); block != cfg.end(); ++block) {
+    for(auto inst = block->get_body().begin(); inst != block->get_body().end(); ++inst) {
     auto instType = (*inst)->get_type();
     if (instType == scar::instruction_type::BINARY) {
       if (IS_CONSTANT((*inst)->get_src1()) and
@@ -380,7 +380,7 @@ bool Codegen::constant_folding(
           (*inst)->set_type(scar::instruction_type::JUMP);
           (*inst)->set_src1((*inst)->get_dst());
         } else {
-          inst = funcBody.erase(inst);
+          inst = block->get_body().erase(inst);
           --inst;
         }
       }
@@ -390,7 +390,7 @@ bool Codegen::constant_folding(
         bool erase{};
         IS_ZERO((*inst)->get_src1()->get_const_val(), erase);
         if (erase) {
-          inst = funcBody.erase(inst);
+          inst = block->get_body().erase(inst);
           --inst;
         } else {
           (*inst)->set_type(scar::instruction_type::JUMP);
