@@ -213,7 +213,7 @@ private:
   std::shared_ptr<AST_const_Node> const_node;
   std::shared_ptr<AST_identifier_Node> identifier_node;
   std::shared_ptr<AST_unop_Node> unop_node;
-  std::shared_ptr<AST_postfix_op_Node> postfix_op_node;
+  std::vector<std::shared_ptr<AST_postfix_op_Node>> postfix_op_node = {};
   // No need to make this a weak pointer because if an object of exp a points to
   // factor b then factor b can never point to exp a. It can only point to
   // another object of exp, say c. exp -> factor -> exp
@@ -255,7 +255,7 @@ public:
     this->type = ElemType::NONE;
     this->arrIdx.clear();
     this->derivedType.clear();
-    this->postfix_op_node = nullptr;
+    this->postfix_op_node = {};
   }
   std::string get_AST_name() { return "Factor"; }
   std::shared_ptr<AST_const_Node> get_const_node() { return const_node; }
@@ -313,11 +313,15 @@ public:
   void set_derived_type(std::vector<long> derivedType) {
     this->derivedType = std::move(derivedType);
   }
-  std::shared_ptr<AST_postfix_op_Node> get_postfix_op_node() {
+  std::vector<std::shared_ptr<AST_postfix_op_Node>> get_postfix_op_node() {
     return postfix_op_node;
   }
-  void set_postfix_op_node(std::shared_ptr<AST_postfix_op_Node> postfix_op_node) {
-    this->postfix_op_node = std::move(postfix_op_node);
+  void add_postfix_op_node(std::shared_ptr<AST_postfix_op_Node> postfix_op) {
+    this->postfix_op_node.emplace_back(postfix_op);
+  }
+  void set_postfix_op_node(
+      std::vector<std::shared_ptr<AST_postfix_op_Node>> postfix_op) {
+    this->postfix_op_node = std::move(postfix_op);
   }
 };
 

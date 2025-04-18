@@ -45,42 +45,49 @@ namespace parser {
   identifier->set_identifier(tokens[0].get_value().value());                   \
   tokens.erase(tokens.begin());
 
-#define EXPECT_POSTFIX_OP() \
-  if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {\
-    tokens.erase(tokens.begin());\
-    MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
-    MAKE_SHARED(ast::AST_exp_Node, exp);\
-    parse_exp(tokens, exp);\
-    postfix->set_postfix_exp(std::move(exp));\
-    factor->set_postfix_op_node(std::move(postfix));\
-    EXPECT(token::TOKEN::CLOSE_BRACKET);\
-  } else if(tokens[0].get_token() == token::TOKEN::DOT) {\
-    tokens.erase(tokens.begin());\
-    MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
-    MAKE_SHARED(ast::AST_identifier_Node, identifier);\
-    if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {\
-      identifier->set_identifier(tokens[0].get_value().value());\
-      tokens.erase(tokens.begin());\
-    } else {\
-      success = false;\
-      error_messages.emplace_back("Expected identifier after dot");\
-    }\
-    postfix->set_dot_identifier(std::move(identifier));\
-    factor->set_postfix_op_node(std::move(postfix));\
-  } else if(tokens[0].get_token() == token::TOKEN::ARROW_OPERATOR) {\
-    tokens.erase(tokens.begin());\
-    MAKE_SHARED(ast::AST_postfix_op_Node, postfix);\
-    MAKE_SHARED(ast::AST_identifier_Node, identifier);\
-    if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {\
-      identifier->set_identifier(tokens[0].get_value().value());\
-      tokens.erase(tokens.begin());\
-    } else {\
-      success = false;\
-      error_messages.emplace_back("Expected identifier after arrow");\
-    }\
-    postfix->set_arrow_identifier(std::move(identifier));\
-    factor->set_postfix_op_node(std::move(postfix));\
-  }\
+  #define EXPECT_POSTFIX_OP()                                                   \
+  std::vector<std::shared_ptr<ast::AST_postfix_op_Node>> postfix_ops = {};     \
+  while(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET ||                 \
+        tokens[0].get_token() == token::TOKEN::DOT ||                          \
+        tokens[0].get_token() == token::TOKEN::ARROW_OPERATOR) {              \
+    if(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET) {                 \
+      tokens.erase(tokens.begin());                                           \
+      MAKE_SHARED(ast::AST_postfix_op_Node, postfix);                         \
+      MAKE_SHARED(ast::AST_exp_Node, exp);                                    \
+      parse_exp(tokens, exp);                                                 \
+      postfix->set_postfix_exp(std::move(exp));                               \
+      postfix_ops.emplace_back(std::move(postfix));                           \
+      EXPECT(token::TOKEN::CLOSE_BRACKET);                                    \
+    } else if(tokens[0].get_token() == token::TOKEN::DOT) {                   \
+      tokens.erase(tokens.begin());                                           \
+      MAKE_SHARED(ast::AST_postfix_op_Node, postfix);                         \
+      MAKE_SHARED(ast::AST_identifier_Node, identifier);                      \
+      if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {                 \
+        identifier->set_identifier(tokens[0].get_value().value());            \
+        tokens.erase(tokens.begin());                                         \
+      } else {                                                                 \
+        success = false;                                                       \
+        error_messages.emplace_back("Expected identifier after dot");         \
+      }                                                                        \
+      postfix->set_dot_identifier(std::move(identifier));                      \
+      postfix_ops.emplace_back(std::move(postfix));                            \
+    } else if(tokens[0].get_token() == token::TOKEN::ARROW_OPERATOR) {         \
+      tokens.erase(tokens.begin());                                           \
+      MAKE_SHARED(ast::AST_postfix_op_Node, postfix);                         \
+      MAKE_SHARED(ast::AST_identifier_Node, identifier);                      \
+      if(tokens[0].get_token() == token::TOKEN::IDENTIFIER) {                 \
+        identifier->set_identifier(tokens[0].get_value().value());            \
+        tokens.erase(tokens.begin());                                         \
+      } else {                                                                 \
+        success = false;                                                       \
+        error_messages.emplace_back("Expected identifier after arrow");       \
+      }                                                                        \
+      postfix->set_arrow_identifier(std::move(identifier));                   \
+      postfix_ops.emplace_back(std::move(postfix));                           \
+    }                                                                          \
+  }                                                                            \
+  factor->set_postfix_op_node(postfix_ops);
+  
 
 /*
 - Error: Multiple identical type specifiers in the same declaration are invalid
