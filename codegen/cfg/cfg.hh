@@ -8,8 +8,7 @@ namespace cfg {
  * The node class represents a node in the control flow graph
  * id represents the block number
  * succ and pred contains the blocks that are connected to the current block
- * start and end point to the start and end scar instructions that the block
- * contains
+ * body contains the scar instructions present in the current block
  */
 class node {
 private:
