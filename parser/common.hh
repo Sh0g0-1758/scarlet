@@ -42,10 +42,10 @@ namespace parser {
     return;                                                                    \
   }                                                                            \
   MAKE_SHARED(ast::AST_identifier_Node, identifier);                           \
-  identifier->set_identifier(tokens[0].get_value().value());                   \
-  tokens.erase(tokens.begin());
+  identifier->set_identifier(tokens[0].get_value().value()) ;                   \
+  tokens.erase(tokens.begin()); \
 
-  #define EXPECT_POSTFIX_OP()                                                   \
+  #define EXPECT_POSTFIX_OP()                                                  \
   std::vector<std::shared_ptr<ast::AST_postfix_op_Node>> postfix_ops = {};     \
   while(tokens[0].get_token() == token::TOKEN::OPEN_BRACKET ||                 \
         tokens[0].get_token() == token::TOKEN::DOT ||                          \

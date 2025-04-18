@@ -224,6 +224,7 @@ private:
   std::shared_ptr<AST_declarator_Node> castDeclarator;
   std::shared_ptr<AST_factor_Node> child;
   ElemType type = ElemType::NONE;
+  std::shared_ptr<AST_identifier_Node> struct_identifier;
   std::vector<std::shared_ptr<ast::AST_exp_Node>> arrIdx;
   std::vector<long> derivedType{};
 
@@ -323,6 +324,12 @@ public:
       std::vector<std::shared_ptr<AST_postfix_op_Node>> postfix_op) {
     this->postfix_op_node = std::move(postfix_op);
   }
+  std::shared_ptr<AST_identifier_Node> get_struct_identifier() {
+    return struct_identifier;
+  }
+  void set_struct_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->struct_identifier = std::move(identifier);
+  }
 };
 
 class AST_factor_function_call_Node : public AST_factor_Node {
@@ -375,6 +382,7 @@ private:
   std::shared_ptr<AST_exp_Node> right;
   std::shared_ptr<AST_exp_Node> left;
   ElemType type = ElemType::NONE;
+  std::shared_ptr<AST_identifier_Node> struct_identifier;
   std::vector<long> derivedType{};
 
 public:
@@ -400,7 +408,12 @@ public:
   void set_binop_node(std::shared_ptr<AST_binop_Node> binop) {
     this->binop = std::move(binop);
   }
-
+  std::shared_ptr<AST_identifier_Node> get_struct_identifier() {
+    return struct_identifier;
+  }
+  void set_struct_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->struct_identifier = std::move(identifier);
+  }
   std::shared_ptr<AST_factor_Node> get_factor_node() { return factor; }
   void set_factor_node(std::shared_ptr<AST_factor_Node> factor) {
     this->factor = std::move(factor);
@@ -576,6 +589,7 @@ class AST_member_declaration_Node {
 private:
   std::shared_ptr<AST_declarator_Node> declarator;
   ElemType base_type;
+  std::shared_ptr<AST_identifier_Node> struct_identifier;
 public:
   std::string get_AST_name() { return "MemberDeclaration"; }
   std::shared_ptr<AST_declarator_Node> get_declarator() { return declarator; }
@@ -584,6 +598,12 @@ public:
   }
   void set_base_type(ElemType type) { this->base_type = type; }
   ElemType get_base_type() { return base_type; }
+  std::shared_ptr<AST_identifier_Node> get_struct_identifier() {
+    return struct_identifier;
+  }
+  void set_struct_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->struct_identifier = std::move(identifier);
+  }
 };
 
 class AST_Declaration_Node {
@@ -639,6 +659,7 @@ private:
   std::shared_ptr<AST_exp_Node> exp;
   std::shared_ptr<initializer> init;
   ElemType base_type;
+  std::shared_ptr<AST_identifier_Node> struct_identifier;
 
 public:
   std::string get_AST_name() { return "VariableDeclaration"; }
@@ -651,17 +672,30 @@ public:
   void set_initializer(std::shared_ptr<initializer> init) {
     this->init = std::move(init);
   }
+  std::shared_ptr<AST_identifier_Node> get_struct_identifier() {
+    return struct_identifier;
+  }
+  void set_struct_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->struct_identifier = std::move(identifier);
+  }
   std::shared_ptr<initializer> get_initializer() { return init; }
 };
 
 struct Param {
   ElemType base_type;
+  std::shared_ptr<AST_identifier_Node> struct_identifier;
   std::shared_ptr<AST_declarator_Node> declarator;
   std::shared_ptr<AST_identifier_Node> identifier;
 
   // This lets us use a macro which simplifies function params parsing
   void set_type(ElemType type) { this->base_type = type; }
   ElemType get_type() { return base_type; }
+  std::shared_ptr<AST_identifier_Node> get_struct_identifier() {
+    return struct_identifier;
+  }
+  void set_struct_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->struct_identifier = std::move(identifier);
+  }
 };
 
 class AST_Block_Node;
@@ -670,6 +704,7 @@ class AST_function_declaration_Node : public AST_Declaration_Node {
 private:
   std::vector<std::shared_ptr<Param>> params;
   ElemType return_type;
+  std::shared_ptr<AST_identifier_Node> struct_identifier;
   std::shared_ptr<AST_Block_Node> block;
 
 public:
@@ -686,6 +721,12 @@ public:
     this->return_type = return_type;
   }
   ElemType get_return_type() { return return_type; }
+  std::shared_ptr<AST_identifier_Node> get_struct_identifier() {
+    return struct_identifier;
+  }
+  void set_struct_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->struct_identifier = std::move(identifier);
+  }
 };
 
 class AST_For_Init_Node {

@@ -32,6 +32,7 @@ void parser::parse_declaration(
     isStructDecl = true;
     iter += 2;
     if(is_storage_specifier(tokens[0].get_token())) {
+      isStructDecl = false;
       iter += 1;
     }
     while(tokens[iter].get_token() != token::TOKEN::SEMICOLON and
@@ -94,7 +95,9 @@ void parser::parse_declaration(
   if(isStructDecl) {
     MAKE_SHARED(ast::AST_struct_declaration_Node, decl);
     decl->set_type(ast::DeclarationType::STRUCT);
-    tokens.erase(tokens.begin());
+    if(tokens[0].get_token() == token::TOKEN::STRUCT) {
+      tokens.erase(tokens.begin());
+    }
     parse_struct_declaration(tokens, decl);
     EXPECT(token::TOKEN::SEMICOLON);
     declaration = std::static_pointer_cast<ast::AST_Declaration_Node>(decl);
@@ -118,7 +121,12 @@ void parser::parse_declaration(
 void parser::parse_struct_declaration (
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_struct_declaration_Node> decl) {
-  if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+  if(is_storage_specifier(tokens[0].get_token())) {
+    success = false;
+    error_messages.emplace_back("Storage Specifiers are not allowed in struct "
+                                "declarations");
+  }
+  else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     MAKE_SHARED(ast::AST_identifier_Node, identifier);
     identifier->set_identifier(tokens[0].get_value().value());
     decl->set_identifier(identifier);
@@ -292,6 +300,7 @@ void parser::parse_variable_declaration(
   if (decl->get_base_type() == ast::ElemType::STRUCT) {
     if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
       EXPECT_IDENTIFIER();
+      decl->set_struct_identifier(identifier);
     } else {
       success = false;
       error_messages.emplace_back("Expected a struct name");
@@ -367,6 +376,7 @@ void parser::parse_function_declaration(
   if (decl->get_return_type() == ast::ElemType::STRUCT) {
     if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
       EXPECT_IDENTIFIER();
+      decl->set_struct_identifier(identifier);
     } else {
       success = false;
       error_messages.emplace_back("Expected a struct name");
@@ -422,6 +432,7 @@ void parser::parse_param_list(
   if (param->get_type() == ast::ElemType::STRUCT) {
     if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
       EXPECT_IDENTIFIER();
+      param->set_struct_identifier(identifier);
     } else {
       success = false;
       error_messages.emplace_back("Expected a struct name");
@@ -448,6 +459,7 @@ void parser::parse_param_list(
     if (param->get_type() == ast::ElemType::STRUCT) {
       if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
         EXPECT_IDENTIFIER();
+        param->set_struct_identifier(identifier);
       } else {
         success = false;
         error_messages.emplace_back("Expected a struct name");
