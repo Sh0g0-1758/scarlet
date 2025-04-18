@@ -241,28 +241,28 @@ void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
   }
 }
 
-#define CALC_TYPECAST(src, result, type, t)                      \
+#define CALC_TYPECAST(src, result, type, t)                                    \
   switch (src.get_type()) {                                                    \
   case constant::Type::INT:                                                    \
-    result.set_value({.t = (type)src.get_value().i});            \
+    result.set_value({.t = (type)src.get_value().i});                          \
     break;                                                                     \
   case constant::Type::UINT:                                                   \
-    result.set_value({.t = (type)src.get_value().ui});           \
+    result.set_value({.t = (type)src.get_value().ui});                         \
     break;                                                                     \
   case constant::Type::LONG:                                                   \
-    result.set_value({.t = (type)src.get_value().l});            \
+    result.set_value({.t = (type)src.get_value().l});                          \
     break;                                                                     \
   case constant::Type::ULONG:                                                  \
-    result.set_value({.t = (type)src.get_value().ul});           \
+    result.set_value({.t = (type)src.get_value().ul});                         \
     break;                                                                     \
   case constant::Type::DOUBLE:                                                 \
-    result.set_value({.t = (type)src.get_value().d});            \
+    result.set_value({.t = (type)src.get_value().d});                          \
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
-    result.set_value({.t = (type)src.get_value().c});            \
+    result.set_value({.t = (type)src.get_value().c});                          \
     break;                                                                     \
   case constant::Type::UCHAR:                                                  \
-    result.set_value({.t = (type)src.get_value().uc});           \
+    result.set_value({.t = (type)src.get_value().uc});                         \
     break;                                                                     \
   default:                                                                     \
     break;                                                                     \
