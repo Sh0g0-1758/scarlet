@@ -30,14 +30,15 @@ namespace codegen {
 
 /* COMMON MACROS FOR SCASM GENERATION */
 
-#define MAKE_DOUBLE_CONSTANT(target, constVal, alignment)                      \
+#define MAKE_DOUBLE_CONSTANT(target, constVal)                                 \
   if (doubleLabelMap.find(constVal.get_value().d) == doubleLabelMap.end()) {   \
     /* declare a top level constant for the double */                          \
     std::string doubleName = get_const_label_name();                           \
     MAKE_SHARED(scasm::scasm_static_constant, doubleConst);                    \
     doubleConst->set_name(doubleName);                                         \
     doubleConst->set_init(constVal);                                           \
-    doubleConst->set_alignment(alignment);                                     \
+    if(constVal.get_value().d == -0.0) doubleConst->set_alignment(16);         \
+    else doubleConst->set_alignment(8);                                        \
     auto top_level_elem =                                                      \
         std::static_pointer_cast<scasm::scasm_top_level>(doubleConst);         \
     top_level_elem->set_type(scasm::scasm_top_level_type::STATIC_CONSTANT);    \
@@ -76,7 +77,7 @@ namespace codegen {
   case scar::val_type::CONSTANT: {                                             \
     if (inst->get_target()->get_const_val().get_type() ==                      \
         constant::Type::DOUBLE) {                                              \
-      MAKE_DOUBLE_CONSTANT(target, inst->get_target()->get_const_val(), 8);    \
+      MAKE_DOUBLE_CONSTANT(target, inst->get_target()->get_const_val());       \
     } else {                                                                   \
       target->set_type(scasm::operand_type::IMM);                              \
       target->set_imm(inst->get_target()->get_const_val());                    \
@@ -96,7 +97,7 @@ namespace codegen {
   case scar::val_type::CONSTANT: {                                             \
     if (inst->get_target()->get_const_val().get_type() ==                      \
         constant::Type::DOUBLE) {                                              \
-      MAKE_DOUBLE_CONSTANT(target, inst->get_target()->get_const_val(), 8);    \
+      MAKE_DOUBLE_CONSTANT(target, inst->get_target()->get_const_val());       \
     } else {                                                                   \
       target->set_type(scasm::operand_type::IMM);                              \
       target->set_imm(inst->get_target()->get_const_val());                    \

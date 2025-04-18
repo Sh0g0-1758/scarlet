@@ -92,7 +92,7 @@ void Codegen::gen_funcall_scasm(
       scasm_src->set_identifier(funcArg->get_reg());
       break;
     case scar::val_type::CONSTANT: {
-      MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val(), 8);
+      MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val());
     } break;
     case scar::val_type::LABEL:
       break;
@@ -119,7 +119,7 @@ void Codegen::gen_funcall_scasm(
       break;
     case scar::val_type::CONSTANT: {
       if (funcArg->get_const_val().get_type() == constant::Type::DOUBLE) {
-        MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val(), 8);
+        MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val());
       } else {
         scasm_src->set_type(scasm::operand_type::IMM);
         scasm_src->set_imm(funcArg->get_const_val());
