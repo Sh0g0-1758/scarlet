@@ -20,7 +20,8 @@ bool Codegen::unreachable_code_elimination(std::vector<cfg::node> &cfg) {
     visited[blockId] = true;
     reachable[blockId] = true;
 
-    for (int succ : getNodeFromID(cfg, blockId).get_succ()) {
+    auto successors = getNodeFromID(cfg, blockId).get_succ();
+    for (uint succ : successors) {
       if (!visited[succ]) {
         q.push(succ);
       }

@@ -20,10 +20,22 @@ private:
   bool empty = true;
 
 public:
-  void add_succ(unsigned int block) { succ.push_back(block); }
-  void add_pred(unsigned int block) { pred.push_back(block); }
-  std::vector<unsigned int> get_succ() { return succ; }
-  std::vector<unsigned int> get_pred() { return pred; }
+  void add_succ(unsigned int block) {
+    if (std::find(succ.begin(), succ.end(), block) == succ.end())
+      succ.emplace_back(block);
+  }
+  void add_pred(unsigned int block) {
+    if (std::find(pred.begin(), pred.end(), block) == pred.end())
+      pred.emplace_back(block);
+  }
+  std::vector<unsigned int> &get_succ() { return succ; }
+  std::vector<unsigned int> &get_pred() { return pred; }
+  bool is_succ(unsigned int block) {
+    return std::find(succ.begin(), succ.end(), block) != succ.end();
+  }
+  bool is_pred(unsigned int block) {
+    return std::find(pred.begin(), pred.end(), block) != pred.end();
+  }
   void remove_pred(unsigned int block) {
     pred.erase(std::remove(pred.begin(), pred.end(), block), pred.end());
   }
