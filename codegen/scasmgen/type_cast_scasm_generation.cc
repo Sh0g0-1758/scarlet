@@ -7,8 +7,8 @@ void Codegen::gen_type_cast_scasm(
     std::shared_ptr<scar::scar_Instruction_Node> inst,
     std::shared_ptr<scasm::scasm_function> scasm_func,
     scasm::scasm_program &scasm_program) {
-  scasm::AssemblyType srcType = valToAsmType(inst->get_src1());
-  scasm::AssemblyType dstType = valToAsmType(inst->get_dst());
+  scasm::AssemblyType srcType = scarValTypeToAsmType(inst->get_src1());
+  scasm::AssemblyType dstType = scarValTypeToAsmType(inst->get_dst());
   if (inst->get_type() == scar::instruction_type::SIGN_EXTEND) {
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOVSX);

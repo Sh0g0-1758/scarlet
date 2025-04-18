@@ -109,4 +109,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 17
     COMMAND echo "Running bitwise, compound, increment/decrement, goto and switch-case test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 17 --extra-credit
+    COMMAND echo "Running constant-folding optimization tests"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19 --fold-constants
 )

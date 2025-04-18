@@ -209,7 +209,7 @@ public:
     return "LC." + std::to_string(constLabelCounter++);
   }
 
-  scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
+  scasm::AssemblyType scarValTypeToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
     if (val == nullptr) {
       return scasm::AssemblyType::NONE;
     }
@@ -248,13 +248,10 @@ public:
         return scasm::AssemblyType::BYTE;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
-      // FIXME: For Arrays
       case ast::ElemType::DERIVED:
         return scasm::AssemblyType::QUAD_WORD;
-      // this case will never be reached
       case ast::ElemType::POINTER:
       case ast::ElemType::VOID:
-      /*fixme? is this okay*/
       case ast::ElemType::NONE:
         return scasm::AssemblyType::NONE;
       }
@@ -291,7 +288,6 @@ public:
     } break;
     case ast::ElemType::POINTER:
     case ast::ElemType::VOID:
-    /*fixme? is this okay*/
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
     }

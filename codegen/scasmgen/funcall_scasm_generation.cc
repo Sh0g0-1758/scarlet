@@ -195,7 +195,7 @@ void Codegen::gen_funcall_scasm(
   }
   MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
   scasm_inst3->set_type(scasm::instruction_type::MOV);
-  scasm_inst3->set_asm_type(valToAsmType(inst->get_dst()));
+  scasm_inst3->set_asm_type(scarValTypeToAsmType(inst->get_dst()));
   MAKE_SHARED(scasm::scasm_operand, scasm_src3);
   scasm_src3->set_type(scasm::operand_type::REG);
   if (valToConstType(inst->get_dst()) == constant::Type::DOUBLE) {
