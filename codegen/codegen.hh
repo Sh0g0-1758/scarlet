@@ -151,9 +151,9 @@ private:
   std::map<std::string, int> NodeLabelToId;
   bool unreachable_code_elimination(std::vector<cfg::node> &cfg);
   cfg::node &getNodeFromID(std::vector<cfg::node> &cfg, unsigned int id) {
-    for (auto &block : cfg) {
-      if (block.get_id() == id) {
-        return block;
+    for (auto &node : cfg) {
+      if (node.get_id() == id) {
+        return node;
       }
     }
     throw std::runtime_error("Block not found");

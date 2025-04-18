@@ -35,10 +35,14 @@ namespace codegen {
   auto currID = block->get_id();                                               \
   auto nextID = (block + 1)->get_id();                                         \
   if (block->is_pred(prevID) and block->is_succ(nextID)) {                     \
-    (block + 1)->remove_pred(currID);                                          \
     (block + 1)->add_pred(prevID);                                             \
-    (block - 1)->remove_succ(currID);                                          \
     (block - 1)->add_succ(nextID);                                             \
+  }                                                                            \
+  for (auto succID : block->get_succ()) {                                      \
+    getNodeFromID(cfg, succID).remove_pred(currID);                            \
+  }                                                                            \
+  for (auto predID : block->get_pred()) {                                      \
+    getNodeFromID(cfg, predID).remove_succ(currID);                            \
   }                                                                            \
   block = cfg.erase(block);                                                    \
   --block;
