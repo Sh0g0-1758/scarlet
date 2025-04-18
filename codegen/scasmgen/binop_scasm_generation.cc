@@ -6,7 +6,7 @@ namespace codegen {
 void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
                               std::shared_ptr<scasm::scasm_function> scasm_func,
                               scasm::scasm_program &scasm_program) {
-  scasm::AssemblyType instType = valToAsmType(inst->get_src1());
+  scasm::AssemblyType instType = scarValTypeToAsmType(inst->get_src1());
 
   if (binop::is_relational(inst->get_binop())) {
     // Cmp(src2, src1)
@@ -23,7 +23,7 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
 
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
     scasm_inst2->set_type(scasm::instruction_type::MOV);
-    scasm_inst2->set_asm_type(valToAsmType(inst->get_dst()));
+    scasm_inst2->set_asm_type(scarValTypeToAsmType(inst->get_dst()));
     MAKE_SHARED(scasm::scasm_operand, scasm_src2);
     scasm_src2->set_type(scasm::operand_type::IMM);
     constant::Constant zero;
@@ -40,9 +40,9 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     scasm_inst3->set_asm_type(scasm::AssemblyType::BYTE);
     MAKE_SHARED(scasm::scasm_operand, scasm_src3);
     scasm_src3->set_type(scasm::operand_type::COND);
-    if (valToConstType(inst->get_src1()) == constant::Type::UINT or
-        valToConstType(inst->get_src1()) == constant::Type::ULONG or
-        valToConstType(inst->get_src1()) == constant::Type::DOUBLE) {
+    if (scarValTypeToConstType(inst->get_src1()) == constant::Type::UINT or
+        scarValTypeToConstType(inst->get_src1()) == constant::Type::ULONG or
+        scarValTypeToConstType(inst->get_src1()) == constant::Type::DOUBLE) {
       switch (inst->get_binop()) {
       case binop::BINOP::EQUAL:
         scasm_src3->set_cond(scasm::cond_code::E);
@@ -113,8 +113,8 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
 
-    if (valToConstType(inst->get_src1()) == constant::Type::UINT or
-        valToConstType(inst->get_src1()) == constant::Type::ULONG) {
+    if (scarValTypeToConstType(inst->get_src1()) == constant::Type::UINT or
+        scarValTypeToConstType(inst->get_src1()) == constant::Type::ULONG) {
       // Mov(<src1 type>, Imm(0), Reg(DX))
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
       scasm_inst2->set_type(scasm::instruction_type::MOV);
@@ -140,8 +140,8 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     }
 
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
-    if (valToConstType(inst->get_src1()) == constant::Type::UINT or
-        valToConstType(inst->get_src1()) == constant::Type::ULONG) {
+    if (scarValTypeToConstType(inst->get_src1()) == constant::Type::UINT or
+        scarValTypeToConstType(inst->get_src1()) == constant::Type::ULONG) {
       scasm_inst3->set_type(scasm::instruction_type::DIV);
     } else {
       scasm_inst3->set_type(scasm::instruction_type::IDIV);

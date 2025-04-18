@@ -45,8 +45,6 @@ constant::Type elemTypeToConstType(ElemType t) {
     return constant::Type::CHAR;
   case ElemType::UCHAR:
     return constant::Type::UCHAR;
-  // TODO: FIXME, maybe when elemType is derived/pointer, constant type should
-  // be something different ?
   case ElemType::POINTER:
   case ElemType::NONE:
   case ElemType::VOID:

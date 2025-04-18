@@ -1,157 +1,95 @@
-int main(void) {
-  int a;
-  int b;
-  int c;
-  int d;
-  int e;
-  int f;
-  int x;
-  int y;
-  int z;
-  int i;
-  int j;
-  int k;
-  int l;
-  int m;
-  int n;
-  int o;
-  int p;
+/* Prototypes for dynamic memory */
+void* malloc(unsigned long size);
+void  free(void* ptr);
 
-start:
-  if ((a = 25) > 0) {
-    if ((b = a * 3) < 100) {
-      c = 42;
-      goto compute_d;
-    } else {
-      c = -42;
-      goto compute_x;
+/* Global/static state */
+static unsigned long global_seed = 123456789UL;
+
+/* Function prototypes */
+double compute_pattern(double* data, int size, double factor);
+long   process(unsigned int n, double factor);
+
+double compute_pattern(double* data, int size, double factor) {
+    int idx = 0;
+    double acc = 1.0;
+
+pattern_loop:
+    if (idx >= size) goto finish_pattern;
+
+    double v = *(data + idx);
+    int imod = (int)v % 5;
+    switch (imod) {
+      case 0:
+        /* acc = acc * (v - factor); */
+        acc = acc * (v - factor);
+        break;
+      case 1:
+        /* acc = acc + (v / (factor + 1.0)); */
+        acc = acc + (v / (factor + 1.0));
+        break;
+      default:
+        /* acc = acc - (v * factor); */
+        acc = acc - (v * factor);
     }
-  } else {
-    b = -75;
-    goto end;
-  }
 
-compute_d:
-  if ((d = b / 2) != 0) {
-    e = d + 5;
-    if (e > 50)
-      goto compute_f;
-    else
-      goto compute_x;
-  }
-  goto end;
+    /* mix in some bitwise via reinterpretation */
+    {
+      unsigned long* bits = (unsigned long*)&v;
+      unsigned long shifted = global_seed >> (idx % 8);
+      unsigned long bx = *bits ^ shifted;
+      *bits = bx;
+      v = *(double*)bits;
+    }
 
-compute_f:
-  f = e * 2;
-  if (f < 100)
-    goto compute_x;
-  else {
-    f = f / 2;
-    goto compute_x;
-  }
+    *(data + idx) = v;
+    idx = idx + 1;
+    goto pattern_loop;
 
-compute_x:
-  x = (c + d) * 2;
-  if (x > 100) {
-    y = x / 2;
-    goto compute_z;
-  } else {
-    y = x * 2;
-    if (y < 50)
-      goto end;
-    goto compute_z;
-  }
+finish_pattern:
+    return acc;
+}
 
-compute_z:
-  z = x + y;
-  if (z > 200) {
-    i = z / 2;
-    j = i - 50;
-    goto compute_kl;
-  } else {
-    i = z * 2;
-    j = i + 25;
-    if (j > 300)
-      goto end;
-    goto compute_kl;
-  }
+long process(unsigned int n, double factor) {
+    double* arr = (double*)malloc((long)n * sizeof(double));
+    unsigned int i = 0;
+    while (i < n) {
+        unsigned long tmp = global_seed ^ i;
+        arr[i] = (double)(tmp + (long)factor);
+        i = i + 1;
+    }
 
-compute_kl:
-  k = i + j;
-  l = k - 100;
-  if (k > l) {
-    m = k / 2;
-    n = l * 2;
-    goto compute_op;
-  } else {
-    goto end;
-  }
+    double r = compute_pattern(arr, (int)n, factor);
 
-compute_op:
-  o = m + n;
-  p = o - 50;
-  goto final;
+    unsigned int k = 0;
+sum_loop:
+    if (k >= n) goto end_sum;
+    r = r + *(arr + k);
+    k = k + 1;
+    goto sum_loop;
+end_sum:
+    free(arr);
 
-end:
-  return -1;
+    /* final scramble with bitwise */
+    long out = (long)r ^ (long)(factor * 1000.0);
+    /* out = out + ((out & 255) << 3); */
+    out = out + ((out & 255) << 3);
+    return out;
+}
 
-final:
-#ifdef __clang__
-  // clang gives undefined behavior for unsequenced modification and access to
-  // the same variable. gcc seems to respect the precedence of C operators (like
-  // scarlet) and thus gives a defined result.
-  return 245;
-#else
-return (o = 9999999) + (((((((((((((((((((((((((((((((((((((((((((((((((((((((((a = 123456789) * (b = 987654321)) / 
-                                                                   ((c = 555555555) + 1)) % 
-                                                                   ((d = 777777777) * (e = 888888888))) * 
-                                                                   (((f = 666666666) << 13) >> ((x = 444444444) % 7))) + 
-                                                                   (((y = 333333333) * 31) % 61)) / 
-                                                                   ((z = 222222222) ? (i = 111111111) : 1)) << 
-                                                                   ((j = 999999999) % 11)) ^ 
-                                                                   (((k = 888888887) * (l = 777777776)) / ((m = 666666665) + 1))) % 
-                                                                   (((n = 555555554) + 17) * (o = 444444443))) * 
-                                                                   (((p = 333333332) >> 5) + (a = 222222221))) + 
-                                                                   (((b = 111111110) % 43) * ((c = 999999998) + 13))) * 
-                                                                   (((d = 888888886) - (e = 777777775)) / 
-                                                                   ((f = 666666664) + 1))) * 
-                                                                   (((x = 555555553) <= (y = 444444442)) != 
-                                                                   ((z = 333333331) >= (i = 222222220)))) * 
-                                                                   (((j = 111111109) < (k = 999999997)) == 
-                                                                   ((l = 888888885) > (m = 777777774)))) * 
-                                                                   ((((n = 666666663) << 9) | ((o = 555555552) >> 4)) ^ 
-                                                                   ((p = 444444441) + -(a = 333333330)))) * 
-                                                                   (((b = 222222219) * (c = 111111108) / (d = 999999996) % 
-                                                                   (e = 888888884)) + (f = 777777773))) * 
-                                                                   (((x = 666666662) <= (y = 555555551)) != 
-                                                                   ((z = 444444440) >= (i = 333333329)))) * 
-                                                                   ((((j = 222222218) + (k = 111111107)) << ((l = 999999995) % 5)) /
-                                                                   (((m = 888888883) + 1) * ((n = 777777772) - (o = 666666661))))) * 
-                                                                   (((((p = 555555550) >> 7) ^ ((a = 444444439) << 11)) + 
-                                                                   ((b = 333333328) * (c = 222222217))) % 
-                                                                   ((d = 111111106) + (e = 999999994)))) * 
-                                                                   ((((f = 888888882) | (x = 777777771)) & 
-                                                                   ((y = 666666660) ^ (z = 555555549))) + 
-                                                                   (((i = 444444438) - (j = 333333327)) * ((k = 222222216) + (l = 111111105))))) *
-                                                                   (((((m = 999999993) >> 3) + ((n = 888888881) << 6)) ^ 
-                                                                   ((o = 777777770) * (p = 666666659))) % 
-                                                                   (((a = 555555548) + (b = 444444437)) * 
-                                                                   ((c = 333333326) - (d = 222222215)))) *
-                                                                   ((((e = 111111104) << 8) | ((f = 999999992) >> 5)) + 
-                                                                   (((x = 888888880) * (y = 777777769)) % 
-                                                                   ((z = 666666658) ^ (i = 555555547)))) *
-                                                                   (((j = 444444436) <= (k = 333333325)) != 
-                                                                   ((l = 222222214) >= (m = 111111103))) *
-                                                                   ((((n = 999999991) + (o = 888888879)) * 
-                                                                   ((p = 777777768) - (a = 666666657))) / 
-                                                                   (((b = 555555546) * (c = 444444435)) + 
-                                                                   ((d = 333333324) ^ (e = 222222213)))) *
-                                                                   (((((f = 111111102) >> 9) + ((x = 999999990) << 12)) * 
-                                                                   ((y = 888888878) % (z = 777777767))) + 
-                                                                   (((i = 666666656) * (j = 555555545)) / 
-                                                                   ((k = 444444434) + (l = 333333323)))) *
-                                                                   ((((m = 222222212) ^ (n = 111111101)) & 
-                                                                   ((o = 999999989) | (p = 888888877))) + 
-                                                                   (((a = 777777766) >> 10) * ((b = 666666655) << 13)))))))))))))))))))))))))))))))))))))));
-#endif
+int main(void) {
+    unsigned int count = 127;
+    double scale = 3.141592653589793;
+    long result = process(count, scale);
+
+    /* do-while, no compounds */
+do_again:
+    result = result >> 2;
+    long tmp1 = result * 3;
+    result = result - tmp1;
+    result = result / 5;
+    if (result > 1000) goto do_again;
+
+    /* return via conditional operator */
+    long final = (result < 0) ? -result : result;
+    return (int)(final % 65536);
 }

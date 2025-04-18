@@ -429,8 +429,9 @@ void Codegen::fix_instructions() {
       if (NOTNULL((*it)->get_src()) and
           (*it)->get_asm_type() == scasm::AssemblyType::QUAD_WORD and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
-        if ((*it)->get_src()->get_imm().get_type() == constant::Type::LONG and
-            (*it)->get_src()->get_imm().get_value().l > INT32_MAX) {
+        auto IMM = (*it)->get_src()->get_imm();
+        if (IMM.get_type() == constant::Type::LONG and
+            (IMM.get_value().l > INT32_MAX or IMM.get_value().l < INT32_MIN)) {
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
           dst->set_reg(scasm::register_type::R11);
@@ -445,9 +446,8 @@ void Codegen::fix_instructions() {
 
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
-        } else if ((*it)->get_src()->get_imm().get_type() ==
-                       constant::Type::UINT and
-                   (*it)->get_src()->get_imm().get_value().ui > INT32_MAX) {
+        } else if (IMM.get_type() == constant::Type::UINT and
+                   (IMM.get_value().ui > INT32_MAX)) {
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
           dst->set_reg(scasm::register_type::R11);
@@ -462,9 +462,8 @@ void Codegen::fix_instructions() {
 
           it = funcs->get_instructions().insert(it, std::move(scasm_inst));
           it++;
-        } else if ((*it)->get_src()->get_imm().get_type() ==
-                       constant::Type::ULONG and
-                   (*it)->get_src()->get_imm().get_value().ul > INT32_MAX) {
+        } else if (IMM.get_type() == constant::Type::ULONG and
+                   (IMM.get_value().ul > INT32_MAX)) {
           MAKE_SHARED(scasm::scasm_operand, dst);
           dst->set_type(scasm::operand_type::REG);
           dst->set_reg(scasm::register_type::R11);
@@ -490,23 +489,20 @@ void Codegen::fix_instructions() {
           (*it)->get_asm_type() == scasm::AssemblyType::LONG_WORD and
           (*it)->get_type() == scasm::instruction_type::MOV and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
-        if ((*it)->get_src()->get_imm().get_type() == constant::Type::LONG and
-            (*it)->get_src()->get_imm().get_value().l > INT32_MAX) {
-          int trunc_val =
-              static_cast<int>((*it)->get_src()->get_imm().get_value().l);
+        auto IMM = (*it)->get_src()->get_imm();
+        if (IMM.get_type() == constant::Type::LONG and
+            (IMM.get_value().l > INT32_MAX or IMM.get_value().l < INT32_MIN)) {
           constant::Constant trunc;
           trunc.set_type(constant::Type::INT);
-          trunc.set_value({.i = trunc_val});
+          trunc.set_value({.i = (int)(IMM.get_value().l)});
 
           (*it)->get_src()->set_imm(trunc);
         }
-        if ((*it)->get_src()->get_imm().get_type() == constant::Type::ULONG and
-            (*it)->get_src()->get_imm().get_value().ul > INT32_MAX) {
-          int trunc_val =
-              static_cast<int>((*it)->get_src()->get_imm().get_value().ul);
+        if (IMM.get_type() == constant::Type::ULONG and
+            (IMM.get_value().ul > INT32_MAX)) {
           constant::Constant trunc;
           trunc.set_type(constant::Type::INT);
-          trunc.set_value({.i = trunc_val});
+          trunc.set_value({.i = (int)(IMM.get_value().ul)});
 
           (*it)->get_src()->set_imm(trunc);
         }

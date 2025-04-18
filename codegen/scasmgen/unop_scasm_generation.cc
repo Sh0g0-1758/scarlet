@@ -6,7 +6,7 @@ namespace codegen {
 void Codegen::gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
                              std::shared_ptr<scasm::scasm_function> scasm_func,
                              scasm::scasm_program &scasm_program) {
-  scasm::AssemblyType instType = valToAsmType(inst->get_src1());
+  scasm::AssemblyType instType = scarValTypeToAsmType(inst->get_src1());
 
   if (inst->get_unop() == unop::UNOP::NOT) {
     // IF DOUBLE
@@ -55,7 +55,7 @@ void Codegen::gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
 
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
     scasm_inst2->set_type(scasm::instruction_type::MOV);
-    scasm_inst2->set_asm_type(valToAsmType(inst->get_dst()));
+    scasm_inst2->set_asm_type(scarValTypeToAsmType(inst->get_dst()));
     MAKE_SHARED(scasm::scasm_operand, scasm_src2);
     scasm_src2->set_type(scasm::operand_type::IMM);
     constant::Constant zero;
@@ -101,7 +101,7 @@ void Codegen::gen_unop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     constant::Constant negzero;
     negzero.set_type(constant::Type::DOUBLE);
     negzero.set_value({.d = -0.0});
-    MAKE_DOUBLE_CONSTANT(scasm_src2, negzero, 16);
+    MAKE_DOUBLE_CONSTANT(scasm_src2, negzero);
     scasm_inst2->set_src(std::move(scasm_src2));
 
     MAKE_SHARED(scasm::scasm_operand, scasm_dst2);

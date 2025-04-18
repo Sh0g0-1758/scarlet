@@ -140,6 +140,7 @@ private:
                   constant::Constant &result, binop::BINOP op);
   void fold_unop(constant::Constant src, constant::Constant &result,
                  unop::UNOP op);
+  void fold_typecast(constant::Constant src, constant::Constant &result);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,
@@ -209,7 +210,8 @@ public:
     return "LC." + std::to_string(constLabelCounter++);
   }
 
-  scasm::AssemblyType valToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
+  scasm::AssemblyType
+  scarValTypeToAsmType(std::shared_ptr<scar::scar_Val_Node> val) {
     if (val == nullptr) {
       return scasm::AssemblyType::NONE;
     }
@@ -248,13 +250,10 @@ public:
         return scasm::AssemblyType::BYTE;
       case ast::ElemType::DOUBLE:
         return scasm::AssemblyType::DOUBLE;
-      // FIXME: For Arrays
       case ast::ElemType::DERIVED:
         return scasm::AssemblyType::QUAD_WORD;
-      // this case will never be reached
       case ast::ElemType::POINTER:
       case ast::ElemType::VOID:
-      /*fixme? is this okay*/
       case ast::ElemType::NONE:
         return scasm::AssemblyType::NONE;
       }
@@ -265,8 +264,8 @@ public:
     UNREACHABLE();
   }
 
-  scasm::AssemblyType elemToAsmType(ast::ElemType type,
-                                    std::vector<long> derivedType) {
+  scasm::AssemblyType elemTypeToAsmType(ast::ElemType type,
+                                        std::vector<long> derivedType) {
     switch (type) {
     case ast::ElemType::INT:
       return scasm::AssemblyType::LONG_WORD;
@@ -291,14 +290,14 @@ public:
     } break;
     case ast::ElemType::POINTER:
     case ast::ElemType::VOID:
-    /*fixme? is this okay*/
     case ast::ElemType::NONE:
       return scasm::AssemblyType::NONE;
     }
     UNREACHABLE();
   }
 
-  constant::Type valToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
+  constant::Type
+  scarValTypeToConstType(std::shared_ptr<scar::scar_Val_Node> val) {
     switch (val->get_type()) {
     case scar::val_type::CONSTANT:
       return val->get_const_val().get_type();

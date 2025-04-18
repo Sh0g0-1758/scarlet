@@ -23,8 +23,7 @@ namespace codegen {
     result.set_value({.d = src1.get_value().d op src2.get_value().d});         \
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
-    result.set_value(                                                          \
-        {.c = (char)(src1.get_value().c op(int) src2.get_value().c)});         \
+    result.set_value({.c = (char)(src1.get_value().c op src2.get_value().c)}); \
     break;                                                                     \
   case constant::Type::UCHAR:                                                  \
     result.set_value(                                                          \
@@ -49,12 +48,39 @@ namespace codegen {
     result.set_value({.ul = src1.get_value().ul op src2.get_value().ul});      \
     break;                                                                     \
   case constant::Type::CHAR:                                                   \
-    result.set_value(                                                          \
-        {.c = (char)(src1.get_value().c op(int) src2.get_value().c)});         \
+    result.set_value({.c = (char)(src1.get_value().c op src2.get_value().c)}); \
     break;                                                                     \
   case constant::Type::UCHAR:                                                  \
     result.set_value(                                                          \
         {.uc = (unsigned char)(src1.get_value().uc op src2.get_value().uc)});  \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
+#define CALC_BINOP_CMP(src1, src2, op)                                         \
+  result.set_type(constant::Type::INT);                                        \
+  switch (src1.get_type()) {                                                   \
+  case constant::Type::INT:                                                    \
+    result.set_value({.i = src1.get_value().i op src2.get_value().i});         \
+    break;                                                                     \
+  case constant::Type::UINT:                                                   \
+    result.set_value({.i = src1.get_value().ui op src2.get_value().ui});       \
+    break;                                                                     \
+  case constant::Type::LONG:                                                   \
+    result.set_value({.i = src1.get_value().l op src2.get_value().l});         \
+    break;                                                                     \
+  case constant::Type::ULONG:                                                  \
+    result.set_value({.i = src1.get_value().ul op src2.get_value().ul});       \
+    break;                                                                     \
+  case constant::Type::DOUBLE:                                                 \
+    result.set_value({.i = src1.get_value().d op src2.get_value().d});         \
+    break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    result.set_value({.i = src1.get_value().c op src2.get_value().c});         \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    result.set_value({.i = src1.get_value().uc op src2.get_value().uc});       \
     break;                                                                     \
   default:                                                                     \
     break;                                                                     \
@@ -89,6 +115,112 @@ namespace codegen {
   case constant::Type::UCHAR:                                                  \
     if (src.get_value().uc == 0)                                               \
       flag = true;                                                             \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
+#define CALC_UNOP(src, op)                                                     \
+  switch (src.get_type()) {                                                    \
+  case constant::Type::INT:                                                    \
+    result.set_value({.i = op src.get_value().i});                             \
+    break;                                                                     \
+  case constant::Type::UINT:                                                   \
+    result.set_value({.ui = op src.get_value().ui});                           \
+    break;                                                                     \
+  case constant::Type::LONG:                                                   \
+    result.set_value({.l = op src.get_value().l});                             \
+    break;                                                                     \
+  case constant::Type::ULONG:                                                  \
+    result.set_value({.ul = op src.get_value().ul});                           \
+    break;                                                                     \
+  case constant::Type::DOUBLE:                                                 \
+    result.set_value({.d = op src.get_value().d});                             \
+    break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    result.set_value({.c = (char)(op src.get_value().c)});                     \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    result.set_value({.uc = (unsigned char)(op src.get_value().uc)});          \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
+#define CALC_UNOP_INT(src, op)                                                 \
+  switch (src.get_type()) {                                                    \
+  case constant::Type::INT:                                                    \
+    result.set_value({.i = op src.get_value().i});                             \
+    break;                                                                     \
+  case constant::Type::UINT:                                                   \
+    result.set_value({.ui = op src.get_value().ui});                           \
+    break;                                                                     \
+  case constant::Type::LONG:                                                   \
+    result.set_value({.l = op src.get_value().l});                             \
+    break;                                                                     \
+  case constant::Type::ULONG:                                                  \
+    result.set_value({.ul = op src.get_value().ul});                           \
+    break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    result.set_value({.c = (char)(op src.get_value().c)});                     \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    result.set_value({.uc = (unsigned char)(op src.get_value().uc)});          \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
+#define CALC_UNOP_NOT(src, op)                                                 \
+  result.set_type(constant::Type::INT);                                        \
+  switch (src.get_type()) {                                                    \
+  case constant::Type::INT:                                                    \
+    result.set_value({.i = op src.get_value().i});                             \
+    break;                                                                     \
+  case constant::Type::UINT:                                                   \
+    result.set_value({.i = op src.get_value().ui});                            \
+    break;                                                                     \
+  case constant::Type::LONG:                                                   \
+    result.set_value({.i = op src.get_value().l});                             \
+    break;                                                                     \
+  case constant::Type::ULONG:                                                  \
+    result.set_value({.i = op src.get_value().ul});                            \
+    break;                                                                     \
+  case constant::Type::DOUBLE:                                                 \
+    result.set_value({.i = op src.get_value().d});                             \
+    break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    result.set_value({.i = op src.get_value().c});                             \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    result.set_value({.i = op src.get_value().uc});                            \
+    break;                                                                     \
+  default:                                                                     \
+    break;                                                                     \
+  }
+
+#define CALC_TYPECAST(src, result, type, t)                                    \
+  switch (src.get_type()) {                                                    \
+  case constant::Type::INT:                                                    \
+    result.set_value({.t = (type)src.get_value().i});                          \
+    break;                                                                     \
+  case constant::Type::UINT:                                                   \
+    result.set_value({.t = (type)src.get_value().ui});                         \
+    break;                                                                     \
+  case constant::Type::LONG:                                                   \
+    result.set_value({.t = (type)src.get_value().l});                          \
+    break;                                                                     \
+  case constant::Type::ULONG:                                                  \
+    result.set_value({.t = (type)src.get_value().ul});                         \
+    break;                                                                     \
+  case constant::Type::DOUBLE:                                                 \
+    result.set_value({.t = (type)src.get_value().d});                          \
+    break;                                                                     \
+  case constant::Type::CHAR:                                                   \
+    result.set_value({.t = (type)src.get_value().c});                          \
+    break;                                                                     \
+  case constant::Type::UCHAR:                                                  \
+    result.set_value({.t = (type)src.get_value().uc});                         \
     break;                                                                     \
   default:                                                                     \
     break;                                                                     \
@@ -142,85 +274,28 @@ void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
   case binop::BINOP::RIGHT_SHIFT:
     CALC_BINOP_INT(src1, src2, >>);
     break;
-  case binop::BINOP::LAND:
-    CALC_BINOP_INT(src1, src2, &&);
-    break;
-  case binop::BINOP::LOR:
-    CALC_BINOP_INT(src1, src2, ||);
-    break;
   case binop::BINOP::EQUAL:
-    CALC_BINOP_INT(src1, src2, ==);
+    CALC_BINOP_CMP(src1, src2, ==);
     break;
   case binop::BINOP::NOTEQUAL:
-    CALC_BINOP_INT(src1, src2, !=);
+    CALC_BINOP_CMP(src1, src2, !=);
     break;
   case binop::BINOP::LESSTHAN:
-    CALC_BINOP_INT(src1, src2, <);
+    CALC_BINOP_CMP(src1, src2, <);
     break;
   case binop::BINOP::GREATERTHAN:
-    CALC_BINOP_INT(src1, src2, >);
+    CALC_BINOP_CMP(src1, src2, >);
     break;
   case binop::BINOP::LESSTHANEQUAL:
-    CALC_BINOP_INT(src1, src2, <=);
+    CALC_BINOP_CMP(src1, src2, <=);
     break;
   case binop::BINOP::GREATERTHANEQUAL:
-    CALC_BINOP_INT(src1, src2, >=);
+    CALC_BINOP_CMP(src1, src2, >=);
     break;
   default:
     break;
   }
 }
-
-#define CALC_UNOP(src, op)                                                     \
-  switch (src.get_type()) {                                                    \
-  case constant::Type::INT:                                                    \
-    result.set_value({.i = op src.get_value().i});                             \
-    break;                                                                     \
-  case constant::Type::UINT:                                                   \
-    result.set_value({.ui = op src.get_value().ui});                           \
-    break;                                                                     \
-  case constant::Type::LONG:                                                   \
-    result.set_value({.l = op src.get_value().l});                             \
-    break;                                                                     \
-  case constant::Type::ULONG:                                                  \
-    result.set_value({.ul = op src.get_value().ul});                           \
-    break;                                                                     \
-  case constant::Type::DOUBLE:                                                 \
-    result.set_value({.d = op src.get_value().d});                             \
-    break;                                                                     \
-  case constant::Type::CHAR:                                                   \
-    result.set_value({.c = (char)(op src.get_value().c)});                     \
-    break;                                                                     \
-  case constant::Type::UCHAR:                                                  \
-    result.set_value({.uc = (unsigned char)(op src.get_value().uc)});          \
-    break;                                                                     \
-  default:                                                                     \
-    break;                                                                     \
-  }
-
-#define CALC_UNOP_INT(src, op)                                                 \
-  switch (src.get_type()) {                                                    \
-  case constant::Type::INT:                                                    \
-    result.set_value({.i = op src.get_value().i});                             \
-    break;                                                                     \
-  case constant::Type::UINT:                                                   \
-    result.set_value({.ui = op src.get_value().ui});                           \
-    break;                                                                     \
-  case constant::Type::LONG:                                                   \
-    result.set_value({.l = op src.get_value().l});                             \
-    break;                                                                     \
-  case constant::Type::ULONG:                                                  \
-    result.set_value({.ul = op src.get_value().ul});                           \
-    break;                                                                     \
-  case constant::Type::CHAR:                                                   \
-    result.set_value({.c = (char)(op src.get_value().c)});                     \
-    break;                                                                     \
-  case constant::Type::UCHAR:                                                  \
-    result.set_value({.uc = (unsigned char)(op src.get_value().uc)});          \
-    break;                                                                     \
-  default:                                                                     \
-    break;                                                                     \
-  }
 
 void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
                         unop::UNOP op) {
@@ -231,10 +306,39 @@ void Codegen::fold_unop(constant::Constant src, constant::Constant &result,
     break;
   case unop::UNOP::NOT:
     result.set_type(constant::Type::INT);
-    CALC_UNOP_INT(src, !);
+    CALC_UNOP_NOT(src, !);
     break;
   case unop::UNOP::COMPLEMENT:
     CALC_UNOP_INT(src, ~);
+    break;
+  default:
+    break;
+  }
+}
+
+void Codegen::fold_typecast(constant::Constant src,
+                            constant::Constant &result) {
+  switch (result.get_type()) {
+  case constant::Type::DOUBLE:
+    CALC_TYPECAST(src, result, double, d);
+    break;
+  case constant::Type::INT:
+    CALC_TYPECAST(src, result, int, i);
+    break;
+  case constant::Type::UINT:
+    CALC_TYPECAST(src, result, unsigned int, ui);
+    break;
+  case constant::Type::LONG:
+    CALC_TYPECAST(src, result, long, l);
+    break;
+  case constant::Type::ULONG:
+    CALC_TYPECAST(src, result, unsigned long, ul);
+    break;
+  case constant::Type::CHAR:
+    CALC_TYPECAST(src, result, char, c);
+    break;
+  case constant::Type::UCHAR:
+    CALC_TYPECAST(src, result, unsigned char, uc);
     break;
   default:
     break;
@@ -245,7 +349,8 @@ bool Codegen::constant_folding(
     std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
   bool isChanged{};
   for (auto inst = funcBody.begin(); inst != funcBody.end(); ++inst) {
-    if ((*inst)->get_type() == scar::instruction_type::BINARY) {
+    auto instType = (*inst)->get_type();
+    if (instType == scar::instruction_type::BINARY) {
       if (IS_CONSTANT((*inst)->get_src1()) and
           IS_CONSTANT((*inst)->get_src2())) {
         isChanged = true;
@@ -257,7 +362,7 @@ bool Codegen::constant_folding(
         (*inst)->get_src1()->set_const_val(result);
         (*inst)->set_src2(nullptr);
       }
-    } else if ((*inst)->get_type() == scar::instruction_type::UNARY) {
+    } else if (instType == scar::instruction_type::UNARY) {
       if (IS_CONSTANT((*inst)->get_src1())) {
         isChanged = true;
         constant::Constant result;
@@ -266,7 +371,7 @@ bool Codegen::constant_folding(
         (*inst)->set_type(scar::instruction_type::COPY);
         (*inst)->get_src1()->set_const_val(result);
       }
-    } else if ((*inst)->get_type() == scar::instruction_type::JUMP_IF_ZERO) {
+    } else if (instType == scar::instruction_type::JUMP_IF_ZERO) {
       if (IS_CONSTANT((*inst)->get_src1())) {
         isChanged = true;
         bool modify{};
@@ -279,8 +384,7 @@ bool Codegen::constant_folding(
           --inst;
         }
       }
-    } else if ((*inst)->get_type() ==
-               scar::instruction_type::JUMP_IF_NOT_ZERO) {
+    } else if (instType == scar::instruction_type::JUMP_IF_NOT_ZERO) {
       if (IS_CONSTANT((*inst)->get_src1())) {
         isChanged = true;
         bool erase{};
@@ -292,6 +396,22 @@ bool Codegen::constant_folding(
           (*inst)->set_type(scar::instruction_type::JUMP);
           (*inst)->set_src1((*inst)->get_dst());
         }
+      }
+    } else if (scar::is_type_cast(instType)) {
+      if (IS_CONSTANT((*inst)->get_src1())) {
+        isChanged = true;
+        constant::Constant result;
+        result.set_type(scarValTypeToConstType((*inst)->get_dst()));
+        fold_typecast((*inst)->get_src1()->get_const_val(), result);
+        (*inst)->set_type(scar::instruction_type::COPY);
+        (*inst)->get_src1()->set_const_val(result);
+      }
+    } else if (instType == scar::instruction_type::COPY) {
+      auto dstType = scarValTypeToConstType((*inst)->get_dst());
+      if (IS_CONSTANT((*inst)->get_src1()) and
+          dstType != (*inst)->get_src1()->get_const_val().get_type()) {
+        isChanged = true;
+        (*inst)->get_src1()->get_const_val().set_type(dstType);
       }
     }
   }

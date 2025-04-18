@@ -129,7 +129,6 @@ void parser::analyze_statement(
     }
     case ast::ElemType::POINTER:
     case ast::ElemType::VOID:
-    /*fixme? okay for void */
     case ast::ElemType::NONE:
       break;
     }

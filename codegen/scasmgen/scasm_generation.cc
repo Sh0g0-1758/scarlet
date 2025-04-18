@@ -107,7 +107,7 @@ void Codegen::gen_scasm() {
     }
 
     for (auto inst : func->get_instructions()) {
-      scasm::AssemblyType instType = valToAsmType(inst->get_src1());
+      scasm::AssemblyType instType = scarValTypeToAsmType(inst->get_src1());
       if (inst->get_type() == scar::instruction_type::RETURN) {
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
 
@@ -248,7 +248,7 @@ void Codegen::gen_scasm() {
 
         MAKE_SHARED(scasm::scasm_instruction, scasm_inst2);
         scasm_inst2->set_type(scasm::instruction_type::MOV);
-        scasm_inst2->set_asm_type(valToAsmType(inst->get_dst()));
+        scasm_inst2->set_asm_type(scarValTypeToAsmType(inst->get_dst()));
         MAKE_SHARED(scasm::scasm_operand, scasm_src2);
         scasm_src2->set_type(scasm::operand_type::MEMORY);
         scasm_src2->set_reg(scasm::register_type::AX);
@@ -439,7 +439,7 @@ void Codegen::gen_scasm() {
       auto derivedType = it.second.derivedTypeMap[0];
       scasm::backendSymbol sym;
       sym.type = scasm::backendSymbolType::STATIC_VARIABLE;
-      sym.asmType = elemToAsmType(baseType, derivedType);
+      sym.asmType = elemTypeToAsmType(baseType, derivedType);
       if (symbolTable::symbolInfo::is_array(it.second)) {
         sym.size = (long)ast::getSizeOfArrayTypeOnArch(derivedType);
         if (sym.size > 16) {
@@ -475,7 +475,6 @@ void Codegen::gen_scasm() {
           break;
         case ast::ElemType::POINTER:
         case ast::ElemType::VOID:
-          /*fixme? is this okay?*/
         case ast::ElemType::NONE:
           sym.alignment = INT_MIN;
           break;
