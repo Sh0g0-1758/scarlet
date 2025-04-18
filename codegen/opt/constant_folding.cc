@@ -382,6 +382,9 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           if (modify) {
             (*inst)->set_type(scar::instruction_type::JUMP);
             (*inst)->set_src1((*inst)->get_dst());
+            block->get_succ().clear();
+            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
+            (block + 1)->remove_pred(block->get_id());
           } else {
             inst = block->get_body().erase(inst);
             --inst;
@@ -398,6 +401,9 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           } else {
             (*inst)->set_type(scar::instruction_type::JUMP);
             (*inst)->set_src1((*inst)->get_dst());
+            block->get_succ().clear();
+            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
+            (block + 1)->remove_pred(block->get_id());
           }
         }
       } else if (scar::is_type_cast(instType)) {
