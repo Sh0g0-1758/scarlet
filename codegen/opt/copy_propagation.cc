@@ -69,13 +69,16 @@ void Codegen::transfer_copies(cfg::node &block) {
       // If x = y in copy map and instruction is COPY(y, x), ignore
       if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
         auto copySrc = block.copy_map[dst->get_reg()];
-        if ((src->get_type() == scar::val_type::CONSTANT and
-             copySrc.get_copy_type() == scar::val_type::CONSTANT and
-             src->get_const_val() == copySrc.get_const_val()) or
-            (src->get_type() == scar::val_type::VAR and
-             copySrc.get_copy_type() == scar::val_type::VAR and
-             src->get_reg() == copySrc.get_reg_name())) {
-          continue;
+        if (src->get_type() == scar::val_type::CONSTANT) {
+          if (copySrc.get_copy_type() == scar::val_type::CONSTANT and
+              src->get_const_val() == copySrc.get_const_val()) {
+            continue;
+          }
+        } else if (src->get_type() == scar::val_type::VAR) {
+          if (copySrc.get_copy_type() == scar::val_type::VAR and
+              src->get_reg() == copySrc.get_reg_name()) {
+            continue;
+          }
         }
       }
 
@@ -234,15 +237,20 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         // instruction
         if (copy_map.find(dst->get_reg()) != copy_map.end()) {
           auto copySrc = copy_map[dst->get_reg()];
-          if ((src->get_type() == scar::val_type::CONSTANT and
-               copySrc.get_copy_type() == scar::val_type::CONSTANT and
-               src->get_const_val() == copySrc.get_const_val()) or
-              (src->get_type() == scar::val_type::VAR and
-               copySrc.get_copy_type() == scar::val_type::VAR and
-               src->get_reg() == copySrc.get_reg_name())) {
-            ran_copy_propagation = true;
-            it = block->get_body().erase(it);
-            continue;
+          if (src->get_type() == scar::val_type::CONSTANT) {
+            if (copySrc.get_copy_type() == scar::val_type::CONSTANT and
+                src->get_const_val() == copySrc.get_const_val()) {
+              ran_copy_propagation = true;
+              it = block->get_body().erase(it);
+              continue;
+            }
+          } else if (src->get_type() == scar::val_type::VAR) {
+            if (copySrc.get_copy_type() == scar::val_type::VAR and
+                src->get_reg() == copySrc.get_reg_name()) {
+              ran_copy_propagation = true;
+              it = block->get_body().erase(it);
+              continue;
+            }
           }
         }
 

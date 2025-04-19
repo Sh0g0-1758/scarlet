@@ -242,7 +242,7 @@ void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
   case binop::BINOP::DIV: {
     bool divisionByZero{};
     IS_ZERO(src2, divisionByZero);
-    if (divisionByZero) {
+    if (divisionByZero and src2.get_type() != constant::Type::DOUBLE) {
       result.set_value({.i = 0});
     } else {
       CALC_BINOP(src1, src2, /);
@@ -251,7 +251,7 @@ void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
   case binop::BINOP::MOD: {
     bool ModByZero{};
     IS_ZERO(src2, ModByZero);
-    if (ModByZero) {
+    if (ModByZero and src2.get_type() != constant::Type::DOUBLE) {
       result.set_value({.i = 0});
     } else {
       CALC_BINOP_INT(src1, src2, %);
