@@ -99,9 +99,9 @@ public:
     case Type::STRING:
       return s < constant.s;
     case Type::NONE:
-      UNREACHABLE();
+      return false;
     }
-    UNREACHABLE();
+    return false;
   }
   bool operator==(const Constant &constant) const {
     if (type != constant.type) {
@@ -127,9 +127,9 @@ public:
     case Type::ZERO:
       return value.ul == constant.value.ul;
     case Type::NONE:
-      UNREACHABLE();
+      return false;
     }
-    UNREACHABLE();
+    return false;
   }
   friend std::ostream &operator<<(std::ostream &os, const Constant &constant) {
     switch (constant.type) {

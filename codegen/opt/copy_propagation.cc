@@ -41,6 +41,19 @@ void Codegen::transfer_copies(cfg::node &block) {
         }
       }
 
+      // If x = y in copy map and instruction is COPY(y, x), ignore
+      if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
+        auto copySrc = block.copy_map[dst->get_reg()];
+        if ((src->get_type() == scar::val_type::CONSTANT and
+             copySrc.get_copy_type() == scar::val_type::CONSTANT and
+             src->get_const_val() == copySrc.get_const_val()) or
+            (src->get_type() == scar::val_type::VAR and
+             copySrc.get_copy_type() == scar::val_type::VAR and
+             src->get_reg() == copySrc.get_reg_name())) {
+          continue;
+        }
+      }
+
       // If x = y in copy map and instruction is COPY(.|x), remove x = y
       if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
         block.copy_map.erase(dst->get_reg());
@@ -182,8 +195,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
     if (block->is_empty())
       continue;
     auto copy_map = merge_copies(cfg, *block);
-    for (auto it = block->get_body().begin(); it != block->get_body().end();
-         it++) {
+    for (auto it = block->get_body().begin(); it != block->get_body().end();) {
       auto src = (*it)->get_src1();
       auto dst = (*it)->get_dst();
       if ((*it)->get_type() == scar::instruction_type::COPY) {
@@ -196,7 +208,22 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
               copy_map[src->get_reg()].get_reg_name() == dst->get_reg()) {
             ran_copy_propagation = true;
             it = block->get_body().erase(it);
-            it--;
+            continue;
+          }
+        }
+
+        // If x = y in copy map and instruction is COPY(y, x), remove
+        // instruction
+        if (copy_map.find(dst->get_reg()) != copy_map.end()) {
+          auto copySrc = copy_map[dst->get_reg()];
+          if ((src->get_type() == scar::val_type::CONSTANT and
+               copySrc.get_copy_type() == scar::val_type::CONSTANT and
+               src->get_const_val() == copySrc.get_const_val()) or
+              (src->get_type() == scar::val_type::VAR and
+               copySrc.get_copy_type() == scar::val_type::VAR and
+               src->get_reg() == copySrc.get_reg_name())) {
+            ran_copy_propagation = true;
+            it = block->get_body().erase(it);
             continue;
           }
         }
@@ -218,6 +245,11 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
             cpy++;
           }
         }
+
+        // add current copy
+        cfg::copy_info copy_val;
+        SET_COPY_FROM_VAL(src, copy_val);
+        copy_map[dst->get_reg()] = copy_val;
       } else if ((*it)->get_type() == scar::instruction_type::CALL) {
         // if x = y in copy map and instruction is funcall(..|x|..), x -> y
         for (auto &arg :
@@ -303,6 +335,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         auto src2 = (*it)->get_src2();
         SET_VAL_FROM_COPY(src2);
       }
+      it++;
     }
     if (block->get_body().empty()) {
       REMOVE_BLOCK();
