@@ -70,35 +70,39 @@ void Codegen::transfer_copies(cfg::node &block) {
       }
 
       // add current copy
-      cfg::copy_info copy_val;
-      SET_COPY_FROM_VAL(src, copy_val);
-      block.copy_map[dst->get_reg()] = copy_val;
+      // make sure to add copies only when src and dst have same signedness
+      if (scarValTypeToConstType(src) == scarValTypeToConstType(dst)) {
+        cfg::copy_info copy_val;
+        SET_COPY_FROM_VAL(src, copy_val);
+        block.copy_map[dst->get_reg()] = copy_val;
+      }
     } else if (instr->get_type() == scar::instruction_type::CALL) {
-      // remove copies with global linkage
+      // remove copies with aliased variables
       for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
-        if (globalSymbolTable[cpy->first].link != symbolTable::linkage::NONE) {
+        if (aliased_vars[cpy->first]) {
           cpy = block.copy_map.erase(cpy);
         } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
-                   globalSymbolTable[cpy->second.get_reg_name()].link !=
-                       symbolTable::linkage::NONE) {
+                   aliased_vars[cpy->second.get_reg_name()]) {
           cpy = block.copy_map.erase(cpy);
         } else {
           cpy++;
         }
       }
 
-      // If x = y in copy map and instruction is funcall(...|x), remove x = y
-      if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
-        block.copy_map.erase(dst->get_reg());
-      }
+      if (dst != nullptr) {
+        // If x = y in copy map and instruction is funcall(...|x), remove x = y
+        if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
+          block.copy_map.erase(dst->get_reg());
+        }
 
-      // If x = y in copy map and instruction is funcall(...|y), remove x = y
-      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
-        if (cpy->second.get_copy_type() == scar::val_type::VAR and
-            cpy->second.get_reg_name() == dst->get_reg()) {
-          cpy = block.copy_map.erase(cpy);
-        } else {
-          cpy++;
+        // If x = y in copy map and instruction is funcall(...|y), remove x = y
+        for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
+          if (cpy->second.get_copy_type() == scar::val_type::VAR and
+              cpy->second.get_reg_name() == dst->get_reg()) {
+            cpy = block.copy_map.erase(cpy);
+          } else {
+            cpy++;
+          }
         }
       }
     } else if (instr->get_type() == scar::instruction_type::UNARY or
@@ -112,6 +116,18 @@ void Codegen::transfer_copies(cfg::node &block) {
       for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
         if (cpy->second.get_copy_type() == scar::val_type::VAR and
             cpy->second.get_reg_name() == dst->get_reg()) {
+          cpy = block.copy_map.erase(cpy);
+        } else {
+          cpy++;
+        }
+      }
+    } else if (instr->get_type() == scar::instruction_type::GET_ADDRESS) {
+      // invalidate copies that contain aliased variables
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
+        if (aliased_vars[cpy->first]) {
+          cpy = block.copy_map.erase(cpy);
+        } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
+                   aliased_vars[cpy->second.get_reg_name()]) {
           cpy = block.copy_map.erase(cpy);
         } else {
           cpy++;
@@ -153,8 +169,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
     for (auto instr : block.get_body()) {
       if (instr->get_type() == scar::instruction_type::COPY) {
         cfg::copy_info copy_val;
-        SET_COPY_FROM_VAL(instr->get_src1(), copy_val);
-        all_copies[instr->get_dst()->get_reg()] = copy_val;
+        // make sure to add copies only when src and dst have same signedness
+        if (scarValTypeToConstType(instr->get_src1()) ==
+            scarValTypeToConstType(instr->get_dst())) {
+          SET_COPY_FROM_VAL(instr->get_src1(), copy_val);
+          all_copies[instr->get_dst()->get_reg()] = copy_val;
+        }
       }
     }
   }
@@ -247,9 +267,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // add current copy
-        cfg::copy_info copy_val;
-        SET_COPY_FROM_VAL(src, copy_val);
-        copy_map[dst->get_reg()] = copy_val;
+        // make sure to add copies only when src and dst have same signedness
+        if (scarValTypeToConstType(src) == scarValTypeToConstType(dst)) {
+          cfg::copy_info copy_val;
+          SET_COPY_FROM_VAL(src, copy_val);
+          copy_map[dst->get_reg()] = copy_val;
+        }
       } else if ((*it)->get_type() == scar::instruction_type::CALL) {
         // if x = y in copy map and instruction is funcall(..|x|..), x -> y
         for (auto &arg :
@@ -259,32 +282,34 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
           SET_VAL_FROM_COPY(arg);
         }
 
-        // remove copies with global linkage
+        // remove copies with aliased variables
         for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
-          if (globalSymbolTable[cpy->first].link !=
-              symbolTable::linkage::NONE) {
+          if (aliased_vars[cpy->first]) {
             cpy = copy_map.erase(cpy);
           } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
-                     globalSymbolTable[cpy->second.get_reg_name()].link !=
-                         symbolTable::linkage::NONE) {
+                     aliased_vars[cpy->second.get_reg_name()]) {
             cpy = copy_map.erase(cpy);
           } else {
             cpy++;
           }
         }
 
-        // If x = y in copy map and instruction is funcall(...|x), remove x = y
-        if (copy_map.find(dst->get_reg()) != copy_map.end()) {
-          copy_map.erase(dst->get_reg());
-        }
+        if (dst != nullptr) {
+          // If x = y in copy map and instruction is funcall(...|x), remove x =
+          // y
+          if (copy_map.find(dst->get_reg()) != copy_map.end()) {
+            copy_map.erase(dst->get_reg());
+          }
 
-        // If x = y in copy map and instruction is funcall(...|y), remove x = y
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
-          if (cpy->second.get_copy_type() == scar::val_type::VAR and
-              cpy->second.get_reg_name() == dst->get_reg()) {
-            cpy = copy_map.erase(cpy);
-          } else {
-            cpy++;
+          // If x = y in copy map and instruction is funcall(...|y), remove x =
+          // y
+          for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
+            if (cpy->second.get_copy_type() == scar::val_type::VAR and
+                cpy->second.get_reg_name() == dst->get_reg()) {
+              cpy = copy_map.erase(cpy);
+            } else {
+              cpy++;
+            }
           }
         }
       } else if ((*it)->get_type() == scar::instruction_type::UNARY) {
@@ -322,6 +347,18 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
+            cpy = copy_map.erase(cpy);
+          } else {
+            cpy++;
+          }
+        }
+      } else if ((*it)->get_type() == scar::instruction_type::GET_ADDRESS) {
+        // invalidate copies that contain aliased variables
+        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
+          if (aliased_vars[cpy->first]) {
+            cpy = copy_map.erase(cpy);
+          } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
+                     aliased_vars[cpy->second.get_reg_name()]) {
             cpy = copy_map.erase(cpy);
           } else {
             cpy++;
