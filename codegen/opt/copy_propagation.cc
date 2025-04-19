@@ -26,6 +26,24 @@ namespace codegen {
     }                                                                          \
   }
 
+#define INVALIDATE_COPY_IF_DST(copy_map)                                       \
+  {                                                                            \
+    /* If x = y in copy map and instruction is op(...|x), remove x = y */      \
+    if (copy_map.find(dst->get_reg()) != copy_map.end()) {                     \
+      copy_map.erase(dst->get_reg());                                          \
+    }                                                                          \
+                                                                               \
+    /* If x = y in copy map and instruction is op(...|y), remove x = y */      \
+    for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {                \
+      if (cpy->second.get_copy_type() == scar::val_type::VAR and               \
+          cpy->second.get_reg_name() == dst->get_reg()) {                      \
+        cpy = copy_map.erase(cpy);                                             \
+      } else {                                                                 \
+        cpy++;                                                                 \
+      }                                                                        \
+    }                                                                          \
+  }
+
 void Codegen::transfer_copies(cfg::node &block) {
   for (auto instr : block.get_body()) {
     auto src = instr->get_src1();
@@ -89,38 +107,8 @@ void Codegen::transfer_copies(cfg::node &block) {
         }
       }
 
-      if (dst != nullptr) {
-        // If x = y in copy map and instruction is funcall(...|x), remove x = y
-        if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
-          block.copy_map.erase(dst->get_reg());
-        }
-
-        // If x = y in copy map and instruction is funcall(...|y), remove x = y
-        for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
-          if (cpy->second.get_copy_type() == scar::val_type::VAR and
-              cpy->second.get_reg_name() == dst->get_reg()) {
-            cpy = block.copy_map.erase(cpy);
-          } else {
-            cpy++;
-          }
-        }
-      }
-    } else if (instr->get_type() == scar::instruction_type::UNARY or
-               instr->get_type() == scar::instruction_type::BINARY) {
-      // If x = y in copy map and instruction is op(..|x), remove x = y
-      if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
-        block.copy_map.erase(dst->get_reg());
-      }
-
-      // If x = y in copy map and instruction is op(..|y), remove x = y
-      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
-        if (cpy->second.get_copy_type() == scar::val_type::VAR and
-            cpy->second.get_reg_name() == dst->get_reg()) {
-          cpy = block.copy_map.erase(cpy);
-        } else {
-          cpy++;
-        }
-      }
+      if (dst != nullptr)
+        INVALIDATE_COPY_IF_DST(block.copy_map);
     } else if (instr->get_type() == scar::instruction_type::GET_ADDRESS) {
       // invalidate copies that contain aliased variables
       for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
@@ -133,6 +121,9 @@ void Codegen::transfer_copies(cfg::node &block) {
           cpy++;
         }
       }
+    } else {
+      if (dst != nullptr)
+        INVALIDATE_COPY_IF_DST(block.copy_map);
     }
   }
 }
@@ -294,64 +285,8 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
           }
         }
 
-        if (dst != nullptr) {
-          // If x = y in copy map and instruction is funcall(...|x), remove x =
-          // y
-          if (copy_map.find(dst->get_reg()) != copy_map.end()) {
-            copy_map.erase(dst->get_reg());
-          }
-
-          // If x = y in copy map and instruction is funcall(...|y), remove x =
-          // y
-          for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
-            if (cpy->second.get_copy_type() == scar::val_type::VAR and
-                cpy->second.get_reg_name() == dst->get_reg()) {
-              cpy = copy_map.erase(cpy);
-            } else {
-              cpy++;
-            }
-          }
-        }
-      } else if ((*it)->get_type() == scar::instruction_type::UNARY) {
-        // If x = y in copy map and instruction is op(x|.) replace x with y
-        SET_VAL_FROM_COPY(src);
-
-        // If x = y in copy map and instruction is op(.|.|x), remove x = y
-        if (copy_map.find(dst->get_reg()) != copy_map.end()) {
-          copy_map.erase(dst->get_reg());
-        }
-
-        // If x = y in copy map and instruction is op(.|.|y), remove x = y
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
-          if (cpy->second.get_copy_type() == scar::val_type::VAR and
-              cpy->second.get_reg_name() == dst->get_reg()) {
-            cpy = copy_map.erase(cpy);
-          } else {
-            cpy++;
-          }
-        }
-      } else if ((*it)->get_type() == scar::instruction_type::BINARY) {
-        // If x = y in copy map and instruction is op(x|.|.), replace x with y
-        SET_VAL_FROM_COPY(src);
-
-        // If x = y in copy map and instruction is op(.|x|.), replace x with y
-        auto src2 = (*it)->get_src2();
-        SET_VAL_FROM_COPY(src2);
-
-        // If x = y in copy map and instruction is op(.|.|x), remove x = y
-        if (copy_map.find(dst->get_reg()) != copy_map.end()) {
-          copy_map.erase(dst->get_reg());
-        }
-
-        // If x = y in copy map and instruction is op(.|.|y), remove x = y
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
-          if (cpy->second.get_copy_type() == scar::val_type::VAR and
-              cpy->second.get_reg_name() == dst->get_reg()) {
-            cpy = copy_map.erase(cpy);
-          } else {
-            cpy++;
-          }
-        }
+        if (dst != nullptr)
+          INVALIDATE_COPY_IF_DST(copy_map);
       } else if ((*it)->get_type() == scar::instruction_type::GET_ADDRESS) {
         // invalidate copies that contain aliased variables
         for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
@@ -364,6 +299,9 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
             cpy++;
           }
         }
+
+        // If x = y in copy map and instruction is op(x|.), replace x with y
+        SET_VAL_FROM_COPY(src);
       } else {
         // If x = y in copy map and instruction is op(x|...), replace x with y
         SET_VAL_FROM_COPY(src);
@@ -371,6 +309,9 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         // If x = y in copy map and instruction is op(.|x|.), replace x with y
         auto src2 = (*it)->get_src2();
         SET_VAL_FROM_COPY(src2);
+
+        if (dst != nullptr)
+          INVALIDATE_COPY_IF_DST(copy_map);
       }
       it++;
     }
