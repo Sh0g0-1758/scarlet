@@ -152,7 +152,8 @@ private:
   bool unreachable_code_elimination(std::vector<cfg::node> &cfg);
   bool copy_propagation(std::vector<cfg::node> &cfg);
   void transfer_copies(cfg::node &block);
-  void merge_copies(std::vector<cfg::node> &cfg, cfg::node &block);
+  std::map<std::string, cfg::copy_info>
+  merge_copies(std::vector<cfg::node> &cfg, cfg::node &block);
   cfg::node &getNodeFromID(std::vector<cfg::node> &cfg, unsigned int id) {
     for (auto &node : cfg) {
       if (node.get_id() == id) {
