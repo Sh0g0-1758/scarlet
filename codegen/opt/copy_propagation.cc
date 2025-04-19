@@ -117,13 +117,12 @@ Codegen::merge_copies(std::vector<cfg::node> &cfg, cfg::node &block) {
   auto initMap = getNodeFromID(cfg, block.get_pred()[0]).copy_map;
   for (int i = 1; i < (int)block.get_pred().size(); i++) {
     auto predMap = getNodeFromID(cfg, block.get_pred()[i]).copy_map;
-    for (auto it = initMap.begin(); it != initMap.end(); it++) {
+    for (auto it = initMap.begin(); it != initMap.end();) {
       if (predMap.find(it->first) != predMap.end() and
           it->second == predMap[it->first]) {
-        // retain the copy
+        it++;
       } else {
         it = initMap.erase(it);
-        it--;
       }
     }
   }
