@@ -12,16 +12,16 @@ namespace codegen {
     copy.set_copy_type(scar::val_type::CONSTANT);                              \
   }
 
-#define SET_VAL_FROM_COPY(src, get_src)                                        \
+#define SET_VAL_FROM_COPY(src)                                                 \
   if (src->get_type() == scar::val_type::VAR and                               \
       copy_map.find(src->get_reg()) != copy_map.end()) {                       \
     auto newVal = copy_map[src->get_reg()];                                    \
     if (newVal.get_copy_type() == scar::val_type::VAR) {                       \
-      (*it)->get_src()->set_type(scar::val_type::VAR);                         \
-      (*it)->get_src()->set_reg_name(newVal.get_reg_name());                   \
+      src->set_type(scar::val_type::VAR);                                      \
+      src->set_reg_name(newVal.get_reg_name());                                \
     } else if (newVal.get_copy_type() == scar::val_type::CONSTANT) {           \
-      (*it)->get_src()->set_type(scar::val_type::CONSTANT);                    \
-      (*it)->get_src()->set_const_val(newVal.get_const_val());                 \
+      src->set_type(scar::val_type::CONSTANT);                                 \
+      src->set_const_val(newVal.get_const_val());                              \
     }                                                                          \
   }
 
@@ -201,7 +201,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // if x = y in copy map and instruction is COPY(x|.), replace x with y
-        SET_VAL_FROM_COPY(src, get_src1);
+        SET_VAL_FROM_COPY(src);
 
         // If x = y in copy map and instruction is COPY(.|x), remove x = y
         if (copy_map.find(dst->get_reg()) != copy_map.end()) {
@@ -217,6 +217,14 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
           }
         }
       } else if ((*it)->get_type() == scar::instruction_type::CALL) {
+        // if x = y in copy map and instruction is funcall(..|x|..), x -> y
+        for (auto &arg :
+             std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
+                 *it)
+                 ->get_args()) {
+          SET_VAL_FROM_COPY(arg);
+        }
+
         // remove copies with global linkage
         for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
           if (globalSymbolTable[cpy->first].link !=
@@ -246,7 +254,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
       } else if ((*it)->get_type() == scar::instruction_type::UNARY) {
         // If x = y in copy map and instruction is op(x|.) replace x with y
-        SET_VAL_FROM_COPY(src, get_src1);
+        SET_VAL_FROM_COPY(src);
 
         // If x = y in copy map and instruction is op(.|.|x), remove x = y
         if (copy_map.find(dst->get_reg()) != copy_map.end()) {
@@ -263,11 +271,11 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
       } else if ((*it)->get_type() == scar::instruction_type::BINARY) {
         // If x = y in copy map and instruction is op(x|.|.), replace x with y
-        SET_VAL_FROM_COPY(src, get_src1);
+        SET_VAL_FROM_COPY(src);
 
         // If x = y in copy map and instruction is op(.|x|.), replace x with y
         auto src2 = (*it)->get_src2();
-        SET_VAL_FROM_COPY(src2, get_src2);
+        SET_VAL_FROM_COPY(src2);
 
         // If x = y in copy map and instruction is op(.|.|x), remove x = y
         if (copy_map.find(dst->get_reg()) != copy_map.end()) {
