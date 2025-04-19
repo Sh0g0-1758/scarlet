@@ -386,7 +386,10 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
               getNodeFromID(cfg, succID).remove_pred(block->get_id());
             }
             block->get_succ().clear();
-            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
+            unsigned int jmpLblID =
+                NodeLabelToId[(*inst)->get_src1()->get_label()];
+            block->add_succ(jmpLblID);
+            getNodeFromID(cfg, jmpLblID).add_pred(block->get_id());
           } else {
             inst = block->get_body().erase(inst);
             --inst;
@@ -396,6 +399,7 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
               }
               block->get_succ().clear();
               block->add_succ((block + 1)->get_id());
+              (block + 1)->add_pred(block->get_id());
             }
           }
         }
@@ -413,6 +417,7 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
               }
               block->get_succ().clear();
               block->add_succ((block + 1)->get_id());
+              (block + 1)->add_pred(block->get_id());
             }
           } else {
             (*inst)->set_type(scar::instruction_type::JUMP);
@@ -421,7 +426,10 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
               getNodeFromID(cfg, succID).remove_pred(block->get_id());
             }
             block->get_succ().clear();
-            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
+            unsigned int jmpLblID =
+                NodeLabelToId[(*inst)->get_src1()->get_label()];
+            block->add_succ(jmpLblID);
+            getNodeFromID(cfg, jmpLblID).add_pred(block->get_id());
           }
         }
       } else if (scar::is_type_cast(instType)) {
