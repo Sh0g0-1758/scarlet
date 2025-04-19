@@ -28,7 +28,6 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
                           std::shared_ptr<ast::AST_factor_Node> &factor) {
   if (token::is_constant(tokens[0].get_token())) {
     parse_const(tokens, factor);
-    EXPECT_POSTFIX_OP();
   } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     EXPECT_IDENTIFIER();
     if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {

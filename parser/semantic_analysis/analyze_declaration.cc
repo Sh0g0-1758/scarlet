@@ -50,7 +50,7 @@ void parser::analyze_declaration(
     auto structDecl =
         std::static_pointer_cast<ast::AST_struct_declaration_Node>(
             declaration);
-    // analyze_struct_declaration(structDecl, symbol_table, var_name, indx);
+    analyze_struct_declaration(structDecl, symbol_table, var_name, indx);
   }
 }
 

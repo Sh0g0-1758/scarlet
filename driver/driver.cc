@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 
   if (cmd.has_option("validate")) {
     std::cout << "[LOG]: Semantic analysis done successfully" << std::endl;
-    gnu.pretty_print();
+    //gnu.pretty_print();
     return 0;
   }
 
