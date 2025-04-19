@@ -47,12 +47,12 @@ void Codegen::transfer_copies(cfg::node &block) {
       }
 
       // If x = y in copy map and instruction is COPY(.|y), remove x = y
-      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
-           cpy++) {
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
         if (cpy->second.get_copy_type() == scar::val_type::VAR and
             cpy->second.get_reg_name() == dst->get_reg()) {
           cpy = block.copy_map.erase(cpy);
-          cpy--;
+        } else {
+          cpy++;
         }
       }
 
@@ -62,16 +62,15 @@ void Codegen::transfer_copies(cfg::node &block) {
       block.copy_map[dst->get_reg()] = copy_val;
     } else if (instr->get_type() == scar::instruction_type::CALL) {
       // remove copies with global linkage
-      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
-           cpy++) {
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
         if (globalSymbolTable[cpy->first].link != symbolTable::linkage::NONE) {
           cpy = block.copy_map.erase(cpy);
-          cpy--;
         } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
                    globalSymbolTable[cpy->second.get_reg_name()].link !=
                        symbolTable::linkage::NONE) {
           cpy = block.copy_map.erase(cpy);
-          cpy--;
+        } else {
+          cpy++;
         }
       }
 
@@ -81,12 +80,12 @@ void Codegen::transfer_copies(cfg::node &block) {
       }
 
       // If x = y in copy map and instruction is funcall(...|y), remove x = y
-      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
-           cpy++) {
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
         if (cpy->second.get_copy_type() == scar::val_type::VAR and
             cpy->second.get_reg_name() == dst->get_reg()) {
           cpy = block.copy_map.erase(cpy);
-          cpy--;
+        } else {
+          cpy++;
         }
       }
     } else if (instr->get_type() == scar::instruction_type::UNARY or
@@ -97,12 +96,12 @@ void Codegen::transfer_copies(cfg::node &block) {
       }
 
       // If x = y in copy map and instruction is op(..|y), remove x = y
-      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
-           cpy++) {
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
         if (cpy->second.get_copy_type() == scar::val_type::VAR and
             cpy->second.get_reg_name() == dst->get_reg()) {
           cpy = block.copy_map.erase(cpy);
-          cpy--;
+        } else {
+          cpy++;
         }
       }
     }
@@ -212,11 +211,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // If x = y in copy map and instruction is COPY(.|y), remove x = y
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
+        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
             cpy = copy_map.erase(cpy);
-            cpy--;
+          } else {
+            cpy++;
           }
         }
       } else if ((*it)->get_type() == scar::instruction_type::CALL) {
@@ -229,16 +229,16 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // remove copies with global linkage
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
+        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (globalSymbolTable[cpy->first].link !=
               symbolTable::linkage::NONE) {
             cpy = copy_map.erase(cpy);
-            cpy--;
           } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
                      globalSymbolTable[cpy->second.get_reg_name()].link !=
                          symbolTable::linkage::NONE) {
             cpy = copy_map.erase(cpy);
-            cpy--;
+          } else {
+            cpy++;
           }
         }
 
@@ -248,11 +248,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // If x = y in copy map and instruction is funcall(...|y), remove x = y
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
+        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
             cpy = copy_map.erase(cpy);
-            cpy--;
+          } else {
+            cpy++;
           }
         }
       } else if ((*it)->get_type() == scar::instruction_type::UNARY) {
@@ -265,11 +266,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // If x = y in copy map and instruction is op(.|.|y), remove x = y
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
+        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
             cpy = copy_map.erase(cpy);
-            cpy--;
+          } else {
+            cpy++;
           }
         }
       } else if ((*it)->get_type() == scar::instruction_type::BINARY) {
@@ -286,11 +288,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // If x = y in copy map and instruction is op(.|.|y), remove x = y
-        for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
+        for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
             cpy = copy_map.erase(cpy);
-            cpy--;
+          } else {
+            cpy++;
           }
         }
       }
