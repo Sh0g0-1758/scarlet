@@ -407,7 +407,6 @@ class TestChapter(unittest.TestCase):
             parts = parts[: len(parts) - 3] + ["build"] + parts[len(parts) - 1:]
         else:
             parts.insert(len(parts) - 1, "build")
-        print(parts)
         exe = Path(*parts)
         result = subprocess.run(
             [exe], check=False, capture_output=True, text=True, timeout=10.0
