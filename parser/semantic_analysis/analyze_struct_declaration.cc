@@ -39,21 +39,23 @@ namespace parser {
             memInfo.name = mem_name;
             memInfo.link = symbolTable::linkage::NONE;
             memInfo.type = symbolTable::symbolType::VARIABLE;
+            memInfo.def = symbolTable::defType::TRUE;
+            std::vector<long> derivedType;
+            ast::unroll_derived_type(member->get_declarator(), derivedType);
             if(member->get_Decltype() == ast::DeclarationType::STRUCT){
                 if(globalStructSymbolTable.find(member->get_struct_identifier()->get_value()) == globalStructSymbolTable.end()
                     or globalStructSymbolTable[member->get_struct_identifier()->get_value()].def == symbolTable::defType::FALSE){
+                    if(derivedType[derivedType.size()-1] != (long)ast::ElemType::POINTER){
                     success = false;
                     error_messages.emplace_back("Struct " + member->get_struct_identifier()->get_value() +
                                                 " has not been defined");
+                    }
                 }
                 memInfo.type = symbolTable::symbolType::STRUCT;
                 constant::Constant constVal;
                 constVal.set_string(member->get_struct_identifier()->get_value());
                 memInfo.struct_identifier = constVal;
             }
-            memInfo.def = symbolTable::defType::TRUE;
-            std::vector<long> derivedType;
-            ast::unroll_derived_type(member->get_declarator(), derivedType);
             if (!derivedType.empty()) {
             derivedType.push_back((long)member->get_base_type());
             memInfo.typeDef.push_back(ast::ElemType::DERIVED);

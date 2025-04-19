@@ -148,7 +148,7 @@ void parser::parse_struct_declaration (
       MAKE_SHARED(ast::AST_declarator_Node, declarator);
       MAKE_SHARED(ast::AST_identifier_Node, identifier);
       parse_declarator(tokens, declarator, identifier);
-      memberDecl->set_identifier(std::move(identifier));
+      memberDecl->set_identifier(identifier);
       if(tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
         // If we have a function declarator, then this is a function
         // declaration
