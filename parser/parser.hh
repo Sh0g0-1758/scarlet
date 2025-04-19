@@ -106,6 +106,10 @@ private:
   void pretty_print_block(std::shared_ptr<ast::AST_Block_Node> block);
   void pretty_print_declaration(
       std::shared_ptr<ast::AST_Declaration_Node> declaration);
+  void pretty_print_struct_declaration(
+      std::shared_ptr<ast::AST_struct_declaration_Node> decl);
+  void pretty_print_member_declaration(
+      std::shared_ptr<ast::AST_member_declaration_Node> member);
   void
   pretty_print_declarator(std::shared_ptr<ast::AST_declarator_Node> declarator);
   void

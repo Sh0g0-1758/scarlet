@@ -31,7 +31,7 @@ void parser::pretty_print_declaration(
     pretty_print_variable_declaration(
         std::static_pointer_cast<ast::AST_variable_declaration_Node>(
             declaration));
-  } else {
+  } else if (declaration->get_type() == ast::DeclarationType::FUNCTION) {
     std::cout << "\tFunction Declaration=(" << std::endl;
     std::cout << "\t\tidentifier=\""
               << declaration->get_identifier()->get_value() << "\","
@@ -39,6 +39,39 @@ void parser::pretty_print_declaration(
     pretty_print_function_declaration(
         std::static_pointer_cast<ast::AST_function_declaration_Node>(
             declaration));
+  } else {
+    std::cout << "\tStruct Declaration=(" << std::endl;
+    std::cout << "\t\tidentifier=\""
+              << declaration->get_identifier()->get_value() << "\","
+              << std::endl;
+    std::cout << "\t\tmembers=[" << std::endl;
+    pretty_print_struct_declaration(
+        std::static_pointer_cast<ast::AST_struct_declaration_Node>(
+            declaration));
+    std::cout << "\t\t]," << std::endl;
+  }
+}
+
+void parser::pretty_print_struct_declaration(
+    std::shared_ptr<ast::AST_struct_declaration_Node> decl) {
+  for (auto member : decl->get_members()) {
+    std::cout << "\t\t\tMember=(" << std::endl;
+    std::cout << "\t\t\t\tIdentifier=" << member->get_identifier()->get_value()
+              << "," << std::endl;
+    pretty_print_member_declaration(member);
+    std::cout << "\t\t\t)," << std::endl;
+  }
+  std::cout << "\t\t]," << std::endl;
+}
+
+void parser::pretty_print_member_declaration(
+    std::shared_ptr<ast::AST_member_declaration_Node> member) {
+  std::cout << "\t\t\t\ttype=";
+  pretty_print_declarator(member->get_declarator());
+  std::cout << ast::to_string(member->get_base_type());
+  if (member->get_struct_identifier() != nullptr) {
+    std::cout << " " << member->get_struct_identifier()->get_value()
+              << std::endl;
   }
 }
 
@@ -49,6 +82,10 @@ void parser::pretty_print_variable_declaration(
   std::cout << "\t\ttype=";
   pretty_print_declarator(declaration->get_declarator());
   std::cout << ast::to_string(declaration->get_base_type());
+  if (declaration->get_struct_identifier() != nullptr) {
+    std::cout << " " << declaration->get_struct_identifier()->get_value()
+              << std::endl;
+  }
   std::cout << "," << std::endl;
   if (declaration->get_exp() != nullptr) {
     std::cout << "\t\texp=(" << std::endl;
