@@ -39,6 +39,7 @@ private:
   std::stack<std::string> loop_switch_end_labels;
   std::stack<std::shared_ptr<ast::AST_switch_statement_Node>> switch_stack;
   std::map<std::string, symbolTable::symbolInfo> globalSymbolTable;
+  std::map<std::string, symbolTable::symbolInfo> globalStructSymbolTable;
   void parse_struct_declaration(
       std::vector<token::Token> &tokens,
       std::shared_ptr<ast::AST_struct_declaration_Node> decl);
@@ -167,6 +168,10 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       std::string &var_name, int indx);
+  void analyze_global_struct_declaration(
+    std::shared_ptr<ast::AST_struct_declaration_Node> structDecl,
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &struct_symbol_table);
   void analyze_local_variable_declaration(
       std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>

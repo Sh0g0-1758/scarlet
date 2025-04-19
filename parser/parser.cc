@@ -23,6 +23,7 @@ void parser::expect(token::TOKEN actual_token, token::TOKEN expected_token) {
 
 void parser::semantic_analysis() {
   std::map<std::pair<std::string, int>, symbolTable::symbolInfo> symbol_table;
+  std::map<std::pair<std::string,int>, symbolTable::symbolInfo> struct_symbol_table;
   for (auto decls : program.get_declarations()) {
     if (decls->get_type() == ast::DeclarationType::VARIABLE) {
       auto vars =
@@ -39,6 +40,10 @@ void parser::semantic_analysis() {
       // for each function will point to the label in that function
       analyze_goto_labels();
       goto_labels.clear();
+    }else if (decls->get_type() == ast::DeclarationType::STRUCT) {
+      auto structs =
+          std::static_pointer_cast<ast::AST_struct_declaration_Node>(decls);
+      analyze_global_struct_declaration(structs, struct_symbol_table);
     }
   }
 }

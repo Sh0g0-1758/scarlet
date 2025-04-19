@@ -589,6 +589,8 @@ class AST_member_declaration_Node {
 private:
   std::shared_ptr<AST_declarator_Node> declarator;
   ElemType base_type;
+  DeclarationType type;
+  std::shared_ptr<AST_identifier_Node> identifier;
   std::shared_ptr<AST_identifier_Node> struct_identifier;
 public:
   std::string get_AST_name() { return "MemberDeclaration"; }
@@ -603,6 +605,14 @@ public:
   }
   void set_struct_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
     this->struct_identifier = std::move(identifier);
+  }
+  DeclarationType get_Decltype() { return type; }
+  void set_Decltype(DeclarationType type) { this->type = type; }
+  std::shared_ptr<AST_identifier_Node> get_identifier() {
+    return identifier;
+  }
+  void set_identifier(std::shared_ptr<AST_identifier_Node> identifier) {
+    this->identifier = std::move(identifier);
   }
 };
 

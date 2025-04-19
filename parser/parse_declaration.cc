@@ -141,11 +141,22 @@ void parser::parse_struct_declaration (
       MAKE_SHARED(ast::AST_member_declaration_Node, memberDecl);
       PARSE_TYPE(memberDecl, set_base_type);
       if(memberDecl->get_base_type() == ast::ElemType::STRUCT) {
-        EXPECT(token::TOKEN::IDENTIFIER);
+        EXPECT_IDENTIFIER();
+        memberDecl->set_struct_identifier(std::move(identifier));
+        memberDecl->set_Decltype(ast::DeclarationType::STRUCT);
       }
       MAKE_SHARED(ast::AST_declarator_Node, declarator);
       MAKE_SHARED(ast::AST_identifier_Node, identifier);
       parse_declarator(tokens, declarator, identifier);
+      memberDecl->set_identifier(std::move(identifier));
+      if(tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+        // If we have a function declarator, then this is a function
+        // declaration
+        // and not a member declaration
+          success = false;
+          error_messages.emplace_back(
+              "Function declarations are not allowed in struct declarations");  
+      }
       EXPECT(token::TOKEN::SEMICOLON);
       if (identifier->get_value().empty()) {
         success = false;
@@ -156,6 +167,10 @@ void parser::parse_struct_declaration (
       decl->add_member(std::move(memberDecl));
     }
     EXPECT(token::TOKEN::CLOSE_BRACE);
+    if(decl->get_members().empty()) {
+      success = false;
+      error_messages.emplace_back("Struct declaration cannot be empty");
+    }
   }
 }
 

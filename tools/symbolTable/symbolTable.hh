@@ -9,7 +9,7 @@
 namespace scarlet {
 namespace symbolTable {
 enum class linkage { NONE, INTERNAL, EXTERNAL };
-enum class symbolType { VARIABLE, FUNCTION };
+enum class symbolType { VARIABLE, FUNCTION, STRUCT };
 // True -> There is a definition
 // Tentative -> There is a global declaration without extern,
 //              which means it will be initalized with 0
@@ -33,6 +33,9 @@ struct symbolInfo {
   std::vector<ast::ElemType> typeDef{};
   defType def = defType::FALSE;
   std::vector<constant::Constant> value{};
+  constant::Constant struct_identifier;
+  std::vector<symbolInfo> struct_type{};
+  std::map<std::string,int> memNametoIndex{};
   // Here <= 0 corresponds to an ElemType and > 0 corrresponds to an array
   // dimension
   std::map<int, std::vector<long>> derivedTypeMap{};

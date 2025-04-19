@@ -32,7 +32,7 @@ void parser::analyze_declaration(
               declaration);
       analyze_local_variable_declaration(varDecl, symbol_table, var_name, indx);
     }
-  } else {
+  } else if (declaration->get_type() == ast::DeclarationType::FUNCTION) {
     // Make sure that function declarations at block scope don't have
     // static storage specifier.
     if (indx != 0 and
@@ -46,6 +46,11 @@ void parser::analyze_declaration(
         std::static_pointer_cast<ast::AST_function_declaration_Node>(
             declaration);
     analyze_function_declaration(funcDecl, symbol_table, var_name, indx);
+  } else if (declaration->get_type() == ast::DeclarationType::STRUCT) {
+    auto structDecl =
+        std::static_pointer_cast<ast::AST_struct_declaration_Node>(
+            declaration);
+    // analyze_struct_declaration(structDecl, symbol_table, var_name, indx);
   }
 }
 
