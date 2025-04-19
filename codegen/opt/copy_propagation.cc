@@ -12,18 +12,25 @@ namespace codegen {
     copy.set_copy_type(scar::val_type::CONSTANT);                              \
   }
 
-#define SET_VAL_FROM_COPY(src)                                                 \
+/*******************************************************************************
+ * NOTE: We make a new scar_Val_Node instead of changing the original one
+ *       because we have made extensive reuse of scar nodes in scargen. So
+ *       changes here can have unintended affects in other scar instructions.
+ ******************************************************************************/
+#define SET_VAL_FROM_COPY(src, set_src)                                        \
   if (src != nullptr and src->get_type() == scar::val_type::VAR and            \
       copy_map.find(src->get_reg()) != copy_map.end()) {                       \
     ran_copy_propagation = true;                                               \
     auto newVal = copy_map[src->get_reg()];                                    \
+    MAKE_SHARED(scar::scar_Val_Node, newSrc);                                  \
     if (newVal.get_copy_type() == scar::val_type::VAR) {                       \
-      src->set_type(scar::val_type::VAR);                                      \
-      src->set_reg_name(newVal.get_reg_name());                                \
+      newSrc->set_type(scar::val_type::VAR);                                   \
+      newSrc->set_reg_name(newVal.get_reg_name());                             \
     } else if (newVal.get_copy_type() == scar::val_type::CONSTANT) {           \
-      src->set_type(scar::val_type::CONSTANT);                                 \
-      src->set_const_val(newVal.get_const_val());                              \
+      newSrc->set_type(scar::val_type::CONSTANT);                              \
+      newSrc->set_const_val(newVal.get_const_val());                           \
     }                                                                          \
+    (*it)->set_src(newSrc);                                                    \
   }
 
 #define INVALIDATE_COPY_IF_DST(copy_map)                                       \
@@ -240,7 +247,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // if x = y in copy map and instruction is COPY(x|.), replace x with y
-        SET_VAL_FROM_COPY(src);
+        SET_VAL_FROM_COPY(src, set_src1);
 
         // If x = y in copy map and instruction is COPY(.|x), remove x = y
         if (copy_map.find(dst->get_reg()) != copy_map.end()) {
@@ -266,11 +273,25 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
       } else if ((*it)->get_type() == scar::instruction_type::CALL) {
         // if x = y in copy map and instruction is funcall(..|x|..), x -> y
-        for (auto &arg :
-             std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
-                 *it)
-                 ->get_args()) {
-          SET_VAL_FROM_COPY(arg);
+        auto funCall =
+            std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
+                *it);
+        for (int i = 0; i < (int)funCall->get_args().size(); i++) {
+          auto arg = funCall->get_args()[i];
+          if (arg != nullptr and arg->get_type() == scar::val_type::VAR and
+              copy_map.find(arg->get_reg()) != copy_map.end()) {
+            ran_copy_propagation = true;
+            auto newVal = copy_map[arg->get_reg()];
+            MAKE_SHARED(scar::scar_Val_Node, newSrc);
+            if (newVal.get_copy_type() == scar::val_type::VAR) {
+              newSrc->set_type(scar::val_type::VAR);
+              newSrc->set_reg_name(newVal.get_reg_name());
+            } else if (newVal.get_copy_type() == scar::val_type::CONSTANT) {
+              newSrc->set_type(scar::val_type::CONSTANT);
+              newSrc->set_const_val(newVal.get_const_val());
+            }
+            funCall->get_args()[i] = newSrc;
+          }
         }
 
         // remove copies with aliased variables
@@ -301,14 +322,14 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         }
 
         // If x = y in copy map and instruction is op(x|.), replace x with y
-        SET_VAL_FROM_COPY(src);
+        SET_VAL_FROM_COPY(src, set_src1);
       } else {
         // If x = y in copy map and instruction is op(x|...), replace x with y
-        SET_VAL_FROM_COPY(src);
+        SET_VAL_FROM_COPY(src, set_src1);
 
         // If x = y in copy map and instruction is op(.|x|.), replace x with y
         auto src2 = (*it)->get_src2();
-        SET_VAL_FROM_COPY(src2);
+        SET_VAL_FROM_COPY(src2, set_src2);
 
         if (dst != nullptr)
           INVALIDATE_COPY_IF_DST(copy_map);

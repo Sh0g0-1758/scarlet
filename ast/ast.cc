@@ -167,8 +167,8 @@ bool is_pointer_to_complete_type(ast::ElemType type,
 }
 
 // Check type specifiers which have void arrays void[3] or void(*[4])[2]
-// This will check for void array and if not found either check nested or return
-// based on size of the remaining type specifiers
+// Makes sure that there are only void pointers. Void arrays are not allowed
+// and void as a basic type is not allowed. The check is recursive in nature.
 bool validate_type_specifier(ast::ElemType type,
                              std::vector<long> derivedType) {
   if (type == ast::ElemType::DERIVED and derivedType[0] > 0) {
