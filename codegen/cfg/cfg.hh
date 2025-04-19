@@ -6,6 +6,35 @@ namespace scarlet {
 namespace cfg {
 
 /*
+ * Used during data flow analysis. Stores the src and dst of a copy instruction
+ */
+class copy_info {
+private:
+  constant::Constant const_val;
+  std::string reg_name;
+  scar::val_type copy_type;
+
+public:
+  void set_const_val(constant::Constant const_val) {
+    this->const_val = const_val;
+  }
+  void set_reg_name(std::string reg_name) { this->reg_name = reg_name; }
+  void set_copy_type(scar::val_type copy_type) { this->copy_type = copy_type; }
+  constant::Constant get_const_val() { return const_val; }
+  std::string get_reg_name() { return reg_name; }
+  scar::val_type get_copy_type() { return copy_type; }
+  bool operator==(const copy_info &other) const {
+    if (copy_type != other.copy_type)
+      return false;
+    if (copy_type == scar::val_type::CONSTANT)
+      return const_val == other.const_val;
+    if (copy_type == scar::val_type::VAR)
+      return reg_name == other.reg_name;
+    return false;
+  }
+};
+
+/*
  * The node class represents a node in the control flow graph
  * id represents the block number
  * succ and pred contains the blocks that are connected to the current block
@@ -16,10 +45,11 @@ private:
   std::vector<unsigned int> succ{};
   std::vector<unsigned int> pred{};
   unsigned int id{};
-  std::vector<std::shared_ptr<scar::scar_Instruction_Node>> body;
+  std::vector<std::shared_ptr<scar::scar_Instruction_Node>> body{};
   bool empty = true;
 
 public:
+  std::map<std::string, copy_info> copy_map{};
   void add_succ(unsigned int block) {
     if (std::find(succ.begin(), succ.end(), block) == succ.end())
       succ.emplace_back(block);

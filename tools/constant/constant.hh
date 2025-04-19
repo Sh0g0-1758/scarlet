@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <tools/macros/macros.hh>
@@ -85,7 +86,10 @@ public:
     case Type::LONG:
       return value.l < constant.value.l;
     case Type::DOUBLE:
-      return value.d < constant.value.d;
+      if (value.d == constant.value.d)
+        return std::signbit(value.d) < std::signbit(constant.value.d);
+      else
+        return value.d < constant.value.d;
     case Type::UINT:
       return value.ui < constant.value.ui;
     case Type::ULONG:
@@ -99,9 +103,9 @@ public:
     case Type::STRING:
       return s < constant.s;
     case Type::NONE:
-      UNREACHABLE();
+      return false;
     }
-    UNREACHABLE();
+    return false;
   }
   bool operator==(const Constant &constant) const {
     if (type != constant.type) {
@@ -113,7 +117,10 @@ public:
     case Type::LONG:
       return value.l == constant.value.l;
     case Type::DOUBLE:
-      return value.d == constant.value.d;
+      if (value.d == constant.value.d)
+        return std::signbit(value.d) == std::signbit(constant.value.d);
+      else
+        return value.d == constant.value.d;
     case Type::UINT:
       return value.ui == constant.value.ui;
     case Type::ULONG:
@@ -127,9 +134,9 @@ public:
     case Type::ZERO:
       return value.ul == constant.value.ul;
     case Type::NONE:
-      UNREACHABLE();
+      return false;
     }
-    UNREACHABLE();
+    return false;
   }
   friend std::ostream &operator<<(std::ostream &os, const Constant &constant) {
     switch (constant.type) {

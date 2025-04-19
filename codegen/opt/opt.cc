@@ -14,6 +14,7 @@ void Codegen::optimize(scarcmd &cmd) {
       std::vector<cfg::node> cfg;
       gen_cfg_from_funcBody(cfg, funcBody);
       while (true) {
+        alias_analysis(cfg);
         bool ran_constant_folding{};
         if (enable_constant_folding or enable_all) {
           ran_constant_folding = constant_folding(cfg);
@@ -22,10 +23,79 @@ void Codegen::optimize(scarcmd &cmd) {
         if (enable_unreachable_code_elimination or enable_all) {
           ran_unreachable_code_elimination = unreachable_code_elimination(cfg);
         }
-        if (!ran_constant_folding and !ran_unreachable_code_elimination)
+        bool ran_copy_propagation{};
+        if (enable_copy_propagation or enable_all) {
+          ran_copy_propagation = copy_propagation(cfg);
+        }
+        if (!ran_constant_folding and !ran_unreachable_code_elimination and
+            !ran_copy_propagation)
           break;
       }
       gen_funcBody_from_cfg(cfg, funcBody);
+    }
+  }
+}
+
+/*
+ * aliased variables are variables whose value can be changed in ways other than
+ * normal assignment / flow of the function. For instance, a pointer can change
+ * the value of a variable through a store instruction and a function call can
+ * potentially update variables with global linkage and even local linkage
+ * through pointers. This pass is run for each specific function and the
+ * information it collects is local to that function only.
+ */
+void Codegen::alias_analysis(std::vector<cfg::node> &cfg) {
+  aliased_vars.clear();
+  for (auto block = cfg.begin(); block != cfg.end(); ++block) {
+    if (block->is_empty())
+      continue;
+    for (auto instr : block->get_body()) {
+      if (instr->get_type() == scar::instruction_type::CALL) {
+        auto args =
+            std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
+                instr)
+                ->get_args();
+        for (auto arg : args) {
+          if (arg->get_type() == scar::val_type::VAR and
+              globalSymbolTable[arg->get_reg()].link !=
+                  symbolTable::linkage::NONE) {
+            aliased_vars[arg->get_reg()] = true;
+          }
+        }
+        auto dst = instr->get_dst();
+        if (dst != nullptr and dst->get_type() == scar::val_type::VAR and
+            globalSymbolTable[dst->get_reg()].link !=
+                symbolTable::linkage::NONE) {
+          aliased_vars[dst->get_reg()] = true;
+        }
+      } else if (instr->get_type() == scar::instruction_type::GET_ADDRESS) {
+        aliased_vars[instr->get_src1()->get_reg()] = true;
+        auto dst = instr->get_dst();
+        if (dst != nullptr and dst->get_type() == scar::val_type::VAR and
+            globalSymbolTable[dst->get_reg()].link !=
+                symbolTable::linkage::NONE) {
+          aliased_vars[dst->get_reg()] = true;
+        }
+      } else {
+        auto src1 = instr->get_src1();
+        auto src2 = instr->get_src2();
+        auto dst = instr->get_dst();
+        if (src1 != nullptr and src1->get_type() == scar::val_type::VAR and
+            globalSymbolTable[src1->get_reg()].link !=
+                symbolTable::linkage::NONE) {
+          aliased_vars[src1->get_reg()] = true;
+        }
+        if (src2 != nullptr and src2->get_type() == scar::val_type::VAR and
+            globalSymbolTable[src2->get_reg()].link !=
+                symbolTable::linkage::NONE) {
+          aliased_vars[src2->get_reg()] = true;
+        }
+        if (dst != nullptr and dst->get_type() == scar::val_type::VAR and
+            globalSymbolTable[dst->get_reg()].link !=
+                symbolTable::linkage::NONE) {
+          aliased_vars[dst->get_reg()] = true;
+        }
+      }
     }
   }
 }

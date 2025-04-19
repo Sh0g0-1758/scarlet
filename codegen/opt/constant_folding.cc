@@ -242,7 +242,7 @@ void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
   case binop::BINOP::DIV: {
     bool divisionByZero{};
     IS_ZERO(src2, divisionByZero);
-    if (divisionByZero) {
+    if (divisionByZero and src2.get_type() != constant::Type::DOUBLE) {
       result.set_value({.i = 0});
     } else {
       CALC_BINOP(src1, src2, /);
@@ -251,7 +251,7 @@ void Codegen::fold_binop(constant::Constant src1, constant::Constant src2,
   case binop::BINOP::MOD: {
     bool ModByZero{};
     IS_ZERO(src2, ModByZero);
-    if (ModByZero) {
+    if (ModByZero and src2.get_type() != constant::Type::DOUBLE) {
       result.set_value({.i = 0});
     } else {
       CALC_BINOP_INT(src1, src2, %);
@@ -382,12 +382,25 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           if (modify) {
             (*inst)->set_type(scar::instruction_type::JUMP);
             (*inst)->set_src1((*inst)->get_dst());
+            for (auto succID : block->get_succ()) {
+              getNodeFromID(cfg, succID).remove_pred(block->get_id());
+            }
             block->get_succ().clear();
-            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
-            (block + 1)->remove_pred(block->get_id());
+            unsigned int jmpLblID =
+                NodeLabelToId[(*inst)->get_src1()->get_label()];
+            block->add_succ(jmpLblID);
+            getNodeFromID(cfg, jmpLblID).add_pred(block->get_id());
           } else {
             inst = block->get_body().erase(inst);
             --inst;
+            if (!block->get_body().empty()) {
+              for (auto succID : block->get_succ()) {
+                getNodeFromID(cfg, succID).remove_pred(block->get_id());
+              }
+              block->get_succ().clear();
+              block->add_succ((block + 1)->get_id());
+              (block + 1)->add_pred(block->get_id());
+            }
           }
         }
       } else if (instType == scar::instruction_type::JUMP_IF_NOT_ZERO) {
@@ -398,12 +411,25 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           if (erase) {
             inst = block->get_body().erase(inst);
             --inst;
+            if (!block->get_body().empty()) {
+              for (auto succID : block->get_succ()) {
+                getNodeFromID(cfg, succID).remove_pred(block->get_id());
+              }
+              block->get_succ().clear();
+              block->add_succ((block + 1)->get_id());
+              (block + 1)->add_pred(block->get_id());
+            }
           } else {
             (*inst)->set_type(scar::instruction_type::JUMP);
             (*inst)->set_src1((*inst)->get_dst());
+            for (auto succID : block->get_succ()) {
+              getNodeFromID(cfg, succID).remove_pred(block->get_id());
+            }
             block->get_succ().clear();
-            block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
-            (block + 1)->remove_pred(block->get_id());
+            unsigned int jmpLblID =
+                NodeLabelToId[(*inst)->get_src1()->get_label()];
+            block->add_succ(jmpLblID);
+            getNodeFromID(cfg, jmpLblID).add_pred(block->get_id());
           }
         }
       } else if (scar::is_type_cast(instType)) {

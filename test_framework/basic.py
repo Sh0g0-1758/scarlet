@@ -403,6 +403,8 @@ class TestChapter(unittest.TestCase):
         parts = list(exe.parts)
         if(parts[len(parts) - 2] == "tests"):
             parts[len(parts) - 2] = "build"
+        elif(parts[len(parts) - 3] == "tests"):
+            parts = parts[: len(parts) - 3] + ["build"] + parts[len(parts) - 1:]
         else:
             parts.insert(len(parts) - 1, "build")
         exe = Path(*parts)

@@ -81,6 +81,7 @@ Scarlet currently supports the following architectures:
 - [x] Add constant folding optimization
 - [x] Add a construct for control flow graph
 - [x] Add unreachable code elimination optimization
+- [x] Add propagate copies optimization
 
 ## Resources
 
