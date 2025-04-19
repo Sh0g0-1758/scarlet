@@ -379,18 +379,24 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           isChanged = true;
           bool modify{};
           IS_ZERO((*inst)->get_src1()->get_const_val(), modify);
-          for (auto succID : block->get_succ()) {
-            getNodeFromID(cfg, succID).remove_pred(block->get_id());
-          }
-          block->get_succ().clear();
           if (modify) {
             (*inst)->set_type(scar::instruction_type::JUMP);
             (*inst)->set_src1((*inst)->get_dst());
+            for (auto succID : block->get_succ()) {
+              getNodeFromID(cfg, succID).remove_pred(block->get_id());
+            }
+            block->get_succ().clear();
             block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
           } else {
-            block->add_succ((block + 1)->get_id());
             inst = block->get_body().erase(inst);
             --inst;
+            if (!block->get_body().empty()) {
+              for (auto succID : block->get_succ()) {
+                getNodeFromID(cfg, succID).remove_pred(block->get_id());
+              }
+              block->get_succ().clear();
+              block->add_succ((block + 1)->get_id());
+            }
           }
         }
       } else if (instType == scar::instruction_type::JUMP_IF_NOT_ZERO) {
@@ -398,17 +404,23 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           isChanged = true;
           bool erase{};
           IS_ZERO((*inst)->get_src1()->get_const_val(), erase);
-          for (auto succID : block->get_succ()) {
-            getNodeFromID(cfg, succID).remove_pred(block->get_id());
-          }
-          block->get_succ().clear();
           if (erase) {
-            block->add_succ((block + 1)->get_id());
             inst = block->get_body().erase(inst);
             --inst;
+            if (!block->get_body().empty()) {
+              for (auto succID : block->get_succ()) {
+                getNodeFromID(cfg, succID).remove_pred(block->get_id());
+              }
+              block->get_succ().clear();
+              block->add_succ((block + 1)->get_id());
+            }
           } else {
             (*inst)->set_type(scar::instruction_type::JUMP);
             (*inst)->set_src1((*inst)->get_dst());
+            for (auto succID : block->get_succ()) {
+              getNodeFromID(cfg, succID).remove_pred(block->get_id());
+            }
+            block->get_succ().clear();
             block->add_succ(NodeLabelToId[(*inst)->get_src1()->get_label()]);
           }
         }

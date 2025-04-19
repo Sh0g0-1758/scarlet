@@ -13,7 +13,7 @@ namespace codegen {
   }
 
 #define SET_VAL_FROM_COPY(src)                                                 \
-  if (src->get_type() == scar::val_type::VAR and                               \
+  if (src != nullptr and src->get_type() == scar::val_type::VAR and            \
       copy_map.find(src->get_reg()) != copy_map.end()) {                       \
     ran_copy_propagation = true;                                               \
     auto newVal = copy_map[src->get_reg()];                                    \
@@ -295,6 +295,13 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
             cpy++;
           }
         }
+      } else {
+        // If x = y in copy map and instruction is op(x|...), replace x with y
+        SET_VAL_FROM_COPY(src);
+
+        // If x = y in copy map and instruction is op(.|x|.), replace x with y
+        auto src2 = (*it)->get_src2();
+        SET_VAL_FROM_COPY(src2);
       }
     }
     if (block->get_body().empty()) {
