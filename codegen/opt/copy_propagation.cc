@@ -15,6 +15,7 @@ namespace codegen {
 #define SET_VAL_FROM_COPY(src)                                                 \
   if (src->get_type() == scar::val_type::VAR and                               \
       copy_map.find(src->get_reg()) != copy_map.end()) {                       \
+    ran_copy_propagation = true;                                               \
     auto newVal = copy_map[src->get_reg()];                                    \
     if (newVal.get_copy_type() == scar::val_type::VAR) {                       \
       src->set_type(scar::val_type::VAR);                                      \
@@ -111,12 +112,11 @@ void Codegen::transfer_copies(cfg::node &block) {
 std::map<std::string, cfg::copy_info>
 Codegen::merge_copies(std::vector<cfg::node> &cfg, cfg::node &block) {
   if (block.get_pred().empty()) {
-    block.copy_map = {};
-    return;
+    return {};
   }
 
   auto initMap = getNodeFromID(cfg, block.get_pred()[0]).copy_map;
-  for (int i = 1; i < block.get_pred().size(); i++) {
+  for (int i = 1; i < (int)block.get_pred().size(); i++) {
     auto predMap = getNodeFromID(cfg, block.get_pred()[i]).copy_map;
     for (auto it : initMap) {
       if (predMap.find(it.first) != predMap.end() and
@@ -131,6 +131,7 @@ Codegen::merge_copies(std::vector<cfg::node> &cfg, cfg::node &block) {
 }
 
 bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
+  bool ran_copy_propagation{};
   // store all copies in the cfg as a provisional result to be able to
   // process blocks whose predecessors have not been processed yet.
   std::map<std::string, cfg::copy_info> all_copies;
@@ -194,6 +195,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
           if (copy_map[src->get_reg()].get_copy_type() ==
                   scar::val_type::VAR and
               copy_map[src->get_reg()].get_reg_name() == dst->get_reg()) {
+            ran_copy_propagation = true;
             it = block->get_body().erase(it);
             it--;
             continue;
@@ -296,6 +298,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
       REMOVE_BLOCK();
     }
   }
+  return ran_copy_propagation;
 }
 
 } // namespace codegen
