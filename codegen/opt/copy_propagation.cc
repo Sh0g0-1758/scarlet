@@ -51,7 +51,7 @@ void Codegen::transfer_copies(cfg::node &block) {
            cpy++) {
         if (cpy->second.get_copy_type() == scar::val_type::VAR and
             cpy->second.get_reg_name() == dst->get_reg()) {
-          block.copy_map.erase(cpy);
+          cpy = block.copy_map.erase(cpy);
           cpy--;
         }
       }
@@ -65,12 +65,12 @@ void Codegen::transfer_copies(cfg::node &block) {
       for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
            cpy++) {
         if (globalSymbolTable[cpy->first].link != symbolTable::linkage::NONE) {
-          block.copy_map.erase(cpy);
+          cpy = block.copy_map.erase(cpy);
           cpy--;
         } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
                    globalSymbolTable[cpy->second.get_reg_name()].link !=
                        symbolTable::linkage::NONE) {
-          block.copy_map.erase(cpy);
+          cpy = block.copy_map.erase(cpy);
           cpy--;
         }
       }
@@ -85,7 +85,7 @@ void Codegen::transfer_copies(cfg::node &block) {
            cpy++) {
         if (cpy->second.get_copy_type() == scar::val_type::VAR and
             cpy->second.get_reg_name() == dst->get_reg()) {
-          block.copy_map.erase(cpy);
+          cpy = block.copy_map.erase(cpy);
           cpy--;
         }
       }
@@ -101,7 +101,7 @@ void Codegen::transfer_copies(cfg::node &block) {
            cpy++) {
         if (cpy->second.get_copy_type() == scar::val_type::VAR and
             cpy->second.get_reg_name() == dst->get_reg()) {
-          block.copy_map.erase(cpy);
+          cpy = block.copy_map.erase(cpy);
           cpy--;
         }
       }
@@ -118,12 +118,13 @@ Codegen::merge_copies(std::vector<cfg::node> &cfg, cfg::node &block) {
   auto initMap = getNodeFromID(cfg, block.get_pred()[0]).copy_map;
   for (int i = 1; i < (int)block.get_pred().size(); i++) {
     auto predMap = getNodeFromID(cfg, block.get_pred()[i]).copy_map;
-    for (auto it : initMap) {
-      if (predMap.find(it.first) != predMap.end() and
-          it.second == predMap[it.first]) {
+    for (auto it = initMap.begin(); it != initMap.end(); it++) {
+      if (predMap.find(it->first) != predMap.end() and
+          it->second == predMap[it->first]) {
         // retain the copy
       } else {
-        initMap.erase(it.first);
+        it = initMap.erase(it);
+        it--;
       }
     }
   }
@@ -214,7 +215,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
-            copy_map.erase(cpy);
+            cpy = copy_map.erase(cpy);
             cpy--;
           }
         }
@@ -231,12 +232,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
           if (globalSymbolTable[cpy->first].link !=
               symbolTable::linkage::NONE) {
-            copy_map.erase(cpy);
+            cpy = copy_map.erase(cpy);
             cpy--;
           } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
                      globalSymbolTable[cpy->second.get_reg_name()].link !=
                          symbolTable::linkage::NONE) {
-            copy_map.erase(cpy);
+            cpy = copy_map.erase(cpy);
             cpy--;
           }
         }
@@ -250,7 +251,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
-            copy_map.erase(cpy);
+            cpy = copy_map.erase(cpy);
             cpy--;
           }
         }
@@ -267,7 +268,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
-            copy_map.erase(cpy);
+            cpy = copy_map.erase(cpy);
             cpy--;
           }
         }
@@ -288,7 +289,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         for (auto cpy = copy_map.begin(); cpy != copy_map.end(); cpy++) {
           if (cpy->second.get_copy_type() == scar::val_type::VAR and
               cpy->second.get_reg_name() == dst->get_reg()) {
-            copy_map.erase(cpy);
+            cpy = copy_map.erase(cpy);
             cpy--;
           }
         }
