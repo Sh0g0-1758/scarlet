@@ -109,7 +109,7 @@ void Codegen::transfer_copies(cfg::node &block) {
 
       if (dst != nullptr)
         INVALIDATE_COPY_IF_DST(block.copy_map);
-    } else if (instr->get_type() == scar::instruction_type::GET_ADDRESS) {
+    } else if (instr->get_type() == scar::instruction_type::STORE) {
       // invalidate copies that contain aliased variables
       for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();) {
         if (aliased_vars[cpy->first]) {
@@ -287,7 +287,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
 
         if (dst != nullptr)
           INVALIDATE_COPY_IF_DST(copy_map);
-      } else if ((*it)->get_type() == scar::instruction_type::GET_ADDRESS) {
+      } else if ((*it)->get_type() == scar::instruction_type::STORE) {
         // invalidate copies that contain aliased variables
         for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (aliased_vars[cpy->first]) {
