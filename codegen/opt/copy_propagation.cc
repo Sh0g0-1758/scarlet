@@ -1,0 +1,167 @@
+#include <codegen/common.hh>
+
+namespace scarlet {
+namespace codegen {
+
+#define SET_COPY(src, copy)                                                    \
+  if (src->get_type() == scar::val_type::VAR) {                                \
+    copy.set_reg_name(src->get_reg());                                         \
+    copy.set_copy_type(scar::val_type::VAR);                                   \
+  } else if (src->get_type() == scar::val_type::CONSTANT) {                    \
+    copy.set_const_val(src->get_const_val());                                  \
+    copy.set_copy_type(scar::val_type::CONSTANT);                              \
+  }
+
+void Codegen::transfer_copies(cfg::node &block) {
+  for (auto instr : block.get_body()) {
+    auto src = instr->get_src1();
+    auto dst = instr->get_dst();
+    if (instr->get_type() == scar::instruction_type::COPY) {
+      // If x = y in copy map and instruction is y = x, ignore
+      if (src->get_type() == scar::val_type::VAR and
+          block.copy_map.find(src->get_reg()) != block.copy_map.end()) {
+        if (block.copy_map[src->get_reg()].get_copy_type() ==
+                scar::val_type::VAR and
+            block.copy_map[src->get_reg()].get_reg_name() == dst->get_reg()) {
+          continue;
+        }
+      }
+
+      // If x = y in copy map and instruction is x = 10 | x = a, remove x = y
+      if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
+        block.copy_map.erase(dst->get_reg());
+      }
+
+      // If x = y in copy map and instruction is y = 10 | y = a, remove x = y
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
+           cpy++) {
+        if (cpy->second.get_copy_type() == scar::val_type::VAR and
+            cpy->second.get_reg_name() == dst->get_reg()) {
+          block.copy_map.erase(cpy);
+          cpy--;
+        }
+      }
+
+      // add current copy
+      cfg::copy_info copy_val;
+      SET_COPY(src, copy_val);
+      block.copy_map[dst->get_reg()] = copy_val;
+    } else if (instr->get_type() == scar::instruction_type::CALL) {
+      // remove copies with global linkage
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
+           cpy++) {
+        if (globalSymbolTable[cpy->first].link != symbolTable::linkage::NONE) {
+          block.copy_map.erase(cpy);
+          cpy--;
+        } else if (cpy->second.get_copy_type() == scar::val_type::VAR and
+                   globalSymbolTable[cpy->second.get_reg_name()].link !=
+                       symbolTable::linkage::NONE) {
+          block.copy_map.erase(cpy);
+          cpy--;
+        }
+      }
+
+      // If x = y in copy map and instruction is funcall(... , x), remove x = y
+      if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
+        block.copy_map.erase(dst->get_reg());
+      }
+
+      // If x = y in copy map and instruction is funcall(..., y), remove x = y
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
+           cpy++) {
+        if (cpy->second.get_copy_type() == scar::val_type::VAR and
+            cpy->second.get_reg_name() == dst->get_reg()) {
+          block.copy_map.erase(cpy);
+          cpy--;
+        }
+      }
+    } else if (instr->get_type() == scar::instruction_type::UNARY or
+               instr->get_type() == scar::instruction_type::BINARY) {
+      // If x = y in copy map and instruction is op(... , x), remove x = y
+      if (block.copy_map.find(dst->get_reg()) != block.copy_map.end()) {
+        block.copy_map.erase(dst->get_reg());
+      }
+
+      // If x = y in copy map and instruction is op(..., y), remove x = y
+      for (auto cpy = block.copy_map.begin(); cpy != block.copy_map.end();
+           cpy++) {
+        if (cpy->second.get_copy_type() == scar::val_type::VAR and
+            cpy->second.get_reg_name() == dst->get_reg()) {
+          block.copy_map.erase(cpy);
+          cpy--;
+        }
+      }
+    }
+  }
+}
+
+void Codegen::merge_copies(std::vector<cfg::node> &cfg, cfg::node &block) {
+  if (block.get_pred().empty()) {
+    block.copy_map = {};
+    return;
+  }
+
+  auto initMap = getNodeFromID(cfg, block.get_pred()[0]).copy_map;
+  for (int i = 1; i < block.get_pred().size(); i++) {
+    auto predMap = getNodeFromID(cfg, block.get_pred()[i]).copy_map;
+    for (auto it : initMap) {
+      if (predMap.find(it.first) != predMap.end() and
+          it.second == predMap[it.first]) {
+        // retain the copy
+      } else {
+        initMap.erase(it.first);
+      }
+    }
+  }
+  block.copy_map = initMap;
+}
+
+bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
+  // store all copies in the cfg as a provisional result to be able to
+  // process blocks whose predecessors have not been processed yet.
+  std::map<std::string, cfg::copy_info> all_copies;
+  for (auto block : cfg) {
+    if (block.is_empty())
+      continue;
+    for (auto instr : block.get_body()) {
+      if (instr->get_type() == scar::instruction_type::COPY) {
+        cfg::copy_info copy_val;
+        SET_COPY(instr->get_src1(), copy_val);
+        all_copies[instr->get_dst()->get_reg()] = copy_val;
+      }
+    }
+  }
+
+  std::queue<unsigned int> worklist;
+  std::map<unsigned int, bool> worklistMap;
+  for (auto &block : cfg) {
+    if (block.is_empty())
+      continue;
+    block.copy_map = all_copies;
+    worklist.push(block.get_id());
+    worklistMap[block.get_id()] = true;
+  }
+
+  while (!worklist.empty()) {
+    auto &block = getNodeFromID(cfg, worklist.front());
+    worklistMap[worklist.front()] = false;
+    worklist.pop();
+    auto old_copy_map = block.copy_map;
+    merge_copies(cfg, block);
+    transfer_copies(block);
+    auto new_copy_map = block.copy_map;
+    if (old_copy_map != new_copy_map) {
+      for (auto succID : block.get_succ()) {
+        if (succID == cfg.size() - 1)
+          continue;
+        if (worklistMap[succID])
+          continue;
+        worklist.push(succID);
+        worklistMap[succID] = true;
+      }
+    }
+  }
+}
+
+} // namespace codegen
+} // namespace scarlet

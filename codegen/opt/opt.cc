@@ -22,7 +22,12 @@ void Codegen::optimize(scarcmd &cmd) {
         if (enable_unreachable_code_elimination or enable_all) {
           ran_unreachable_code_elimination = unreachable_code_elimination(cfg);
         }
-        if (!ran_constant_folding and !ran_unreachable_code_elimination)
+        bool ran_copy_propagation{};
+        if (enable_copy_propagation or enable_all) {
+          ran_copy_propagation = copy_propagation(cfg);
+        }
+        if (!ran_constant_folding and !ran_unreachable_code_elimination and
+            !ran_copy_propagation)
           break;
       }
       gen_funcBody_from_cfg(cfg, funcBody);
