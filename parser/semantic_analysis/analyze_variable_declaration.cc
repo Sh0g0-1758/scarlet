@@ -71,8 +71,8 @@ void parser::analyze_global_variable_declaration(
       }
     }
 
-    if (!ast::validate_type_specifier(varInfo.typeDef[0],
-                                      varInfo.derivedTypeMap[0])) {
+    if (!ast::validate_type_specifier(
+            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "")) {
       success = false;
       error_messages.emplace_back("Variable " + var_name +
                                   " cannot be declared as incomplete type");
@@ -138,8 +138,8 @@ void parser::analyze_global_variable_declaration(
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
 
-    if (!ast::validate_type_specifier(varInfo.typeDef[0],
-                                      varInfo.derivedTypeMap[0])) {
+    if (!ast::validate_type_specifier(
+            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "")) {
       success = false;
       error_messages.emplace_back("Variable " + var_name +
                                   " cannot be declared as incomplete type");
@@ -213,7 +213,8 @@ void parser::analyze_local_variable_declaration(
       }
 
       if (!ast::validate_type_specifier(varInfo.typeDef[0],
-                                        varInfo.derivedTypeMap[0])) {
+                                        varInfo.derivedTypeMap[0], symbol_table,
+                                        "")) {
         success = false;
         error_messages.emplace_back("Variable " + var_name +
                                     " cannot be declared as incomplete type");
@@ -239,8 +240,8 @@ void parser::analyze_local_variable_declaration(
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
 
-    if (!ast::validate_type_specifier(varInfo.typeDef[0],
-                                      varInfo.derivedTypeMap[0])) {
+    if (!ast::validate_type_specifier(
+            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "")) {
       success = false;
       error_messages.emplace_back("Variable " + var_name +
                                   " cannot be declared as incomplete type");
@@ -258,6 +259,9 @@ void parser::analyze_local_variable_declaration(
     varInfo.name = temp_name;
     varInfo.link = symbolTable::linkage::NONE;
     varInfo.type = symbolTable::symbolType::VARIABLE;
+    constant::Constant structId;
+    structId.set_string(varDecl->get_struct_identifier()->get_value());
+    varInfo.struct_identifier = structId;
     std::vector<long> derivedType;
     ast::unroll_derived_type(varDecl->get_declarator(), derivedType);
     if (!derivedType.empty()) {
@@ -268,11 +272,11 @@ void parser::analyze_local_variable_declaration(
       varInfo.typeDef.push_back(varDecl->get_base_type());
     }
 
-    if (!ast::is_valid_declarator(varInfo.typeDef[0],
-                                  varInfo.derivedTypeMap[0])) {
+    if (!ast::is_valid_declarator(
+            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table,
+            varDecl->get_struct_identifier()->get_value())) {
       success = false;
-      error_messages.emplace_back("Variable " + var_name +
-                                  " cannot be declared as void");
+      error_messages.emplace_back("Variable " + var_name + " cannot be declared with incomplete or void type");
     }
     symbol_table[{var_name, indx}] = varInfo;
     globalSymbolTable[temp_name] = varInfo;
@@ -326,7 +330,7 @@ void parser::analyze_local_variable_declaration(
           varDecl->set_initializer(std::move(init));
           varDecl->set_exp(nullptr);
           analyze_array_initializer(varDecl->get_initializer(), symbol_table,
-                                    indx, arrDim, baseElemType,
+                                    indx, arrDim, baseElemType, varDecl->get_struct_identifier()->get_value(),
                                     derivedElemType);
         } else {
           success = false;
@@ -341,9 +345,11 @@ void parser::analyze_local_variable_declaration(
 
       auto expType = varDecl->get_exp()->get_type();
       auto expDerivedType = varDecl->get_exp()->get_derived_type();
+      auto expStructName =
+          varDecl->get_exp()->get_struct_identifier()->get_value();
       auto [castType, castDerivedType] =
-          ast::getAssignType(varInfo.typeDef[0], varInfo.derivedTypeMap[0],
-                             expType, expDerivedType, varDecl->get_exp());
+          ast::getAssignType(varInfo.typeDef[0], varInfo.derivedTypeMap[0], varInfo.struct_identifier.get_string(),
+                             expType, expDerivedType,expStructName,varDecl->get_exp());
 
       if (castType == ast::ElemType::NONE) {
         success = false;
@@ -363,7 +369,7 @@ void parser::analyze_local_variable_declaration(
         std::vector<long> derivedElemType{};
         get_arrInfo(arrDim, baseElemType, derivedElemType, varInfo);
         analyze_array_initializer(varDecl->get_initializer(), symbol_table,
-                                  indx, arrDim, baseElemType, derivedElemType);
+                                  indx, arrDim, baseElemType, varDecl->get_struct_identifier()->get_value() ,derivedElemType);
       } else {
         success = false;
         error_messages.emplace_back("Invalid use of initializer list, it can "
@@ -621,7 +627,7 @@ void parser::analyze_array_initializer(
     std::shared_ptr<ast::initializer> init,
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
         &symbol_table,
-    int indx, std::vector<long> arrDim, ast::ElemType baseElemType,
+    int indx, std::vector<long> arrDim, ast::ElemType baseElemType, std::string struct_identifier,
     std::vector<long> derivedElemType) {
   if (init == nullptr)
     return;
@@ -669,12 +675,12 @@ void parser::analyze_array_initializer(
     long i = 0;
     for (; i < (long)init->initializer_list.size(); i++) {
       analyze_array_initializer(init->initializer_list[i], symbol_table, indx,
-                                arrDim, baseElemType, derivedElemType);
+                                arrDim, baseElemType,struct_identifier, derivedElemType);
     }
     for (; i < currDim; i++) {
       MAKE_SHARED(ast::initializer, child_init);
       analyze_array_initializer(child_init, symbol_table, indx, arrDim,
-                                baseElemType, derivedElemType);
+                                baseElemType,struct_identifier, derivedElemType);
       init->initializer_list.push_back(child_init);
     }
   } else if (!(init->exp_list.empty())) {
@@ -695,8 +701,10 @@ void parser::analyze_array_initializer(
       decay_arr_to_pointer(nullptr, child_exp);
       auto expType = child_exp->get_type();
       auto expDerivedType = child_exp->get_derived_type();
+      auto expStructName =
+          child_exp->get_struct_identifier()->get_value();
       auto [castType, castDerivedType] = ast::getAssignType(
-          baseElemType, derivedElemType, expType, expDerivedType, child_exp);
+          baseElemType, derivedElemType, struct_identifier,expType, expDerivedType,expStructName,child_exp);
       if (castType == ast::ElemType::NONE) {
         success = false;
         error_messages.emplace_back("Invalid type in initializer list");
@@ -730,7 +738,7 @@ void parser::analyze_array_initializer(
     for (long i = 0; i < currDim; i++) {
       MAKE_SHARED(ast::initializer, child_init);
       analyze_array_initializer(child_init, symbol_table, indx, arrDim,
-                                baseElemType, derivedElemType);
+                                baseElemType, struct_identifier,derivedElemType);
       init->initializer_list.push_back(child_init);
     }
   } else if (arrDim.size() == 1) {

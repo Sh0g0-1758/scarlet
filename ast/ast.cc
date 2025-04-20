@@ -176,7 +176,13 @@ bool is_pointer_to_complete_type(ast::ElemType type,
 // This will check for void array and if not found either check nested or return
 // based on size of the remaining type specifiers
 bool validate_type_specifier(ast::ElemType type,
-                             std::vector<long> derivedType) {
+                             std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier) {
+  std::string temp_name = "struct." + struct_identifier;
+  if(type == ast::ElemType::STRUCT or ( type == ast::ElemType::DERIVED and derivedType.size() > 0 and derivedType[derivedType.size()-1] == (long)ast::ElemType::STRUCT)){
+    if(symbol_table.find({temp_name,0}) == symbol_table.end() or symbol_table[{temp_name,0}].def == symbolTable::defType::FALSE){
+      return false;
+    }
+  }    
   if (type == ast::ElemType::DERIVED and derivedType[0] > 0) {
     if (derivedType[1] == (long)ast::ElemType::VOID) {
       return false;
@@ -184,7 +190,7 @@ bool validate_type_specifier(ast::ElemType type,
       return true;
     } else {
       derivedType.erase(derivedType.begin());
-      return validate_type_specifier(ast::ElemType::DERIVED, derivedType);
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier);
     }
 
   } else if (type == ast::ElemType::DERIVED and
@@ -193,7 +199,7 @@ bool validate_type_specifier(ast::ElemType type,
       return true;
     } else {
       derivedType.erase(derivedType.begin());
-      return validate_type_specifier(ast::ElemType::DERIVED, derivedType);
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier);
     }
   } else if (type == ast::ElemType::VOID) {
     return false;
@@ -201,10 +207,10 @@ bool validate_type_specifier(ast::ElemType type,
   return true;
 }
 
-bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType) {
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier) {
   if (type == ast::ElemType::VOID or
-      (type == ast::ElemType::DERIVED and
-       !ast::validate_type_specifier(type, derivedType)))
+      ((type == ast::ElemType::DERIVED or type == ast::ElemType::STRUCT) and
+       !ast::validate_type_specifier(type, derivedType,symbol_table,struct_identifier)))
     return false;
   return true;
 }
@@ -336,11 +342,12 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
 }
 
 std::pair<ElemType, std::vector<long>>
-getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
-              std::vector<long> srcDerived,
+getAssignType(ElemType target, std::vector<long> targetDerived,std::string targetStructIdentifier, ElemType src,
+              std::vector<long> srcDerived, std::string srcStructIdentifier,
               std::shared_ptr<AST_exp_Node> srcExp) {
   if (target == ElemType::DERIVED or src == ElemType::DERIVED) {
-    if (targetDerived == srcDerived) {
+    if (targetDerived == srcDerived and 
+        targetStructIdentifier == srcStructIdentifier) {
       return {target, targetDerived};
     } else if (is_const_zero(srcExp->get_factor_node())) {
       return {target, targetDerived};
@@ -355,6 +362,11 @@ getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
   } else {
     if (src == ElemType::VOID) {
       return {ElemType::NONE, {}};
+    }
+    if(target == ElemType::STRUCT and src == ElemType::STRUCT){
+      if(targetStructIdentifier != srcStructIdentifier){
+        return {ElemType::NONE, {}};
+      }
     }
     return {target, targetDerived};
   }

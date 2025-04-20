@@ -66,6 +66,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       if (factor->get_cast_type() == ast::ElemType::STRUCT) {
         if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
           EXPECT_IDENTIFIER();
+          factor->set_struct_identifier(identifier);
         } else {
           success = false;
           error_messages.emplace_back("Expected a struct name");

@@ -7,8 +7,10 @@
 #include <token/token.hh>
 #include <tools/constant/constant.hh>
 #include <tools/macros/macros.hh>
+#include <tools/symbolTable/symbolTable.hh>
 #include <unary_operations/unop.hh>
 #include <vector>
+#include "elemType.hh"
 
 // clang-format off
 /*
@@ -122,20 +124,7 @@ namespace ast {
 enum class SpecifierType { NONE, STATIC, EXTERN };
 // Assignment to these values help us store the derived type as a flat vector in
 // the global symbol table
-enum class ElemType {
-  NONE = 0,
-  DERIVED = -1,
-  POINTER = -2,
-  INT = -3,
-  LONG = -4,
-  ULONG = -5,
-  UINT = -6,
-  DOUBLE = -7,
-  CHAR = -8,
-  UCHAR = -9,
-  VOID = -10,
-  STRUCT = -11,
-};
+
 
 class AST_exp_Node;
 class AST_identifier_Node;
@@ -893,8 +882,8 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
               std::vector<long> &rightDerivedType,
               std::shared_ptr<AST_exp_Node> exp);
 std::pair<ElemType, std::vector<long>>
-getAssignType(ElemType target, std::vector<long> targetDerived, ElemType src,
-              std::vector<long> srcDerived,
+getAssignType(ElemType target, std::vector<long> targetDerived,std::string targetStructIdentifier, ElemType src,
+              std::vector<long> srcDerived, std::string srcStructIdentifier,
               std::shared_ptr<AST_exp_Node> srcExp);
 constant::Constant castConstToElemType(constant::Constant c, ElemType type);
 bool isComplexType(ElemType type);
@@ -912,8 +901,9 @@ bool is_void_ptr(ast::ElemType type, std::vector<long> derivedType);
 bool is_ptr_type(ast::ElemType type, std::vector<long> derivedType);
 bool is_pointer_to_complete_type(ast::ElemType type,
                                  std::vector<long> derivedType);
-bool validate_type_specifier(ast::ElemType type, std::vector<long> derivedType);
-bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType);
+bool validate_type_specifier(ast::ElemType type,
+                             std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier);
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier);
 void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
                          std::vector<long> &derivedType);
 bool exp_is_string(std::shared_ptr<AST_exp_Node> exp);

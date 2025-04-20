@@ -27,7 +27,8 @@ void parser::analyze_global_function_declaration(
       auto paramDerivedType =
           globalSymbolTable[currFuncName].derivedTypeMap[i + 1];
 
-      if (!ast::validate_type_specifier(paramType, paramDerivedType)) {
+      if (!ast::validate_type_specifier(paramType, paramDerivedType,symbol_table,
+                                        param->get_struct_identifier()->get_value())) {
         success = false;
         error_messages.emplace_back("Variable " +
                                     param->identifier->get_value() +
@@ -57,6 +58,8 @@ void parser::analyze_function_declaration(
         &symbol_table,
     std::string &var_name, int indx) {
   // Check that the function parameters always have different names.
+  
+    
   std::set<std::string> param_names;
   for (auto param : funcDecl->get_params()) {
     std::string paramName = param->identifier->get_value();
@@ -83,6 +86,7 @@ void parser::analyze_function_declaration(
   // create the function type (return_type ++ arg_types)
   std::vector<ast::ElemType> funcType;
   std::map<int, std::vector<long>> funcDerivedTypeMap;
+  std::vector<std::string> funcStructNames;
   for (int i = 0; i <= (int)funcDecl->get_params().size(); i++) {
     if (i == 0) {
       std::vector<long> derivedType;
@@ -99,6 +103,15 @@ void parser::analyze_function_declaration(
       } else {
         funcType.push_back(funcDecl->get_return_type());
       }
+      if(funcDecl->get_return_type() == ast::ElemType::STRUCT){
+        if(!ast::validate_type_specifier(funcDecl->get_return_type(), derivedType,symbol_table,funcDecl->get_struct_identifier()->get_value())){
+          success = false;
+          error_messages.emplace_back("Function " +
+                                      var_name +
+                                      " cannot return incomplete type");
+        }
+      }
+      funcStructNames.push_back(funcDecl->get_struct_identifier()->get_value());
     } else {
       std::vector<long> derivedType;
       auto param = funcDecl->get_params()[i - 1];
@@ -106,7 +119,7 @@ void parser::analyze_function_declaration(
       if (!derivedType.empty()) {
         derivedType.push_back((long)param->base_type);
         if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
-                                          derivedType)) {
+                                          derivedType,symbol_table,param->get_struct_identifier()->get_value())) {
           success = false;
           error_messages.emplace_back("Variable " +
                                       param->identifier->get_value() +
@@ -128,6 +141,7 @@ void parser::analyze_function_declaration(
                                       " cannot take void argument");
         }
       }
+      funcStructNames.push_back(param->get_struct_identifier()->get_value());
     }
   }
 
@@ -186,6 +200,7 @@ void parser::analyze_function_declaration(
     funcInfo.type = symbolTable::symbolType::FUNCTION;
     funcInfo.typeDef = funcType;
     funcInfo.derivedTypeMap = funcDerivedTypeMap;
+    funcInfo.struct_identifier_vec = funcStructNames;
     if (funcDecl->get_specifier() == ast::SpecifierType::STATIC) {
       funcInfo.link = symbolTable::linkage::INTERNAL;
     }

@@ -247,6 +247,9 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     auto gstDerivedTypeDef =
         globalSymbolTable[func_call->get_identifier_node()->get_value()]
             .derivedTypeMap;
+    auto gstStructName =
+        globalSymbolTable[func_call->get_identifier_node()->get_value()]
+            .struct_identifier_vec;
     if ((int)func_call->get_arguments().size() != (int)gstTypeDef.size() - 1) {
       success = false;
       error_messages.emplace_back(
@@ -259,10 +262,11 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         auto funcArgType = func_call->get_arguments()[i]->get_type();
         auto funcArgDerivedType =
             func_call->get_arguments()[i]->get_derived_type();
-
+        auto funcArgStructName =
+            func_call->get_arguments()[i]->get_struct_identifier()->get_value();
         auto [castType, castDerivedType] = ast::getAssignType(
-            gstTypeDef[i + 1], gstDerivedTypeDef[i + 1], funcArgType,
-            funcArgDerivedType, func_call->get_arguments()[i]);
+            gstTypeDef[i + 1], gstDerivedTypeDef[i + 1],gstStructName[i+1],funcArgType,
+            funcArgDerivedType, funcArgStructName,func_call->get_arguments()[i]);
         if (castType == ast::ElemType::NONE) {
           success = false;
           error_messages.emplace_back(
@@ -347,7 +351,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         // exp has been analyzed already
         if (!ast::validate_type_specifier(
                 factor->get_child()->get_type(),
-                factor->get_child()->get_derived_type())) {
+                factor->get_child()->get_derived_type(),symbol_table,factor->get_struct_identifier()->get_value())) {
           success = false;
           error_messages.emplace_back(
               "sizeof operator not allowed on incomplete type");
@@ -360,7 +364,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         if (!derivedType.empty()) {
           derivedType.push_back((long)factor->get_cast_type());
           if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
-                                            derivedType)) {
+                                            derivedType,symbol_table,factor->get_struct_identifier()->get_value())) {
             success = false;
             error_messages.emplace_back(
                 "sizeof operator not allowed on incomplete type");
@@ -560,7 +564,8 @@ void parser::assign_type_to_factor(
       derivedType.push_back((long)factor->get_cast_type());
       factor->set_derived_type(derivedType);
       factor->set_type(ast::ElemType::DERIVED);
-      if (!ast::validate_type_specifier(ast::ElemType::DERIVED, derivedType)) {
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo> tempSymbolTable;
+      if (!ast::validate_type_specifier(ast::ElemType::DERIVED, derivedType, tempSymbolTable, "")) {
         success = false;
         error_messages.emplace_back(
             "Casting operator not allowed on incomplete type");
@@ -590,6 +595,7 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
   if (exp->get_binop_node() == nullptr) {
     exp->set_type(exp->get_factor_node()->get_type());
     exp->set_derived_type(exp->get_factor_node()->get_derived_type());
+    exp->set_struct_identifier(exp->get_factor_node()->get_struct_identifier());
   } else {
     binop::BINOP binop = exp->get_binop_node()->get_op();
     decay_arr_to_pointer(nullptr, exp->get_left());
@@ -613,16 +619,20 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
     } else if (binop == binop::BINOP::ASSIGN) {
       auto leftType = exp->get_factor_node()->get_type();
       auto leftDerivedType = exp->get_factor_node()->get_derived_type();
+      auto leftStructName =
+          exp->get_factor_node()->get_struct_identifier()->get_value();
       auto rightType = exp->get_right()->get_type();
       auto rightDerivedType = exp->get_right()->get_derived_type();
+      auto rightStructName =
+          exp->get_right()->get_struct_identifier()->get_value();
       if (leftType == ast::ElemType::DERIVED and leftDerivedType[0] > 0) {
         success = false;
         error_messages.emplace_back(
             "Assignment operator not allowed on array type");
       } else {
         auto [expType, expDerivedType] =
-            ast::getAssignType(leftType, leftDerivedType, rightType,
-                               rightDerivedType, exp->get_right());
+            ast::getAssignType(leftType, leftDerivedType,leftStructName, rightType,
+                               rightDerivedType,rightStructName, exp->get_right());
         if (expType == ast::ElemType::NONE or expType == ast::ElemType::VOID) {
           success = false;
           error_messages.emplace_back("Incompatible types in expression");

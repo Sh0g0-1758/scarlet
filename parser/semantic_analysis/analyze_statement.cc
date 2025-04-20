@@ -22,6 +22,8 @@ void parser::analyze_statement(
     decay_arr_to_pointer(nullptr, statement->get_exps());
     auto funcType = globalSymbolTable[currFuncName].typeDef[0];
     auto funcDerivedType = globalSymbolTable[currFuncName].derivedTypeMap[0];
+    auto funcStructName =
+        globalSymbolTable[currFuncName].struct_identifier_vec[0];
     if (funcType == ast::ElemType::VOID) {
       if (statement->get_exps() == nullptr)
         return;
@@ -40,9 +42,11 @@ void parser::analyze_statement(
       }
       auto expType = statement->get_exps()->get_type();
       auto expDerivedType = statement->get_exps()->get_derived_type();
+      auto expStructName =
+          statement->get_exps()->get_struct_identifier()->get_value();
       auto [castType, castDerivedType] =
-          ast::getAssignType(funcType, funcDerivedType, expType, expDerivedType,
-                             statement->get_exps());
+          ast::getAssignType(funcType, funcDerivedType,funcStructName, expType, expDerivedType,
+                             expStructName,statement->get_exps());
       if (castType == ast::ElemType::NONE) {
         success = false;
         error_messages.emplace_back("Invalid return value of function " +

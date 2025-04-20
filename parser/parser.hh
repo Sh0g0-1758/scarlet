@@ -136,12 +136,12 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
-  void analyze_array_initializer(
-      std::shared_ptr<ast::initializer> init,
-      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
-          &symbol_table,
-      int indx, std::vector<long> arrDim, ast::ElemType baseElemType,
-      std::vector<long> derivedElemType);
+ void analyze_array_initializer(
+    std::shared_ptr<ast::initializer> init,
+    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+        &symbol_table,
+    int indx, std::vector<long> arrDim, ast::ElemType baseElemType, std::string struct_identifier,
+    std::vector<long> derivedElemType);
   void init_static_array_initializer(std::shared_ptr<ast::initializer> init,
                                      std::vector<long> arrDim,
                                      ast::ElemType baseElemType,
