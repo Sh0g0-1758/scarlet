@@ -74,12 +74,6 @@ void Codegen::alias_analysis(std::vector<cfg::node> &cfg) {
         }
       } else if (instr->get_type() == scar::instruction_type::GET_ADDRESS) {
         aliased_vars[instr->get_src1()->get_reg()] = true;
-        // aliased_vars[dst->get_reg()] = true;
-        // auto dst = instr->get_dst();
-        // if (dst != nullptr and dst->get_type() == scar::val_type::VAR and
-        //     globalSymbolTable[dst->get_reg()].link !=
-        //         symbolTable::linkage::NONE) {
-        // }
       } else {
         auto src1 = instr->get_src1();
         auto src2 = instr->get_src2();
