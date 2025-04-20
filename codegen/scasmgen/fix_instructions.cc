@@ -429,8 +429,11 @@ void Codegen::fix_instructions() {
       // a register(r11) and then use it from the register
       if (NOTNULL((*it)->get_src()) and
           (*it)->get_asm_type() == scasm::AssemblyType::QUAD_WORD and
-          (*it)->get_src()->get_type() == scasm::operand_type::IMM and
-          (*it)->get_dst()->get_type() != scasm::operand_type::REG) {
+          (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
+        if ((*it)->get_dst() != nullptr and
+            (*it)->get_dst()->get_type() == scasm::operand_type::REG) {
+          continue;
+        }
         auto IMM = (*it)->get_src()->get_imm();
         if (IMM.get_type() == constant::Type::LONG and
             (IMM.get_value().l > INT32_MAX or IMM.get_value().l < INT32_MIN)) {
