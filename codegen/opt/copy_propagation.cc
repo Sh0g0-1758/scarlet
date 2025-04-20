@@ -332,6 +332,9 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
 
         // If x = y in copy map and instruction is op(x|.), replace x with y
         SET_VAL_FROM_COPY(src, set_src1);
+
+        // If x = y in copy map and instruction is op(.|x), replace x with y
+        SET_VAL_FROM_COPY(dst, set_dst);
       } else if ((*it)->get_type() == scar::instruction_type::GET_ADDRESS) {
         // NOTE: Do not tamper with the source of get address because
         // COPY(0, a)

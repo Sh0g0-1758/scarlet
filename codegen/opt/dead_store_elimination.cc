@@ -31,10 +31,9 @@ void Codegen::transfer_stores(cfg::node &block) {
       for (auto var : aliased_vars)
         if (var.second)
           block.live_vars[var.first] = true;
-      if (dst != nullptr)
-        block.live_vars.erase(dst->get_reg());
       if (src != nullptr and src->get_type() == scar::val_type::VAR)
         block.live_vars[src->get_reg()] = true;
+      block.live_vars[dst->get_reg()] = true;
     } else if (instrType == scar::instruction_type::JUMP or
                instrType == scar::instruction_type::LABEL) {
       continue;
@@ -154,10 +153,9 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
           for (auto var : aliased_vars)
             if (var.second)
               live_vars[var.first] = true;
-          if (dst != nullptr)
-            live_vars.erase(dst->get_reg());
           if (src != nullptr and src->get_type() == scar::val_type::VAR)
             live_vars[src->get_reg()] = true;
+          live_vars[dst->get_reg()] = true;
         } else if (instrType == scar::instruction_type::JUMP or
                    instrType == scar::instruction_type::LABEL) {
           continue;
