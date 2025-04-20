@@ -359,7 +359,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                                                                 ? ""
                                                                 : factor
                                                                       ->get_struct_identifier()
-                                                                      ->get_value())) {
+                                                                      ->get_value(),indx)) {
           success = false;
           error_messages.emplace_back(
               "sizeof operator not allowed on incomplete type");
@@ -376,7 +376,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                                                                         ? ""
                                                                         : factor
                                                                               ->get_struct_identifier()
-                                                                              ->get_value())) {
+                                                                              ->get_value(),indx)) {
             success = false;
             error_messages.emplace_back(
                 "sizeof operator not allowed on incomplete type");
@@ -580,7 +580,7 @@ void parser::assign_type_to_factor(
       factor->set_derived_type(derivedType);
       factor->set_type(ast::ElemType::DERIVED);
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo> tempSymbolTable;
-      if (!ast::validate_type_specifier(ast::ElemType::DERIVED, derivedType, tempSymbolTable, "")) {
+      if (!ast::validate_type_specifier(ast::ElemType::DERIVED, derivedType, tempSymbolTable, "",0)) {
         success = false;
         error_messages.emplace_back(
             "Casting operator not allowed on incomplete type");

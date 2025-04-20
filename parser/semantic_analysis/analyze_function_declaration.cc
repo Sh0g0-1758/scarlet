@@ -31,7 +31,7 @@ void parser::analyze_global_function_declaration(
                                         param->get_struct_identifier() == nullptr
                                             ? ""
                                             : param->get_struct_identifier()
-                                                  ->get_value())) {
+                                                  ->get_value(),0)) {
         success = false;
         error_messages.emplace_back("Variable " +
                                     param->identifier->get_value() +
@@ -66,6 +66,16 @@ void parser::analyze_function_declaration(
   std::set<std::string> param_names;
   for (auto param : funcDecl->get_params()) {
     std::string paramName = param->identifier->get_value();
+    if(param->get_struct_identifier() != nullptr) {
+      std::string struct_param_id = "struct." + param->get_struct_identifier()->get_value();
+      if(symbol_table.find({struct_param_id, indx}) == symbol_table.end() or (symbol_table.find({struct_param_id, indx}) != symbol_table.end() and symbol_table[{struct_param_id,indx}].def == symbolTable::defType::FALSE)) {
+        if(funcDecl->get_block()){
+        success = false;
+        error_messages.emplace_back("Param Variable " + struct_param_id + " of function " + funcDecl->get_identifier()->get_value() +
+                                    " has incomplete struct type");
+        }
+      }
+    }
     if (param_names.find(paramName) != param_names.end()) {
       success = false;
       error_messages.emplace_back("Variable " + paramName +
@@ -110,7 +120,7 @@ void parser::analyze_function_declaration(
         if(!ast::validate_type_specifier(funcDecl->get_return_type(), derivedType,symbol_table,funcDecl->get_struct_identifier() == nullptr
                                             ? ""
                                             : funcDecl->get_struct_identifier()
-                                                  ->get_value())){
+                                                  ->get_value(),indx)){
           success = false;
           error_messages.emplace_back("Function " +
                                       var_name +
@@ -134,7 +144,7 @@ void parser::analyze_function_declaration(
                                                                       ? ""
                                                                       : param
                                                                             ->get_struct_identifier()
-                                                                            ->get_value())) {
+                                                                            ->get_value(),indx)) {
           success = false;
           error_messages.emplace_back("Variable " +
                                       param->identifier->get_value() +

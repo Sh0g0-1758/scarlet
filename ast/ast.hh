@@ -902,8 +902,8 @@ bool is_ptr_type(ast::ElemType type, std::vector<long> derivedType);
 bool is_pointer_to_complete_type(ast::ElemType type,
                                  std::vector<long> derivedType);
 bool validate_type_specifier(ast::ElemType type,
-                             std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier);
-bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier);
+                             std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier,int indx);
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier,int indx);
 void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
                          std::vector<long> &derivedType);
 bool exp_is_string(std::shared_ptr<AST_exp_Node> exp);

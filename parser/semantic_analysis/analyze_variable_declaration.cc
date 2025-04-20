@@ -72,7 +72,7 @@ void parser::analyze_global_variable_declaration(
     }
 
     if (!ast::validate_type_specifier(
-            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "")) {
+            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "",0)) {
       success = false;
       error_messages.emplace_back("Variable " + var_name +
                                   " cannot be declared as incomplete type");
@@ -139,7 +139,7 @@ void parser::analyze_global_variable_declaration(
     }
 
     if (!ast::validate_type_specifier(
-            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "")) {
+            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "",0)) {
       success = false;
       error_messages.emplace_back("Variable " + var_name +
                                   " cannot be declared as incomplete type");
@@ -214,10 +214,15 @@ void parser::analyze_local_variable_declaration(
 
       if (!ast::validate_type_specifier(varInfo.typeDef[0],
                                         varInfo.derivedTypeMap[0], symbol_table,
-                                        "")) {
-        success = false;
-        error_messages.emplace_back("Variable " + var_name +
-                                    " cannot be declared as incomplete type");
+                                        "",indx)) {
+        if(varInfo.typeDef[0] != ast::ElemType::STRUCT and (varInfo.typeDef[0] != ast::ElemType::DERIVED or
+           (varInfo.derivedTypeMap[0].size() > 0 and
+           varInfo.derivedTypeMap[0][varInfo.derivedTypeMap[0].size() - 1] !=
+               (long)ast::ElemType::STRUCT))) {
+          success = false;
+          error_messages.emplace_back("Variable " + var_name +
+                                      " cannot be declared as incomplete type");
+        }
       }
       symbol_table[{var_name, indx}] = varInfo;
       globalSymbolTable[var_name] = varInfo;
@@ -241,7 +246,7 @@ void parser::analyze_local_variable_declaration(
     }
 
     if (!ast::validate_type_specifier(
-            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "")) {
+            varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table, "",indx)) {
       success = false;
       error_messages.emplace_back("Variable " + var_name +
                                   " cannot be declared as incomplete type");
@@ -278,7 +283,7 @@ void parser::analyze_local_variable_declaration(
             varInfo.typeDef[0], varInfo.derivedTypeMap[0], symbol_table,
             varDecl->get_struct_identifier() == nullptr
                 ? ""
-                : varDecl->get_struct_identifier()->get_value())) {
+                : varDecl->get_struct_identifier()->get_value(),indx)) {
       success = false;
       error_messages.emplace_back("Variable " + var_name + " cannot be declared with incomplete or void type");
     }

@@ -176,10 +176,16 @@ bool is_pointer_to_complete_type(ast::ElemType type,
 // This will check for void array and if not found either check nested or return
 // based on size of the remaining type specifiers
 bool validate_type_specifier(ast::ElemType type,
-                             std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier) {
+                             std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier,int indx) {
   std::string temp_name = "struct." + struct_identifier;
   if(type == ast::ElemType::STRUCT or ( type == ast::ElemType::DERIVED and derivedType.size() > 0 and derivedType[derivedType.size()-1] == (long)ast::ElemType::STRUCT)){
-    if(symbol_table.find({temp_name,0}) == symbol_table.end() or symbol_table[{temp_name,0}].def == symbolTable::defType::FALSE){
+    bool flag_check = false;
+    for(int ind = 0; ind <=indx; ind++){
+    if(symbol_table.find({temp_name,ind}) != symbol_table.end() and symbol_table[{temp_name,ind}].def == symbolTable::defType::TRUE){
+      flag_check = true;
+    }
+    }
+    if(flag_check == false){
       return false;
     }
   }    
@@ -190,7 +196,7 @@ bool validate_type_specifier(ast::ElemType type,
       return true;
     } else {
       derivedType.erase(derivedType.begin());
-      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier);
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier,indx);
     }
 
   } else if (type == ast::ElemType::DERIVED and
@@ -199,7 +205,7 @@ bool validate_type_specifier(ast::ElemType type,
       return true;
     } else {
       derivedType.erase(derivedType.begin());
-      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier);
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier,indx);
     }
   } else if (type == ast::ElemType::VOID) {
     return false;
@@ -207,10 +213,13 @@ bool validate_type_specifier(ast::ElemType type,
   return true;
 }
 
-bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier) {
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier,int indx) {
+  if(type == ast::ElemType::DERIVED and derivedType.size() > 0 and derivedType[derivedType.size()-1] == (long)ast::ElemType::STRUCT and derivedType[derivedType.size()-2] == (long)ast::ElemType::POINTER){
+   return true;
+  }
   if (type == ast::ElemType::VOID or
       ((type == ast::ElemType::DERIVED or type == ast::ElemType::STRUCT) and
-       !ast::validate_type_specifier(type, derivedType,symbol_table,struct_identifier)))
+       !ast::validate_type_specifier(type, derivedType,symbol_table,struct_identifier,indx)))
     return false;
   return true;
 }

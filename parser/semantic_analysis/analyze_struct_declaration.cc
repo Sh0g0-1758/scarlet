@@ -72,7 +72,7 @@ namespace parser {
             }
 
             if (!ast::validate_type_specifier(memInfo.typeDef[0],
-                                            memInfo.derivedTypeMap[0],symbol_table,"")) {
+                                            memInfo.derivedTypeMap[0],symbol_table,"",0)) {
             success = false;
             error_messages.emplace_back("Variable " + mem_name +
                                         " cannot be declared as incomplete type");
@@ -155,7 +155,7 @@ void parser::analyze_struct_declaration(
             }
 
             if (!ast::validate_type_specifier(memInfo.typeDef[0],
-                                            memInfo.derivedTypeMap[0],symbol_table,"")) {
+                                            memInfo.derivedTypeMap[0],symbol_table,"",indx)) {
             success = false;
             error_messages.emplace_back("Variable " + mem_name +
                                         " cannot be declared as incomplete type");
