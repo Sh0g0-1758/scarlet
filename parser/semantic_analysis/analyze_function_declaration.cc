@@ -28,7 +28,10 @@ void parser::analyze_global_function_declaration(
           globalSymbolTable[currFuncName].derivedTypeMap[i + 1];
 
       if (!ast::validate_type_specifier(paramType, paramDerivedType,symbol_table,
-                                        param->get_struct_identifier()->get_value())) {
+                                        param->get_struct_identifier() == nullptr
+                                            ? ""
+                                            : param->get_struct_identifier()
+                                                  ->get_value())) {
         success = false;
         error_messages.emplace_back("Variable " +
                                     param->identifier->get_value() +
@@ -104,14 +107,22 @@ void parser::analyze_function_declaration(
         funcType.push_back(funcDecl->get_return_type());
       }
       if(funcDecl->get_return_type() == ast::ElemType::STRUCT){
-        if(!ast::validate_type_specifier(funcDecl->get_return_type(), derivedType,symbol_table,funcDecl->get_struct_identifier()->get_value())){
+        if(!ast::validate_type_specifier(funcDecl->get_return_type(), derivedType,symbol_table,funcDecl->get_struct_identifier() == nullptr
+                                            ? ""
+                                            : funcDecl->get_struct_identifier()
+                                                  ->get_value())){
           success = false;
           error_messages.emplace_back("Function " +
                                       var_name +
                                       " cannot return incomplete type");
         }
       }
-      funcStructNames.push_back(funcDecl->get_struct_identifier()->get_value());
+      if(funcDecl->get_struct_identifier() == nullptr) {
+        funcStructNames.push_back("");
+      }
+      else {
+        funcStructNames.push_back(funcDecl->get_struct_identifier() == nullptr ? "" : funcDecl->get_struct_identifier()->get_value());       // why is this here?
+      }
     } else {
       std::vector<long> derivedType;
       auto param = funcDecl->get_params()[i - 1];
@@ -119,7 +130,11 @@ void parser::analyze_function_declaration(
       if (!derivedType.empty()) {
         derivedType.push_back((long)param->base_type);
         if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
-                                          derivedType,symbol_table,param->get_struct_identifier()->get_value())) {
+                                          derivedType,symbol_table,param->get_struct_identifier() == nullptr
+                                                                      ? ""
+                                                                      : param
+                                                                            ->get_struct_identifier()
+                                                                            ->get_value())) {
           success = false;
           error_messages.emplace_back("Variable " +
                                       param->identifier->get_value() +
@@ -141,7 +156,12 @@ void parser::analyze_function_declaration(
                                       " cannot take void argument");
         }
       }
-      funcStructNames.push_back(param->get_struct_identifier()->get_value());
+      if(funcDecl->get_struct_identifier() == nullptr) {
+        funcStructNames.push_back("");
+      }
+      else {
+        funcStructNames.push_back(funcDecl->get_struct_identifier() == nullptr ? "" : funcDecl->get_struct_identifier()->get_value());       // why is this here?
+      }
     }
   }
 

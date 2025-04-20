@@ -263,7 +263,11 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         auto funcArgDerivedType =
             func_call->get_arguments()[i]->get_derived_type();
         auto funcArgStructName =
-            func_call->get_arguments()[i]->get_struct_identifier()->get_value();
+            func_call->get_arguments()[i]->get_struct_identifier() == nullptr
+                ? ""
+                : func_call->get_arguments()[i]
+                      ->get_struct_identifier()
+                      ->get_value();
         auto [castType, castDerivedType] = ast::getAssignType(
             gstTypeDef[i + 1], gstDerivedTypeDef[i + 1],gstStructName[i+1],funcArgType,
             funcArgDerivedType, funcArgStructName,func_call->get_arguments()[i]);
@@ -351,7 +355,11 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         // exp has been analyzed already
         if (!ast::validate_type_specifier(
                 factor->get_child()->get_type(),
-                factor->get_child()->get_derived_type(),symbol_table,factor->get_struct_identifier()->get_value())) {
+                factor->get_child()->get_derived_type(),symbol_table,factor->get_struct_identifier() == nullptr
+                                                                ? ""
+                                                                : factor
+                                                                      ->get_struct_identifier()
+                                                                      ->get_value())) {
           success = false;
           error_messages.emplace_back(
               "sizeof operator not allowed on incomplete type");
@@ -364,7 +372,11 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
         if (!derivedType.empty()) {
           derivedType.push_back((long)factor->get_cast_type());
           if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
-                                            derivedType,symbol_table,factor->get_struct_identifier()->get_value())) {
+                                            derivedType,symbol_table,factor->get_struct_identifier() == nullptr
+                                                                        ? ""
+                                                                        : factor
+                                                                              ->get_struct_identifier()
+                                                                              ->get_value())) {
             success = false;
             error_messages.emplace_back(
                 "sizeof operator not allowed on incomplete type");
@@ -620,11 +632,15 @@ void parser::assign_type_to_exp(std::shared_ptr<ast::AST_exp_Node> exp) {
       auto leftType = exp->get_factor_node()->get_type();
       auto leftDerivedType = exp->get_factor_node()->get_derived_type();
       auto leftStructName =
-          exp->get_factor_node()->get_struct_identifier()->get_value();
+          exp->get_factor_node()->get_struct_identifier() == nullptr
+              ? ""
+              : exp->get_factor_node()->get_struct_identifier()->get_value();
       auto rightType = exp->get_right()->get_type();
       auto rightDerivedType = exp->get_right()->get_derived_type();
       auto rightStructName =
-          exp->get_right()->get_struct_identifier()->get_value();
+          exp->get_right()->get_struct_identifier() == nullptr
+              ? ""
+              : exp->get_right()->get_struct_identifier()->get_value();
       if (leftType == ast::ElemType::DERIVED and leftDerivedType[0] > 0) {
         success = false;
         error_messages.emplace_back(
