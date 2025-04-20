@@ -4,6 +4,8 @@ namespace scarlet {
 namespace codegen {
 
 void Codegen::transfer_stores(cfg::node &block) {
+  if (block.is_empty())
+    return;
   for (auto it = block.get_body().end() - 1; it >= block.get_body().begin();
        --it) {
     auto instr = *it;
@@ -89,6 +91,8 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
 
   // remove dead stores
   for (auto block = cfg.begin(); block != cfg.end(); block++) {
+    if (block->is_empty())
+      continue;
     auto live_vars = merge_stores(cfg, *block);
     for (auto it = block->get_body().end() - 1; it >= block->get_body().begin();
          --it) {
@@ -118,6 +122,9 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
           }
         }
       }
+    }
+    if (block->get_body().empty()) {
+      REMOVE_BLOCK();
     }
   }
 
