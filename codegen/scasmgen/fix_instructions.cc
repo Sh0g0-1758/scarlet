@@ -424,14 +424,14 @@ void Codegen::fix_instructions() {
      */
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
-      // If the Immediate value cannot be represented as a signed 32 bit, and
-      // the destination is not a register, then we move the immediate value to
-      // a register(r11) and then use it from the register
+      // If the Immediate value cannot be represented as a signed 32 bit, then
+      // we move the immediate value to a register(r11) and use it from the
+      // register. The only exception to this is a return instruction which can
+      // have larger immediate values as source.
       if (NOTNULL((*it)->get_src()) and
           (*it)->get_asm_type() == scasm::AssemblyType::QUAD_WORD and
           (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
-        if ((*it)->get_dst() != nullptr and
-            (*it)->get_dst()->get_type() == scasm::operand_type::REG) {
+        if ((*it)->get_type() == scasm::instruction_type::RET) {
           continue;
         }
         auto IMM = (*it)->get_src()->get_imm();
