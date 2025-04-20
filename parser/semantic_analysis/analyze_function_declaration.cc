@@ -156,11 +156,11 @@ void parser::analyze_function_declaration(
                                       " cannot take void argument");
         }
       }
-      if(funcDecl->get_struct_identifier() == nullptr) {
+      if(param->get_struct_identifier() == nullptr) {
         funcStructNames.push_back("");
       }
       else {
-        funcStructNames.push_back(funcDecl->get_struct_identifier() == nullptr ? "" : funcDecl->get_struct_identifier()->get_value());       // why is this here?
+        funcStructNames.push_back(param->get_struct_identifier() == nullptr ? "" : param->get_struct_identifier()->get_value());       // why is this here?
       }
     }
   }
