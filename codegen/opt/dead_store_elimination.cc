@@ -15,6 +15,8 @@ void Codegen::transfer_stores(cfg::node &block) {
     auto instrType = instr->get_type();
 
     if (instrType == scar::instruction_type::CALL) {
+      if (dst != nullptr)
+        block.live_vars.erase(dst->get_reg());
       auto funCall =
           std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
               instr);
@@ -30,8 +32,6 @@ void Codegen::transfer_stores(cfg::node &block) {
                instrType == scar::instruction_type::JUMP_IF_ZERO) {
       if (src != nullptr and src->get_type() == scar::val_type::VAR)
         block.live_vars[src->get_reg()] = true;
-      if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
-        block.live_vars[src2->get_reg()] = true;
     } else {
       if (dst != nullptr)
         block.live_vars.erase(dst->get_reg());
@@ -121,6 +121,8 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
         auto instrType = instr->get_type();
 
         if (instrType == scar::instruction_type::CALL) {
+          if (dst != nullptr)
+            live_vars.erase(dst->get_reg());
           auto funCall = std::static_pointer_cast<
               scar::scar_FunctionCall_Instruction_Node>(instr);
           for (auto arg : funCall->get_args()) {
@@ -135,8 +137,6 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
                    instrType == scar::instruction_type::JUMP_IF_ZERO) {
           if (src != nullptr and src->get_type() == scar::val_type::VAR)
             live_vars[src->get_reg()] = true;
-          if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
-            live_vars[src2->get_reg()] = true;
         } else {
           if (dst != nullptr)
             live_vars.erase(dst->get_reg());
