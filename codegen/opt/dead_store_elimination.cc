@@ -28,12 +28,15 @@ void Codegen::transfer_stores(cfg::node &block) {
         if (var.second)
           block.live_vars[var.first] = true;
     } else if (instrType == scar::instruction_type::STORE) {
-      for (auto var : aliased_vars)
-        if (var.second)
-          block.live_vars[var.first] = true;
       if (src != nullptr and src->get_type() == scar::val_type::VAR)
         block.live_vars[src->get_reg()] = true;
       block.live_vars[dst->get_reg()] = true;
+    } else if (instrType == scar::instruction_type::LOAD) {
+      for (auto var : aliased_vars)
+        if (var.second)
+          block.live_vars[var.first] = true;
+      block.live_vars.erase(dst->get_reg());
+      block.live_vars[src->get_reg()] = true;
     } else if (instrType == scar::instruction_type::JUMP or
                instrType == scar::instruction_type::LABEL) {
       continue;
@@ -150,12 +153,15 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
             if (var.second)
               live_vars[var.first] = true;
         } else if (instrType == scar::instruction_type::STORE) {
-          for (auto var : aliased_vars)
-            if (var.second)
-              live_vars[var.first] = true;
           if (src != nullptr and src->get_type() == scar::val_type::VAR)
             live_vars[src->get_reg()] = true;
           live_vars[dst->get_reg()] = true;
+        } else if (instrType == scar::instruction_type::LOAD) {
+          for (auto var : aliased_vars)
+            if (var.second)
+              live_vars[var.first] = true;
+          live_vars.erase(dst->get_reg());
+          live_vars[src->get_reg()] = true;
         } else if (instrType == scar::instruction_type::JUMP or
                    instrType == scar::instruction_type::LABEL) {
           continue;
