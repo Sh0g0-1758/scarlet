@@ -42,6 +42,10 @@ void Codegen::transfer_stores(cfg::node &block) {
       // copy to offset instructions contiguously
       if (src != nullptr and src->get_type() == scar::val_type::VAR)
         block.live_vars[src->get_reg()] = true;
+    } else if (instrType == scar::instruction_type::GET_ADDRESS) {
+      // Do not mark the source as alive as it does not use the
+      // value of the source, it uses its address
+      block.live_vars.erase(dst->get_reg());
     } else if (instrType == scar::instruction_type::JUMP or
                instrType == scar::instruction_type::LABEL) {
       continue;
@@ -172,6 +176,10 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
           // copy to offset instructions contiguously
           if (src != nullptr and src->get_type() == scar::val_type::VAR)
             live_vars[src->get_reg()] = true;
+        } else if (instrType == scar::instruction_type::GET_ADDRESS) {
+          // Do not mark the source as alive as it does not use the
+          // value of the source, it uses its address
+          live_vars.erase(dst->get_reg());
         } else if (instrType == scar::instruction_type::JUMP or
                    instrType == scar::instruction_type::LABEL) {
           continue;
