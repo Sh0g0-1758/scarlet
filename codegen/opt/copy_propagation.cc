@@ -246,6 +246,15 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
           }
         }
 
+        // If instruction is COPY(x,x), remove instruction
+        if (src->get_type() == scar::val_type::VAR and
+            dst->get_type() == scar::val_type::VAR and
+            src->get_reg() == dst->get_reg()) {
+          ran_copy_propagation = true;
+          it = block->get_body().erase(it);
+          continue;
+        }
+
         // if x = y in copy map and instruction is COPY(x|.), replace x with y
         SET_VAL_FROM_COPY(src, set_src1);
 
