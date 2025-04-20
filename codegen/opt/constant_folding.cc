@@ -3,7 +3,8 @@
 namespace scarlet {
 namespace codegen {
 
-#define IS_CONSTANT(operand) operand->get_type() == scar::val_type::CONSTANT
+#define IS_CONSTANT(operand)                                                   \
+  operand != nullptr and operand->get_type() == scar::val_type::CONSTANT
 
 #define CALC_BINOP(src1, src2, op)                                             \
   switch (src1.get_type()) {                                                   \
@@ -447,16 +448,6 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
             dstType != (*inst)->get_src1()->get_const_val().get_type()) {
           isChanged = true;
           (*inst)->get_src1()->get_const_val().set_type(dstType);
-        }
-      } else if (instType == scar::instruction_type::RETURN) {
-        if (IS_CONSTANT((*inst)->get_src1()) and
-            (*inst)->get_src1()->get_const_val().get_type() !=
-                constant::Type::INT) {
-          isChanged = true;
-          constant::Constant result;
-          result.set_type(constant::Type::INT);
-          fold_typecast((*inst)->get_src1()->get_const_val(), result);
-          (*inst)->get_src1()->set_const_val(result);
         }
       }
     }
