@@ -33,10 +33,10 @@ void Codegen::fix_instructions() {
   }
 
   // FIXES SPECIFIC TO X86_64
-  /* **NOTE**
-   * For this pass, use only R10 register because we use R11 for another pass
-   * and the fixes required for some intruction can require both these passes.
-   * As such the registers can coalesce
+  /**
+   * NOTE: For this pass, use only R10 register because we use R11 for another
+   * pass and the fixes required for some intruction can require both these
+   * passes. As such the registers can coalesce
    */
   for (auto &elem : scasm.get_elems()) {
     if (elem->get_type() != scasm::scasm_top_level_type::FUNCTION) {
@@ -385,10 +385,10 @@ void Codegen::fix_instructions() {
     }
 
     // Fixing up instructions in which both src and dst are Stack/Data
-    /* **NOTE**
-     * For this pass, use only R10 register because we use R11 for another pass
-     * and the fixes required for some intruction can require both these passes.
-     * As such the registers can coalesce
+    /**
+     * NOTE: For this pass, use only R10 register because we use R11 for another
+     * pass and the fixes required for some intruction can require both these
+     * passes. As such the registers can coalesce
      */
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
@@ -417,18 +417,20 @@ void Codegen::fix_instructions() {
       }
     }
 
-    /* **NOTE**
-     * For this pass, use only R11 register because we use R10 for another pass
-     * and the fixes required for some intruction can require both these passes.
-     * As such the registers can coalesce
+    /**
+     * NOTE: For this pass, use only R11 register because we use R10 for another
+     * pass and the fixes required for some intruction can require both these
+     * passes. As such the registers can coalesce
      */
     for (auto it = funcs->get_instructions().begin();
          it != funcs->get_instructions().end(); it++) {
-      // If the Immediate value cannot be represented as a signed 32 bit,
-      // then it is moved to a register(r11) and then used.
+      // If the Immediate value cannot be represented as a signed 32 bit, and
+      // the destination is not a register, then we move the immediate value to
+      // a register(r11) and then use it from the register
       if (NOTNULL((*it)->get_src()) and
           (*it)->get_asm_type() == scasm::AssemblyType::QUAD_WORD and
-          (*it)->get_src()->get_type() == scasm::operand_type::IMM) {
+          (*it)->get_src()->get_type() == scasm::operand_type::IMM and
+          (*it)->get_dst()->get_type() != scasm::operand_type::REG) {
         auto IMM = (*it)->get_src()->get_imm();
         if (IMM.get_type() == constant::Type::LONG and
             (IMM.get_value().l > INT32_MAX or IMM.get_value().l < INT32_MIN)) {
