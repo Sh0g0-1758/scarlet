@@ -72,13 +72,14 @@ std::map<std::string, bool> Codegen::merge_stores(std::vector<cfg::node> &cfg,
 bool Codegen::is_dead_store(scar::scar_Instruction_Node &instr,
                             std::map<std::string, bool> &live_vars) {
   // Don't eliminate calls and instructions with no destination and
-  // instructions that can have side effects like store
+  // instructions that can have side effects like store or copy to offset
   if (instr.get_type() == scar::instruction_type::CALL or
       instr.get_type() == scar::instruction_type::JUMP or
       instr.get_type() == scar::instruction_type::JUMP_IF_ZERO or
       instr.get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO or
       instr.get_type() == scar::instruction_type::LABEL or
-      instr.get_type() == scar::instruction_type::STORE)
+      instr.get_type() == scar::instruction_type::STORE or
+      instr.get_type() == scar::instruction_type::COPY_TO_OFFSET)
     return false;
   auto dst = instr.get_dst();
   if (dst == nullptr)
