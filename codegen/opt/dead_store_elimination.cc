@@ -21,10 +21,11 @@ void Codegen::transfer_stores(cfg::node &block) {
           std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
               instr);
       for (auto arg : funCall->get_args()) {
-        if (arg->get_type() == scar::val_type::VAR) {
+        if (arg->get_type() == scar::val_type::VAR)
           block.live_vars[arg->get_reg()] = true;
-        }
       }
+      for (auto var : aliased_vars)
+        block.live_vars[var.first] = true;
     } else if (instrType == scar::instruction_type::JUMP or
                instrType == scar::instruction_type::LABEL) {
       continue;
@@ -68,8 +69,6 @@ bool Codegen::is_dead_store(scar::scar_Instruction_Node &instr,
   auto dst = instr.get_dst();
   if (dst == nullptr)
     return false;
-  if (aliased_vars[dst->get_reg()])
-    return false;
   if (live_vars[dst->get_reg()])
     return false;
   return true;
@@ -81,6 +80,12 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
   std::queue<unsigned int> worklist;
   std::map<unsigned int, bool> worklistMap;
   initialize_worklist(cfg, cfg[0], worklist, worklistMap);
+  // clear live variables from previous iterations
+  for (auto &block : cfg)
+    block.live_vars.clear();
+  // mark all static variables as alive in the exit block
+  for (auto it : aliased_vars)
+    cfg[cfg.size() - 1].live_vars[it.first] = true;
 
   // liveness analysis
   while (!worklist.empty()) {
@@ -126,10 +131,11 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
           auto funCall = std::static_pointer_cast<
               scar::scar_FunctionCall_Instruction_Node>(instr);
           for (auto arg : funCall->get_args()) {
-            if (arg->get_type() == scar::val_type::VAR) {
+            if (arg->get_type() == scar::val_type::VAR)
               live_vars[arg->get_reg()] = true;
-            }
           }
+          for (auto var : aliased_vars)
+            live_vars[var.first] = true;
         } else if (instrType == scar::instruction_type::JUMP or
                    instrType == scar::instruction_type::LABEL) {
           continue;
