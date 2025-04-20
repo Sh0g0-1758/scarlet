@@ -128,11 +128,10 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
 void Codegen::initialize_worklist(std::vector<cfg::node> &cfg, cfg::node &block,
                                   std::queue<unsigned int> &worklist,
                                   std::map<unsigned int, bool> &worklistMap) {
+  for (auto succID : block.get_succ())
+    initialize_worklist(cfg, getNodeFromID(cfg, succID), worklist, worklistMap);
   if (block.is_empty())
     return;
-  for (auto succID : block.get_succ()) {
-    initialize_worklist(cfg, getNodeFromID(cfg, succID), worklist, worklistMap);
-  }
   worklist.push(block.get_id());
   worklistMap[block.get_id()] = true;
 }
