@@ -25,7 +25,8 @@ void Codegen::transfer_stores(cfg::node &block) {
           block.live_vars[arg->get_reg()] = true;
       }
       for (auto var : aliased_vars)
-        block.live_vars[var.first] = true;
+        if (var.second)
+          block.live_vars[var.first] = true;
     } else if (instrType == scar::instruction_type::JUMP or
                instrType == scar::instruction_type::LABEL) {
       continue;
@@ -60,6 +61,7 @@ std::map<std::string, bool> Codegen::merge_stores(std::vector<cfg::node> &cfg,
 
 bool Codegen::is_dead_store(scar::scar_Instruction_Node &instr,
                             std::map<std::string, bool> &live_vars) {
+  // Don't eliminate calls and instructions with no destination
   if (instr.get_type() == scar::instruction_type::CALL or
       instr.get_type() == scar::instruction_type::JUMP or
       instr.get_type() == scar::instruction_type::JUMP_IF_ZERO or
@@ -85,7 +87,8 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
     block.live_vars.clear();
   // mark all static variables as alive in the exit block
   for (auto it : aliased_vars)
-    cfg[cfg.size() - 1].live_vars[it.first] = true;
+    if (it.second)
+      cfg[cfg.size() - 1].live_vars[it.first] = true;
 
   // liveness analysis
   while (!worklist.empty()) {
@@ -135,7 +138,8 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
               live_vars[arg->get_reg()] = true;
           }
           for (auto var : aliased_vars)
-            live_vars[var.first] = true;
+            if (var.second)
+              live_vars[var.first] = true;
         } else if (instrType == scar::instruction_type::JUMP or
                    instrType == scar::instruction_type::LABEL) {
           continue;
