@@ -549,6 +549,8 @@ void parser::assign_type_to_factor(
         derivedType.push_back((long)factor->get_child()->get_type());
       }
       factor->set_derived_type(derivedType);
+      factor->set_struct_identifier(
+      factor->get_child()->get_struct_identifier());
     } else if (unop::is_incr_decr(unop)) {
       factor->set_type(factor->get_child()->get_type());
       factor->set_derived_type(factor->get_child()->get_derived_type());
