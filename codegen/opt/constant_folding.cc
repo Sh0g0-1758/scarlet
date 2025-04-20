@@ -448,6 +448,16 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
           isChanged = true;
           (*inst)->get_src1()->get_const_val().set_type(dstType);
         }
+      } else if (instType == scar::instruction_type::RETURN) {
+        if (IS_CONSTANT((*inst)->get_src1()) and
+            (*inst)->get_src1()->get_const_val().get_type() !=
+                constant::Type::INT) {
+          isChanged = true;
+          constant::Constant result;
+          result.set_type(constant::Type::INT);
+          fold_typecast((*inst)->get_src1()->get_const_val(), result);
+          (*inst)->get_src1()->set_const_val(result);
+        }
       }
     }
     if (block->get_body().empty()) {
