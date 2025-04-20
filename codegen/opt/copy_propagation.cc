@@ -318,6 +318,12 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
         if (dst != nullptr)
           INVALIDATE_COPY_IF_DST(copy_map);
       } else if ((*it)->get_type() == scar::instruction_type::STORE) {
+        // If x = y in copy map and instruction is op(x|.), replace x with y
+        SET_VAL_FROM_COPY(src, set_src1);
+
+        // If x = y in copy map and instruction is op(.|x), replace x with y
+        SET_VAL_FROM_COPY(dst, set_dst);
+
         // invalidate copies that contain aliased variables
         for (auto cpy = copy_map.begin(); cpy != copy_map.end();) {
           if (aliased_vars[cpy->first]) {
@@ -329,12 +335,6 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
             cpy++;
           }
         }
-
-        // If x = y in copy map and instruction is op(x|.), replace x with y
-        SET_VAL_FROM_COPY(src, set_src1);
-
-        // If x = y in copy map and instruction is op(.|x), replace x with y
-        SET_VAL_FROM_COPY(dst, set_dst);
       } else if ((*it)->get_type() == scar::instruction_type::GET_ADDRESS) {
         // NOTE: Do not tamper with the source of get address because
         // COPY(0, a)

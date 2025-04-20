@@ -117,4 +117,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19 --propagate-copies
     COMMAND echo "Running dead-store elimination optimization test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19 --eliminate-dead-stores
+    COMMAND echo "Running complete optimization pipeline test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19
 )

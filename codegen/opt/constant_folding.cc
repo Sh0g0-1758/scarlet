@@ -3,7 +3,8 @@
 namespace scarlet {
 namespace codegen {
 
-#define IS_CONSTANT(operand) operand->get_type() == scar::val_type::CONSTANT
+#define IS_CONSTANT(operand)                                                   \
+  operand != nullptr and operand->get_type() == scar::val_type::CONSTANT
 
 #define CALC_BINOP(src1, src2, op)                                             \
   switch (src1.get_type()) {                                                   \
