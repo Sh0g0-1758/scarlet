@@ -12,15 +12,9 @@ void Codegen::transfer_stores(cfg::node &block) {
     auto src = instr->get_src1();
     auto src2 = instr->get_src2();
     auto dst = instr->get_dst();
+    auto instrType = instr->get_type();
 
-    if (dst != nullptr)
-      block.live_vars.erase(dst->get_reg());
-    if (src != nullptr and src->get_type() == scar::val_type::VAR)
-      block.live_vars[src->get_reg()] = true;
-    if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
-      block.live_vars[src2->get_reg()] = true;
-
-    if (instr->get_type() == scar::instruction_type::CALL) {
+    if (instrType == scar::instruction_type::CALL) {
       auto funCall =
           std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(
               instr);
@@ -29,6 +23,22 @@ void Codegen::transfer_stores(cfg::node &block) {
           block.live_vars[arg->get_reg()] = true;
         }
       }
+    } else if (instrType == scar::instruction_type::JUMP or
+               instrType == scar::instruction_type::LABEL) {
+      continue;
+    } else if (instrType == scar::instruction_type::JUMP_IF_NOT_ZERO or
+               instrType == scar::instruction_type::JUMP_IF_ZERO) {
+      if (src != nullptr and src->get_type() == scar::val_type::VAR)
+        block.live_vars[src->get_reg()] = true;
+      if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
+        block.live_vars[src2->get_reg()] = true;
+    } else {
+      if (dst != nullptr)
+        block.live_vars.erase(dst->get_reg());
+      if (src != nullptr and src->get_type() == scar::val_type::VAR)
+        block.live_vars[src->get_reg()] = true;
+      if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
+        block.live_vars[src2->get_reg()] = true;
     }
   }
 }
@@ -49,7 +59,11 @@ std::map<std::string, bool> Codegen::merge_stores(std::vector<cfg::node> &cfg,
 
 bool Codegen::is_dead_store(scar::scar_Instruction_Node &instr,
                             std::map<std::string, bool> &live_vars) {
-  if (instr.get_type() == scar::instruction_type::CALL)
+  if (instr.get_type() == scar::instruction_type::CALL or
+      instr.get_type() == scar::instruction_type::JUMP or
+      instr.get_type() == scar::instruction_type::JUMP_IF_ZERO or
+      instr.get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO or
+      instr.get_type() == scar::instruction_type::LABEL)
     return false;
   auto dst = instr.get_dst();
   if (dst == nullptr)
@@ -104,15 +118,9 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
         auto src = instr->get_src1();
         auto src2 = instr->get_src2();
         auto dst = instr->get_dst();
+        auto instrType = instr->get_type();
 
-        if (dst != nullptr)
-          live_vars.erase(dst->get_reg());
-        if (src != nullptr and src->get_type() == scar::val_type::VAR)
-          live_vars[src->get_reg()] = true;
-        if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
-          live_vars[src2->get_reg()] = true;
-
-        if (instr->get_type() == scar::instruction_type::CALL) {
+        if (instrType == scar::instruction_type::CALL) {
           auto funCall = std::static_pointer_cast<
               scar::scar_FunctionCall_Instruction_Node>(instr);
           for (auto arg : funCall->get_args()) {
@@ -120,6 +128,22 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
               live_vars[arg->get_reg()] = true;
             }
           }
+        } else if (instrType == scar::instruction_type::JUMP or
+                   instrType == scar::instruction_type::LABEL) {
+          continue;
+        } else if (instrType == scar::instruction_type::JUMP_IF_NOT_ZERO or
+                   instrType == scar::instruction_type::JUMP_IF_ZERO) {
+          if (src != nullptr and src->get_type() == scar::val_type::VAR)
+            live_vars[src->get_reg()] = true;
+          if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
+            live_vars[src2->get_reg()] = true;
+        } else {
+          if (dst != nullptr)
+            live_vars.erase(dst->get_reg());
+          if (src != nullptr and src->get_type() == scar::val_type::VAR)
+            live_vars[src->get_reg()] = true;
+          if (src2 != nullptr and src2->get_type() == scar::val_type::VAR)
+            live_vars[src2->get_reg()] = true;
         }
       }
     }
