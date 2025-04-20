@@ -27,6 +27,14 @@ void Codegen::transfer_stores(cfg::node &block) {
       for (auto var : aliased_vars)
         if (var.second)
           block.live_vars[var.first] = true;
+    } else if (instrType == scar::instruction_type::STORE) {
+      for (auto var : aliased_vars)
+        if (var.second)
+          block.live_vars[var.first] = true;
+      if (dst != nullptr)
+        block.live_vars.erase(dst->get_reg());
+      if (src != nullptr and src->get_type() == scar::val_type::VAR)
+        block.live_vars[src->get_reg()] = true;
     } else if (instrType == scar::instruction_type::JUMP or
                instrType == scar::instruction_type::LABEL) {
       continue;
@@ -61,12 +69,14 @@ std::map<std::string, bool> Codegen::merge_stores(std::vector<cfg::node> &cfg,
 
 bool Codegen::is_dead_store(scar::scar_Instruction_Node &instr,
                             std::map<std::string, bool> &live_vars) {
-  // Don't eliminate calls and instructions with no destination
+  // Don't eliminate calls and instructions with no destination and
+  // instructions that can have side effects like store
   if (instr.get_type() == scar::instruction_type::CALL or
       instr.get_type() == scar::instruction_type::JUMP or
       instr.get_type() == scar::instruction_type::JUMP_IF_ZERO or
       instr.get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO or
-      instr.get_type() == scar::instruction_type::LABEL)
+      instr.get_type() == scar::instruction_type::LABEL or
+      instr.get_type() == scar::instruction_type::STORE)
     return false;
   auto dst = instr.get_dst();
   if (dst == nullptr)
@@ -87,7 +97,7 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
     block.live_vars.clear();
   // mark all static variables as alive in the exit block
   for (auto it : aliased_vars)
-    if (it.second)
+    if (globalSymbolTable[it.first].link != symbolTable::linkage::NONE)
       cfg[cfg.size() - 1].live_vars[it.first] = true;
 
   // liveness analysis
@@ -140,6 +150,14 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
           for (auto var : aliased_vars)
             if (var.second)
               live_vars[var.first] = true;
+        } else if (instrType == scar::instruction_type::STORE) {
+          for (auto var : aliased_vars)
+            if (var.second)
+              live_vars[var.first] = true;
+          if (dst != nullptr)
+            live_vars.erase(dst->get_reg());
+          if (src != nullptr and src->get_type() == scar::val_type::VAR)
+            live_vars[src->get_reg()] = true;
         } else if (instrType == scar::instruction_type::JUMP or
                    instrType == scar::instruction_type::LABEL) {
           continue;
