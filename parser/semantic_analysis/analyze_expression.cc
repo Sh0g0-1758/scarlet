@@ -488,6 +488,9 @@ void parser::assign_type_to_factor(
         globalSymbolTable[factor->get_identifier_node()->get_value()];
     factor->set_type(identInfo.typeDef[0]);
     factor->set_derived_type(identInfo.derivedTypeMap[0]);
+    MAKE_SHARED(ast::AST_identifier_Node, ident);
+    ident->set_identifier(identInfo.struct_identifier.get_string());
+    factor->set_struct_identifier(ident);
   } else if (factor->get_exp_node() != nullptr) {
     auto exp = factor->get_exp_node();
     factor->set_type(exp->get_type());
