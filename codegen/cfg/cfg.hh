@@ -50,6 +50,7 @@ private:
 
 public:
   std::map<std::string, copy_info> copy_map{};
+  std::map<std::string, bool> live_vars{};
   void add_succ(unsigned int block) {
     if (std::find(succ.begin(), succ.end(), block) == succ.end())
       succ.emplace_back(block);

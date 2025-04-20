@@ -154,6 +154,20 @@ private:
   void transfer_copies(cfg::node &block);
   std::map<std::string, cfg::copy_info>
   merge_copies(std::vector<cfg::node> &cfg, cfg::node &block);
+  bool dead_store_elimination(std::vector<cfg::node> &cfg);
+  void transfer_stores(cfg::node &block);
+  std::map<std::string, bool> merge_stores(std::vector<cfg::node> &cfg,
+                                           cfg::node &block);
+  bool is_dead_store(scar::scar_Instruction_Node &instr,
+                     std::map<std::string, bool> &live_vars);
+  void initialize_worklist(std::vector<cfg::node> &cfg, cfg::node &block,
+                           std::queue<unsigned int> &worklist,
+                           std::map<unsigned int, bool> &worklistMap);
+  /**
+   * NOTE: Be careful while using the aliased_vars map as although it is
+   * initialized with aliased variables only, the various optimization passes
+   * can introduce non-aliased variables into the map.
+   */
   std::map<std::string, bool> aliased_vars;
   void alias_analysis(std::vector<cfg::node> &cfg);
   cfg::node &getNodeFromID(std::vector<cfg::node> &cfg, unsigned int id) {

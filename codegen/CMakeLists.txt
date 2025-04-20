@@ -16,6 +16,7 @@ add_library(scarCodegen STATIC
     opt/constant_folding.cc
     opt/unreachable_code_elimination.cc
     opt/copy_propagation.cc
+    opt/dead_store_elimination.cc
 
     scasmgen/scasm_generation.cc
     scasmgen/binop_scasm_generation.cc

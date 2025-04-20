@@ -208,7 +208,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
     }
   }
 
-  // rewrite scar
+  // propagate copies
   for (auto block = cfg.begin(); block != cfg.end(); ++block) {
     if (block->is_empty())
       continue;
@@ -244,6 +244,15 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
             it = block->get_body().erase(it);
             continue;
           }
+        }
+
+        // If instruction is COPY(x,x), remove instruction
+        if (src->get_type() == scar::val_type::VAR and
+            dst->get_type() == scar::val_type::VAR and
+            src->get_reg() == dst->get_reg()) {
+          ran_copy_propagation = true;
+          it = block->get_body().erase(it);
+          continue;
         }
 
         // if x = y in copy map and instruction is COPY(x|.), replace x with y
@@ -323,6 +332,9 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
 
         // If x = y in copy map and instruction is op(x|.), replace x with y
         SET_VAL_FROM_COPY(src, set_src1);
+
+        // If x = y in copy map and instruction is op(.|x), replace x with y
+        SET_VAL_FROM_COPY(dst, set_dst);
       } else if ((*it)->get_type() == scar::instruction_type::GET_ADDRESS) {
         // NOTE: Do not tamper with the source of get address because
         // COPY(0, a)

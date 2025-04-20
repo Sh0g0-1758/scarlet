@@ -27,8 +27,12 @@ void Codegen::optimize(scarcmd &cmd) {
         if (enable_copy_propagation or enable_all) {
           ran_copy_propagation = copy_propagation(cfg);
         }
+        bool ran_dead_store_elimination{};
+        if (enable_dead_store_elimination or enable_all) {
+          ran_dead_store_elimination = dead_store_elimination(cfg);
+        }
         if (!ran_constant_folding and !ran_unreachable_code_elimination and
-            !ran_copy_propagation)
+            !ran_copy_propagation and !ran_dead_store_elimination)
           break;
       }
       gen_funcBody_from_cfg(cfg, funcBody);
@@ -70,12 +74,6 @@ void Codegen::alias_analysis(std::vector<cfg::node> &cfg) {
         }
       } else if (instr->get_type() == scar::instruction_type::GET_ADDRESS) {
         aliased_vars[instr->get_src1()->get_reg()] = true;
-        auto dst = instr->get_dst();
-        if (dst != nullptr and dst->get_type() == scar::val_type::VAR and
-            globalSymbolTable[dst->get_reg()].link !=
-                symbolTable::linkage::NONE) {
-          aliased_vars[dst->get_reg()] = true;
-        }
       } else {
         auto src1 = instr->get_src1();
         auto src2 = instr->get_src2();
