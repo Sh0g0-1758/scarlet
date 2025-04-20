@@ -208,7 +208,7 @@ bool Codegen::copy_propagation(std::vector<cfg::node> &cfg) {
     }
   }
 
-  // rewrite scar
+  // propagate copies
   for (auto block = cfg.begin(); block != cfg.end(); ++block) {
     if (block->is_empty())
       continue;
