@@ -135,12 +135,15 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
 void Codegen::initialize_worklist(std::vector<cfg::node> &cfg, cfg::node &block,
                                   std::queue<unsigned int> &worklist,
                                   std::map<unsigned int, bool> &worklistMap) {
-  for (auto succID : block.get_succ())
+  worklistMap[block.get_id()] = true;
+  for (auto succID : block.get_succ()) {
+    if (worklistMap[succID])
+      continue;
     initialize_worklist(cfg, getNodeFromID(cfg, succID), worklist, worklistMap);
+  }
   if (block.is_empty())
     return;
   worklist.push(block.get_id());
-  worklistMap[block.get_id()] = true;
 }
 
 } // namespace codegen
