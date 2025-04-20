@@ -37,6 +37,11 @@ void Codegen::transfer_stores(cfg::node &block) {
           block.live_vars[var.first] = true;
       block.live_vars.erase(dst->get_reg());
       block.live_vars[src->get_reg()] = true;
+    } else if (instrType == scar::instruction_type::COPY_TO_OFFSET) {
+      // Do not mark the destination as dead as there can be multiple
+      // copy to offset instructions contiguously
+      if (src != nullptr and src->get_type() == scar::val_type::VAR)
+        block.live_vars[src->get_reg()] = true;
     } else if (instrType == scar::instruction_type::JUMP or
                instrType == scar::instruction_type::LABEL) {
       continue;
@@ -78,8 +83,7 @@ bool Codegen::is_dead_store(scar::scar_Instruction_Node &instr,
       instr.get_type() == scar::instruction_type::JUMP_IF_ZERO or
       instr.get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO or
       instr.get_type() == scar::instruction_type::LABEL or
-      instr.get_type() == scar::instruction_type::STORE or
-      instr.get_type() == scar::instruction_type::COPY_TO_OFFSET)
+      instr.get_type() == scar::instruction_type::STORE)
     return false;
   auto dst = instr.get_dst();
   if (dst == nullptr)
@@ -163,6 +167,11 @@ bool Codegen::dead_store_elimination(std::vector<cfg::node> &cfg) {
               live_vars[var.first] = true;
           live_vars.erase(dst->get_reg());
           live_vars[src->get_reg()] = true;
+        } else if (instrType == scar::instruction_type::COPY_TO_OFFSET) {
+          // Do not mark the destination as dead as there can be multiple
+          // copy to offset instructions contiguously
+          if (src != nullptr and src->get_type() == scar::val_type::VAR)
+            live_vars[src->get_reg()] = true;
         } else if (instrType == scar::instruction_type::JUMP or
                    instrType == scar::instruction_type::LABEL) {
           continue;
