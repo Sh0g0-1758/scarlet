@@ -84,6 +84,7 @@ void Codegen::fix_pseudo_registers() {
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
       scasm_src->set_type(scasm::operand_type::REG);
       scasm_src->set_reg(*it);
+      scasm_inst->set_src(std::move(scasm_src));
       func->get_instructions().insert(func->get_instructions().begin(),
                                       scasm_inst);
       offset += 8;
@@ -98,6 +99,7 @@ void Codegen::fix_pseudo_registers() {
       MAKE_SHARED(scasm::scasm_operand, scasm_src);
       scasm_src->set_type(scasm::operand_type::REG);
       scasm_src->set_reg(*it);
+      scasm_inst->set_src(std::move(scasm_src));
       func->get_instructions().insert(func->get_instructions().end() - 1,
                                       scasm_inst);
     }
