@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <ast/ast.hh>
 #include <cmath>
 #include <cmd/cmd.hh>
@@ -232,6 +233,7 @@ private:
     node1->add_neighbor(node2);
     node2->add_neighbor(node1);
   }
+  void color_graph(std::vector<std::shared_ptr<regalloc::node>> &graph, int k);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,
@@ -475,6 +477,10 @@ public:
       scasm::register_type::XMM2, scasm::register_type::XMM3,
       scasm::register_type::XMM4, scasm::register_type::XMM5,
       scasm::register_type::XMM6, scasm::register_type::XMM7};
+  std::vector<scasm::register_type> callee_savedReg = {
+      scasm::register_type::AX,  scasm::register_type::BX,
+      scasm::register_type::R12, scasm::register_type::R13,
+      scasm::register_type::R14, scasm::register_type::R15};
 };
 
 } // namespace codegen

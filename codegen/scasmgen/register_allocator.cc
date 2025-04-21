@@ -18,7 +18,7 @@ void Codegen::allocate_registers() {
       continue;
     auto func = std::static_pointer_cast<scasm::scasm_function>(elem);
     /**
-     * @goal: Build an interference graph from the instructions.
+     * @goal: Build an interference graph from the scasm instructions.
      * @steps:
      *        1.1 Create a base graph with available hard registers.
      *        1.2 Add pseudoregisters to the graph.
@@ -160,9 +160,85 @@ void Codegen::allocate_registers() {
     /**
      * @goal: Color the graph using a graph coloring algorithm.
      * @steps:
-     *        3.1
-     *        3.2
+     *        3.1 prune nodes with degree less than k and put them in a stack
+     *        3.2 repeat this process until we either cannot prune or no node is
+     * left 3.3 if we cannot prune, spill the node with the lowest spill cost
+     *        3.4 assign color to the nodes
      */
+    color_graph(graph, 12);
+  }
+}
+
+void Codegen::color_graph(std::vector<std::shared_ptr<regalloc::node>> &graph,
+                          int k) {
+  std::vector<std::shared_ptr<regalloc::node>> remaining;
+  for (auto node : graph) {
+    if (node->is_pruned())
+      continue;
+    remaining.emplace_back(node);
+  }
+  if (remaining.empty())
+    return;
+
+  std::shared_ptr<regalloc::node> chosen_node = nullptr;
+  for (auto node : remaining) {
+    int unpruned_neighbors = 0;
+    for (auto neighbor : node->get_neighbors()) {
+      if (!neighbor->is_pruned()) {
+        unpruned_neighbors++;
+      }
+    }
+    if (unpruned_neighbors < k) {
+      node->prune();
+      chosen_node = node;
+      break;
+    }
+  }
+
+  if (chosen_node == nullptr) {
+    double best_spill_metric = INT_MAX;
+    for (auto node : remaining) {
+      int degree = 0;
+      for (auto neighbor : node->get_neighbors()) {
+        if (!neighbor->is_pruned()) {
+          degree++;
+        }
+      }
+      double spill_metric = (double)node->get_spill_cost() / degree;
+      if (spill_metric < best_spill_metric) {
+        best_spill_metric = spill_metric;
+        chosen_node = node;
+      }
+    }
+    chosen_node->prune();
+  }
+  color_graph(graph, k);
+  std::map<int, bool> colors;
+  for (int i = 1; i <= k; i++)
+    colors[i] = true;
+  for (auto neighbour : chosen_node->get_neighbors()) {
+    if (neighbour->get_color() != 0)
+      colors[neighbour->get_color()] = false;
+  }
+  std::vector<int> available_colors;
+  for (auto color : colors)
+    if (color.second)
+      available_colors.push_back(color.first);
+  if (!available_colors.empty()) {
+    if (chosen_node->get_reg().type == scasm::operand_type::PSEUDO) {
+      chosen_node->set_color(
+          *std::min(available_colors.begin(), available_colors.end()));
+    } else {
+      if (std::find(callee_savedReg.begin(), callee_savedReg.end(),
+                    chosen_node->get_reg().reg) != callee_savedReg.end()) {
+        chosen_node->set_color(
+            *std::max(available_colors.begin(), available_colors.end()));
+      } else {
+        chosen_node->set_color(
+            *std::min(available_colors.begin(), available_colors.end()));
+      }
+    }
+    chosen_node->unprune();
   }
 }
 

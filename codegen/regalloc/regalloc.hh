@@ -27,6 +27,8 @@ struct Reg {
  * - neighbors:  the nodes that are connected to the current node
  * - spill_cost: the cost of spilling the current node
  * - reg:        the register assigned to the current node
+ * - color:      the color assigned to the current node
+ * - pruned:     whether the current node is pruned or not
  */
 class node {
 private:
@@ -34,6 +36,7 @@ private:
   int spill_cost{};
   Reg reg{};
   int color{};
+  bool pruned{};
 
 public:
   void add_neighbor(std::shared_ptr<node> n) { neighbors.emplace_back(n); }
@@ -44,6 +47,9 @@ public:
   Reg get_reg() { return reg; }
   void set_color(int color) { this->color = color; }
   int get_color() { return color; }
+  void prune() { pruned = true; }
+  void unprune() { pruned = false; }
+  bool is_pruned() { return pruned; }
 };
 
 /**
