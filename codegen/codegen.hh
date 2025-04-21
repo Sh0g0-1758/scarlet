@@ -203,12 +203,35 @@ private:
     }
     throw std::runtime_error("Block not found");
   }
-  std::map<regalloc::reg, bool>
+  std::map<regalloc::Reg, bool>
   merge_live_regs(std::vector<regalloc::cfg_node> &cfg,
                   regalloc::cfg_node &block);
   void transfer_live_regs(regalloc::cfg_node &block);
-  std::pair<std::vector<regalloc::reg>, std::vector<regalloc::reg>>
+  std::pair<std::vector<regalloc::Reg>, std::vector<regalloc::Reg>>
   used_and_updated_regs(std::shared_ptr<scasm::scasm_instruction> instr);
+  std::shared_ptr<regalloc::node> &
+  getNodeFromReg(std::vector<std::shared_ptr<regalloc::node>> &graph,
+                 regalloc::Reg reg) {
+    for (auto &node : graph) {
+      if (node->get_reg() == reg) {
+        return node;
+      }
+    }
+    throw std::runtime_error("Node not found");
+  }
+  void add_edge(std::vector<std::shared_ptr<regalloc::node>> &graph,
+                regalloc::Reg reg1, regalloc::Reg reg2) {
+    if (reg1 == reg2)
+      return;
+    auto &node1 = getNodeFromReg(graph, reg1);
+    for (auto neighbour : node1->get_neighbors()) {
+      if (neighbour->get_reg() == reg2)
+        return;
+    }
+    auto &node2 = getNodeFromReg(graph, reg2);
+    node1->add_neighbor(node2);
+    node2->add_neighbor(node1);
+  }
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

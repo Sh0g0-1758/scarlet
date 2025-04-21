@@ -5,43 +5,45 @@
 namespace scarlet {
 namespace regalloc {
 
+struct Reg {
+  scasm::operand_type type{};
+  scasm::register_type reg{};
+  std::string pseudoreg{};
+  bool operator==(const Reg &other) const {
+    if (type != other.type)
+      return false;
+    if (type == scasm::operand_type::REG)
+      return reg == other.reg;
+    if (type == scasm::operand_type::PSEUDO)
+      return pseudoreg == other.pseudoreg;
+    return false;
+  }
+  bool operator!=(const Reg &other) const { return !(*this == other); }
+};
+
 /**
  * @info:
  * The node class represents a node in the interference graph
  * - neighbors:  the nodes that are connected to the current node
  * - spill_cost: the cost of spilling the current node
- * - type:       the type of the current node
- * - reg:        the register assigned to the current node if type is REG
- * - pseudoreg:  the pseudoReg assigned to the current node if type is PSEUDO
+ * - reg:        the register assigned to the current node
  */
 class node {
 private:
   std::vector<std::shared_ptr<node>> neighbors{};
-  double spill_cost{};
-  scasm::operand_type type{};
-  scasm::register_type reg{};
-  std::string pseudoreg{};
+  int spill_cost{};
+  Reg reg{};
   int color{};
 
 public:
   void add_neighbor(std::shared_ptr<node> n) { neighbors.emplace_back(n); }
   std::vector<std::shared_ptr<node>> get_neighbors() { return neighbors; }
-  void set_spill_cost(double cost) { spill_cost = cost; }
-  double get_spill_cost() { return spill_cost; }
-  void set_type(scasm::operand_type type) { this->type = type; }
-  scasm::operand_type get_type() { return type; }
-  void set_reg(scasm::register_type reg) { this->reg = reg; }
-  scasm::register_type get_reg() { return reg; }
-  void set_pseudoreg(std::string pseudoreg) { this->pseudoreg = pseudoreg; }
-  std::string get_pseudoreg() { return pseudoreg; }
+  void set_spill_cost(int cost) { spill_cost = cost; }
+  int get_spill_cost() { return spill_cost; }
+  void set_reg(Reg reg) { this->reg = reg; }
+  Reg get_reg() { return reg; }
   void set_color(int color) { this->color = color; }
   int get_color() { return color; }
-};
-
-struct reg {
-  scasm::operand_type type{};
-  scasm::register_type reg{};
-  std::string pseudoreg{};
 };
 
 /**
@@ -60,7 +62,7 @@ private:
   bool empty = true;
 
 public:
-  std::map<reg, bool> live_regs;
+  std::map<Reg, bool> live_regs;
   void add_succ(unsigned int block) {
     if (std::find(succ.begin(), succ.end(), block) == succ.end())
       succ.emplace_back(block);

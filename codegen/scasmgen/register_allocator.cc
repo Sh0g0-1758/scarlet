@@ -34,10 +34,13 @@ void Codegen::allocate_registers() {
         scasm::register_type::R8,  scasm::register_type::R9,
         scasm::register_type::R12, scasm::register_type::R13,
         scasm::register_type::R14, scasm::register_type::R15};
-    for (auto reg : base_registers) {
+    for (auto base_reg : base_registers) {
       MAKE_SHARED(regalloc::node, node);
+      regalloc::Reg reg;
+      reg.type = scasm::operand_type::REG;
+      reg.reg = base_reg;
       node->set_reg(reg);
-      node->set_type(scasm::operand_type::REG);
+      node->set_spill_cost(INT_MAX);
       graph.emplace_back(node);
     }
     for (auto node : graph) {
@@ -47,6 +50,7 @@ void Codegen::allocate_registers() {
         node->add_neighbor(other);
       }
     }
+
     std::map<std::string, bool> pseudoRegInGraph;
     for (auto &inst : func->get_instructions()) {
       auto src = inst->get_src();
@@ -56,8 +60,10 @@ void Codegen::allocate_registers() {
         if (pseudoRegInGraph[pseudoReg])
           continue;
         MAKE_SHARED(regalloc::node, node);
-        node->set_pseudoreg(pseudoReg);
-        node->set_type(scasm::operand_type::PSEUDO);
+        regalloc::Reg reg;
+        reg.type = scasm::operand_type::PSEUDO;
+        reg.pseudoreg = pseudoReg;
+        node->set_reg(reg);
         graph.emplace_back(node);
         pseudoRegInGraph[pseudoReg] = true;
       }
@@ -66,8 +72,10 @@ void Codegen::allocate_registers() {
         if (pseudoRegInGraph[pseudoReg])
           continue;
         MAKE_SHARED(regalloc::node, node);
-        node->set_pseudoreg(pseudoReg);
-        node->set_type(scasm::operand_type::PSEUDO);
+        regalloc::Reg reg;
+        reg.type = scasm::operand_type::PSEUDO;
+        reg.pseudoreg = pseudoReg;
+        node->set_reg(reg);
         graph.emplace_back(node);
         pseudoRegInGraph[pseudoReg] = true;
       }
@@ -75,15 +83,99 @@ void Codegen::allocate_registers() {
 
     std::vector<regalloc::cfg_node> cfg;
     gen_cfg_from_funcBody(cfg, func->get_instructions());
+    liveness_analysis(cfg);
+
+    for (auto &block : cfg) {
+      if (block.is_empty())
+        continue;
+      auto live_regs = merge_live_regs(cfg, block);
+      for (auto it = block.get_body().end() - 1; it >= block.get_body().begin();
+           --it) {
+        auto [used, updated] = used_and_updated_regs(*it);
+
+        // If a register was updated while another register is still alive,
+        // add an edge between the two registers. However, if instruction is a
+        // mov instruction and the live register is the source of the mov,
+        // we can ignore the edge as the two registers do not interfere.
+        for (auto lreg : live_regs) {
+          if (!lreg.second)
+            continue;
+          auto live_reg = lreg.first;
+
+          // (instr is Mov) and (live_reg == instr.src)
+          if ((*it)->get_type() == scasm::instruction_type::MOV) {
+            auto src = (*it)->get_src();
+            if (src->get_type() == scasm::operand_type::REG) {
+              if (live_reg.type == scasm::operand_type::REG and
+                  live_reg.reg == src->get_reg())
+                continue;
+            }
+            if (src->get_type() == scasm::operand_type::PSEUDO) {
+              if (live_reg.type == scasm::operand_type::PSEUDO and
+                  live_reg.pseudoreg == src->get_identifier())
+                continue;
+            }
+          }
+
+          for (auto updated_reg : updated) {
+            add_edge(graph, live_reg, updated_reg);
+          }
+        }
+        for (auto reg : updated) {
+          live_regs.erase(reg);
+        }
+        for (auto reg : used) {
+          live_regs[reg] = true;
+        }
+      }
+    }
+
+    /**
+     * @goal: Add spill costs to the nodes in the graph.
+     * @steps:
+     *        2.1 Naively assign spill costs according to the number of times
+     *            a pseudoregister is used.
+     *        2.2 The hard registers are assigned a spill cost of infinity
+     */
+
+    std::map<std::string, int> pseudoRegSpillCost;
+    for (auto &inst : func->get_instructions()) {
+      auto src = inst->get_src();
+      auto dst = inst->get_dst();
+      if (src->get_type() == scasm::operand_type::PSEUDO) {
+        std::string pseudoReg = src->get_identifier();
+        pseudoRegSpillCost[pseudoReg]++;
+      }
+      if (dst->get_type() == scasm::operand_type::PSEUDO) {
+        std::string pseudoReg = dst->get_identifier();
+        pseudoRegSpillCost[pseudoReg]++;
+      }
+    }
+    for (auto node : graph) {
+      if (node->get_reg().type == scasm::operand_type::PSEUDO) {
+        node->set_spill_cost(pseudoRegSpillCost[node->get_reg().pseudoreg]);
+      }
+    }
+
+    /**
+     * @goal: Color the graph using a graph coloring algorithm.
+     * @steps:
+     *        3.1
+     *        3.2
+     */
   }
 }
+
+/************************************************************************
+ ********** LIVENESS ANALYIS AND CONTROL FLOW GRAPH FOR SCASM ***********
+ ************************************************************************/
 
 void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
   std::queue<unsigned int> worklist;
   std::map<unsigned int, bool> worklistMap;
   initialize_worklist(cfg, cfg[0], worklist, worklistMap);
 
-  regalloc::reg reg;
+  regalloc::Reg reg;
   reg.type = scasm::operand_type::REG;
   reg.reg = scasm::register_type::AX;
   cfg[cfg.size() - 1].live_regs[reg] = true;
@@ -111,12 +203,12 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
 
 #define CHECK_USED(operand)                                                    \
   if (operand->get_type() == scasm::operand_type::REG) {                       \
-    regalloc::reg reg;                                                         \
+    regalloc::Reg reg;                                                         \
     reg.type = scasm::operand_type::REG;                                       \
     reg.reg = operand->get_reg();                                              \
     used.push_back(reg);                                                       \
   } else if (operand->get_type() == scasm::operand_type::PSEUDO) {             \
-    regalloc::reg reg;                                                         \
+    regalloc::Reg reg;                                                         \
     reg.type = scasm::operand_type::PSEUDO;                                    \
     reg.pseudoreg = operand->get_identifier();                                 \
     used.push_back(reg);                                                       \
@@ -124,26 +216,26 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
 
 #define CHECK_UPDATED(operand)                                                 \
   if (operand->get_type() == scasm::operand_type::REG) {                       \
-    regalloc::reg reg;                                                         \
+    regalloc::Reg reg;                                                         \
     reg.type = scasm::operand_type::REG;                                       \
     reg.reg = operand->get_reg();                                              \
     updated.push_back(reg);                                                    \
   } else if (operand->get_type() == scasm::operand_type::PSEUDO) {             \
-    regalloc::reg reg;                                                         \
+    regalloc::Reg reg;                                                         \
     reg.type = scasm::operand_type::PSEUDO;                                    \
     reg.pseudoreg = operand->get_identifier();                                 \
     updated.push_back(reg);                                                    \
   }
 
-std::pair<std::vector<regalloc::reg>, std::vector<regalloc::reg>>
+std::pair<std::vector<regalloc::Reg>, std::vector<regalloc::Reg>>
 Codegen::used_and_updated_regs(
     std::shared_ptr<scasm::scasm_instruction> instr) {
   auto src = instr->get_src();
   auto dst = instr->get_dst();
   auto instrType = instr->get_type();
 
-  std::vector<regalloc::reg> used;
-  std::vector<regalloc::reg> updated;
+  std::vector<regalloc::Reg> used;
+  std::vector<regalloc::Reg> updated;
 
   if (instrType == scasm::instruction_type::MOV) {
     CHECK_USED(src);
@@ -164,10 +256,10 @@ Codegen::used_and_updated_regs(
     CHECK_USED(src);
   } else if (instrType == scasm::instruction_type::IDIV) {
     CHECK_USED(src);
-    regalloc::reg reg_ax;
+    regalloc::Reg reg_ax;
     reg_ax.type = scasm::operand_type::REG;
     reg_ax.reg = scasm::register_type::AX;
-    regalloc::reg reg_dx;
+    regalloc::Reg reg_dx;
     reg_dx.type = scasm::operand_type::REG;
     reg_dx.reg = scasm::register_type::DX;
     used.push_back(reg_ax);
@@ -175,10 +267,10 @@ Codegen::used_and_updated_regs(
     updated.push_back(reg_ax);
     updated.push_back(reg_dx);
   } else if (instrType == scasm::instruction_type::CDQ) {
-    regalloc::reg reg_ax;
+    regalloc::Reg reg_ax;
     reg_ax.type = scasm::operand_type::REG;
     reg_ax.reg = scasm::register_type::AX;
-    regalloc::reg reg_dx;
+    regalloc::Reg reg_dx;
     reg_dx.type = scasm::operand_type::REG;
     reg_dx.reg = scasm::register_type::DX;
     used.push_back(reg_ax);
@@ -187,14 +279,14 @@ Codegen::used_and_updated_regs(
     std::string funcName = src->get_identifier();
     auto argRegs = funcRegs[funcName];
     for (int i = 0; i < argRegs.size() - 1; i++) {
-      regalloc::reg reg;
+      regalloc::Reg reg;
       reg.type = scasm::operand_type::REG;
       reg.reg = argRegs[i];
       used.push_back(reg);
     }
 
     for (auto it : int_argReg) {
-      regalloc::reg reg;
+      regalloc::Reg reg;
       reg.type = scasm::operand_type::REG;
       reg.reg = it;
       updated.push_back(reg);
@@ -218,7 +310,7 @@ void Codegen::transfer_live_regs(regalloc::cfg_node &block) {
   }
 }
 
-std::map<regalloc::reg, bool>
+std::map<regalloc::Reg, bool>
 Codegen::merge_live_regs(std::vector<regalloc::cfg_node> &cfg,
                          regalloc::cfg_node &block) {
   if (block.get_succ().empty())
