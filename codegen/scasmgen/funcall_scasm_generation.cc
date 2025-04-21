@@ -19,8 +19,7 @@ namespace codegen {
   } break;                                                                     \
   case scar::val_type::LABEL:                                                  \
     break;                                                                     \
-  }                                                                            \
-  scasm_inst->set_src(std::move(scasm_src));
+  }
 
 void Codegen::gen_funcall_scasm(
     std::shared_ptr<scar::scar_Instruction_Node> inst,
@@ -79,6 +78,7 @@ void Codegen::gen_funcall_scasm(
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     auto funcArg = funcCall->get_args()[int_param_indx[i].second];
     SET_SRC_FROM_FUNCARG();
+    scasm_inst->set_src(std::move(scasm_src));
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
     scasm_dst->set_type(scasm::operand_type::REG);
     scasm_dst->set_reg(int_argReg[i]);
@@ -97,6 +97,7 @@ void Codegen::gen_funcall_scasm(
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     auto funcArg = funcCall->get_args()[double_param_indx[i]];
     SET_SRC_FROM_FUNCARG();
+    scasm_inst->set_src(std::move(scasm_src));
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
     scasm_dst->set_type(scasm::operand_type::REG);
     scasm_dst->set_reg(double_argReg[i]);
