@@ -26,6 +26,13 @@ namespace codegen {
  * thus do not mark those registers as updated in the liveness analysis. That is
  * why we emit special instructions only for callee saved and not for caller
  * saved.
+ * @caller_saved:      AX, DI, SI, DX, CX, R8, R9, R10, R11
+ * @return_value:      AX
+ * @scratch_registers: R10, R11
+ * @parameter_passing: DI, SI, DX, CX, R8, R9
+ * @callee_saved:      SP, BP, BX, R12, R13, R14, R15
+ * @stack_pointer:     SP
+ * @base_pointer:      BP
  */
 
 /**
