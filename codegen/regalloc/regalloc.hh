@@ -19,6 +19,19 @@ struct Reg {
     return false;
   }
   bool operator!=(const Reg &other) const { return !(*this == other); }
+  bool operator<(const Reg &other) const {
+    if (type != other.type) {
+      if (type == scasm::operand_type::REG)
+        return true;
+      else
+        return false;
+    } else {
+      if (type == scasm::operand_type::REG)
+        return reg < other.reg;
+      else
+        return pseudoreg < other.pseudoreg;
+    }
+  }
 };
 
 /**
