@@ -124,7 +124,11 @@ enum class AssemblyType {
   DOUBLE,
   BYTE_ARRAY
 };
-// NOTE: Every Pseudo Operand gets converted into a memory operand
+
+/**
+ * NOTE: Ever Pseudo operand either gets converted into a memory (stack) operand
+ *       or a register. Data operand here represents static variables.
+ */
 enum class operand_type {
   UNKNOWN,
   IMM,

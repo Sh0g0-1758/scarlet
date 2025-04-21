@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cmd/cmd.hh>
 #include <codegen/cfg/cfg.hh>
+#include <codegen/regalloc/regalloc.hh>
 #include <fstream>
 #include <map>
 #include <queue>
@@ -148,7 +149,7 @@ private:
   void gen_funcBody_from_cfg(
       std::vector<cfg::node> &cfg,
       std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
-  std::map<std::string, int> NodeLabelToId;
+  std::map<std::string, int> nodeLabelToId;
   bool unreachable_code_elimination(std::vector<cfg::node> &cfg);
   bool copy_propagation(std::vector<cfg::node> &cfg);
   void transfer_copies(cfg::node &block);
@@ -178,6 +179,31 @@ private:
     }
     throw std::runtime_error("Block not found");
   }
+
+  /* REGISTER ALLOCATOR VARS */
+  void allocate_registers();
+  void gen_cfg_from_funcBody(
+      std::vector<regalloc::cfg_node> &cfg,
+      std::vector<std::shared_ptr<scasm::scasm_instruction>> &funcBody);
+  std::map<std::string, int> cfgNodeLabelToId;
+  void liveness_analysis(std::vector<regalloc::cfg_node> &cfg);
+  void initialize_worklist(std::vector<regalloc::cfg_node> &cfg,
+                           regalloc::cfg_node &block,
+                           std::queue<unsigned int> &worklist,
+                           std::map<unsigned int, bool> &worklistMap);
+  regalloc::cfg_node &getNodeFromID(std::vector<regalloc::cfg_node> &cfg,
+                                    unsigned int id) {
+    for (auto &node : cfg) {
+      if (node.get_id() == id) {
+        return node;
+      }
+    }
+    throw std::runtime_error("Block not found");
+  }
+  std::map<regalloc::reg, bool>
+  merge_live_regs(std::vector<regalloc::cfg_node> &cfg,
+                  regalloc::cfg_node &block);
+  void transfer_live_regs(regalloc::cfg_node &block);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

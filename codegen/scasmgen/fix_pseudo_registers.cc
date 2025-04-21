@@ -51,7 +51,7 @@ namespace codegen {
             scasm::operand_type::PSEUDO_MEM) {                                 \
           /* the Pseudo Mem operand used by arrays to copy data into some      \
            * offset. As such they already has some base positive offset and    \
-           * then we change that according the offset we calculate for the     \
+           * then we change that according to the offset we calculate for the  \
            * array  */                                                         \
           inst->get_##target()->set_offset(                                    \
               -offset + inst->get_##target()->get_offset());                   \

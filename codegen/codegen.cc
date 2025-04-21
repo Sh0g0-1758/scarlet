@@ -369,6 +369,7 @@ void Codegen::asm_gen_static_constant(
 void Codegen::codegen() {
   // ###########################
   gen_scasm();
+  allocate_registers();
   fix_pseudo_registers();
   fix_instructions();
   // ###########################
