@@ -118,6 +118,12 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << " ";
       CODEGEN_SRC(instr->get_asm_type());
       assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::POP) {
+      assembly << "\tpop";
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
+      assembly << " ";
+      CODEGEN_SRC(instr->get_asm_type());
+      assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::RET) {
       assembly << "\tmovq %rbp, %rsp\n";
       assembly << "\tpopq %rbp\n";
