@@ -181,6 +181,9 @@ private:
   }
 
   /* REGISTER ALLOCATOR VARS */
+  // A map that stores the registers used by a function
+  // to pass parameters and return value
+  std::map<std::string, std::vector<scasm::register_type>> funcRegs;
   void allocate_registers();
   void gen_cfg_from_funcBody(
       std::vector<regalloc::cfg_node> &cfg,

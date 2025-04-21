@@ -28,6 +28,7 @@ void Codegen::gen_funcall_scasm(
     scasm::scasm_program &scasm_program) {
   auto funcCall =
       std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(inst);
+  std::string funcName = funcCall->get_name()->get_value();
   int numArgs = funcCall->get_args().size();
 
   std::vector<constant::Type> param_types;
@@ -83,6 +84,9 @@ void Codegen::gen_funcall_scasm(
     scasm_dst->set_reg(int_argReg[i]);
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
+    if (funcRegs.find(funcName) != funcRegs.end()) {
+      funcRegs[funcName].emplace_back(int_argReg[i]);
+    }
   }
 
   // Move double args
@@ -98,6 +102,9 @@ void Codegen::gen_funcall_scasm(
     scasm_dst->set_reg(double_argReg[i]);
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
+    if (funcRegs.find(funcName) != funcRegs.end()) {
+      funcRegs[funcName].emplace_back(double_argReg[i]);
+    }
   }
 
   // Move stack args
@@ -139,7 +146,7 @@ void Codegen::gen_funcall_scasm(
   scasm_inst->set_type(scasm::instruction_type::CALL);
   MAKE_SHARED(scasm::scasm_operand, scasm_src);
   scasm_src->set_type(scasm::operand_type::LABEL);
-  scasm_src->set_identifier(funcCall->get_name()->get_value());
+  scasm_src->set_identifier(funcName);
   scasm_inst->set_src(std::move(scasm_src));
   scasm_func->add_instruction(std::move(scasm_inst));
 
@@ -168,8 +175,10 @@ void Codegen::gen_funcall_scasm(
     scasm_func->add_instruction(std::move(scasm_inst));
   }
 
-  if (globalSymbolTable[funcCall->get_name()->get_value()].typeDef[0] ==
-      ast::ElemType::VOID) {
+  if (globalSymbolTable[funcName].typeDef[0] == ast::ElemType::VOID) {
+    if (funcRegs.find(funcName) != funcRegs.end()) {
+      funcRegs[funcName].emplace_back(scasm::register_type::UNKNOWN);
+    }
     return;
   }
   MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
@@ -179,8 +188,14 @@ void Codegen::gen_funcall_scasm(
   scasm_src3->set_type(scasm::operand_type::REG);
   if (scarValTypeToConstType(inst->get_dst()) == constant::Type::DOUBLE) {
     scasm_src3->set_reg(scasm::register_type::XMM0);
+    if (funcRegs.find(funcName) != funcRegs.end()) {
+      funcRegs[funcName].emplace_back(scasm::register_type::XMM0);
+    }
   } else {
     scasm_src3->set_reg(scasm::register_type::AX);
+    if (funcRegs.find(funcName) != funcRegs.end()) {
+      funcRegs[funcName].emplace_back(scasm::register_type::AX);
+    }
   }
   scasm_inst3->set_src(std::move(scasm_src3));
   MAKE_SHARED(scasm::scasm_operand, scasm_dst3);

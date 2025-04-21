@@ -32,23 +32,21 @@ void Codegen::gen_scasm() {
     }
 
     auto func = std::static_pointer_cast<scar::scar_Function_Node>(elem);
+    std::string funcName = func->get_identifier()->get_value();
     MAKE_SHARED(scasm::scasm_function, scasm_func);
-    scasm_func->set_name(func->get_identifier()->get_value());
+    scasm_func->set_name(funcName);
     scasm_func->set_global(elem->is_global());
 
     // Move function args from registers and stack to the callee stack frame
     int numParams = func->get_params().size();
     std::vector<constant::Type> param_types;
     for (int i = 0; i < numParams; i++) {
-      param_types.push_back(ast::elemTypeToConstType(
-          globalSymbolTable[func->get_identifier()->get_value()]
-              .typeDef[i + 1]));
+      param_types.push_back(
+          ast::elemTypeToConstType(globalSymbolTable[funcName].typeDef[i + 1]));
     }
 
     std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
-
     std::vector<int> double_param_indx;
-
     std::vector<std::pair<scasm::AssemblyType, int>> stack_param_indx;
 
     calssify_parameters(param_types, int_param_indx, double_param_indx,
@@ -69,6 +67,9 @@ void Codegen::gen_scasm() {
           func->get_params()[int_param_indx[i].second]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
+      if (funcRegs.find(funcName) != funcRegs.end()) {
+        funcRegs[funcName].emplace_back(int_argReg[i]);
+      }
     }
 
     // Move double args
@@ -86,6 +87,9 @@ void Codegen::gen_scasm() {
           func->get_params()[double_param_indx[i]]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
+      if (funcRegs.find(funcName) != funcRegs.end()) {
+        funcRegs[funcName].emplace_back(double_argReg[i]);
+      }
     }
 
     // Move stack args
@@ -114,6 +118,9 @@ void Codegen::gen_scasm() {
         if (inst->get_src1() == nullptr) {
           scasm_inst->set_type(scasm::instruction_type::RET);
           scasm_func->add_instruction(std::move(scasm_inst));
+          if (funcRegs.find(funcName) != funcRegs.end()) {
+            funcRegs[funcName].emplace_back(scasm::register_type::UNKNOWN);
+          }
           continue;
         }
 
@@ -127,8 +134,14 @@ void Codegen::gen_scasm() {
         scasm_dst->set_type(scasm::operand_type::REG);
         if (instType == scasm::AssemblyType::DOUBLE) {
           scasm_dst->set_reg(scasm::register_type::XMM0);
+          if (funcRegs.find(funcName) != funcRegs.end()) {
+            funcRegs[funcName].emplace_back(scasm::register_type::XMM0);
+          }
         } else {
           scasm_dst->set_reg(scasm::register_type::AX);
+          if (funcRegs.find(funcName) != funcRegs.end()) {
+            funcRegs[funcName].emplace_back(scasm::register_type::AX);
+          }
         }
 
         scasm_inst->set_dst(std::move(scasm_dst));
