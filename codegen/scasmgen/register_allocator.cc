@@ -374,9 +374,21 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
   }
 }
 
+// It is possible that SP or BP register have become a part of the
+// live registers because of scasm generation during function call
+// (16-byte alignment) and stack cleanup after the function call
+// and function declaration (to copy arguments on the stack)
+// For sanity, we also check for scratch registers
+#define IS_BASE_REG(operand)                                                   \
+  operand->get_reg() != scasm::register_type::SP and                           \
+      operand->get_reg() != scasm::register_type::BP and                       \
+      operand->get_reg() != scasm::register_type::R10 and                      \
+      operand->get_reg() != scasm::register_type::R11
+
 #define CHECK_USED(operand)                                                    \
   if (operand != nullptr) {                                                    \
-    if (operand->get_type() == scasm::operand_type::REG) {                     \
+    if (operand->get_type() == scasm::operand_type::REG and                    \
+        IS_BASE_REG(operand)) {                                                \
       regalloc::Reg reg;                                                       \
       reg.type = scasm::operand_type::REG;                                     \
       reg.reg = operand->get_reg();                                            \
@@ -391,7 +403,8 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
 
 #define CHECK_UPDATED(operand)                                                 \
   if (operand != nullptr) {                                                    \
-    if (operand->get_type() == scasm::operand_type::REG) {                     \
+    if (operand->get_type() == scasm::operand_type::REG and                    \
+        IS_BASE_REG(operand)) {                                                \
       regalloc::Reg reg;                                                       \
       reg.type = scasm::operand_type::REG;                                     \
       reg.reg = operand->get_reg();                                            \
@@ -411,8 +424,8 @@ Codegen::used_and_updated_regs(
   auto dst = instr->get_dst();
   auto instrType = instr->get_type();
 
-  std::vector<regalloc::Reg> used;
-  std::vector<regalloc::Reg> updated;
+  std::vector<regalloc::Reg> used{};
+  std::vector<regalloc::Reg> updated{};
 
   if (instrType == scasm::instruction_type::MOV) {
     CHECK_USED(src);
