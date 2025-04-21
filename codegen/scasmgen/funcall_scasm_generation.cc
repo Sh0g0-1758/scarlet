@@ -176,9 +176,6 @@ void Codegen::gen_funcall_scasm(
   }
 
   if (globalSymbolTable[funcName].typeDef[0] == ast::ElemType::VOID) {
-    if (funcRegs.find(funcName) != funcRegs.end()) {
-      funcRegs[funcName].emplace_back(scasm::register_type::UNKNOWN);
-    }
     return;
   }
   MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
@@ -186,17 +183,11 @@ void Codegen::gen_funcall_scasm(
   scasm_inst3->set_asm_type(scarValTypeToAsmType(inst->get_dst()));
   MAKE_SHARED(scasm::scasm_operand, scasm_src3);
   scasm_src3->set_type(scasm::operand_type::REG);
-  if (scarValTypeToConstType(inst->get_dst()) == constant::Type::DOUBLE) {
+  if (scarValTypeToConstType(inst->get_dst()) == constant::Type::DOUBLE)
     scasm_src3->set_reg(scasm::register_type::XMM0);
-    if (funcRegs.find(funcName) != funcRegs.end()) {
-      funcRegs[funcName].emplace_back(scasm::register_type::XMM0);
-    }
-  } else {
+  else
     scasm_src3->set_reg(scasm::register_type::AX);
-    if (funcRegs.find(funcName) != funcRegs.end()) {
-      funcRegs[funcName].emplace_back(scasm::register_type::AX);
-    }
-  }
+
   scasm_inst3->set_src(std::move(scasm_src3));
   MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
   SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst3);

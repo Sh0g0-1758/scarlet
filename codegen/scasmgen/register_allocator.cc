@@ -449,11 +449,10 @@ Codegen::used_and_updated_regs(
     updated.push_back(reg_dx);
   } else if (instrType == scasm::instruction_type::CALL) {
     std::string funcName = src->get_identifier();
-    auto argRegs = funcRegs[funcName];
-    for (int i = 0; i < argRegs.size() - 1; i++) {
+    for (auto it : funcRegs[funcName]) {
       regalloc::Reg reg;
       reg.type = scasm::operand_type::REG;
-      reg.reg = argRegs[i];
+      reg.reg = it;
       used.push_back(reg);
     }
 

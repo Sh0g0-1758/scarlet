@@ -118,9 +118,6 @@ void Codegen::gen_scasm() {
         if (inst->get_src1() == nullptr) {
           scasm_inst->set_type(scasm::instruction_type::RET);
           scasm_func->add_instruction(std::move(scasm_inst));
-          if (funcRegs.find(funcName) != funcRegs.end()) {
-            funcRegs[funcName].emplace_back(scasm::register_type::UNKNOWN);
-          }
           continue;
         }
 
@@ -132,17 +129,10 @@ void Codegen::gen_scasm() {
 
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         scasm_dst->set_type(scasm::operand_type::REG);
-        if (instType == scasm::AssemblyType::DOUBLE) {
+        if (instType == scasm::AssemblyType::DOUBLE)
           scasm_dst->set_reg(scasm::register_type::XMM0);
-          if (funcRegs.find(funcName) != funcRegs.end()) {
-            funcRegs[funcName].emplace_back(scasm::register_type::XMM0);
-          }
-        } else {
+        else
           scasm_dst->set_reg(scasm::register_type::AX);
-          if (funcRegs.find(funcName) != funcRegs.end()) {
-            funcRegs[funcName].emplace_back(scasm::register_type::AX);
-          }
-        }
 
         scasm_inst->set_dst(std::move(scasm_dst));
         scasm_func->add_instruction(std::move(scasm_inst));
