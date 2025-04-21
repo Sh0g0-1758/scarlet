@@ -84,7 +84,91 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                             int indx) {
   if (factor == nullptr)
     return;
+  if(factor->get_postfix_op_node().size() > 0){
+    if(factor->get_postfix_op_node()[0]->get_dot_identifier()){
+    bool flag_for_struct = false;
+    std::string struct_id ;
+    for(int ind =indx ;ind >= 0;ind--){
+      if(symbol_table.find({factor->get_identifier_node()->get_value(),ind}) != symbol_table.end()){
+        auto info = symbol_table[{factor->get_identifier_node()->get_value(),ind}];
+        if(info.typeDef[0] == ast::ElemType::STRUCT){
+          flag_for_struct = true;
+          struct_id = info.struct_identifier.get_string();
+        }
+          break;
+      }
+    }
+    if(!flag_for_struct){
+      success = false;
+      error_messages.emplace_back("Identifier " + factor->get_identifier_node()->get_value() +
+                                  " is not a struct type");
+    }else{
+    if(factor->get_postfix_op_node()[0]->get_dot_identifier()){
+      std::string struct_idi = "struct." + struct_id;
+      symbolTable::symbolInfo structInfo;
+      for(int ind =indx ;ind >= 0;ind--){
+        if(symbol_table.find({struct_idi,ind}) != symbol_table.end()){
+          structInfo = symbol_table[{struct_idi,ind}];
+          break;
+        }
+      }
+      
+      if(structInfo.memNametoIndex.find(factor->get_postfix_op_node()[0]->get_dot_identifier()->get_value()) == structInfo.memNametoIndex.end()){
+        success = false;
+        error_messages.emplace_back("Struct " + struct_id + " has no member " + factor->get_postfix_op_node()[0]->get_dot_identifier()->get_value());
+        }else{
+            factor->set_type(structInfo.struct_type[structInfo.memNametoIndex[factor->get_postfix_op_node()[0]->get_dot_identifier()->get_value()]].typeDef[0]);
+            factor->set_derived_type(structInfo.struct_type[structInfo.memNametoIndex[factor->get_postfix_op_node()[0]->get_dot_identifier()->get_value()]].derivedTypeMap[0]);
+            MAKE_SHARED(ast::AST_identifier_Node, id);
+            id->set_identifier(structInfo.struct_type[structInfo.memNametoIndex[factor->get_postfix_op_node()[0]->get_arrow_identifier()->get_value()]].struct_identifier.get_string());
+            factor->set_struct_identifier(id);
+          }
 
+    }
+    }
+    }else{
+      bool flag_for_struct = false;
+      std::string struct_id ;
+    for(int ind =indx ;ind >= 0;ind--){
+      if(symbol_table.find({factor->get_identifier_node()->get_value(),ind}) != symbol_table.end()){
+        auto info = symbol_table[{factor->get_identifier_node()->get_value(),ind}];
+        if(info.typeDef[0] == ast::ElemType::DERIVED and info.derivedTypeMap[0].size() > 0 and info.derivedTypeMap[0][0] < 0 and info.derivedTypeMap[0][info.derivedTypeMap[0].size()-1] == (long)ast::ElemType::STRUCT){
+          flag_for_struct = true;
+          struct_id = info.struct_identifier.get_string();
+        }
+          break;
+      }
+    }
+    if(!flag_for_struct){
+      success = false;
+      error_messages.emplace_back("Identifier " + factor->get_identifier_node()->get_value() +
+                                  " is not a pointer type");
+    }else{
+      if(factor->get_postfix_op_node()[0]->get_arrow_identifier()){
+        std::string struct_idi = "struct." + struct_id;
+        symbolTable::symbolInfo structInfo;
+        for(int ind =indx ;ind >= 0;ind--){
+          if(symbol_table.find({struct_idi,ind}) != symbol_table.end()){
+            structInfo = symbol_table[{struct_idi,ind}];
+            break;
+          }
+        }
+        if(structInfo.memNametoIndex.find(factor->get_postfix_op_node()[0]->get_arrow_identifier()->get_value()) == structInfo.memNametoIndex.end()){
+          success = false;
+          error_messages.emplace_back("Struct " + struct_id + " has no member " + factor->get_postfix_op_node()[0]->get_arrow_identifier()->get_value());
+          }else{
+            factor->set_type(structInfo.struct_type[structInfo.memNametoIndex[factor->get_postfix_op_node()[0]->get_arrow_identifier()->get_value()]].typeDef[0]);
+            factor->set_derived_type(structInfo.struct_type[structInfo.memNametoIndex[factor->get_postfix_op_node()[0]->get_arrow_identifier()->get_value()]].derivedTypeMap[0]);
+            MAKE_SHARED(ast::AST_identifier_Node, id);
+            id->set_identifier(structInfo.struct_type[structInfo.memNametoIndex[factor->get_postfix_op_node()[0]->get_arrow_identifier()->get_value()]].struct_identifier.get_string());
+            factor->set_struct_identifier(id);
+          }
+
+      }
+    }
+    }
+    return;
+  }
   if (factor->get_arrIdx().size() > 0) {
     /*
      * When we have array subscripts, we expand them by adding the subscript

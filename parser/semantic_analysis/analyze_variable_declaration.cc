@@ -211,6 +211,10 @@ void parser::analyze_local_variable_declaration(
       } else {
         varInfo.typeDef.push_back(varDecl->get_base_type());
       }
+      varInfo.struct_identifier.set_string(
+          varDecl->get_struct_identifier() == nullptr
+              ? ""
+              : varDecl->get_struct_identifier()->get_value());
 
       if (!ast::validate_type_specifier(varInfo.typeDef[0],
                                         varInfo.derivedTypeMap[0], symbol_table,

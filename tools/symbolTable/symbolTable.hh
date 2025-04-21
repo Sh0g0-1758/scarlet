@@ -25,6 +25,8 @@ enum class defType { TRUE, TENTATIVE, FALSE };
 //              (a vector because functions can have multiple args)
 // - isDefined: whether the symbol is defined or not
 // - value:     value of the symbol (used for variables)
+// - struct_identifier_vec: stores struct identifier for the params in function.
+// - struct_type: stores the struct members
 
 struct symbolInfo {
   std::string name;
