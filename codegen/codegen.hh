@@ -207,6 +207,8 @@ private:
   merge_live_regs(std::vector<regalloc::cfg_node> &cfg,
                   regalloc::cfg_node &block);
   void transfer_live_regs(regalloc::cfg_node &block);
+  std::pair<std::vector<regalloc::reg>, std::vector<regalloc::reg>>
+  used_and_updated_regs(std::shared_ptr<scasm::scasm_instruction> instr);
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

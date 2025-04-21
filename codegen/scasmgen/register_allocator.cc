@@ -109,15 +109,112 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
   }
 }
 
+#define CHECK_USED(operand)                                                    \
+  if (operand->get_type() == scasm::operand_type::REG) {                       \
+    regalloc::reg reg;                                                         \
+    reg.type = scasm::operand_type::REG;                                       \
+    reg.reg = operand->get_reg();                                              \
+    used.push_back(reg);                                                       \
+  } else if (operand->get_type() == scasm::operand_type::PSEUDO) {             \
+    regalloc::reg reg;                                                         \
+    reg.type = scasm::operand_type::PSEUDO;                                    \
+    reg.pseudoreg = operand->get_identifier();                                 \
+    used.push_back(reg);                                                       \
+  }
+
+#define CHECK_UPDATED(operand)                                                 \
+  if (operand->get_type() == scasm::operand_type::REG) {                       \
+    regalloc::reg reg;                                                         \
+    reg.type = scasm::operand_type::REG;                                       \
+    reg.reg = operand->get_reg();                                              \
+    updated.push_back(reg);                                                    \
+  } else if (operand->get_type() == scasm::operand_type::PSEUDO) {             \
+    regalloc::reg reg;                                                         \
+    reg.type = scasm::operand_type::PSEUDO;                                    \
+    reg.pseudoreg = operand->get_identifier();                                 \
+    updated.push_back(reg);                                                    \
+  }
+
+std::pair<std::vector<regalloc::reg>, std::vector<regalloc::reg>>
+Codegen::used_and_updated_regs(
+    std::shared_ptr<scasm::scasm_instruction> instr) {
+  auto src = instr->get_src();
+  auto dst = instr->get_dst();
+  auto instrType = instr->get_type();
+
+  std::vector<regalloc::reg> used;
+  std::vector<regalloc::reg> updated;
+
+  if (instrType == scasm::instruction_type::MOV) {
+    CHECK_USED(src);
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::BINARY) {
+    CHECK_USED(src);
+    CHECK_USED(dst);
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::UNARY) {
+    CHECK_USED(dst);
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::CMP) {
+    CHECK_USED(src);
+    CHECK_USED(dst);
+  } else if (instrType == scasm::instruction_type::SETCC) {
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::PUSH) {
+    CHECK_USED(src);
+  } else if (instrType == scasm::instruction_type::IDIV) {
+    CHECK_USED(src);
+    regalloc::reg reg_ax;
+    reg_ax.type = scasm::operand_type::REG;
+    reg_ax.reg = scasm::register_type::AX;
+    regalloc::reg reg_dx;
+    reg_dx.type = scasm::operand_type::REG;
+    reg_dx.reg = scasm::register_type::DX;
+    used.push_back(reg_ax);
+    used.push_back(reg_dx);
+    updated.push_back(reg_ax);
+    updated.push_back(reg_dx);
+  } else if (instrType == scasm::instruction_type::CDQ) {
+    regalloc::reg reg_ax;
+    reg_ax.type = scasm::operand_type::REG;
+    reg_ax.reg = scasm::register_type::AX;
+    regalloc::reg reg_dx;
+    reg_dx.type = scasm::operand_type::REG;
+    reg_dx.reg = scasm::register_type::DX;
+    used.push_back(reg_ax);
+    updated.push_back(reg_dx);
+  } else if (instrType == scasm::instruction_type::CALL) {
+    std::string funcName = src->get_identifier();
+    auto argRegs = funcRegs[funcName];
+    for (int i = 0; i < argRegs.size() - 1; i++) {
+      regalloc::reg reg;
+      reg.type = scasm::operand_type::REG;
+      reg.reg = argRegs[i];
+      used.push_back(reg);
+    }
+
+    for (auto it : int_argReg) {
+      regalloc::reg reg;
+      reg.type = scasm::operand_type::REG;
+      reg.reg = it;
+      updated.push_back(reg);
+    }
+  }
+  return {used, updated};
+}
+
 void Codegen::transfer_live_regs(regalloc::cfg_node &block) {
   if (block.is_empty())
     return;
   for (auto it = block.get_body().end() - 1; it >= block.get_body().begin();
        --it) {
-    auto instr = *it;
-    auto src = instr->get_src();
-    auto dst = instr->get_dst();
-    auto instrType = instr->get_type();
+    auto [used, updated] = used_and_updated_regs(*it);
+    for (auto reg : updated) {
+      block.live_regs.erase(reg);
+    }
+    for (auto reg : used) {
+      block.live_regs[reg] = true;
+    }
   }
 }
 
