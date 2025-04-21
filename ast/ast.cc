@@ -113,7 +113,8 @@ int getSizeOfTypeOnArch(ElemType type) {
   case ast::ElemType::CHAR:
   case ast::ElemType::UCHAR:
     return sizeof(char);
-  case ast::ElemType::STRUCT: //TODO: FIXME, this should be the size of the struct
+  case ast::ElemType::STRUCT: // TODO: FIXME, this should be the size of the
+                              // struct
   case ast::ElemType::VOID:
   case ast::ElemType::DERIVED:
   case ast::ElemType::NONE:
@@ -175,20 +176,25 @@ bool is_pointer_to_complete_type(ast::ElemType type,
 // Check type specifiers which have void arrays void[3] or void(*[4])[2]
 // This will check for void array and if not found either check nested or return
 // based on size of the remaining type specifiers
-bool validate_type_specifier(ast::ElemType type,
-                             std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier,int indx) {
+bool validate_type_specifier(ast::ElemType type, std::vector<long> derivedType,
+                             std::map<std::pair<std::string, int>,
+                                      symbolTable::symbolInfo> &symbol_table,
+                             std::string struct_identifier, int indx) {
   std::string temp_name = "struct." + struct_identifier;
-  if(type == ast::ElemType::STRUCT or ( type == ast::ElemType::DERIVED and derivedType.size() > 0 and derivedType[derivedType.size()-1] == (long)ast::ElemType::STRUCT)){
+  if (type == ast::ElemType::STRUCT or
+      (type == ast::ElemType::DERIVED and derivedType.size() > 0 and
+       derivedType[derivedType.size() - 1] == (long)ast::ElemType::STRUCT)) {
     bool flag_check = false;
-    for(int ind = 0; ind <=indx; ind++){
-    if(symbol_table.find({temp_name,ind}) != symbol_table.end() and symbol_table[{temp_name,ind}].def == symbolTable::defType::TRUE){
-      flag_check = true;
+    for (int ind = 0; ind <= indx; ind++) {
+      if (symbol_table.find({temp_name, ind}) != symbol_table.end() and
+          symbol_table[{temp_name, ind}].def == symbolTable::defType::TRUE) {
+        flag_check = true;
+      }
     }
-    }
-    if(flag_check == false){
+    if (flag_check == false) {
       return false;
     }
-  }    
+  }
   if (type == ast::ElemType::DERIVED and derivedType[0] > 0) {
     if (derivedType[1] == (long)ast::ElemType::VOID) {
       return false;
@@ -196,7 +202,8 @@ bool validate_type_specifier(ast::ElemType type,
       return true;
     } else {
       derivedType.erase(derivedType.begin());
-      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier,indx);
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,
+                                     symbol_table, struct_identifier, indx);
     }
 
   } else if (type == ast::ElemType::DERIVED and
@@ -205,7 +212,8 @@ bool validate_type_specifier(ast::ElemType type,
       return true;
     } else {
       derivedType.erase(derivedType.begin());
-      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,symbol_table,struct_identifier,indx);
+      return validate_type_specifier(ast::ElemType::DERIVED, derivedType,
+                                     symbol_table, struct_identifier, indx);
     }
   } else if (type == ast::ElemType::VOID) {
     return false;
@@ -213,13 +221,19 @@ bool validate_type_specifier(ast::ElemType type,
   return true;
 }
 
-bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,std::map<std::pair<std::string, int>, symbolTable::symbolInfo> &symbol_table,std::string struct_identifier,int indx) {
-  if(type == ast::ElemType::DERIVED and derivedType.size() > 0 and derivedType[derivedType.size()-1] == (long)ast::ElemType::STRUCT and derivedType[derivedType.size()-2] == (long)ast::ElemType::POINTER){
-   return true;
+bool is_valid_declarator(ast::ElemType type, std::vector<long> derivedType,
+                         std::map<std::pair<std::string, int>,
+                                  symbolTable::symbolInfo> &symbol_table,
+                         std::string struct_identifier, int indx) {
+  if (type == ast::ElemType::DERIVED and derivedType.size() > 0 and
+      derivedType[derivedType.size() - 1] == (long)ast::ElemType::STRUCT and
+      derivedType[derivedType.size() - 2] == (long)ast::ElemType::POINTER) {
+    return true;
   }
   if (type == ast::ElemType::VOID or
       ((type == ast::ElemType::DERIVED or type == ast::ElemType::STRUCT) and
-       !ast::validate_type_specifier(type, derivedType,symbol_table,struct_identifier,indx)))
+       !ast::validate_type_specifier(type, derivedType, symbol_table,
+                                     struct_identifier, indx)))
     return false;
   return true;
 }
@@ -243,6 +257,11 @@ void unroll_derived_type(std::shared_ptr<ast::AST_declarator_Node> declarator,
 }
 
 bool is_lvalue(std::shared_ptr<AST_factor_Node> factor) {
+  if (factor->get_postfix_op_node().size() != 0) {
+    if(factor->get_postfix_op_node()[0]->get_arrow_identifier() != nullptr) {
+      return true;
+    }
+  }
   if (factor == nullptr)
     return false;
   if (factor->get_arrIdx().size() != 0)
@@ -351,11 +370,12 @@ getParentType(ElemType left, ElemType right, std::vector<long> &leftDerivedType,
 }
 
 std::pair<ElemType, std::vector<long>>
-getAssignType(ElemType target, std::vector<long> targetDerived,std::string targetStructIdentifier, ElemType src,
+getAssignType(ElemType target, std::vector<long> targetDerived,
+              std::string targetStructIdentifier, ElemType src,
               std::vector<long> srcDerived, std::string srcStructIdentifier,
               std::shared_ptr<AST_exp_Node> srcExp) {
   if (target == ElemType::DERIVED or src == ElemType::DERIVED) {
-    if (targetDerived == srcDerived and 
+    if (targetDerived == srcDerived and
         targetStructIdentifier == srcStructIdentifier) {
       return {target, targetDerived};
     } else if (is_const_zero(srcExp->get_factor_node())) {
@@ -372,8 +392,8 @@ getAssignType(ElemType target, std::vector<long> targetDerived,std::string targe
     if (src == ElemType::VOID) {
       return {ElemType::NONE, {}};
     }
-    if(target == ElemType::STRUCT and src == ElemType::STRUCT){
-      if(targetStructIdentifier != srcStructIdentifier){
+    if (target == ElemType::STRUCT and src == ElemType::STRUCT) {
+      if (targetStructIdentifier != srcStructIdentifier) {
         return {ElemType::NONE, {}};
       }
     }
@@ -451,7 +471,7 @@ constant::Constant castConstToElemType(constant::Constant Const,
     ret.set_type(constant::Type::UCHAR);
     CASTCONST(Const, ret, uc, unsigned char);
   } break;
-  case ElemType::STRUCT: 
+  case ElemType::STRUCT:
   case ElemType::POINTER:
   case ElemType::VOID:
     break;

@@ -136,12 +136,12 @@ private:
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
           &symbol_table,
       int indx);
- void analyze_array_initializer(
-    std::shared_ptr<ast::initializer> init,
-    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
-        &symbol_table,
-    int indx, std::vector<long> arrDim, ast::ElemType baseElemType, std::string struct_identifier,
-    std::vector<long> derivedElemType);
+  void analyze_array_initializer(
+      std::shared_ptr<ast::initializer> init,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
+      int indx, std::vector<long> arrDim, ast::ElemType baseElemType,
+      std::string struct_identifier, std::vector<long> derivedElemType);
   void init_static_array_initializer(std::shared_ptr<ast::initializer> init,
                                      std::vector<long> arrDim,
                                      ast::ElemType baseElemType,
@@ -172,14 +172,14 @@ private:
           &symbol_table,
       std::string &var_name, int indx);
   void analyze_global_struct_declaration(
-    std::shared_ptr<ast::AST_struct_declaration_Node> structDecl,
-    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
-        &struct_symbol_table);
+      std::shared_ptr<ast::AST_struct_declaration_Node> structDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &struct_symbol_table);
   void analyze_struct_declaration(
-    std::shared_ptr<ast::AST_struct_declaration_Node> structDecl,
-    std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
-        &symbol_table,
-    std::string struct_name,int indx);
+      std::shared_ptr<ast::AST_struct_declaration_Node> structDecl,
+      std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
+          &symbol_table,
+      std::string struct_name, int indx);
   void analyze_local_variable_declaration(
       std::shared_ptr<ast::AST_variable_declaration_Node> varDecl,
       std::map<std::pair<std::string, int>, symbolTable::symbolInfo>

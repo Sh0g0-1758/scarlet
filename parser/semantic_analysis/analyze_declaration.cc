@@ -48,8 +48,7 @@ void parser::analyze_declaration(
     analyze_function_declaration(funcDecl, symbol_table, var_name, indx);
   } else if (declaration->get_type() == ast::DeclarationType::STRUCT) {
     auto structDecl =
-        std::static_pointer_cast<ast::AST_struct_declaration_Node>(
-            declaration);
+        std::static_pointer_cast<ast::AST_struct_declaration_Node>(declaration);
     analyze_struct_declaration(structDecl, symbol_table, var_name, indx);
   }
 }

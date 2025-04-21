@@ -273,7 +273,7 @@ public:
         return scasm::AssemblyType::QUAD_WORD;
       }
     } break;
-    case ast::ElemType::STRUCT: 
+    case ast::ElemType::STRUCT:
     case ast::ElemType::POINTER:
     case ast::ElemType::VOID:
     /*fixme? is this okay*/

@@ -27,22 +27,24 @@ void parser::parse_declaration(
   bool isFuncDecl = false;
   int iter = 0;
   int num_identifiers = 0;
-  if(tokens[0].get_token() == token::TOKEN::STRUCT or (is_storage_specifier(tokens[0].get_token()) and
-     tokens[1].get_token() == token::TOKEN::STRUCT)) {
+  if (tokens[0].get_token() == token::TOKEN::STRUCT or
+      (is_storage_specifier(tokens[0].get_token()) and
+       tokens[1].get_token() == token::TOKEN::STRUCT)) {
     isStructDecl = true;
     iter += 2;
-    if(is_storage_specifier(tokens[0].get_token())) {
+    if (is_storage_specifier(tokens[0].get_token())) {
       isStructDecl = false;
       iter += 1;
     }
-    while(tokens[iter].get_token() != token::TOKEN::SEMICOLON and
-          iter < (int)tokens.size()) {
+    while (tokens[iter].get_token() != token::TOKEN::SEMICOLON and
+           iter < (int)tokens.size()) {
 
-      if(tokens[iter].get_token() == token::TOKEN::OPEN_BRACE and num_identifiers == 0) {
+      if (tokens[iter].get_token() == token::TOKEN::OPEN_BRACE and
+          num_identifiers == 0) {
         isStructDecl = true;
         break;
       }
-      if(tokens[iter].get_token() == token::TOKEN::ASSIGNMENT) {
+      if (tokens[iter].get_token() == token::TOKEN::ASSIGNMENT) {
         isStructDecl = false;
         break;
       }
@@ -54,7 +56,7 @@ void parser::parse_declaration(
           break;
         }
       } else if (num_identifiers > 0 and
-                tokens[iter].get_token() == token::TOKEN::VOID) {
+                 tokens[iter].get_token() == token::TOKEN::VOID) {
         num_identifiers++;
         isStructDecl = false;
         if (num_identifiers > 1) {
@@ -64,17 +66,17 @@ void parser::parse_declaration(
       }
       iter++;
     }
-  }
-  else {
+  } else {
     while (tokens[iter].get_token() != token::TOKEN::SEMICOLON and
-          iter < (int)tokens.size()) {
+           iter < (int)tokens.size()) {
       // If we find an assignment token, then this is a variable declaration
       if (tokens[iter].get_token() == token::TOKEN::ASSIGNMENT) {
         isFuncDecl = false;
         break;
       }
 
-      // If we find more than one identifier, then this is a function declaration
+      // If we find more than one identifier, then this is a function
+      // declaration
       if (tokens[iter].get_token() == token::TOKEN::IDENTIFIER) {
         num_identifiers++;
         if (num_identifiers > 1) {
@@ -82,7 +84,7 @@ void parser::parse_declaration(
           break;
         }
       } else if (num_identifiers > 0 and
-                tokens[iter].get_token() == token::TOKEN::VOID) {
+                 tokens[iter].get_token() == token::TOKEN::VOID) {
         num_identifiers++;
         if (num_identifiers > 1) {
           isFuncDecl = true;
@@ -92,10 +94,10 @@ void parser::parse_declaration(
       iter++;
     }
   }
-  if(isStructDecl) {
+  if (isStructDecl) {
     MAKE_SHARED(ast::AST_struct_declaration_Node, decl);
     decl->set_type(ast::DeclarationType::STRUCT);
-    if(tokens[0].get_token() == token::TOKEN::STRUCT) {
+    if (tokens[0].get_token() == token::TOKEN::STRUCT) {
       tokens.erase(tokens.begin());
     }
     parse_struct_declaration(tokens, decl);
@@ -118,15 +120,14 @@ void parser::parse_declaration(
   }
 }
 
-void parser::parse_struct_declaration (
+void parser::parse_struct_declaration(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_struct_declaration_Node> decl) {
-  if(is_storage_specifier(tokens[0].get_token())) {
+  if (is_storage_specifier(tokens[0].get_token())) {
     success = false;
     error_messages.emplace_back("Storage Specifiers are not allowed in struct "
                                 "declarations");
-  }
-  else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
+  } else if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
     MAKE_SHARED(ast::AST_identifier_Node, identifier);
     identifier->set_identifier(tokens[0].get_value().value());
     decl->set_identifier(identifier);
@@ -135,12 +136,12 @@ void parser::parse_struct_declaration (
     success = false;
     error_messages.emplace_back("Expected a struct name");
   }
-  if(tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
+  if (tokens[0].get_token() == token::TOKEN::OPEN_BRACE) {
     EXPECT(token::TOKEN::OPEN_BRACE);
     while (tokens[0].get_token() != token::TOKEN::CLOSE_BRACE) {
       MAKE_SHARED(ast::AST_member_declaration_Node, memberDecl);
       PARSE_TYPE(memberDecl, set_base_type);
-      if(memberDecl->get_base_type() == ast::ElemType::STRUCT) {
+      if (memberDecl->get_base_type() == ast::ElemType::STRUCT) {
         EXPECT_IDENTIFIER();
         memberDecl->set_struct_identifier(std::move(identifier));
         memberDecl->set_Decltype(ast::DeclarationType::STRUCT);
@@ -149,13 +150,13 @@ void parser::parse_struct_declaration (
       MAKE_SHARED(ast::AST_identifier_Node, identifier);
       parse_declarator(tokens, declarator, identifier);
       memberDecl->set_identifier(identifier);
-      if(tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
+      if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
         // If we have a function declarator, then this is a function
         // declaration
         // and not a member declaration
-          success = false;
-          error_messages.emplace_back(
-              "Function declarations are not allowed in struct declarations");  
+        success = false;
+        error_messages.emplace_back(
+            "Function declarations are not allowed in struct declarations");
       }
       EXPECT(token::TOKEN::SEMICOLON);
       if (identifier->get_value().empty()) {
@@ -167,7 +168,7 @@ void parser::parse_struct_declaration (
       decl->add_member(std::move(memberDecl));
     }
     EXPECT(token::TOKEN::CLOSE_BRACE);
-    if(decl->get_members().empty()) {
+    if (decl->get_members().empty()) {
       success = false;
       error_messages.emplace_back("Struct declaration cannot be empty");
     }

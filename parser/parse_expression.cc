@@ -105,7 +105,7 @@ void parser::parse_factor(std::vector<token::Token> &tokens,
       tokens.erase(tokens.begin());
       if (token::is_type_specifier(tokens[0].get_token())) {
         PARSE_TYPE(factor, set_cast_type);
-        if(factor->get_cast_type() == ast::ElemType::STRUCT) {
+        if (factor->get_cast_type() == ast::ElemType::STRUCT) {
           if (tokens[0].get_token() == token::TOKEN::IDENTIFIER) {
             EXPECT_IDENTIFIER();
             factor->set_struct_identifier(std::move(identifier));

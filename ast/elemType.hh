@@ -1,7 +1,7 @@
 #pragma once
 
 namespace scarlet {
-namespace ast { 
+namespace ast {
 enum class ElemType {
   NONE = 0,
   DERIVED = -1,
@@ -17,4 +17,4 @@ enum class ElemType {
   STRUCT = -11,
 };
 }
-}
+} // namespace scarlet

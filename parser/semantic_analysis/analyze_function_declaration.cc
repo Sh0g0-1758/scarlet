@@ -27,11 +27,12 @@ void parser::analyze_global_function_declaration(
       auto paramDerivedType =
           globalSymbolTable[currFuncName].derivedTypeMap[i + 1];
 
-      if (!ast::validate_type_specifier(paramType, paramDerivedType,symbol_table,
-                                        param->get_struct_identifier() == nullptr
-                                            ? ""
-                                            : param->get_struct_identifier()
-                                                  ->get_value(),0)) {
+      if (!ast::validate_type_specifier(
+              paramType, paramDerivedType, symbol_table,
+              param->get_struct_identifier() == nullptr
+                  ? ""
+                  : param->get_struct_identifier()->get_value(),
+              0)) {
         success = false;
         error_messages.emplace_back("Variable " +
                                     param->identifier->get_value() +
@@ -61,18 +62,23 @@ void parser::analyze_function_declaration(
         &symbol_table,
     std::string &var_name, int indx) {
   // Check that the function parameters always have different names.
-  
-    
+
   std::set<std::string> param_names;
   for (auto param : funcDecl->get_params()) {
     std::string paramName = param->identifier->get_value();
-    if(param->get_struct_identifier() != nullptr) {
-      std::string struct_param_id = "struct." + param->get_struct_identifier()->get_value();
-      if(symbol_table.find({struct_param_id, indx}) == symbol_table.end() or (symbol_table.find({struct_param_id, indx}) != symbol_table.end() and symbol_table[{struct_param_id,indx}].def == symbolTable::defType::FALSE)) {
-        if(funcDecl->get_block()){
-        success = false;
-        error_messages.emplace_back("Param Variable " + struct_param_id + " of function " + funcDecl->get_identifier()->get_value() +
-                                    " has incomplete struct type");
+    if (param->get_struct_identifier() != nullptr) {
+      std::string struct_param_id =
+          "struct." + param->get_struct_identifier()->get_value();
+      if (symbol_table.find({struct_param_id, indx}) == symbol_table.end() or
+          (symbol_table.find({struct_param_id, indx}) != symbol_table.end() and
+           symbol_table[{struct_param_id, indx}].def ==
+               symbolTable::defType::FALSE)) {
+        if (funcDecl->get_block()) {
+          success = false;
+          error_messages.emplace_back("Param Variable " + struct_param_id +
+                                      " of function " +
+                                      funcDecl->get_identifier()->get_value() +
+                                      " has incomplete struct type");
         }
       }
     }
@@ -116,22 +122,25 @@ void parser::analyze_function_declaration(
       } else {
         funcType.push_back(funcDecl->get_return_type());
       }
-      if(funcDecl->get_return_type() == ast::ElemType::STRUCT){
-        if(!ast::validate_type_specifier(funcDecl->get_return_type(), derivedType,symbol_table,funcDecl->get_struct_identifier() == nullptr
-                                            ? ""
-                                            : funcDecl->get_struct_identifier()
-                                                  ->get_value(),indx)){
+      if (funcDecl->get_return_type() == ast::ElemType::STRUCT) {
+        if (!ast::validate_type_specifier(
+                funcDecl->get_return_type(), derivedType, symbol_table,
+                funcDecl->get_struct_identifier() == nullptr
+                    ? ""
+                    : funcDecl->get_struct_identifier()->get_value(),
+                indx)) {
           success = false;
-          error_messages.emplace_back("Function " +
-                                      var_name +
+          error_messages.emplace_back("Function " + var_name +
                                       " cannot return incomplete type");
         }
       }
-      if(funcDecl->get_struct_identifier() == nullptr) {
+      if (funcDecl->get_struct_identifier() == nullptr) {
         funcStructNames.push_back("");
-      }
-      else {
-        funcStructNames.push_back(funcDecl->get_struct_identifier() == nullptr ? "" : funcDecl->get_struct_identifier()->get_value());       // why is this here?
+      } else {
+        funcStructNames.push_back(funcDecl->get_struct_identifier() == nullptr
+                                      ? ""
+                                      : funcDecl->get_struct_identifier()
+                                            ->get_value()); // why is this here?
       }
     } else {
       std::vector<long> derivedType;
@@ -139,12 +148,12 @@ void parser::analyze_function_declaration(
       ast::unroll_derived_type(param->declarator, derivedType);
       if (!derivedType.empty()) {
         derivedType.push_back((long)param->base_type);
-        if (!ast::validate_type_specifier(ast::ElemType::DERIVED,
-                                          derivedType,symbol_table,param->get_struct_identifier() == nullptr
-                                                                      ? ""
-                                                                      : param
-                                                                            ->get_struct_identifier()
-                                                                            ->get_value(),indx)) {
+        if (!ast::validate_type_specifier(
+                ast::ElemType::DERIVED, derivedType, symbol_table,
+                param->get_struct_identifier() == nullptr
+                    ? ""
+                    : param->get_struct_identifier()->get_value(),
+                indx)) {
           success = false;
           error_messages.emplace_back("Variable " +
                                       param->identifier->get_value() +
@@ -166,11 +175,13 @@ void parser::analyze_function_declaration(
                                       " cannot take void argument");
         }
       }
-      if(param->get_struct_identifier() == nullptr) {
+      if (param->get_struct_identifier() == nullptr) {
         funcStructNames.push_back("");
-      }
-      else {
-        funcStructNames.push_back(param->get_struct_identifier() == nullptr ? "" : param->get_struct_identifier()->get_value());       // why is this here?
+      } else {
+        funcStructNames.push_back(param->get_struct_identifier() == nullptr
+                                      ? ""
+                                      : param->get_struct_identifier()
+                                            ->get_value()); // why is this here?
       }
     }
   }

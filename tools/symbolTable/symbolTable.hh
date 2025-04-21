@@ -35,11 +35,11 @@ struct symbolInfo {
   std::vector<ast::ElemType> typeDef{};
   defType def = defType::FALSE;
   std::vector<constant::Constant> value{};
-  //TO-DO: to make below two into one
+  // TO-DO: to make below two into one
   constant::Constant struct_identifier;
   std::vector<std::string> struct_identifier_vec{};
   std::vector<symbolInfo> struct_type{};
-  std::map<std::string,int> memNametoIndex{};
+  std::map<std::string, int> memNametoIndex{};
   // Here <= 0 corresponds to an ElemType and > 0 corrresponds to an array
   // dimension
   std::map<int, std::vector<long>> derivedTypeMap{};
