@@ -48,7 +48,7 @@ private:
   std::vector<std::shared_ptr<node>> neighbors{};
   int spill_cost{};
   Reg reg{};
-  int color{};
+  int color = 0;
   bool pruned{};
 
 public:

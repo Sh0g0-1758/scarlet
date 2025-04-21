@@ -218,9 +218,7 @@ void Codegen::allocate_registers() {
         if (node->get_color() != 0) {
           pseudoRegToReg[node->get_reg().pseudoreg] =
               colorToReg[node->get_color()];
-          if (std::find(callee_savedReg.begin(), callee_savedReg.end(),
-                        colorToReg[node->get_color()]) !=
-              callee_savedReg.end()) {
+          if (callee_savedReg[colorToReg[node->get_color()]]) {
             calleeSavedRegisters[func->get_name()].insert(
                 colorToReg[node->get_color()]);
           }
@@ -323,16 +321,12 @@ void Codegen::color_graph(std::vector<std::shared_ptr<regalloc::node>> &graph,
       available_colors.push_back(color.first);
   if (!available_colors.empty()) {
     if (chosen_node->get_reg().type == scasm::operand_type::PSEUDO) {
-      chosen_node->set_color(
-          *std::min(available_colors.begin(), available_colors.end()));
+      chosen_node->set_color(available_colors[0]);
     } else {
-      if (std::find(callee_savedReg.begin(), callee_savedReg.end(),
-                    chosen_node->get_reg().reg) != callee_savedReg.end()) {
-        chosen_node->set_color(
-            *std::max(available_colors.begin(), available_colors.end()));
+      if (callee_savedReg[chosen_node->get_reg().reg]) {
+        chosen_node->set_color(available_colors[available_colors.size() - 1]);
       } else {
-        chosen_node->set_color(
-            *std::min(available_colors.begin(), available_colors.end()));
+        chosen_node->set_color(available_colors[0]);
       }
     }
     chosen_node->unprune();
