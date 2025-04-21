@@ -498,6 +498,28 @@ void Codegen::gen_scasm() {
       backendSymbolTable[it.first] = sym;
     }
   }
+
+  // Mark the static variables used in functions with the correct operand type
+  for (auto &elem : scasm_program.get_elems()) {
+    if (elem->get_type() == scasm::scasm_top_level_type::FUNCTION) {
+      auto func = std::static_pointer_cast<scasm::scasm_function>(elem);
+      for (auto &inst : func->get_instructions()) {
+        auto src = inst->get_src();
+        auto dst = inst->get_dst();
+        if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO) {
+          auto data = src->get_identifier();
+          if (backendSymbolTable[data].isTopLevel)
+            src->set_type(scasm::operand_type::DATA);
+        }
+        if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
+          auto data = dst->get_identifier();
+          if (backendSymbolTable[data].isTopLevel)
+            dst->set_type(scasm::operand_type::DATA);
+        }
+      }
+    }
+  }
+
   this->scasm = scasm_program;
 }
 
