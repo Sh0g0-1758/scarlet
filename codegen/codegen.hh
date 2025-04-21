@@ -234,6 +234,8 @@ private:
     node2->add_neighbor(node1);
   }
   void color_graph(std::vector<std::shared_ptr<regalloc::node>> &graph, int k);
+  // A map that stores the callee saved registers used by a function
+  std::map<std::string, std::set<scasm::register_type>> calleeSavedRegisters;
 
 public:
   Codegen(ast::AST_Program_Node program, int counter,

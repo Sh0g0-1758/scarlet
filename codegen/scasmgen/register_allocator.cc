@@ -166,6 +166,70 @@ void Codegen::allocate_registers() {
      *        3.4 assign color to the nodes
      */
     color_graph(graph, 12);
+
+    /**
+     * @goal: Create a register map from the colored graph.
+     * @steps:
+     *        4.1 create a map from the color to hard registers
+     *        4.2 use the map to assign registers to the pseudoregisters
+     *        4.3 save the callee saved registers used by a function
+     */
+    std::map<int, scasm::register_type> colorToReg;
+    for (auto node : graph) {
+      if (node->get_reg().type == scasm::operand_type::REG) {
+        colorToReg[node->get_color()] = node->get_reg().reg;
+      }
+    }
+    std::map<std::string, scasm::register_type> pseudoRegToReg;
+    for (auto node : graph) {
+      if (node->get_reg().type == scasm::operand_type::PSEUDO) {
+        if (node->get_color() != 0) {
+          pseudoRegToReg[node->get_reg().pseudoreg] =
+              colorToReg[node->get_color()];
+          if (std::find(callee_savedReg.begin(), callee_savedReg.end(),
+                        colorToReg[node->get_color()]) !=
+              callee_savedReg.end()) {
+            calleeSavedRegisters[func->get_name()].insert(
+                colorToReg[node->get_color()]);
+          }
+        }
+      }
+    }
+
+    /**
+     * @goal: Replace pseudoregisters in the instructions with the allocated
+     *        hard registers.
+     * @steps:
+     *        5.1 Simply use the map to figure out the hard register allocated
+     *            to a particular pseudoregister
+     *        5.2 Remove instructions in which we move a hard register to itself
+     */
+    for (auto it = func->get_instructions().begin();
+         it != func->get_instructions().end();) {
+      auto src = (*it)->get_src();
+      auto dst = (*it)->get_dst();
+      if (src->get_type() == scasm::operand_type::PSEUDO) {
+        std::string pseudoReg = src->get_identifier();
+        if (pseudoRegToReg.find(pseudoReg) != pseudoRegToReg.end()) {
+          src->set_type(scasm::operand_type::REG);
+          src->set_reg(pseudoRegToReg[pseudoReg]);
+        }
+      }
+      if (dst->get_type() == scasm::operand_type::PSEUDO) {
+        std::string pseudoReg = dst->get_identifier();
+        if (pseudoRegToReg.find(pseudoReg) != pseudoRegToReg.end()) {
+          dst->set_type(scasm::operand_type::REG);
+          dst->set_reg(pseudoRegToReg[pseudoReg]);
+        }
+      }
+      if (src->get_type() == scasm::operand_type::REG and
+          dst->get_type() == scasm::operand_type::REG and
+          src->get_reg() == dst->get_reg()) {
+        it = func->get_instructions().erase(it);
+      } else {
+        ++it;
+      }
+    }
   }
 }
 
