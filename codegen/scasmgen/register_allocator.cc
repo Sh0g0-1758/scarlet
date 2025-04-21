@@ -4,6 +4,31 @@ namespace scarlet {
 namespace codegen {
 
 /**
+ * @note:
+ * While allocating hard registers to pseudoregisters, we take note of any
+ * callee saved registers that we used and emit instructions to preserve their
+ * values. We do not do the same for caller saved registers because these
+ * registers are only ever used for parameter passing, idiv instruction, return
+ * value and as scratch registers. For Parameter passing, we copy the values
+ * from the registers to the stack and use these stack values, so we don't have
+ * to worry about them being clobbered. Though the register allocator will try
+ * to use these registers only by replacing the pseudoregister with the
+ * corresponding hard register and thus remove this mov instruction. Through the
+ * liveness analysis, it will also make sure to use a different hard register or
+ * spill the pseudo-register if the hard register gets clobbered later. When
+ * there is a function call, we also mark all caller saved registers as
+ * clobbered and thus make sure of the correctness of the hard-register
+ * assignment. For idiv instruction, the result which gets stored in DX,AX
+ * registers must be used immediately after it and thus we do not need to worry
+ * about saving it The same is true for return value and scratch register.
+ * However the same is not true for callee saved registers because the caller
+ * can safely assume that those values are preserved accross function calls and
+ * thus do not mark those registers as updated in the liveness analysis. That is
+ * why we emit special instructions only for callee saved and not for caller
+ * saved.
+ */
+
+/**
  * @brief: Allocates registers for the given instructions using graph coloring.
  * @structure:
  * 1. Build an interference graph from the instructions.
@@ -425,12 +450,17 @@ Codegen::used_and_updated_regs(
       used.push_back(reg);
     }
 
+    // Mark all caller saved registers as updated
     for (auto it : int_argReg) {
       regalloc::Reg reg;
       reg.type = scasm::operand_type::REG;
       reg.reg = it;
       updated.push_back(reg);
     }
+    regalloc::Reg reg;
+    reg.type = scasm::operand_type::REG;
+    reg.reg = scasm::register_type::AX;
+    updated.push_back(reg);
   }
   return {used, updated};
 }
