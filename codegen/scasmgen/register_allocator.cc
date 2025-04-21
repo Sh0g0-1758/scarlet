@@ -87,7 +87,7 @@ void Codegen::allocate_registers() {
     for (auto &inst : func->get_instructions()) {
       auto src = inst->get_src();
       auto dst = inst->get_dst();
-      if (src->get_type() == scasm::operand_type::PSEUDO) {
+      if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = src->get_identifier();
         if (pseudoRegInGraph[pseudoReg])
           continue;
@@ -99,7 +99,7 @@ void Codegen::allocate_registers() {
         graph.emplace_back(node);
         pseudoRegInGraph[pseudoReg] = true;
       }
-      if (dst->get_type() == scasm::operand_type::PSEUDO) {
+      if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = dst->get_identifier();
         if (pseudoRegInGraph[pseudoReg])
           continue;
@@ -174,11 +174,11 @@ void Codegen::allocate_registers() {
     for (auto &inst : func->get_instructions()) {
       auto src = inst->get_src();
       auto dst = inst->get_dst();
-      if (src->get_type() == scasm::operand_type::PSEUDO) {
+      if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = src->get_identifier();
         pseudoRegSpillCost[pseudoReg]++;
       }
-      if (dst->get_type() == scasm::operand_type::PSEUDO) {
+      if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = dst->get_identifier();
         pseudoRegSpillCost[pseudoReg]++;
       }
@@ -240,21 +240,22 @@ void Codegen::allocate_registers() {
          it != func->get_instructions().end();) {
       auto src = (*it)->get_src();
       auto dst = (*it)->get_dst();
-      if (src->get_type() == scasm::operand_type::PSEUDO) {
+      if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = src->get_identifier();
         if (pseudoRegToReg.find(pseudoReg) != pseudoRegToReg.end()) {
           src->set_type(scasm::operand_type::REG);
           src->set_reg(pseudoRegToReg[pseudoReg]);
         }
       }
-      if (dst->get_type() == scasm::operand_type::PSEUDO) {
+      if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = dst->get_identifier();
         if (pseudoRegToReg.find(pseudoReg) != pseudoRegToReg.end()) {
           dst->set_type(scasm::operand_type::REG);
           dst->set_reg(pseudoRegToReg[pseudoReg]);
         }
       }
-      if (src->get_type() == scasm::operand_type::REG and
+      if (src != nullptr and dst != nullptr and
+          src->get_type() == scasm::operand_type::REG and
           dst->get_type() == scasm::operand_type::REG and
           src->get_reg() == dst->get_reg()) {
         it = func->get_instructions().erase(it);
@@ -374,29 +375,33 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
 }
 
 #define CHECK_USED(operand)                                                    \
-  if (operand->get_type() == scasm::operand_type::REG) {                       \
-    regalloc::Reg reg;                                                         \
-    reg.type = scasm::operand_type::REG;                                       \
-    reg.reg = operand->get_reg();                                              \
-    used.push_back(reg);                                                       \
-  } else if (operand->get_type() == scasm::operand_type::PSEUDO) {             \
-    regalloc::Reg reg;                                                         \
-    reg.type = scasm::operand_type::PSEUDO;                                    \
-    reg.pseudoreg = operand->get_identifier();                                 \
-    used.push_back(reg);                                                       \
+  if (operand != nullptr) {                                                    \
+    if (operand->get_type() == scasm::operand_type::REG) {                     \
+      regalloc::Reg reg;                                                       \
+      reg.type = scasm::operand_type::REG;                                     \
+      reg.reg = operand->get_reg();                                            \
+      used.push_back(reg);                                                     \
+    } else if (operand->get_type() == scasm::operand_type::PSEUDO) {           \
+      regalloc::Reg reg;                                                       \
+      reg.type = scasm::operand_type::PSEUDO;                                  \
+      reg.pseudoreg = operand->get_identifier();                               \
+      used.push_back(reg);                                                     \
+    }                                                                          \
   }
 
 #define CHECK_UPDATED(operand)                                                 \
-  if (operand->get_type() == scasm::operand_type::REG) {                       \
-    regalloc::Reg reg;                                                         \
-    reg.type = scasm::operand_type::REG;                                       \
-    reg.reg = operand->get_reg();                                              \
-    updated.push_back(reg);                                                    \
-  } else if (operand->get_type() == scasm::operand_type::PSEUDO) {             \
-    regalloc::Reg reg;                                                         \
-    reg.type = scasm::operand_type::PSEUDO;                                    \
-    reg.pseudoreg = operand->get_identifier();                                 \
-    updated.push_back(reg);                                                    \
+  if (operand != nullptr) {                                                    \
+    if (operand->get_type() == scasm::operand_type::REG) {                     \
+      regalloc::Reg reg;                                                       \
+      reg.type = scasm::operand_type::REG;                                     \
+      reg.reg = operand->get_reg();                                            \
+      updated.push_back(reg);                                                  \
+    } else if (operand->get_type() == scasm::operand_type::PSEUDO) {           \
+      regalloc::Reg reg;                                                       \
+      reg.type = scasm::operand_type::PSEUDO;                                  \
+      reg.pseudoreg = operand->get_identifier();                               \
+      updated.push_back(reg);                                                  \
+    }                                                                          \
   }
 
 std::pair<std::vector<regalloc::Reg>, std::vector<regalloc::Reg>>
