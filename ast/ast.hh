@@ -591,6 +591,7 @@ private:
   std::vector<std::shared_ptr<Param>> params;
   ElemType return_type;
   std::shared_ptr<AST_Block_Node> block;
+  bool is_variadic = false;
 
 public:
   std::string get_AST_name() { return "FunctionDeclaration"; }
@@ -606,6 +607,8 @@ public:
     this->return_type = return_type;
   }
   ElemType get_return_type() { return return_type; }
+  void set_variadic(bool is_variadic) { this->is_variadic = is_variadic; }
+  bool is_variadic_func() { return is_variadic; }
 };
 
 class AST_For_Init_Node {

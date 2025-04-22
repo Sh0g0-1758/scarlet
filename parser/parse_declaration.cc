@@ -128,7 +128,7 @@ void parser::parse_function_declarator_suffix(
   if (tokens[0].get_token() == token::TOKEN::OPEN_PARANTHESES) {
     tokens.erase(tokens.begin());
     // Check that the parameters have valid types
-    if (tokens[0].get_token() == token::TOKEN::VOID or
+    if (tokens[0].get_token() == token::TOKEN::VOID or tokens[0].get_token() == token::TOKEN::ELLIPSIS or
         token::is_type_specifier(tokens[0].get_token())) {
       parse_param_list(tokens, funcDecl);
       haveParams = true;
@@ -308,6 +308,11 @@ void parser::parse_function_declaration(
 void parser::parse_param_list(
     std::vector<token::Token> &tokens,
     std::shared_ptr<ast::AST_function_declaration_Node> decl) {
+  if(tokens[0].get_token() == token::TOKEN::ELLIPSIS){
+    tokens.erase(tokens.begin());
+    decl->set_variadic(true);
+    return;
+  }
   if (tokens[0].get_token() == token::TOKEN::VOID) {
     if (tokens[1].get_token() == token::TOKEN::CLOSE_PARANTHESES) {
       tokens.erase(tokens.begin());
@@ -333,6 +338,11 @@ void parser::parse_param_list(
 
   while (tokens[0].get_token() == token::TOKEN::COMMA) {
     tokens.erase(tokens.begin());
+    if(tokens[0].get_token() == token::TOKEN::ELLIPSIS){
+      tokens.erase(tokens.begin());
+      decl->set_variadic(true);
+      return;
+    }
     MAKE_SHARED(ast::Param, param);
     PARSE_TYPE(param, set_type);
     MAKE_SHARED(ast::AST_declarator_Node, declarator);
