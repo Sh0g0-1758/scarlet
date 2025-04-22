@@ -76,6 +76,7 @@ Scarlet currently supports the following architectures:
 - [x] Add support for Arrays
 - [x] Add support for characters and strings
 - [x] Add support for dynamic memory allocation
+- [x] Add support for variadic argument function calling
 - [ ] Add support for user defined structures
 - [ ] Add support for NaN
 - [x] Add constant folding optimization
