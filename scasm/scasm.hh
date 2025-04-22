@@ -209,8 +209,6 @@ enum class register_type {
   R14,
   R15,
   SP,
-  /* A byte form of CX, simplifies scasm for shift instructions */
-  CL,
   XMM0,
   XMM1,
   XMM2,
@@ -235,6 +233,7 @@ enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE, B, BE, A, AE };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);
+bool isShiftBinop(Binop op);
 std::string to_string(register_type reg, register_size size);
 std::string to_string(Unop unop);
 std::string to_string(Binop binop);
