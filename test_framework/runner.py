@@ -521,6 +521,7 @@ def main() -> int:
     runner = unittest.TextTestRunner(verbosity=args.verbose, failfast=args.failfast)
     result = runner.run(test_suite)
     if result.wasSuccessful():
+        # subprocess.run(['bash', './clean.sh', "../build"], check=True)
         return 0
 
     if args.keep_asm_on_failure and args.stage == "run":
@@ -533,4 +534,5 @@ def main() -> int:
             if is_valid_test_case(failure_case):
                 gen_assembly(failure_case)
 
+    # subprocess.run(['bash', './clean.sh', "../build"], check=True)
     return 1

@@ -233,7 +233,9 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
   if (factor->get_factor_type() == ast::FactorType::FUNCTION_CALL) {
     auto func_call =
         std::static_pointer_cast<ast::AST_factor_function_call_Node>(factor);
-
+    bool is_variadic =
+        globalSymbolTable[func_call->get_identifier_node()->get_value()]
+            .is_variadic_func;
     for (auto it : func_call->get_arguments()) {
       analyze_exp(it, symbol_table, indx);
       decay_arr_to_pointer(nullptr, it);
@@ -247,7 +249,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     auto gstDerivedTypeDef =
         globalSymbolTable[func_call->get_identifier_node()->get_value()]
             .derivedTypeMap;
-    if ((int)func_call->get_arguments().size() != (int)gstTypeDef.size() - 1) {
+    if (!is_variadic and
+        (int) func_call->get_arguments().size() != (int)gstTypeDef.size() - 1) {
       success = false;
       error_messages.emplace_back(
           "Function " + func_call->get_identifier_node()->get_value() +
@@ -255,7 +258,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     } else {
       // check that the function is being called with the correct type of
       //  arguments. If not we cast the arguments to the correct type
-      for (int i = 0; i < (int)func_call->get_arguments().size(); i++) {
+      for (int i = 0; i < (int)gstTypeDef.size() - 1; i++) {
         auto funcArgType = func_call->get_arguments()[i]->get_type();
         auto funcArgDerivedType =
             func_call->get_arguments()[i]->get_derived_type();
