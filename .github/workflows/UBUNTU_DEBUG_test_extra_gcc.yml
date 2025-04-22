@@ -1,4 +1,4 @@
-name: UBUNTU_DEBUG => extra Test (gcc)
+name: UBUNTU_DEBUG => Extra Test (gcc)
 
 on:
   push:
