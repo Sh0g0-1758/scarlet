@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Type
 
 ROOT_DIR = Path(__file__).parent.parent  # ROOT of test repo
 TEST_DIR = ROOT_DIR / "tests"  # directory containing all test programs
+BUILD_DIR = ROOT_DIR / "build"  # directory containing compiled test programs
 IS_OSX = platform.system().lower() == "darwin"
 EXPECTED_RESULTS: dict[str, Any]
 
