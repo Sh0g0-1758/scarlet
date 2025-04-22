@@ -70,36 +70,6 @@ void Codegen::fix_pseudo_registers() {
     auto func = std::static_pointer_cast<scasm::scasm_function>(elem);
     int offset = 0;
 
-    std::string funcName = func->get_name();
-    for (auto it = calleeSavedRegisters[funcName].begin();
-         it != calleeSavedRegisters[funcName].end(); it++) {
-      // push the callee saved registers on the stack
-      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-      scasm_inst->set_type(scasm::instruction_type::PUSH);
-      scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
-      MAKE_SHARED(scasm::scasm_operand, scasm_src);
-      scasm_src->set_type(scasm::operand_type::REG);
-      scasm_src->set_reg(*it);
-      scasm_inst->set_src(std::move(scasm_src));
-      func->get_instructions().insert(func->get_instructions().begin(),
-                                      scasm_inst);
-      offset += 8;
-    }
-
-    for (auto it = calleeSavedRegisters[funcName].rbegin();
-         it != calleeSavedRegisters[funcName].rend(); it++) {
-      // pop the callee saved value from the stack into the register
-      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-      scasm_inst->set_type(scasm::instruction_type::POP);
-      scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
-      MAKE_SHARED(scasm::scasm_operand, scasm_src);
-      scasm_src->set_type(scasm::operand_type::REG);
-      scasm_src->set_reg(*it);
-      scasm_inst->set_src(std::move(scasm_src));
-      func->get_instructions().insert(func->get_instructions().end() - 1,
-                                      scasm_inst);
-    }
-
     for (auto &inst : func->get_instructions()) {
       FIX_PSEUDO(src);
       FIX_PSEUDO(dst);
