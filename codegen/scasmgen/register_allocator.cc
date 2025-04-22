@@ -121,8 +121,8 @@ void Codegen::allocate_registers() {
       if (block.is_empty())
         continue;
       auto live_regs = merge_live_regs(cfg, block);
-      for (auto it = block.get_body().end() - 1; it >= block.get_body().begin();
-           --it) {
+      for (auto it = block.get_body().rbegin(); it != block.get_body().rend();
+           ++it) {
         auto [used, updated] = used_and_updated_regs(*it);
 
         // If a register was updated while another register is still alive,
@@ -263,11 +263,12 @@ void Codegen::allocate_registers() {
     }
 
     std::string funcName = func->get_name();
-    std::vector<scasm::register_type> calleeSavedRegs;
+    std::vector<scasm::register_type> calleeSavedRegs{};
     for (auto it : calleeSavedRegisters[funcName])
       calleeSavedRegs.emplace_back(it);
 
     // push the callee saved registers on the stack
+    int regNum = 0;
     for (auto it = calleeSavedRegs.begin(); it != calleeSavedRegs.end(); it++) {
       MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
       scasm_inst->set_type(scasm::instruction_type::PUSH);
@@ -276,22 +277,29 @@ void Codegen::allocate_registers() {
       scasm_src->set_type(scasm::operand_type::REG);
       scasm_src->set_reg(*it);
       scasm_inst->set_src(std::move(scasm_src));
-      func->get_instructions().insert(func->get_instructions().begin(),
+      func->get_instructions().insert(func->get_instructions().begin() + regNum,
                                       scasm_inst);
+      ++regNum;
     }
 
-    // pop the callee saved value from the stack into the register
-    for (auto it = calleeSavedRegs.end() - 1; it >= calleeSavedRegs.begin();
-         --it) {
-      MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
-      scasm_inst->set_type(scasm::instruction_type::POP);
-      scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
-      MAKE_SHARED(scasm::scasm_operand, scasm_src);
-      scasm_src->set_type(scasm::operand_type::REG);
-      scasm_src->set_reg(*it);
-      scasm_inst->set_src(std::move(scasm_src));
-      func->get_instructions().insert(func->get_instructions().end() - 1,
-                                      scasm_inst);
+    // pop the callee saved value from the stack into the register before every
+    // ret instr
+    for (auto it = func->get_instructions().begin();
+         it != func->get_instructions().end(); ++it) {
+      if ((*it)->get_type() == scasm::instruction_type::RET) {
+        for (auto reg = calleeSavedRegs.rbegin(); reg != calleeSavedRegs.rend();
+             ++reg) {
+          MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
+          scasm_inst->set_type(scasm::instruction_type::POP);
+          scasm_inst->set_asm_type(scasm::AssemblyType::QUAD_WORD);
+          MAKE_SHARED(scasm::scasm_operand, scasm_src);
+          scasm_src->set_type(scasm::operand_type::REG);
+          scasm_src->set_reg(*reg);
+          scasm_inst->set_src(std::move(scasm_src));
+          it = func->get_instructions().insert(it, scasm_inst);
+          ++it;
+        }
+      }
     }
   }
 }
@@ -518,8 +526,8 @@ Codegen::used_and_updated_regs(
 void Codegen::transfer_live_regs(regalloc::cfg_node &block) {
   if (block.is_empty())
     return;
-  for (auto it = block.get_body().end() - 1; it >= block.get_body().begin();
-       --it) {
+  for (auto it = block.get_body().rbegin(); it != block.get_body().rend();
+       ++it) {
     auto [used, updated] = used_and_updated_regs(*it);
     for (auto reg : updated) {
       block.live_regs.erase(reg);

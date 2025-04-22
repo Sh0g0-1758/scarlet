@@ -75,7 +75,11 @@ void Codegen::fix_pseudo_registers() {
       FIX_PSEUDO(dst);
     }
 
-    MAKE_ALIGNED(offset, 16);
+    auto numCalleeRegsBytes = calleeSavedRegisters[func->get_name()].size() * 8;
+    int totalStackBytes = offset + numCalleeRegsBytes;
+
+    MAKE_ALIGNED(totalStackBytes, 16);
+    offset = totalStackBytes - numCalleeRegsBytes;
 
     func->set_frame_size(offset);
   }
