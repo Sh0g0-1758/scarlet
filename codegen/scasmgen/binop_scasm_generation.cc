@@ -100,8 +100,8 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
                                                    like integer mul|add|sub */
     // Mov(<src1 type>, src1, Reg(AX))
     // unsigned: Mov(<src1 type>, Imm(0), Reg(DX)) | signed: Cdq
-    // unsigned: Div(<src1 type>, src2)            | signed: Idiv(<src1 type>,
-    // src2) Mov(<src1 type>, Reg(AX), dst) | Mov(<src1 type>, Reg(DX), dst)
+    // unsigned: Div(<src1 type>, src2) | signed: Idiv(<src1 type>, src2)
+    // Mov(<src1 type>, Reg(AX), dst) | Mov(<src1 type>, Reg(DX), dst)
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::MOV);
     scasm_inst->set_asm_type(instType);
