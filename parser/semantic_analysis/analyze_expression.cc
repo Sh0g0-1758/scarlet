@@ -249,7 +249,8 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
     auto gstDerivedTypeDef =
         globalSymbolTable[func_call->get_identifier_node()->get_value()]
             .derivedTypeMap;
-    if (!is_variadic and (int)func_call->get_arguments().size() != (int)gstTypeDef.size() - 1) {
+    if (!is_variadic and
+        (int) func_call->get_arguments().size() != (int)gstTypeDef.size() - 1) {
       success = false;
       error_messages.emplace_back(
           "Function " + func_call->get_identifier_node()->get_value() +
@@ -277,7 +278,7 @@ void parser::analyze_factor(std::shared_ptr<ast::AST_factor_Node> factor,
                             castDerivedType);
           }
         }
-      } 
+      }
     }
   }
 

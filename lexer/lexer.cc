@@ -362,23 +362,23 @@ void lexer::tokenize() {
       }
       col_number += (identifier.length());
     } else if (regex.matchDigit(ch) or ch == '.') {
-      if(ch=='.'){
+      if (ch == '.') {
         file.get(ch);
-        if(ch=='.'){
+        if (ch == '.') {
           file.get(ch);
-          if(ch=='.'){
+          if (ch == '.') {
             tokens.emplace_back(token::TOKEN::ELLIPSIS);
-            col_number+=3;
+            col_number += 3;
             continue;
-          }else{
+          } else {
             file.seekg(-2, std::ios::cur);
-            ch='.';
+            ch = '.';
           }
-      }else{
-        file.seekg(-1, std::ios::cur);
-        ch='.';
+        } else {
+          file.seekg(-1, std::ios::cur);
+          ch = '.';
+        }
       }
-    }
       std::string constant;
       while (regex.matchDigit(ch)) {
         constant += ch;

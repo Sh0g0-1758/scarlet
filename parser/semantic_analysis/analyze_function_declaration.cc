@@ -190,7 +190,8 @@ void parser::analyze_function_declaration(
       funcInfo.link = symbolTable::linkage::INTERNAL;
     }
     symbol_table[{var_name, indx}] = funcInfo;
-    if(funcDecl->is_variadic_func()) funcInfo.is_variadic_func = true;
+    if (funcDecl->is_variadic_func())
+      funcInfo.is_variadic_func = true;
     globalSymbolTable[var_name] = funcInfo;
   }
 }
