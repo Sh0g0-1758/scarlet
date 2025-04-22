@@ -84,6 +84,7 @@ Scarlet currently supports the following architectures:
 - [x] Add propagate copies optimization
 - [x] Add dead store elimination optimization
 - [x] Test the complete scar optimization pipeline
+- [x] Add a register allocator
 
 ## Resources
 
