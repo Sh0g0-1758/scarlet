@@ -110,6 +110,7 @@ void Codegen::allocate_registers() {
       }
     }
 
+    alias_analyis(func->get_instructions());
     std::map<std::string, bool> pseudoRegInGraph;
     for (auto &inst : func->get_instructions()) {
       auto src = inst->get_src();
