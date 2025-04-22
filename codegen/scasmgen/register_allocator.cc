@@ -186,6 +186,11 @@ void Codegen::allocate_registers() {
           }
 
           for (auto updated_reg : updated) {
+            if (updated_reg == live_reg)
+              continue;
+            if (updated_reg.type == scasm::operand_type::REG and
+                live_reg.type == scasm::operand_type::REG)
+              continue;
             if (isDoubleReg(updated_reg) and isDoubleReg(live_reg)) {
               add_edge(xmm_graph, live_reg, updated_reg);
             } else if (!isDoubleReg(updated_reg) and !isDoubleReg(live_reg)) {
