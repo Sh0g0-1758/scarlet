@@ -119,4 +119,6 @@ add_custom_target(test-scarlet
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19 --eliminate-dead-stores
     COMMAND echo "Running complete optimization pipeline test"
     COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 19
+    COMMAND echo "Running register allocator correctness test"
+    COMMAND ${CMAKE_SOURCE_DIR}/test_compiler ./scarlet --chapter 20 --no-coalescing
 )

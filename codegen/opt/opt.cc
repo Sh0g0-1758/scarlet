@@ -115,7 +115,7 @@ void Codegen::gen_funcBody_from_cfg(
 void Codegen::gen_cfg_from_funcBody(
     std::vector<cfg::node> &cfg,
     std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody) {
-  NodeLabelToId.clear();
+  nodeLabelToId.clear();
   cfg::node entryNode = cfg::node();
   entryNode.set_id(0);
   entryNode.add_succ(1);
@@ -131,7 +131,7 @@ void Codegen::gen_cfg_from_funcBody(
         cfg.emplace_back(node);
         node = cfg::node();
       }
-      NodeLabelToId[it->get_src1()->get_label()] = blockId;
+      nodeLabelToId[it->get_src1()->get_label()] = blockId;
       node.add_instruction(it);
     } else if (instType == scar::instruction_type::RETURN or
                instType == scar::instruction_type::JUMP or
@@ -164,12 +164,12 @@ void Codegen::gen_cfg_from_funcBody(
       node->add_succ(blockId);
       (cfg.end() - 1)->add_pred(node->get_id());
     } else if (instr->get_type() == scar::instruction_type::JUMP) {
-      unsigned int dstId = NodeLabelToId[instr->get_src1()->get_label()];
+      unsigned int dstId = nodeLabelToId[instr->get_src1()->get_label()];
       node->add_succ(dstId);
       (cfg.begin() + dstId)->add_pred(node->get_id());
     } else if (instr->get_type() == scar::instruction_type::JUMP_IF_ZERO or
                instr->get_type() == scar::instruction_type::JUMP_IF_NOT_ZERO) {
-      unsigned int dstId = NodeLabelToId[instr->get_dst()->get_label()];
+      unsigned int dstId = nodeLabelToId[instr->get_dst()->get_label()];
       node->add_succ(dstId);
       (cfg.begin() + dstId)->add_pred(node->get_id());
 

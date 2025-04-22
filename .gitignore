@@ -37,6 +37,5 @@ play
 .vscode
 playground
 build
-test_framework
 __pycache__
 *.pyc
