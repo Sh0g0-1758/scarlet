@@ -122,6 +122,9 @@ void print_token(TOKEN token) {
   case TOKEN::COLON:
     std::cerr << ": ";
     break;
+  case TOKEN::ELLIPSIS:
+    std::cerr << "... ";
+    break;
   case TOKEN::QUESTION_MARK:
     std::cerr << "? ";
     break;
@@ -330,6 +333,8 @@ std::string to_string(TOKEN token) {
     return ";";
   case TOKEN::COLON:
     return ":";
+  case TOKEN::ELLIPSIS:
+    return "...";
   case TOKEN::OPEN_BRACKET:
     return "[";
   case TOKEN::CLOSE_BRACKET:
@@ -492,7 +497,7 @@ std::string get_token_type(TOKEN token) {
     return "CONSTANT";
   } else if (token > TOKEN::KEYWORDSTART && token < TOKEN::KEYWORDEND) {
     return "KEYWORD";
-  } else if (token > TOKEN::GRAMMARSTART && token < TOKEN::GRAMMAREND) {
+  } else if (token > TOKEN::GRAMMARSTART && token < TOKEN::ELLIPSIS) {
     return "SPECIAL SYMBOL";
   } else {
     if (token > TOKEN::UNARYSTART && token < TOKEN::UNARYEND) {

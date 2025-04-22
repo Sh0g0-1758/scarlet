@@ -33,6 +33,7 @@ struct symbolInfo {
   std::vector<ast::ElemType> typeDef{};
   defType def = defType::FALSE;
   std::vector<constant::Constant> value{};
+  bool is_variadic_func = false;
   // Here <= 0 corresponds to an ElemType and > 0 corrresponds to an array
   // dimension
   std::map<int, std::vector<long>> derivedTypeMap{};
