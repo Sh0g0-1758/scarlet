@@ -1,4 +1,4 @@
-name: UBUNTU_DEBUG => Stress Test (clang)
+name: UBUNTU_DEBUG => Extra Test (clang)
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: UBUNTU_DEBUG => Stress Test (gcc)
+name: UBUNTU_DEBUG => extra Test (gcc)
 
 on:
   push:

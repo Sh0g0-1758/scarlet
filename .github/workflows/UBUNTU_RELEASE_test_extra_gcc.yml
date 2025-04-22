@@ -1,4 +1,4 @@
-name: UBUNTU_RELEASE => Stress Test (gcc)
+name: UBUNTU_RELEASE => Extra Test (gcc)
 
 on:
   push:
