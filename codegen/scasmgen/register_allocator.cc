@@ -66,6 +66,16 @@ void Codegen::allocate_registers() {
         scasm::register_type::R8,  scasm::register_type::R9,
         scasm::register_type::R12, scasm::register_type::R13,
         scasm::register_type::R14, scasm::register_type::R15};
+    std::vector<std::shared_ptr<regalloc::node>> xmm_graph;
+    std::vector<scasm::register_type> xmm_registers = {
+        scasm::register_type::XMM0,  scasm::register_type::XMM1,
+        scasm::register_type::XMM2,  scasm::register_type::XMM3,
+        scasm::register_type::XMM4,  scasm::register_type::XMM5,
+        scasm::register_type::XMM6,  scasm::register_type::XMM7,
+        scasm::register_type::XMM8,  scasm::register_type::XMM9,
+        scasm::register_type::XMM10, scasm::register_type::XMM11,
+        scasm::register_type::XMM12, scasm::register_type::XMM13,
+    };
     for (auto base_reg : base_registers) {
       MAKE_SHARED(regalloc::node, node);
       regalloc::Reg reg;
@@ -83,32 +93,57 @@ void Codegen::allocate_registers() {
       }
     }
 
+    for (auto base_reg : xmm_registers) {
+      MAKE_SHARED(regalloc::node, node);
+      regalloc::Reg reg;
+      reg.type = scasm::operand_type::REG;
+      reg.reg = base_reg;
+      node->set_reg(reg);
+      node->set_spill_cost(INT_MAX);
+      xmm_graph.emplace_back(node);
+    }
+    for (auto node : xmm_graph) {
+      for (auto other : xmm_graph) {
+        if (node == other)
+          continue;
+        node->add_neighbor(other);
+      }
+    }
+
     std::map<std::string, bool> pseudoRegInGraph;
     for (auto &inst : func->get_instructions()) {
       auto src = inst->get_src();
       auto dst = inst->get_dst();
       if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = src->get_identifier();
-        if (pseudoRegInGraph[pseudoReg])
+        if (pseudoRegInGraph[pseudoReg] or aliasedPseudoRegs[pseudoReg])
           continue;
         MAKE_SHARED(regalloc::node, node);
         regalloc::Reg reg;
         reg.type = scasm::operand_type::PSEUDO;
         reg.pseudoreg = pseudoReg;
         node->set_reg(reg);
-        graph.emplace_back(node);
+        if (backendSymbolTable[pseudoReg].asmType ==
+            scasm::AssemblyType::DOUBLE)
+          xmm_graph.emplace_back(node);
+        else
+          graph.emplace_back(node);
         pseudoRegInGraph[pseudoReg] = true;
       }
       if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = dst->get_identifier();
-        if (pseudoRegInGraph[pseudoReg])
+        if (pseudoRegInGraph[pseudoReg] or aliasedPseudoRegs[pseudoReg])
           continue;
         MAKE_SHARED(regalloc::node, node);
         regalloc::Reg reg;
         reg.type = scasm::operand_type::PSEUDO;
         reg.pseudoreg = pseudoReg;
         node->set_reg(reg);
-        graph.emplace_back(node);
+        if (backendSymbolTable[pseudoReg].asmType ==
+            scasm::AssemblyType::DOUBLE)
+          xmm_graph.emplace_back(node);
+        else
+          graph.emplace_back(node);
         pseudoRegInGraph[pseudoReg] = true;
       }
     }
@@ -378,6 +413,20 @@ void Codegen::color_graph(std::vector<std::shared_ptr<regalloc::node>> &graph,
  ********** LIVENESS ANALYIS AND CONTROL FLOW GRAPH FOR SCASM ***********
  ************************************************************************/
 
+void Codegen::alias_analyis(
+    std::vector<std::shared_ptr<scasm::scasm_instruction>> &funcBody) {
+  // in scasm_generation, we already converted pseudoregisters which are static
+  // variables to data type, hence we do not need to worry about them here
+  aliasedPseudoRegs.clear();
+  for (auto instr : funcBody) {
+    if (instr->get_type() == scasm::instruction_type::LEA) {
+      auto src = instr->get_src();
+      if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO)
+        aliasedPseudoRegs[src->get_identifier()] = true;
+    }
+  }
+}
+
 void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
   std::queue<unsigned int> worklist;
   std::map<unsigned int, bool> worklistMap;
@@ -427,12 +476,13 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
       regalloc::Reg reg;                                                       \
       reg.type = scasm::operand_type::REG;                                     \
       reg.reg = operand->get_reg();                                            \
-      used.push_back(reg);                                                     \
-    } else if (operand->get_type() == scasm::operand_type::PSEUDO) {           \
+      used.insert(reg);                                                        \
+    } else if (operand->get_type() == scasm::operand_type::PSEUDO and          \
+               !aliasedPseudoRegs[operand->get_identifier()]) {                \
       regalloc::Reg reg;                                                       \
-      reg.type = scasm::operand_type::PSEUDO;                                  \
       reg.pseudoreg = operand->get_identifier();                               \
-      used.push_back(reg);                                                     \
+      reg.type = scasm::operand_type::PSEUDO;                                  \
+      used.insert(reg);                                                        \
     }                                                                          \
   }
 
@@ -443,24 +493,25 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
       regalloc::Reg reg;                                                       \
       reg.type = scasm::operand_type::REG;                                     \
       reg.reg = operand->get_reg();                                            \
-      updated.push_back(reg);                                                  \
-    } else if (operand->get_type() == scasm::operand_type::PSEUDO) {           \
+      updated.insert(reg);                                                     \
+    } else if (operand->get_type() == scasm::operand_type::PSEUDO and          \
+               !aliasedPseudoRegs[operand->get_identifier()]) {                \
       regalloc::Reg reg;                                                       \
       reg.type = scasm::operand_type::PSEUDO;                                  \
       reg.pseudoreg = operand->get_identifier();                               \
-      updated.push_back(reg);                                                  \
+      updated.insert(reg);                                                     \
     }                                                                          \
   }
 
-std::pair<std::vector<regalloc::Reg>, std::vector<regalloc::Reg>>
+std::pair<std::set<regalloc::Reg>, std::set<regalloc::Reg>>
 Codegen::used_and_updated_regs(
     std::shared_ptr<scasm::scasm_instruction> instr) {
   auto src = instr->get_src();
   auto dst = instr->get_dst();
   auto instrType = instr->get_type();
 
-  std::vector<regalloc::Reg> used{};
-  std::vector<regalloc::Reg> updated{};
+  std::set<regalloc::Reg> used{};
+  std::set<regalloc::Reg> updated{};
 
   if (instrType == scasm::instruction_type::MOV) {
     CHECK_USED(src);
@@ -487,10 +538,10 @@ Codegen::used_and_updated_regs(
     regalloc::Reg reg_dx;
     reg_dx.type = scasm::operand_type::REG;
     reg_dx.reg = scasm::register_type::DX;
-    used.push_back(reg_ax);
-    used.push_back(reg_dx);
-    updated.push_back(reg_ax);
-    updated.push_back(reg_dx);
+    used.insert(reg_ax);
+    used.insert(reg_dx);
+    updated.insert(reg_ax);
+    updated.insert(reg_dx);
   } else if (instrType == scasm::instruction_type::CDQ) {
     regalloc::Reg reg_ax;
     reg_ax.type = scasm::operand_type::REG;
@@ -498,15 +549,15 @@ Codegen::used_and_updated_regs(
     regalloc::Reg reg_dx;
     reg_dx.type = scasm::operand_type::REG;
     reg_dx.reg = scasm::register_type::DX;
-    used.push_back(reg_ax);
-    updated.push_back(reg_dx);
+    used.insert(reg_ax);
+    updated.insert(reg_dx);
   } else if (instrType == scasm::instruction_type::CALL) {
     std::string funcName = src->get_identifier();
-    for (auto it : funcRegs[funcName]) {
+    for (auto it : funcParamRegs[funcName]) {
       regalloc::Reg reg;
       reg.type = scasm::operand_type::REG;
       reg.reg = it;
-      used.push_back(reg);
+      used.insert(reg);
     }
 
     // Mark all caller saved registers as updated
@@ -514,12 +565,12 @@ Codegen::used_and_updated_regs(
       regalloc::Reg reg;
       reg.type = scasm::operand_type::REG;
       reg.reg = it;
-      updated.push_back(reg);
+      updated.insert(reg);
     }
     regalloc::Reg reg;
     reg.type = scasm::operand_type::REG;
     reg.reg = scasm::register_type::AX;
-    updated.push_back(reg);
+    updated.insert(reg);
   }
   return {used, updated};
 }

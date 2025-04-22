@@ -182,9 +182,12 @@ private:
   }
 
   /* REGISTER ALLOCATOR VARS */
-  // A map that stores the registers used by a function
-  // to pass parameters and return value
-  std::map<std::string, std::vector<scasm::register_type>> funcRegs;
+  // A map that stores that aliased pseudo-registers used by a function
+  std::map<std::string, bool> aliasedPseudoRegs;
+  void alias_analyis(
+      std::vector<std::shared_ptr<scasm::scasm_instruction>> &funcBody);
+  // A map that stores the registers used by a function to pass parameters
+  std::map<std::string, std::vector<scasm::register_type>> funcParamRegs;
   void allocate_registers();
   void gen_cfg_from_funcBody(
       std::vector<regalloc::cfg_node> &cfg,
@@ -208,7 +211,7 @@ private:
   merge_live_regs(std::vector<regalloc::cfg_node> &cfg,
                   regalloc::cfg_node &block);
   void transfer_live_regs(regalloc::cfg_node &block);
-  std::pair<std::vector<regalloc::Reg>, std::vector<regalloc::Reg>>
+  std::pair<std::set<regalloc::Reg>, std::set<regalloc::Reg>>
   used_and_updated_regs(std::shared_ptr<scasm::scasm_instruction> instr);
   std::shared_ptr<regalloc::node> &
   getNodeFromReg(std::vector<std::shared_ptr<regalloc::node>> &graph,

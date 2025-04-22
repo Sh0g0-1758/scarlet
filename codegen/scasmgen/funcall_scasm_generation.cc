@@ -84,8 +84,8 @@ void Codegen::gen_funcall_scasm(
     scasm_dst->set_reg(int_argReg[i]);
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
-    if (funcRegs.find(funcName) != funcRegs.end()) {
-      funcRegs[funcName].emplace_back(int_argReg[i]);
+    if (funcParamRegs.find(funcName) != funcParamRegs.end()) {
+      funcParamRegs[funcName].emplace_back(int_argReg[i]);
     }
   }
 
@@ -103,8 +103,8 @@ void Codegen::gen_funcall_scasm(
     scasm_dst->set_reg(double_argReg[i]);
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
-    if (funcRegs.find(funcName) != funcRegs.end()) {
-      funcRegs[funcName].emplace_back(double_argReg[i]);
+    if (funcParamRegs.find(funcName) != funcParamRegs.end()) {
+      funcParamRegs[funcName].emplace_back(double_argReg[i]);
     }
   }
 
