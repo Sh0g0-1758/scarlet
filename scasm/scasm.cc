@@ -251,8 +251,6 @@ std::string to_string(register_type reg, register_size size) {
     return "%rbp";
   case register_type::SP:
     return "%rsp";
-  case register_type::CL:
-    return "%cl";
   case register_type::XMM0:
     return "%xmm0";
   case register_type::XMM1:

@@ -209,8 +209,6 @@ enum class register_type {
   R14,
   R15,
   SP,
-  /* A byte form of CX, simplifies scasm for shift instructions */
-  CL,
   XMM0,
   XMM1,
   XMM2,
