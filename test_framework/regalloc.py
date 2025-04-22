@@ -113,13 +113,17 @@ class TestRegAlloc(basic.TestChapter):
 
         # first compile to assembly
         try:
-            self.invoke_compiler(program_path, cc_opt="-s").check_returncode()
+            self.invoke_compiler(program_path, cc_opt="-S").check_returncode()
         except subprocess.CalledProcessError as e:
             self.fail(f"Compilation failed:\n{e.stderr}")
         asm_file = program_path.with_suffix(".s")
 
         # make sure behavior is the same
         self.basic_test(asm_file)
+
+        parts = list(asm_file.parts)
+        idx = parts.index("tests")
+        asm_file = Path(*parts[:idx], "build", parts[-1])
 
         # make sure we actually performed the optimization
         parsed_asm = parse.parse_file(asm_file)[target_fun]

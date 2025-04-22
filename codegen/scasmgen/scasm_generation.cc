@@ -32,23 +32,21 @@ void Codegen::gen_scasm() {
     }
 
     auto func = std::static_pointer_cast<scar::scar_Function_Node>(elem);
+    std::string funcName = func->get_identifier()->get_value();
     MAKE_SHARED(scasm::scasm_function, scasm_func);
-    scasm_func->set_name(func->get_identifier()->get_value());
+    scasm_func->set_name(funcName);
     scasm_func->set_global(elem->is_global());
 
     // Move function args from registers and stack to the callee stack frame
     int numParams = func->get_params().size();
     std::vector<constant::Type> param_types;
     for (int i = 0; i < numParams; i++) {
-      param_types.push_back(ast::elemTypeToConstType(
-          globalSymbolTable[func->get_identifier()->get_value()]
-              .typeDef[i + 1]));
+      param_types.push_back(
+          ast::elemTypeToConstType(globalSymbolTable[funcName].typeDef[i + 1]));
     }
 
     std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
-
     std::vector<int> double_param_indx;
-
     std::vector<std::pair<scasm::AssemblyType, int>> stack_param_indx;
 
     calssify_parameters(param_types, int_param_indx, double_param_indx,
@@ -69,6 +67,9 @@ void Codegen::gen_scasm() {
           func->get_params()[int_param_indx[i].second]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
+      if (funcParamRegs.find(funcName) != funcParamRegs.end()) {
+        funcParamRegs[funcName].emplace_back(int_argReg[i]);
+      }
     }
 
     // Move double args
@@ -86,6 +87,9 @@ void Codegen::gen_scasm() {
           func->get_params()[double_param_indx[i]]->get_value());
       scasm_inst->set_dst(std::move(scasm_dst));
       scasm_func->add_instruction(std::move(scasm_inst));
+      if (funcParamRegs.find(funcName) != funcParamRegs.end()) {
+        funcParamRegs[funcName].emplace_back(double_argReg[i]);
+      }
     }
 
     // Move stack args
@@ -125,11 +129,10 @@ void Codegen::gen_scasm() {
 
         MAKE_SHARED(scasm::scasm_operand, scasm_dst);
         scasm_dst->set_type(scasm::operand_type::REG);
-        if (instType == scasm::AssemblyType::DOUBLE) {
+        if (instType == scasm::AssemblyType::DOUBLE)
           scasm_dst->set_reg(scasm::register_type::XMM0);
-        } else {
+        else
           scasm_dst->set_reg(scasm::register_type::AX);
-        }
 
         scasm_inst->set_dst(std::move(scasm_dst));
         scasm_func->add_instruction(std::move(scasm_inst));
@@ -495,6 +498,28 @@ void Codegen::gen_scasm() {
       backendSymbolTable[it.first] = sym;
     }
   }
+
+  // Mark the static variables used in functions with the correct operand type
+  for (auto &elem : scasm_program.get_elems()) {
+    if (elem->get_type() == scasm::scasm_top_level_type::FUNCTION) {
+      auto func = std::static_pointer_cast<scasm::scasm_function>(elem);
+      for (auto &inst : func->get_instructions()) {
+        auto src = inst->get_src();
+        auto dst = inst->get_dst();
+        if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO) {
+          auto data = src->get_identifier();
+          if (backendSymbolTable[data].isTopLevel)
+            src->set_type(scasm::operand_type::DATA);
+        }
+        if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
+          auto data = dst->get_identifier();
+          if (backendSymbolTable[data].isTopLevel)
+            dst->set_type(scasm::operand_type::DATA);
+        }
+      }
+    }
+  }
+
   this->scasm = scasm_program;
 }
 

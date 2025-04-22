@@ -45,6 +45,7 @@ instruction = Mov(assembly_type, Operand src, Operand dst)
             | SetCC(cond_code, operand)
             | Label(label)
             | Push(Operand)
+            | Pop(reg)
             | Call(Identifier)
             | Cvtts2di(assembly_type, Operand src, Operand dst)
             | Cvtsi2sd(assembly_type, Operand src, Operand dst)
@@ -75,6 +76,7 @@ Operand = Imm(int)
 cond_code = E | NE | G | GE | L | LE
 
 reg = AX
+    | BX
     | CX 
     | DX 
     | DI 
@@ -82,13 +84,14 @@ reg = AX
     | R8 
     | R9 
     | R10 
-    | R11 
+    | R11
+    | R12
+    | R13
+    | R14
+    | R15
     | CL 
-    | SP 
-    | B 
-    | BE 
-    | A 
-    | AE
+    | SP
+    | BP
     | XMM0
     | XMM1
     | XMM2
@@ -121,7 +124,11 @@ enum class AssemblyType {
   DOUBLE,
   BYTE_ARRAY
 };
-// NOTE: Every Pseudo Operand gets converted into a memory operand
+
+/**
+ * NOTE: Ever Pseudo operand either gets converted into a memory (stack) operand
+ *       or a register. Data operand here represents static variables.
+ */
 enum class operand_type {
   UNKNOWN,
   IMM,
@@ -177,6 +184,7 @@ enum class instruction_type {
   SETCC,
   LABEL,
   PUSH,
+  POP,
   CALL,
   CVTTS2DI,
   CVTSI2SD,
@@ -185,7 +193,9 @@ enum class instruction_type {
 
 enum class register_type {
   UNKNOWN,
+  BP,
   AX,
+  BX,
   CX,
   DX,
   DI,
@@ -194,9 +204,11 @@ enum class register_type {
   R9,
   R10,
   R11,
-  CL,
+  R12,
+  R13,
+  R14,
+  R15,
   SP,
-  BP,
   XMM0,
   XMM1,
   XMM2,
@@ -205,6 +217,12 @@ enum class register_type {
   XMM5,
   XMM6,
   XMM7,
+  XMM8,
+  XMM9,
+  XMM10,
+  XMM11,
+  XMM12,
+  XMM13,
   XMM14,
   XMM15
 };
@@ -215,6 +233,7 @@ enum class cond_code { UNKNOWN, E, NE, G, GE, L, LE, B, BE, A, AE };
 
 Unop scar_unop_to_scasm_unop(unop::UNOP unop);
 Binop scar_binop_to_scasm_binop(binop::BINOP binop);
+bool isShiftBinop(Binop op);
 std::string to_string(register_type reg, register_size size);
 std::string to_string(Unop unop);
 std::string to_string(Binop binop);

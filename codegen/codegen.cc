@@ -118,6 +118,12 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
       assembly << " ";
       CODEGEN_SRC(instr->get_asm_type());
       assembly << "\n";
+    } else if (instr->get_type() == scasm::instruction_type::POP) {
+      assembly << "\tpop";
+      POSTFIX_ASM_TYPE(instr->get_asm_type());
+      assembly << " ";
+      CODEGEN_SRC(instr->get_asm_type());
+      assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::RET) {
       assembly << "\tmovq %rbp, %rsp\n";
       assembly << "\tpopq %rbp\n";
@@ -174,7 +180,14 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
         POSTFIX_ASM_TYPE(instr->get_asm_type());
       }
       assembly << " ";
-      CODEGEN_SRC_DST();
+      if (scasm::isShiftBinop(instr->get_binop())) {
+        assembly << scasm::to_string(instr->get_src()->get_reg(),
+                                     scasm::register_size::BYTE);
+        assembly << ", ";
+        CODEGEN_DST(instr->get_asm_type());
+      } else {
+        CODEGEN_SRC_DST();
+      }
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::JMP) {
 #ifdef __APPLE__
@@ -369,6 +382,7 @@ void Codegen::asm_gen_static_constant(
 void Codegen::codegen() {
   // ###########################
   gen_scasm();
+  allocate_registers();
   fix_pseudo_registers();
   fix_instructions();
   // ###########################

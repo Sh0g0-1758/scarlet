@@ -91,6 +91,18 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   UNREACHABLE()
 }
 
+bool isShiftBinop(Binop op) {
+  switch (op) {
+  case Binop::LEFT_SHIFT:
+  case Binop::RIGHT_SHIFT:
+  case Binop::LOGICAL_LEFT_SHIFT:
+  case Binop::LOGICAL_RIGHT_SHIFT:
+    return true;
+  default:
+    return false;
+  }
+}
+
 std::string to_string(register_type reg, register_size size) {
   switch (reg) {
   case register_type::AX:
@@ -101,6 +113,17 @@ std::string to_string(register_type reg, register_size size) {
       return "%eax";
     case register_size::QWORD:
       return "%rax";
+    }
+    break;
+
+  case register_type::BX:
+    switch (size) {
+    case register_size::BYTE:
+      return "%bl";
+    case register_size::LWORD:
+      return "%ebx";
+    case register_size::QWORD:
+      return "%rbx";
     }
     break;
 
@@ -192,12 +215,54 @@ std::string to_string(register_type reg, register_size size) {
     }
     break;
 
+  case register_type::R12:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r12b";
+    case register_size::LWORD:
+      return "%r12d";
+    case register_size::QWORD:
+      return "%r12";
+    }
+    break;
+
+  case register_type::R13:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r13b";
+    case register_size::LWORD:
+      return "%r13d";
+    case register_size::QWORD:
+      return "%r13";
+    }
+    break;
+
+  case register_type::R14:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r14b";
+    case register_size::LWORD:
+      return "%r14d";
+    case register_size::QWORD:
+      return "%r14";
+    }
+    break;
+
+  case register_type::R15:
+    switch (size) {
+    case register_size::BYTE:
+      return "%r15b";
+    case register_size::LWORD:
+      return "%r15d";
+    case register_size::QWORD:
+      return "%r15";
+    }
+    break;
+
   case register_type::BP:
     return "%rbp";
   case register_type::SP:
     return "%rsp";
-  case register_type::CL:
-    return "%cl";
   case register_type::XMM0:
     return "%xmm0";
   case register_type::XMM1:
@@ -214,6 +279,18 @@ std::string to_string(register_type reg, register_size size) {
     return "%xmm6";
   case register_type::XMM7:
     return "%xmm7";
+  case register_type::XMM8:
+    return "%xmm8";
+  case register_type::XMM9:
+    return "%xmm9";
+  case register_type::XMM10:
+    return "%xmm10";
+  case register_type::XMM11:
+    return "%xmm11";
+  case register_type::XMM12:
+    return "%xmm12";
+  case register_type::XMM13:
+    return "%xmm13";
   case register_type::XMM14:
     return "%xmm14";
   case register_type::XMM15:
@@ -320,6 +397,12 @@ bool RegIsXMM(register_type reg) {
   case register_type::XMM5:
   case register_type::XMM6:
   case register_type::XMM7:
+  case register_type::XMM8:
+  case register_type::XMM9:
+  case register_type::XMM10:
+  case register_type::XMM11:
+  case register_type::XMM12:
+  case register_type::XMM13:
   case register_type::XMM14:
   case register_type::XMM15:
     return true;

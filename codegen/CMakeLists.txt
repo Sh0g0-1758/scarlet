@@ -3,6 +3,7 @@ add_library(scarCodegen STATIC
     codegen.hh
     common.hh
     cfg/cfg.hh
+    regalloc/regalloc.hh
 
     scargen/scar.cc
     scargen/scar_statement.cc
@@ -19,6 +20,7 @@ add_library(scarCodegen STATIC
     opt/dead_store_elimination.cc
 
     scasmgen/scasm_generation.cc
+    scasmgen/register_allocator.cc
     scasmgen/binop_scasm_generation.cc
     scasmgen/unop_scasm_generation.cc
     scasmgen/funcall_scasm_generation.cc

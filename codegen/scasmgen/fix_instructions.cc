@@ -10,6 +10,8 @@ void Codegen::fix_instructions() {
       continue;
     }
     auto funcs = std::static_pointer_cast<scasm::scasm_function>(elem);
+    if (funcs->get_frame_size() == 0)
+      continue;
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::BINARY);
     scasm_inst->set_binop(scasm::Binop::SUB);

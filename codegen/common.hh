@@ -88,6 +88,7 @@ namespace codegen {
  * set_target  - the scasm target operand setter
  * get_target  - the scar operand getter
  * instruction - the scasm instruction
+ * inst        - the scar instruction
  */
 #define SET_OPERAND(target, set_target, get_target, instruction)               \
   switch (inst->get_target()->get_type()) {                                    \

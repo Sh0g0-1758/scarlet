@@ -3,24 +3,40 @@
 namespace scarlet {
 namespace codegen {
 
+#define SET_SRC_FROM_FUNCARG()                                                 \
+  switch (funcArg->get_type()) {                                               \
+  case scar::val_type::VAR: {                                                  \
+    scasm_src->set_type(scasm::operand_type::PSEUDO);                          \
+    scasm_src->set_identifier(funcArg->get_reg());                             \
+  } break;                                                                     \
+  case scar::val_type::CONSTANT: {                                             \
+    if (funcArg->get_const_val().get_type() == constant::Type::DOUBLE) {       \
+      MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val());               \
+    } else {                                                                   \
+      scasm_src->set_type(scasm::operand_type::IMM);                           \
+      scasm_src->set_imm(funcArg->get_const_val());                            \
+    }                                                                          \
+  } break;                                                                     \
+  case scar::val_type::LABEL:                                                  \
+    break;                                                                     \
+  }
+
 void Codegen::gen_funcall_scasm(
     std::shared_ptr<scar::scar_Instruction_Node> inst,
     std::shared_ptr<scasm::scasm_function> scasm_func,
     scasm::scasm_program &scasm_program) {
   auto funcCall =
       std::static_pointer_cast<scar::scar_FunctionCall_Instruction_Node>(inst);
+  std::string funcName = funcCall->get_name()->get_value();
   int numArgs = funcCall->get_args().size();
 
   std::vector<constant::Type> param_types;
 
-  for (int i = 0; i < numArgs; i++) {
+  for (int i = 0; i < numArgs; i++)
     param_types.push_back(scarValTypeToConstType(funcCall->get_args()[i]));
-  }
 
   std::vector<std::pair<scasm::AssemblyType, int>> int_param_indx;
-
   std::vector<int> double_param_indx;
-
   std::vector<std::pair<scasm::AssemblyType, int>> stack_param_indx;
 
   calssify_parameters(param_types, int_param_indx, double_param_indx,
@@ -29,6 +45,8 @@ void Codegen::gen_funcall_scasm(
   bool stack_padding = stack_param_indx.size() % 2;
 
   if (stack_padding) {
+    // subtract 8 bytes from the stack pointer to conform to the ABI
+    // 16-byte alignment requirement
     MAKE_SHARED(scasm::scasm_instruction, scasm_inst);
     scasm_inst->set_type(scasm::instruction_type::BINARY);
     scasm_inst->set_binop(scasm::Binop::SUB);
@@ -59,24 +77,16 @@ void Codegen::gen_funcall_scasm(
     scasm_inst->set_asm_type(int_param_indx[i].first);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     auto funcArg = funcCall->get_args()[int_param_indx[i].second];
-    switch (funcArg->get_type()) {
-    case scar::val_type::VAR:
-      scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier(funcArg->get_reg());
-      break;
-    case scar::val_type::CONSTANT:
-      scasm_src->set_type(scasm::operand_type::IMM);
-      scasm_src->set_imm(funcArg->get_const_val());
-      break;
-    case scar::val_type::LABEL:
-      break;
-    }
+    SET_SRC_FROM_FUNCARG();
     scasm_inst->set_src(std::move(scasm_src));
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
     scasm_dst->set_type(scasm::operand_type::REG);
     scasm_dst->set_reg(int_argReg[i]);
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
+    if (funcParamRegs.find(funcName) != funcParamRegs.end()) {
+      funcParamRegs[funcName].emplace_back(int_argReg[i]);
+    }
   }
 
   // Move double args
@@ -86,23 +96,16 @@ void Codegen::gen_funcall_scasm(
     scasm_inst->set_asm_type(scasm::AssemblyType::DOUBLE);
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     auto funcArg = funcCall->get_args()[double_param_indx[i]];
-    switch (funcArg->get_type()) {
-    case scar::val_type::VAR:
-      scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier(funcArg->get_reg());
-      break;
-    case scar::val_type::CONSTANT: {
-      MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val());
-    } break;
-    case scar::val_type::LABEL:
-      break;
-    }
+    SET_SRC_FROM_FUNCARG();
     scasm_inst->set_src(std::move(scasm_src));
     MAKE_SHARED(scasm::scasm_operand, scasm_dst);
     scasm_dst->set_type(scasm::operand_type::REG);
     scasm_dst->set_reg(double_argReg[i]);
     scasm_inst->set_dst(std::move(scasm_dst));
     scasm_func->add_instruction(std::move(scasm_inst));
+    if (funcParamRegs.find(funcName) != funcParamRegs.end()) {
+      funcParamRegs[funcName].emplace_back(double_argReg[i]);
+    }
   }
 
   // Move stack args
@@ -111,23 +114,7 @@ void Codegen::gen_funcall_scasm(
     MAKE_SHARED(scasm::scasm_operand, scasm_src);
     scasm_inst->set_asm_type(stack_param_indx[i].first);
     auto funcArg = funcCall->get_args()[stack_param_indx[i].second];
-
-    switch (funcArg->get_type()) {
-    case scar::val_type::VAR:
-      scasm_src->set_type(scasm::operand_type::PSEUDO);
-      scasm_src->set_identifier(funcArg->get_reg());
-      break;
-    case scar::val_type::CONSTANT: {
-      if (funcArg->get_const_val().get_type() == constant::Type::DOUBLE) {
-        MAKE_DOUBLE_CONSTANT(scasm_src, funcArg->get_const_val());
-      } else {
-        scasm_src->set_type(scasm::operand_type::IMM);
-        scasm_src->set_imm(funcArg->get_const_val());
-      }
-    } break;
-    case scar::val_type::LABEL:
-      break;
-    }
+    SET_SRC_FROM_FUNCARG();
 
     if (scasm_src->get_type() == scasm::operand_type::IMM or
         scasm_inst->get_asm_type() == scasm::AssemblyType::QUAD_WORD or
@@ -160,7 +147,7 @@ void Codegen::gen_funcall_scasm(
   scasm_inst->set_type(scasm::instruction_type::CALL);
   MAKE_SHARED(scasm::scasm_operand, scasm_src);
   scasm_src->set_type(scasm::operand_type::LABEL);
-  scasm_src->set_identifier(funcCall->get_name()->get_value());
+  scasm_src->set_identifier(funcName);
   scasm_inst->set_src(std::move(scasm_src));
   scasm_func->add_instruction(std::move(scasm_inst));
 
@@ -189,8 +176,7 @@ void Codegen::gen_funcall_scasm(
     scasm_func->add_instruction(std::move(scasm_inst));
   }
 
-  if (globalSymbolTable[funcCall->get_name()->get_value()].typeDef[0] ==
-      ast::ElemType::VOID) {
+  if (globalSymbolTable[funcName].typeDef[0] == ast::ElemType::VOID) {
     return;
   }
   MAKE_SHARED(scasm::scasm_instruction, scasm_inst3);
@@ -198,11 +184,11 @@ void Codegen::gen_funcall_scasm(
   scasm_inst3->set_asm_type(scarValTypeToAsmType(inst->get_dst()));
   MAKE_SHARED(scasm::scasm_operand, scasm_src3);
   scasm_src3->set_type(scasm::operand_type::REG);
-  if (scarValTypeToConstType(inst->get_dst()) == constant::Type::DOUBLE) {
+  if (scarValTypeToConstType(inst->get_dst()) == constant::Type::DOUBLE)
     scasm_src3->set_reg(scasm::register_type::XMM0);
-  } else {
+  else
     scasm_src3->set_reg(scasm::register_type::AX);
-  }
+
   scasm_inst3->set_src(std::move(scasm_src3));
   MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
   SET_OPERAND(scasm_dst3, set_dst, get_dst, scasm_inst3);

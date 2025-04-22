@@ -1,9 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <ast/ast.hh>
 #include <cmath>
 #include <cmd/cmd.hh>
 #include <codegen/cfg/cfg.hh>
+#include <codegen/regalloc/regalloc.hh>
 #include <fstream>
 #include <map>
 #include <queue>
@@ -148,7 +150,7 @@ private:
   void gen_funcBody_from_cfg(
       std::vector<cfg::node> &cfg,
       std::vector<std::shared_ptr<scar::scar_Instruction_Node>> &funcBody);
-  std::map<std::string, int> NodeLabelToId;
+  std::map<std::string, int> nodeLabelToId;
   bool unreachable_code_elimination(std::vector<cfg::node> &cfg);
   bool copy_propagation(std::vector<cfg::node> &cfg);
   void transfer_copies(cfg::node &block);
@@ -177,6 +179,73 @@ private:
       }
     }
     throw std::runtime_error("Block not found");
+  }
+
+  /* REGISTER ALLOCATOR VARS */
+  // A map that stores that aliased pseudo-registers used by a function
+  std::map<std::string, bool> aliasedPseudoRegs;
+  void alias_analyis(
+      std::vector<std::shared_ptr<scasm::scasm_instruction>> &funcBody);
+  // A map that stores the registers used by a function to pass parameters
+  std::map<std::string, std::vector<scasm::register_type>> funcParamRegs;
+  void allocate_registers();
+  void gen_cfg_from_funcBody(
+      std::vector<regalloc::cfg_node> &cfg,
+      std::vector<std::shared_ptr<scasm::scasm_instruction>> &funcBody);
+  std::map<std::string, int> cfgNodeLabelToId;
+  void liveness_analysis(std::vector<regalloc::cfg_node> &cfg,
+                         std::string funcName);
+  void initialize_worklist(std::vector<regalloc::cfg_node> &cfg,
+                           regalloc::cfg_node &block,
+                           std::queue<unsigned int> &worklist,
+                           std::map<unsigned int, bool> &worklistMap);
+  regalloc::cfg_node &getNodeFromID(std::vector<regalloc::cfg_node> &cfg,
+                                    unsigned int id) {
+    for (auto &node : cfg) {
+      if (node.get_id() == id) {
+        return node;
+      }
+    }
+    throw std::runtime_error("Block not found");
+  }
+  std::map<regalloc::Reg, bool>
+  merge_live_regs(std::vector<regalloc::cfg_node> &cfg,
+                  regalloc::cfg_node &block);
+  void transfer_live_regs(regalloc::cfg_node &block);
+  std::pair<std::set<regalloc::Reg>, std::set<regalloc::Reg>>
+  used_and_updated_regs(std::shared_ptr<scasm::scasm_instruction> instr);
+  std::shared_ptr<regalloc::node> &
+  getNodeFromReg(std::vector<std::shared_ptr<regalloc::node>> &graph,
+                 regalloc::Reg reg) {
+    for (auto &node : graph) {
+      if (node->get_reg() == reg) {
+        return node;
+      }
+    }
+    throw std::runtime_error("Node not found");
+  }
+  void add_edge(std::vector<std::shared_ptr<regalloc::node>> &graph,
+                regalloc::Reg reg1, regalloc::Reg reg2) {
+    if (reg1 == reg2)
+      return;
+    auto &node1 = getNodeFromReg(graph, reg1);
+    for (auto neighbour : node1->get_neighbors()) {
+      if (neighbour->get_reg() == reg2)
+        return;
+    }
+    auto &node2 = getNodeFromReg(graph, reg2);
+    node1->add_neighbor(node2);
+    node2->add_neighbor(node1);
+  }
+  void color_graph(std::vector<std::shared_ptr<regalloc::node>> &graph, int k);
+  // A map that stores the callee saved registers used by a function
+  std::map<std::string, std::set<scasm::register_type>> calleeSavedRegisters;
+  bool isDoubleReg(regalloc::Reg reg) {
+    if (reg.type == scasm::operand_type::REG)
+      return scasm::RegIsXMM(reg.reg);
+    else
+      return backendSymbolTable[reg.pseudoreg].asmType ==
+             scasm::AssemblyType::DOUBLE;
   }
 
 public:
@@ -421,6 +490,26 @@ public:
       scasm::register_type::XMM2, scasm::register_type::XMM3,
       scasm::register_type::XMM4, scasm::register_type::XMM5,
       scasm::register_type::XMM6, scasm::register_type::XMM7};
+  // We don't factor in base pointer, stack pointer and scratch registers
+  std::map<scasm::register_type, bool> callee_savedReg = {
+      {scasm::register_type::BX, true},
+      {scasm::register_type::R12, true},
+      {scasm::register_type::R13, true},
+      {scasm::register_type::R14, true},
+      {scasm::register_type::R15, true}};
+  std::map<scasm::register_type, bool> caller_savedReg = {
+      {scasm::register_type::DI, true}, {scasm::register_type::SI, true},
+      {scasm::register_type::DX, true}, {scasm::register_type::CX, true},
+      {scasm::register_type::R8, true}, {scasm::register_type::R9, true},
+      {scasm::register_type::AX, true}};
+  std::map<scasm::register_type, bool> xmm_caller_savedReg = {
+      {scasm::register_type::XMM0, true},  {scasm::register_type::XMM1, true},
+      {scasm::register_type::XMM2, true},  {scasm::register_type::XMM3, true},
+      {scasm::register_type::XMM4, true},  {scasm::register_type::XMM5, true},
+      {scasm::register_type::XMM6, true},  {scasm::register_type::XMM7, true},
+      {scasm::register_type::XMM8, true},  {scasm::register_type::XMM9, true},
+      {scasm::register_type::XMM10, true}, {scasm::register_type::XMM11, true},
+      {scasm::register_type::XMM12, true}, {scasm::register_type::XMM13, true}};
 };
 
 } // namespace codegen

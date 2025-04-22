@@ -388,7 +388,7 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
             }
             block->get_succ().clear();
             unsigned int jmpLblID =
-                NodeLabelToId[(*inst)->get_src1()->get_label()];
+                nodeLabelToId[(*inst)->get_src1()->get_label()];
             block->add_succ(jmpLblID);
             getNodeFromID(cfg, jmpLblID).add_pred(block->get_id());
           } else {
@@ -428,7 +428,7 @@ bool Codegen::constant_folding(std::vector<cfg::node> &cfg) {
             }
             block->get_succ().clear();
             unsigned int jmpLblID =
-                NodeLabelToId[(*inst)->get_src1()->get_label()];
+                nodeLabelToId[(*inst)->get_src1()->get_label()];
             block->add_succ(jmpLblID);
             getNodeFromID(cfg, jmpLblID).add_pred(block->get_id());
           }

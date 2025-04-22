@@ -202,24 +202,12 @@ void parser::analyze_for_statement(
   if (for_statement->get_for_init() == nullptr) {
     analyze_exp(for_statement->get_exps(), symbol_table, indx);
     analyze_exp(for_statement->get_exp2(), symbol_table, indx);
-    if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
-      auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
-          for_statement->get_stmt());
-      analyze_for_statement(forstmt, symbol_table, indx);
-    } else {
-      analyze_statement(for_statement->get_stmt(), symbol_table, indx);
-    }
+    analyze_statement(for_statement->get_stmt(), symbol_table, indx);
   } else if (for_statement->get_for_init()->get_declaration() == nullptr) {
     analyze_exp(for_statement->get_for_init()->get_exp(), symbol_table, indx);
     analyze_exp(for_statement->get_exps(), symbol_table, indx);
     analyze_exp(for_statement->get_exp2(), symbol_table, indx);
-    if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
-      auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
-          for_statement->get_stmt());
-      analyze_for_statement(forstmt, symbol_table, indx);
-    } else {
-      analyze_statement(for_statement->get_stmt(), symbol_table, indx);
-    }
+    analyze_statement(for_statement->get_stmt(), symbol_table, indx);
   } else {
     // Add another level to the symbol table
     std::map<std::pair<std::string, int>, symbolTable::symbolInfo>
@@ -228,14 +216,7 @@ void parser::analyze_for_statement(
                         proxy_symbol_table, indx + 1);
     analyze_exp(for_statement->get_exps(), proxy_symbol_table, indx + 1);
     analyze_exp(for_statement->get_exp2(), proxy_symbol_table, indx + 1);
-    if (for_statement->get_stmt()->get_type() == ast::statementType::FOR) {
-      auto forstmt = std::static_pointer_cast<ast::AST_For_Statement_Node>(
-          for_statement->get_stmt());
-      analyze_for_statement(forstmt, proxy_symbol_table, indx + 1);
-    } else {
-      analyze_statement(for_statement->get_stmt(), proxy_symbol_table,
-                        indx + 1);
-    }
+    analyze_statement(for_statement->get_stmt(), proxy_symbol_table, indx + 1);
   }
   // check for scalar type
 
