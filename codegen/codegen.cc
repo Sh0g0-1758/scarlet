@@ -180,14 +180,7 @@ void Codegen::asm_gen_func(std::shared_ptr<scasm::scasm_top_level> elem,
         POSTFIX_ASM_TYPE(instr->get_asm_type());
       }
       assembly << " ";
-      if (scasm::isShiftBinop(instr->get_binop())) {
-        assembly << scasm::to_string(instr->get_src()->get_reg(),
-                                     scasm::register_size::BYTE);
-        assembly << ", ";
-        CODEGEN_DST(instr->get_asm_type());
-      } else {
-        CODEGEN_SRC_DST();
-      }
+      CODEGEN_SRC_DST();
       assembly << "\n";
     } else if (instr->get_type() == scasm::instruction_type::JMP) {
 #ifdef __APPLE__

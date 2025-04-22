@@ -200,7 +200,7 @@ void Codegen::gen_binop_scasm(std::shared_ptr<scar::scar_Instruction_Node> inst,
     scasm_inst3->set_binop(scasm::scar_binop_to_scasm_binop(inst->get_binop()));
     MAKE_SHARED(scasm::scasm_operand, scasm_src3);
     scasm_src3->set_type(scasm::operand_type::REG);
-    scasm_src3->set_reg(scasm::register_type::CX);
+    scasm_src3->set_reg(scasm::register_type::CL);
     scasm_inst3->set_src(std::move(scasm_src3));
     MAKE_SHARED(scasm::scasm_operand, scasm_dst3);
     scasm_dst3->set_type(scasm::operand_type::PSEUDO);

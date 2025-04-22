@@ -91,18 +91,6 @@ Binop scar_binop_to_scasm_binop(binop::BINOP binop) {
   UNREACHABLE()
 }
 
-bool isShiftBinop(Binop op) {
-  switch (op) {
-  case Binop::LEFT_SHIFT:
-  case Binop::RIGHT_SHIFT:
-  case Binop::LOGICAL_LEFT_SHIFT:
-  case Binop::LOGICAL_RIGHT_SHIFT:
-    return true;
-  default:
-    return false;
-  }
-}
-
 std::string to_string(register_type reg, register_size size) {
   switch (reg) {
   case register_type::AX:
@@ -263,6 +251,8 @@ std::string to_string(register_type reg, register_size size) {
     return "%rbp";
   case register_type::SP:
     return "%rsp";
+  case register_type::CL:
+    return "%cl";
   case register_type::XMM0:
     return "%xmm0";
   case register_type::XMM1:
