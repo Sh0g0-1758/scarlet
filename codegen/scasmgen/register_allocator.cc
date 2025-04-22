@@ -523,6 +523,22 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg,
       reg.pseudoreg = operand->get_identifier();                               \
       reg.type = scasm::operand_type::PSEUDO;                                  \
       used.insert(reg);                                                        \
+    } else if (operand->get_type() == scasm::operand_type::MEMORY and          \
+               IS_BASE_REG(operand)) {                                         \
+      regalloc::Reg reg;                                                       \
+      reg.type = scasm::operand_type::REG;                                     \
+      reg.reg = operand->get_reg();                                            \
+      used.insert(reg);                                                        \
+    } else if (operand->get_type() == scasm::operand_type::INDEXED and         \
+               IS_BASE_REG(operand)) {                                         \
+      regalloc::Reg reg;                                                       \
+      reg.type = scasm::operand_type::REG;                                     \
+      reg.reg = operand->get_reg();                                            \
+      used.insert(reg);                                                        \
+      regalloc::Reg reg2;                                                      \
+      reg2.type = scasm::operand_type::REG;                                    \
+      reg2.reg = operand->get_index();                                         \
+      used.insert(reg2);                                                       \
     }                                                                          \
   }
 
@@ -540,6 +556,12 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg,
       reg.type = scasm::operand_type::PSEUDO;                                  \
       reg.pseudoreg = operand->get_identifier();                               \
       updated.insert(reg);                                                     \
+    } else if (operand->get_type() == scasm::operand_type::MEMORY and          \
+               IS_BASE_REG(operand)) {                                         \
+      regalloc::Reg reg;                                                       \
+      reg.type = scasm::operand_type::REG;                                     \
+      reg.reg = operand->get_reg();                                            \
+      used.insert(reg);                                                        \
     }                                                                          \
   }
 
@@ -570,7 +592,10 @@ Codegen::used_and_updated_regs(
     CHECK_UPDATED(dst);
   } else if (instrType == scasm::instruction_type::PUSH) {
     CHECK_USED(src);
-  } else if (instrType == scasm::instruction_type::IDIV) {
+  } else if (instrType == scasm::instruction_type::POP) {
+    CHECK_UPDATED(src);
+  } else if (instrType == scasm::instruction_type::IDIV or
+             instrType == scasm::instruction_type::DIV) {
     CHECK_USED(src);
     regalloc::Reg reg_ax;
     reg_ax.type = scasm::operand_type::REG;
@@ -613,6 +638,21 @@ Codegen::used_and_updated_regs(
       reg.reg = it.first;
       updated.insert(reg);
     }
+  } else if (instrType == scasm::instruction_type::MOVSX) {
+    CHECK_USED(src);
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::MOVZX) {
+    CHECK_USED(src);
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::LEA) {
+    CHECK_USED(src);
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::CVTSI2SD) {
+    CHECK_USED(src);
+    CHECK_UPDATED(dst);
+  } else if (instrType == scasm::instruction_type::CVTTS2DI) {
+    CHECK_USED(src);
+    CHECK_UPDATED(dst);
   }
   return {used, updated};
 }
