@@ -117,18 +117,20 @@ void Codegen::allocate_registers() {
       auto dst = inst->get_dst();
       if (src != nullptr and src->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = src->get_identifier();
-        if (pseudoRegInGraph[pseudoReg] or aliasedPseudoRegs[pseudoReg])
-          continue;
-        MAKE_SHARED(regalloc::node, node);
-        regalloc::Reg reg;
-        reg.type = scasm::operand_type::PSEUDO;
-        reg.pseudoreg = pseudoReg;
-        node->set_reg(reg);
-        if (isDoubleReg(reg))
-          xmm_graph.emplace_back(node);
-        else
-          graph.emplace_back(node);
-        pseudoRegInGraph[pseudoReg] = true;
+        if (pseudoRegInGraph[pseudoReg] or aliasedPseudoRegs[pseudoReg]) {
+          // fall through to check dst
+        } else {
+          MAKE_SHARED(regalloc::node, node);
+          regalloc::Reg reg;
+          reg.type = scasm::operand_type::PSEUDO;
+          reg.pseudoreg = pseudoReg;
+          node->set_reg(reg);
+          if (isDoubleReg(reg))
+            xmm_graph.emplace_back(node);
+          else
+            graph.emplace_back(node);
+          pseudoRegInGraph[pseudoReg] = true;
+        }
       }
       if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = dst->get_identifier();
