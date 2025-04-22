@@ -123,8 +123,7 @@ void Codegen::allocate_registers() {
         reg.type = scasm::operand_type::PSEUDO;
         reg.pseudoreg = pseudoReg;
         node->set_reg(reg);
-        if (backendSymbolTable[pseudoReg].asmType ==
-            scasm::AssemblyType::DOUBLE)
+        if (isDoubleReg(reg))
           xmm_graph.emplace_back(node);
         else
           graph.emplace_back(node);
@@ -139,8 +138,7 @@ void Codegen::allocate_registers() {
         reg.type = scasm::operand_type::PSEUDO;
         reg.pseudoreg = pseudoReg;
         node->set_reg(reg);
-        if (backendSymbolTable[pseudoReg].asmType ==
-            scasm::AssemblyType::DOUBLE)
+        if (isDoubleReg(reg))
           xmm_graph.emplace_back(node);
         else
           graph.emplace_back(node);
@@ -150,7 +148,7 @@ void Codegen::allocate_registers() {
 
     std::vector<regalloc::cfg_node> cfg;
     gen_cfg_from_funcBody(cfg, func->get_instructions());
-    liveness_analysis(cfg);
+    liveness_analysis(cfg, func->get_name());
 
     for (auto &block : cfg) {
       if (block.is_empty())
@@ -185,7 +183,11 @@ void Codegen::allocate_registers() {
           }
 
           for (auto updated_reg : updated) {
-            add_edge(graph, live_reg, updated_reg);
+            if (isDoubleReg(updated_reg) and isDoubleReg(live_reg)) {
+              add_edge(xmm_graph, live_reg, updated_reg);
+            } else if (!isDoubleReg(updated_reg) and !isDoubleReg(live_reg)) {
+              add_edge(graph, live_reg, updated_reg);
+            }
           }
         }
         for (auto reg : updated) {
@@ -223,6 +225,11 @@ void Codegen::allocate_registers() {
         node->set_spill_cost(pseudoRegSpillCost[node->get_reg().pseudoreg]);
       }
     }
+    for (auto node : xmm_graph) {
+      if (node->get_reg().type == scasm::operand_type::PSEUDO) {
+        node->set_spill_cost(pseudoRegSpillCost[node->get_reg().pseudoreg]);
+      }
+    }
 
     /**
      * @goal: Color the graph using a graph coloring algorithm.
@@ -233,6 +240,7 @@ void Codegen::allocate_registers() {
      *        3.4 assign color to the nodes
      */
     color_graph(graph, 12);
+    color_graph(xmm_graph, 14);
 
     /**
      * @goal: Create a register map from the colored graph.
@@ -251,12 +259,25 @@ void Codegen::allocate_registers() {
     for (auto node : graph) {
       if (node->get_reg().type == scasm::operand_type::PSEUDO) {
         if (node->get_color() != 0) {
-          pseudoRegToReg[node->get_reg().pseudoreg] =
-              colorToReg[node->get_color()];
-          if (callee_savedReg[colorToReg[node->get_color()]]) {
-            calleeSavedRegisters[func->get_name()].insert(
-                colorToReg[node->get_color()]);
-          }
+          auto hard_reg = colorToReg[node->get_color()];
+          pseudoRegToReg[node->get_reg().pseudoreg] = hard_reg;
+          if (callee_savedReg[hard_reg])
+            calleeSavedRegisters[func->get_name()].insert(hard_reg);
+        }
+      }
+    }
+    colorToReg.clear();
+    for (auto node : xmm_graph) {
+      if (node->get_reg().type == scasm::operand_type::REG) {
+        colorToReg[node->get_color()] = node->get_reg().reg;
+      }
+    }
+    std::map<std::string, scasm::register_type> pseudoRegToXMMReg;
+    for (auto node : xmm_graph) {
+      if (node->get_reg().type == scasm::operand_type::PSEUDO) {
+        if (node->get_color() != 0) {
+          auto hard_reg = colorToReg[node->get_color()];
+          pseudoRegToXMMReg[node->get_reg().pseudoreg] = hard_reg;
         }
       }
     }
@@ -279,12 +300,20 @@ void Codegen::allocate_registers() {
           src->set_type(scasm::operand_type::REG);
           src->set_reg(pseudoRegToReg[pseudoReg]);
         }
+        if (pseudoRegToXMMReg.find(pseudoReg) != pseudoRegToXMMReg.end()) {
+          src->set_type(scasm::operand_type::REG);
+          src->set_reg(pseudoRegToXMMReg[pseudoReg]);
+        }
       }
       if (dst != nullptr and dst->get_type() == scasm::operand_type::PSEUDO) {
         std::string pseudoReg = dst->get_identifier();
         if (pseudoRegToReg.find(pseudoReg) != pseudoRegToReg.end()) {
           dst->set_type(scasm::operand_type::REG);
           dst->set_reg(pseudoRegToReg[pseudoReg]);
+        }
+        if (pseudoRegToXMMReg.find(pseudoReg) != pseudoRegToXMMReg.end()) {
+          dst->set_type(scasm::operand_type::REG);
+          dst->set_reg(pseudoRegToXMMReg[pseudoReg]);
         }
       }
       if ((*it)->get_type() == scasm::instruction_type::MOV and
@@ -427,15 +456,24 @@ void Codegen::alias_analyis(
   }
 }
 
-void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
+void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg,
+                                std::string funcName) {
   std::queue<unsigned int> worklist;
   std::map<unsigned int, bool> worklistMap;
   initialize_worklist(cfg, cfg[0], worklist, worklistMap);
 
-  regalloc::Reg reg;
-  reg.type = scasm::operand_type::REG;
-  reg.reg = scasm::register_type::AX;
-  cfg[cfg.size() - 1].live_regs[reg] = true;
+  if (globalSymbolTable[funcName].typeDef[0] == ast::ElemType::VOID) {
+    // do nothing
+  } else {
+    regalloc::Reg reg;
+    reg.type = scasm::operand_type::REG;
+    if (globalSymbolTable[funcName].typeDef[0] == ast::ElemType::DOUBLE) {
+      reg.reg = scasm::register_type::XMM0;
+    } else {
+      reg.reg = scasm::register_type::AX;
+    }
+    cfg[cfg.size() - 1].live_regs[reg] = true;
+  }
 
   while (!worklist.empty()) {
     auto &block = getNodeFromID(cfg, worklist.front());
@@ -467,7 +505,9 @@ void Codegen::liveness_analysis(std::vector<regalloc::cfg_node> &cfg) {
   operand->get_reg() != scasm::register_type::SP and                           \
       operand->get_reg() != scasm::register_type::BP and                       \
       operand->get_reg() != scasm::register_type::R10 and                      \
-      operand->get_reg() != scasm::register_type::R11
+      operand->get_reg() != scasm::register_type::R11 and                      \
+      operand->get_reg() != scasm::register_type::XMM14 and                    \
+      operand->get_reg() != scasm::register_type::XMM15
 
 #define CHECK_USED(operand)                                                    \
   if (operand != nullptr) {                                                    \
@@ -561,16 +601,18 @@ Codegen::used_and_updated_regs(
     }
 
     // Mark all caller saved registers as updated
-    for (auto it : int_argReg) {
+    for (auto it : caller_savedReg) {
       regalloc::Reg reg;
       reg.type = scasm::operand_type::REG;
-      reg.reg = it;
+      reg.reg = it.first;
       updated.insert(reg);
     }
-    regalloc::Reg reg;
-    reg.type = scasm::operand_type::REG;
-    reg.reg = scasm::register_type::AX;
-    updated.insert(reg);
+    for (auto it : xmm_caller_savedReg) {
+      regalloc::Reg reg;
+      reg.type = scasm::operand_type::REG;
+      reg.reg = it.first;
+      updated.insert(reg);
+    }
   }
   return {used, updated};
 }
