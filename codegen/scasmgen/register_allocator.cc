@@ -252,7 +252,8 @@ void Codegen::allocate_registers() {
           dst->set_reg(pseudoRegToReg[pseudoReg]);
         }
       }
-      if (src != nullptr and dst != nullptr and
+      if ((*it)->get_type() == scasm::instruction_type::MOV and
+          src != nullptr and dst != nullptr and
           src->get_type() == scasm::operand_type::REG and
           dst->get_type() == scasm::operand_type::REG and
           src->get_reg() == dst->get_reg()) {
