@@ -1,6 +1,6 @@
 # Scarlet
 
-Scarlet is a custom compiler developed in C++, designed with the primary goal of enhancing our understanding of compiler construction. The overarching objective is to implement an exceptionally fast machine learning framework built atop this compiler.
+Scarlet is a highly customizable C compiler written in C++. It is compliant with the systemV ABI specification and follows the latest C standard (c23). Its correctness have been ratified over nearly 1100 test-cases against both gcc and clang which makes sure that it handles nearly every obscure C program one can ever write. Every stage of scarlet has been handwritten. Its parser is a recursive descent one with arbitary lookahead and it has its own IR (we call it scar) which is quite intuitive to follow. Coupled with scar optimizations (dead-store,copy-propagation,unreachable-code,constant-folding) and a custom register allocator, the assembly that it generates is very close to what you will get from production compilers like gcc and clang.
 
 ## Building Scarlet
 
@@ -127,6 +127,7 @@ We try to be as close to the C standard as possible but there are a few features
 - Declaration like `int x,y;` are not supported. You have to write `int x` and `int y` in seperate lines.
 - Array function parameters are not supported, as they are anyway decayed to pointers. You should rewrite `int foo(int a[])` to `int foo(int *a)`.
 - We do not support the `const` keyword right now.
+- We also do not support `function pointers` right now.
 - The cases in a switch statement must be a constant. So you cannot have `unop<constant>` because scarlet will try to evaluate this and thus treat the result as a variable. So `case -100` is wrong. 
 
 ## Contributing Guidelines
