@@ -35,6 +35,7 @@ public:
       ("optimize,O", "Enable all optimizations")
       ("asm,S", "generate .s file containing X86-64 assembly")
       (",c", "Complie and assemble, but do not link")
+      (",l", "specify the libraries you want to link against")
       ("output-file,o", po::value<std::string>(), "output file");
 
     hidden.add_options()
@@ -88,7 +89,7 @@ public:
 │       ░▒▓█ S C A R L E T █▓▒░       │
 └─────────────────────────────────────┘
 )" << "\033[38;5;159m"
-              << "                  Compiler v0.1_  \033[0m\n\n";
+              << "                  Compiler v1.0_  \033[0m\n\n";
   }
 
   const std::string get_input_file() const { return input_file; }

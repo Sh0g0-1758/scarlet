@@ -39,6 +39,29 @@ To check memory leaks in scarlet, run the following command within the `stress` 
 ./check_memory_leaks.sh
 ```
 
+## How to use Scarlet
+
+```
+Usage: scarlet [options] file...
+Options:
+  -h [ --help ]                 produce this help message
+  -v [ --version ]              print version string
+  --lex                         run only till the lexer stage
+  --parse                       run only till the parser stage and print the 
+                                AST
+  --validate                    run semantic analysis and print the AST
+  --scar                        print scar(IR for scarlet)
+  --fold-constants              Enable constant folding
+  --propagate-copies            Enable copy propagation
+  --eliminate-unreachable-code  Enable unreachable code elimination
+  --eliminate-dead-stores       Enable dead store elimination
+  -O [ --optimize ]             Enable all optimizations
+  -S [ --asm ]                  generate .s file containing X86-64 assembly
+  -c                            Complie and assemble, but do not link
+  -l                            specify the libraries you want to link against
+  -o [ --output-file ] arg      output file
+```
+
 ## Supported Architectures
 
 Scarlet currently supports the following architectures:
@@ -99,9 +122,12 @@ We try to be as close to the C standard as possible but there are a few features
 - For comparing pointers the base type needs to be the same. So you need to cast a `long*` to a `void*` before comparing it with a `void*`
 - The expression `sizeof 'a'` get's evaluated to 1, although gcc and clang say its 4. (come on its a character) 
 - We do not support variable length arrays (`int arr[b];`, b known at runtime) or array length initialization using expressions(`int arr[1+1];`)
-- We do not support empty parameter lists. You have to explicitly add void to the function parameter list. So `int foo(){}` should be changed to `int foo(void){}`
+- We do not support empty parameter lists. You have to explicitly add void to the function parameter list. So `int foo();` should be changed to `int foo(void);`
+- We do not support function declaration with no variables. You cannot just write the type-specifier. So `int foo(int, int);` should be changed to `int foo(int a, int b);`
 - Declaration like `int x,y;` are not supported. You have to write `int x` and `int y` in seperate lines.
 - Array function parameters are not supported, as they are anyway decayed to pointers. You should rewrite `int foo(int a[])` to `int foo(int *a)`.
+- We do not support the `const` keyword right now.
+- The cases in a switch statement must be a constant. So you cannot have `unop<constant>` because scarlet will try to evaluate this and thus treat the result as a variable. So `case -100` is wrong. 
 
 ## Contributing Guidelines
 
