@@ -243,8 +243,9 @@ void parser::parse_statement(
     if (tokens[0].get_token() == token::TOKEN::UNTIL) {
       is_until = true;
       tokens.erase(tokens.begin());
-    } else
+    } else {
       EXPECT(token::TOKEN::WHILE);
+    }
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
