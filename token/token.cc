@@ -50,6 +50,9 @@ void print_token(TOKEN token) {
   case TOKEN::WHILE:
     std::cerr << "while ";
     break;
+  case TOKEN::UNTIL:
+    std::cerr << "until ";
+    break;
   case TOKEN::FOR:
     std::cerr << "for ";
     break;
@@ -289,6 +292,8 @@ std::string to_string(TOKEN token) {
     return "do";
   case TOKEN::WHILE:
     return "while";
+  case TOKEN::UNTIL:
+    return "until";
   case TOKEN::FOR:
     return "for";
   case TOKEN::BREAK:

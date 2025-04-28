@@ -319,6 +319,8 @@ void lexer::tokenize() {
         tokens.emplace_back(token::TOKEN::DO);
       } else if (identifier == "while") {
         tokens.emplace_back(token::TOKEN::WHILE);
+      } else if (identifier == "until") {
+        tokens.emplace_back(token::TOKEN::UNTIL);
       } else if (identifier == "for") {
         tokens.emplace_back(token::TOKEN::FOR);
       } else if (identifier == "break") {

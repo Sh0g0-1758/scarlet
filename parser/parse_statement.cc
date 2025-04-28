@@ -90,8 +90,12 @@ void parser::parse_statement(
     block_stmt->set_type(ast::statementType::BLOCK);
     block_stmt->set_block(std::move(block_node));
     statement = std::static_pointer_cast<ast::AST_Statement_Node>(block_stmt);
-  } else if (tokens[0].get_token() == token::TOKEN::WHILE) {
+  } else if (tokens[0].get_token() == token::TOKEN::WHILE or
+             tokens[0].get_token() == token::TOKEN::UNTIL) {
     MAKE_SHARED(ast::AST_while_statement_Node, while_statement);
+    bool is_until = false;
+    if (tokens[0].get_token() == token::TOKEN::UNTIL)
+      is_until = true;
     while_statement->set_type(ast::statementType::WHILE);
     tokens.erase(tokens.begin());
     while_statement->set_labels(get_loop_labels());
@@ -99,7 +103,22 @@ void parser::parse_statement(
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
-    while_statement->set_exp(std::move(exp));
+    if (is_until) {
+      MAKE_SHARED(ast::AST_exp_Node, not_exp);
+      MAKE_SHARED(ast::AST_factor_Node, not_factor);
+      MAKE_SHARED(ast::AST_unop_Node, not_op);
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+
+      child_factor->set_exp_node(std::move(exp));
+      not_op->set_op(unop::UNOP::NOT);
+      not_factor->set_unop_node(std::move(not_op));
+      not_factor->set_child(std::move(child_factor));
+      not_exp->set_factor_node(std::move(not_factor));
+
+      while_statement->set_exp(std::move(not_exp));
+    } else {
+      while_statement->set_exp(std::move(exp));
+    }
 
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
 
@@ -220,11 +239,32 @@ void parser::parse_statement(
     parse_statement(tokens, stmt);
     while_statement->set_stmt(std::move(stmt));
 
-    EXPECT(token::TOKEN::WHILE);
+    bool is_until = false;
+    if (tokens[0].get_token() == token::TOKEN::UNTIL) {
+      is_until = true;
+      tokens.erase(tokens.begin());
+    } else {
+      EXPECT(token::TOKEN::WHILE);
+    }
     EXPECT(token::TOKEN::OPEN_PARANTHESES);
     MAKE_SHARED(ast::AST_exp_Node, exp);
     parse_exp(tokens, exp);
-    while_statement->set_exp(std::move(exp));
+    if (is_until) {
+      MAKE_SHARED(ast::AST_exp_Node, not_exp);
+      MAKE_SHARED(ast::AST_factor_Node, not_factor);
+      MAKE_SHARED(ast::AST_unop_Node, not_op);
+      MAKE_SHARED(ast::AST_factor_Node, child_factor);
+
+      child_factor->set_exp_node(std::move(exp));
+      not_op->set_op(unop::UNOP::NOT);
+      not_factor->set_unop_node(std::move(not_op));
+      not_factor->set_child(std::move(child_factor));
+      not_exp->set_factor_node(std::move(not_factor));
+
+      while_statement->set_exp(std::move(not_exp));
+    } else
+      while_statement->set_exp(std::move(exp));
+
     EXPECT(token::TOKEN::CLOSE_PARANTHESES);
     EXPECT(token::TOKEN::SEMICOLON);
 

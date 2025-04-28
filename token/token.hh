@@ -29,6 +29,7 @@ enum class TOKEN {
   ELSE,
   DO,
   WHILE,
+  UNTIL,
   FOR,
   BREAK,
   CONTINUE,
