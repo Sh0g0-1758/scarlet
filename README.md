@@ -86,7 +86,7 @@ Scarlet currently supports the following architectures:
 - [x] Add support for compound operators (+=,-=,*=,/=,<<=,>>=,%=)
 - [x] Add support for goto statement
 - [x] Add support for compound statements
-- [x] Add support for Loops (for, while, do-while)
+- [x] Add support for Loops (for, while, do-while, until, do-until)
 - [x] Add support for switch-case
 - [x] Add support for Functions
 - [x] Add support for static keyword and global scope
